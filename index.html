@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Finnvelo Programmwelten entwickelt Software, Testversionen und digitale Werkzeuge für produktive Arbeitsabläufe.">
+  <meta name="description" content="Finnvelo Programmwelten entwickelt Software, Automatisierung und digitale Werkzeuge für produktive Arbeitsabläufe.">
   <title>Finnvelo Programmwelten</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -11,47 +11,66 @@
   <header class="site-header">
     <a class="brand" href="index.html" aria-label="Finnvelo Programmwelten Startseite">
       <img class="brand-logo" src="assets/images/finnvelo-plakette.png" alt="Finnvelo Plakette">
-      <span>Finnvelo Programmwelten</span>
+      <span class="brand-text">
+        <strong>Finnvelo</strong>
+        <small>Programmwelten</small>
+      </span>
     </a>
     <nav aria-label="Hauptnavigation">
       <a href="index.html" aria-current="page">Start</a>
       <a href="programme.html">Programme</a>
-      <a href="tester.html">Testerbereich</a>
-      <a href="downloads.html">Downloads</a>
       <a href="kontakt.html">Kontakt</a>
     </nav>
   </header>
 
-  <main>
-    <section class="hero compact-hero">
-      <div class="hero-content">
-        <p class="label">Software · Automatisierung · Produktivität</p>
-        <h1>Finnvelo Programmwelten.</h1>
-        <p class="lead">
-          Finnvelo entwickelt Programme, die digitale Arbeitsabläufe übersichtlicher,
-          einfacher und schneller machen sollen. Diese Webseite dient zunächst als
-          erreichbare Projektseite für Informationen, Testversionen und Feedback.
+  <main class="main-canvas home-main">
+    <section class="home-stage" aria-labelledby="home-title">
+      <div class="home-stage__intro">
+        <p class="section-kicker">Software · Automatisierung · Produktivität</p>
+        <h1 id="home-title">Finnvelo<br>Programmwelten.</h1>
+        <p class="hero-lead">
+          Digitale Werkzeuge für Steuerung, Organisation, Archivierung, Medien und produktive Arbeitsabläufe.
         </p>
-        <div class="actions">
-          <a class="button" href="tester.html">Zum Testerbereich</a>
-          <a class="button secondary" href="downloads.html">Downloads ansehen</a>
-        </div>
       </div>
-    </section>
 
-    <section class="cards" aria-label="Kurzübersicht">
-      <article>
-        <h2>Programme</h2>
-        <p>Informationen zu aktuellen und geplanten Finnvelo-Programmen.</p>
-      </article>
-      <article>
-        <h2>Testerbereich</h2>
-        <p>Hinweise für ausgewählte Tester, Testaufgaben und Installationsinformationen.</p>
-      </article>
-      <article>
-        <h2>Datensparsam</h2>
-        <p>Die Webseite ist bewusst schlicht geplant: kein Tracking, kein Kontaktformular und keine eigene Kundendatenbank.</p>
-      </article>
+      <section class="program-overview program-overview--home" aria-labelledby="program-overview-title">
+        <div class="section-heading section-heading--flush">
+          <h2 id="program-overview-title">Programmübersicht</h2>
+          <p>Fünf Programmwelten für Steuerung, Archivierung, Finanzen, Aufgaben und Medienarbeit.</p>
+        </div>
+
+        <div class="program-button-grid program-button-grid--home">
+          <a class="program-button" href="command-control.html" aria-label="Finnvelo Command Control öffnen">
+            <span class="program-button__status">In Testphase</span>
+            <img src="assets/images/command-control-label.png" alt="Finnvelo Command Control">
+            <span class="program-button__description">Zentrale Steuerung für Programme, Abläufe und wichtige Arbeitsbereiche.</span>
+          </a>
+
+          <a class="program-button" href="archivar.html" aria-label="Finnvelo Archivar öffnen">
+            <span class="program-button__status">In Entwicklung</span>
+            <img src="assets/images/archivar-label.png" alt="Finnvelo Archivar">
+            <span class="program-button__description">Archivierungsprogramm für Dateien, Ordner und geordnete Ablage.</span>
+          </a>
+
+          <a class="program-button" href="finanzmanager.html" aria-label="Finnvelo Finanzmanager öffnen">
+            <span class="program-button__status">In Entwicklung</span>
+            <img src="assets/images/finanzmanager-label.png" alt="Finnvelo Finanzmanager">
+            <span class="program-button__description">Haushaltsbuch und Übersicht für Einnahmen, Ausgaben und Finanzen.</span>
+          </a>
+
+          <a class="program-button" href="aufgabenplaner.html" aria-label="Finnvelo Aufgabenplaner öffnen">
+            <span class="program-button__status">In Entwicklung</span>
+            <img src="assets/images/aufgabenplaner-label.png" alt="Finnvelo Aufgabenplaner">
+            <span class="program-button__description">Kleiner Manager für Tagesaufgaben, Planung und Organisation.</span>
+          </a>
+
+          <a class="program-button" href="medienstudio.html" aria-label="Finnvelo Medienstudio öffnen">
+            <span class="program-button__status">In Entwicklung</span>
+            <img src="assets/images/medienstudio-label.png" alt="Finnvelo Medienstudio">
+            <span class="program-button__description">Kamera-, Bild- und Videowerkzeuge für Medienarbeit.</span>
+          </a>
+        </div>
+      </section>
     </section>
   </main>
 

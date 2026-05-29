@@ -1,32 +1,25 @@
-Finnvelo Programmwelten - Änderungspaket v3
+Finnvelo Programmwelten - Änderung v5 einpflegen
 
-Arbeitsordner des Projekts:
+Arbeitsordner:
 C:\Desktop\finnvelo-programmwelten
-
-Enthaltene geänderte Dateien:
-- index.html
-- styles.css
-- kontakt.html
-- datenschutz.html
 
 Einpflege:
 1. Diese ZIP entpacken.
-2. Die vier Dateien index.html, styles.css, kontakt.html und datenschutz.html kopieren.
-3. In C:\Desktop\finnvelo-programmwelten einfügen und vorhandene Dateien ersetzen.
-4. Lokal index.html im Browser öffnen und prüfen.
+2. Alle enthaltenen Dateien und Ordner in den Arbeitsordner kopieren.
+3. Vorhandene Dateien ersetzen.
+4. In VS Code mit Live Server index.html prüfen.
 5. GitHub Desktop öffnen.
-6. Summary eintragen, z. B.: Logo verkleinert und Datenschutz ergänzt
+6. Summary eintragen: Startseite und Programmkacheln überarbeitet
 7. Commit to main klicken.
 8. Push origin klicken.
-9. In Cloudflare prüfen, ob der automatische Build erfolgreich war.
-10. Webseite online öffnen und Startseite, Kontakt und Datenschutz prüfen.
+9. Cloudflare-Build abwarten und online prüfen.
 
 Geändert:
-- großes Cover von der Startseite entfernt/entschärft
-- Logo/Plakette im Header kleiner und dezenter gemacht
-- Startseite ruhiger formuliert
-- Kontaktseite mit finnveloprogrammwelten@gmail.com ergänzt
-- Datenschutzseite als datensparsame Entwurfsfassung ergänzt
-
-Hinweis:
-Impressum bleibt bewusst Platzhalter. Für eine öffentliche geschäftliche Nutzung müssen echte Anbieterangaben ergänzt und Datenschutz/Impressum rechtlich geprüft werden.
+- Header mit kleinem Bildlogo plus Text FINNVELO / Programmwelten.
+- Hintergrundlabel auf der Startseite bleibt einmalig, vollständig sichtbar und ca. 25 Prozent transparent.
+- Große Aktionsbuttons auf der Startseite entfernt.
+- Programmkacheln deutlich verkleinert und als 5er-Übersicht aufgebaut.
+- Medienstudio ergänzt.
+- Command Control Status auf In Testphase gesetzt.
+- Andere Programme auf In Entwicklung gesetzt.
+- Command-Control-Detailseite vereinfacht und unnötige weitere Bausteine entfernt.
