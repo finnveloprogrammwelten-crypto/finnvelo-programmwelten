@@ -299,14 +299,15 @@ h1 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: clamp(58px, 4.2vw, 82px);
-  min-height: 24px;
-  padding: 5px 7px;
+  width: auto;
+  min-width: clamp(92px, 5.6vw, 124px);
+  min-height: 25px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: rgba(9, 12, 21, 0.86);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #ffe3ed;
-  font-size: clamp(8px, 0.62vw, 10px);
+  font-size: clamp(8px, 0.58vw, 10px);
   font-weight: 900;
   line-height: 1.15;
   text-align: center;
@@ -537,6 +538,11 @@ h1 {
   font-weight: 800;
 }
 
+.status--download {
+  background: rgba(45, 204, 112, 0.16);
+  color: #d9ffe8;
+}
+
 .notice {
   padding: 18px;
   margin: 24px 0;
@@ -744,6 +750,6 @@ footer a {
   }
 
   .program-button__status {
-    width: 72px;
+    min-width: 96px;
   }
 }
