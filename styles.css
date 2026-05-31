@@ -802,7 +802,43 @@ footer a {
 
 @media (max-width: 900px) {
   .feature-grid,
-  .feature-list {
+  .feature-list,
+  .program-media-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.program-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 34px);
+  margin-top: clamp(24px, 3vw, 42px);
+}
+
+.program-media-card {
+  margin: 0;
+  padding: 0;
+}
+
+.program-media-card img {
+  display: block;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.30);
+}
+
+.program-media-card figcaption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .program-media-grid {
     grid-template-columns: 1fr;
   }
 }
