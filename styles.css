@@ -754,7 +754,8 @@ footer a {
   }
 }
 
-.program-detail__body--archivar {
+.program-detail__body--archivar,
+.program-detail__body--command-control {
   grid-template-columns: minmax(0, 1fr);
   gap: clamp(28px, 3.8vw, 58px);
 }
