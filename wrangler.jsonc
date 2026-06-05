@@ -7,13 +7,14 @@
     "directory": ".",
     "binding": "ASSETS"
   },
-  "kv_namespaces": [
-    {
-      "binding": "COUNTERS",
-      // Diese ID wird einmalig erzeugt mit:
-      //   npx wrangler kv namespace create COUNTERS
-      // und hier eingetragen:
-      "id": "HIER_DEINE_KV_NAMESPACE_ID_EINTRAGEN"
-    }
+  // Durable Object fuer die Zaehler - wird beim Deploy automatisch angelegt.
+  // KEIN KV-Namespace, KEINE ID noetig.
+  "durable_objects": {
+    "bindings": [
+      { "name": "COUNTERS", "class_name": "Counter" }
+    ]
+  },
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["Counter"] }
   ]
 }

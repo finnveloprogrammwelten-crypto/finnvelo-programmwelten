@@ -1,12 +1,11 @@
-// Cloudflare Worker fuer Finnvelo Programmwelten.
-// Stellt anonyme Zaehler bereit (keine Cookies, keine IP-Speicherung, nur Zahlen):
+// Cloudflare Worker + Durable Object fuer Finnvelo Programmwelten.
+// Anonyme Zaehler (keine Cookies, keine IP-Speicherung, nur Zahlen):
 //   POST /api/hit    Body {"key":"views:command-control"}  -> Zaehler +1, liefert {key,value}
 //   GET  /api/stats?keys=views:site,video:archivar,...     -> {counts:{...}}
-// Alle anderen Pfade werden als statische Datei ausgeliefert (env.ASSETS).
 //
-// Speicher: KV-Namespace mit Bindung COUNTERS (siehe wrangler.jsonc).
-// Erlaubte Schluessel: <prefix>:<name>, prefix aus ALLOWED_PREFIXES,
-// name = Kleinbuchstaben/Ziffern/Bindestrich (1-40 Zeichen).
+// Speicher: Durable Object "Counter" mit SQLite. Wird beim Deploy AUTOMATISCH
+// angelegt - es ist KEIN separater KV-Namespace und KEINE ID noetig.
+// Erlaubte Schluessel: <prefix>:<name>, prefix aus ALLOWED_PREFIXES.
 
 const KEY_RE = /^[a-z]+:[a-z0-9-]{1,40}$/;
 const ALLOWED_PREFIXES = ['views', 'video', 'download'];
@@ -14,10 +13,7 @@ const ALLOWED_PREFIXES = ['views', 'video', 'download'];
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      'cache-control': 'no-store'
-    }
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' }
   });
 }
 
@@ -26,46 +22,63 @@ function isValidKey(key) {
   return ALLOWED_PREFIXES.includes(key.split(':')[0]);
 }
 
-async function readCount(env, key) {
-  const raw = await env.COUNTERS.get(key);
-  const value = parseInt(raw || '0', 10);
-  return Number.isFinite(value) ? value : 0;
-}
-
-async function handleApi(request, url, env) {
-  if (!env || !env.COUNTERS) return json({ error: 'storage_not_configured' }, 503);
-
-  if (request.method === 'GET' && url.pathname === '/api/stats') {
-    const keys = (url.searchParams.get('keys') || '')
-      .split(',')
-      .map((k) => k.trim())
-      .filter(isValidKey)
-      .slice(0, 30);
-    const counts = {};
-    await Promise.all(keys.map(async (k) => { counts[k] = await readCount(env, k); }));
-    return json({ counts });
+// --- Durable Object: haelt alle Zaehler in einer kleinen SQLite-Tabelle ---
+export class Counter {
+  constructor(state, env) {
+    this.state = state;
+    this.env = env;
+    this.state.blockConcurrencyWhile(async () => {
+      this.state.storage.sql.exec(
+        'CREATE TABLE IF NOT EXISTS counters (k TEXT PRIMARY KEY, v INTEGER NOT NULL DEFAULT 0)'
+      );
+    });
   }
 
-  if (request.method === 'POST' && url.pathname === '/api/hit') {
-    let body = {};
-    try { body = await request.json(); } catch (_error) { body = {}; }
-    const key = body && body.key;
-    if (!isValidKey(key)) return json({ error: 'invalid_key' }, 400);
-    const next = (await readCount(env, key)) + 1;
-    await env.COUNTERS.put(key, String(next));
-    return json({ key, value: next });
+  read(key) {
+    const rows = this.state.storage.sql.exec('SELECT v FROM counters WHERE k = ?', key).toArray();
+    return rows.length ? Number(rows[0].v) : 0;
   }
 
-  return json({ error: 'not_found' }, 404);
+  increment(key) {
+    // Atomar: ein einziger SQL-Befehl, daher keine verlorenen Zaehlungen.
+    this.state.storage.sql.exec(
+      'INSERT INTO counters (k, v) VALUES (?, 1) ON CONFLICT(k) DO UPDATE SET v = v + 1',
+      key
+    );
+    return this.read(key);
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    if (request.method === 'GET' && url.pathname === '/api/stats') {
+      const keys = (url.searchParams.get('keys') || '')
+        .split(',').map((k) => k.trim()).filter(isValidKey).slice(0, 30);
+      const counts = {};
+      for (const k of keys) counts[k] = this.read(k);
+      return json({ counts });
+    }
+
+    if (request.method === 'POST' && url.pathname === '/api/hit') {
+      let body = {};
+      try { body = await request.json(); } catch (_error) { body = {}; }
+      const key = body && body.key;
+      if (!isValidKey(key)) return json({ error: 'invalid_key' }, 400);
+      return json({ key, value: this.increment(key) });
+    }
+
+    return json({ error: 'not_found' }, 404);
+  }
 }
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith('/api/')) {
-      return handleApi(request, url, env);
+      if (!env || !env.COUNTERS) return json({ error: 'storage_not_configured' }, 503);
+      const id = env.COUNTERS.idFromName('global');   // eine gemeinsame Instanz fuer alle Zaehler
+      return env.COUNTERS.get(id).fetch(request);
     }
-    // Alles andere: statische Datei ausliefern.
     if (env && env.ASSETS) return env.ASSETS.fetch(request);
     return new Response('Not found', { status: 404 });
   }
