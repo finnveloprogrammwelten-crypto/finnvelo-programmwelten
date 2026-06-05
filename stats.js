@@ -58,11 +58,16 @@
       + 'border-radius:999px;padding:6px 12px;box-shadow:0 6px 18px rgba(0,0,0,.3);'
       + 'pointer-events:none;user-select:none;display:flex;gap:8px;align-items:center;white-space:nowrap;'
       + '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}'
-      + '.fv-stats-badge--home{top:12px;left:14px;}'
-      + '.fv-stats-badge--page{top:12px;right:14px;}'
+      + '.fv-stats-badge--home{top:84px;right:20px;left:auto;}'
+      + '.fv-stats-badge--page{top:84px;right:20px;left:auto;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
       + '.fv-stats-badge .fv-sep{opacity:.35;}'
-      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 9px;gap:6px;}}';
+      + '.fv-video-facade{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:#000 center/cover no-repeat;border-radius:inherit;display:block;}'
+      + '.fv-video-facade::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.30);}'
+      + '.fv-video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:50px;border-radius:14px;background:rgba(20,20,20,.85);z-index:1;transition:background .15s;}'
+      + '.fv-video-play::before{content:"";position:absolute;top:50%;left:54%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff;}'
+      + '.fv-video-facade:hover .fv-video-play,.fv-video-facade:focus-visible .fv-video-play{background:#ff0000;}'
+      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 9px;gap:6px;top:auto;bottom:12px;right:12px;left:auto;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
@@ -105,10 +110,52 @@
   function onClick(event) {
     var target = event.target;
     if (!target || !target.closest) return;
-    var video = target.closest('a[href*="youtube.com"], a[href*="youtu.be"], .video-link a, .video-embed, [data-track="video"]');
+    // Eingebettete Videos werden von der Klick-Vorschau (setupVideoFacades) gezaehlt.
+    // Hier nur noch der "Video auf YouTube oeffnen"-Link bzw. data-track="video".
+    var video = target.closest('a[href*="youtube.com"], a[href*="youtu.be"], [data-track="video"]');
     if (video) { hit('video:' + key); bump('video:' + key); return; }
     var download = target.closest('a[href$=".exe"], a[href$=".zip"], a[href*="releases/download"], a[download], .download-slot a.button, [data-track="download"]');
     if (download) { hit('download:' + key); bump('download:' + key); }
+  }
+
+  // Ersetzt eingebettete YouTube-iframes durch eine Klick-Vorschau (Thumbnail +
+  // Play-Knopf). Der Klick darauf ist ein echter Klick -> wird gezaehlt; danach
+  // startet das Video sofort (autoplay). Vorteil: Abspielen wird zuverlaessig
+  // gezaehlt (Klicks IM fremden iframe sind technisch nicht erfassbar) und es wird
+  // erst beim Klick Kontakt zu YouTube aufgenommen.
+  function setupVideoFacades() {
+    injectStyles();
+    var iframes = document.querySelectorAll('.video-embed iframe[src*="youtube"]');
+    Array.prototype.forEach.call(iframes, function (iframe) {
+      var src = iframe.getAttribute('src') || '';
+      var match = src.match(/embed\/([A-Za-z0-9_-]{6,})/);
+      if (!match) return;
+      var videoId = match[1];
+      var host = src.indexOf('nocookie') !== -1 ? 'https://www.youtube-nocookie.com' : 'https://www.youtube.com';
+      var title = iframe.getAttribute('title') || 'Video';
+      var parent = iframe.parentNode;
+      if (!parent) return;
+
+      var facade = document.createElement('button');
+      facade.type = 'button';
+      facade.className = 'fv-video-facade';
+      facade.setAttribute('aria-label', title + ' abspielen');
+      facade.style.backgroundImage = "url('https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg')";
+      facade.innerHTML = '<span class="fv-video-play" aria-hidden="true"></span>';
+      parent.replaceChild(facade, iframe);
+
+      facade.addEventListener('click', function () {
+        hit('video:' + key);
+        bump('video:' + key);
+        var real = document.createElement('iframe');
+        real.setAttribute('src', host + '/embed/' + videoId + '?rel=0&autoplay=1');
+        real.setAttribute('title', title);
+        real.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        real.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        real.setAttribute('allowfullscreen', '');
+        if (facade.parentNode) facade.parentNode.replaceChild(real, facade);
+      });
+    });
   }
 
   function start() {
@@ -117,6 +164,7 @@
     if (!seenOnce('fv_seen_page_' + key)) pending.push(hit('views:' + key));
 
     document.addEventListener('click', onClick, true);
+    setupVideoFacades();
 
     var keysToShow = null;
     if (isHome) {
