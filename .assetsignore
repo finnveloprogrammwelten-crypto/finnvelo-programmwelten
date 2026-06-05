@@ -1,0 +1,24 @@
+# Diese Datei legt fest, welche Dateien NICHT als oeffentliche Webseiten-Dateien
+# ausgeliefert werden (gleiche Schreibweise wie .gitignore).
+# Der Worker selbst wird davon NICHT beeintraechtigt (main: worker.js wird separat
+# gebaut) - es geht nur um die statisch ausgelieferten Assets.
+
+# Versions-/Build-/Tool-Ordner
+.git
+.wrangler
+node_modules
+
+# Worker-Quellcode + Source-Maps (gehoeren nicht ins oeffentliche Hosting)
+worker.js
+*.map
+
+# Konfiguration
+wrangler.jsonc
+wrangler.jsonc.txt
+wrangler.toml
+
+# Sonstiges/Doku
+.gitattributes
+.gitignore
+README.md
+ANLEITUNG-Zaehler.txt
