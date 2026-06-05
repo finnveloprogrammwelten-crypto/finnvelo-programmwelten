@@ -1,0 +1,19 @@
+{
+  // WICHTIG: Diese Datei als "wrangler.jsonc" verwenden (nicht .txt).
+  "name": "finnvelo-programmwelten",
+  "compatibility_date": "2026-05-27",
+  "main": "worker.js",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+  "kv_namespaces": [
+    {
+      "binding": "COUNTERS",
+      // Diese ID wird einmalig erzeugt mit:
+      //   npx wrangler kv namespace create COUNTERS
+      // und hier eingetragen:
+      "id": "HIER_DEINE_KV_NAMESPACE_ID_EINTRAGEN"
+    }
+  ]
+}
