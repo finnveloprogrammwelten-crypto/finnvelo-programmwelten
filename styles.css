@@ -209,6 +209,31 @@ h1 {
   line-height: 1.62;
 }
 
+.dev-note {
+  margin-top: clamp(22px, 2.4vw, 34px);
+  max-width: 560px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--blue-light);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
+.dev-note__label {
+  margin: 0 0 6px;
+  color: var(--blue-light);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dev-note__text {
+  margin: 0;
+  color: #d7e2f5;
+  font-size: clamp(15px, 1.05vw, 17px);
+  line-height: 1.6;
+}
+
 .program-overview {
   width: 100%;
   margin: 0;
@@ -216,7 +241,7 @@ h1 {
 }
 
 .program-overview--home {
-  margin-top: clamp(220px, 23vw, 340px);
+  margin-top: clamp(90px, 10vw, 170px);
 }
 
 .section-heading {
