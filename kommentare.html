@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kommentare und Feedback zu den Finnvelo Programmwelten - ohne Anmeldung.">
+  <title>Kommentare · Finnvelo</title>
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Finnvelo Programmwelten Startseite">
+      <img class="brand-logo" src="assets/images/finnvelo-plakette.png" alt="Finnvelo Plakette">
+      <span class="brand-text">
+        <strong>Finnvelo</strong>
+        <small>Programmwelten</small>
+      </span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="index.html">Start</a>
+      <a href="programme.html">Programme</a>
+      <a href="kommentare.html" aria-current="page">Kommentare</a>
+      <a href="kontakt.html">Kontakt</a>
+    </nav>
+  </header>
+
+  <main class="main-canvas comments-page">
+    <section class="comments-layout" aria-labelledby="comments-title">
+      <div class="comments-intro">
+        <p class="section-kicker">Software · Automatisierung · Produktivität</p>
+        <h1 id="comments-title">Kommentare.</h1>
+        <p class="hero-lead">
+          Hier kannst du ganz ohne Anmeldung einen Kommentar hinterlassen &ndash; Feedback, Lob, Wünsche oder Fragen sind willkommen.
+        </p>
+      </div>
+
+      <section class="comment-form-card" aria-labelledby="comment-form-title">
+        <h2 id="comment-form-title">Kommentar schreiben</h2>
+        <form id="comment-form" autocomplete="off">
+          <label class="comment-field">
+            <span>Name (optional)</span>
+            <input type="text" id="comment-name" maxlength="60" placeholder="z. B. dein Name oder leer für Anonym">
+          </label>
+          <label class="comment-field">
+            <span>Dein Kommentar</span>
+            <textarea id="comment-text" maxlength="2000" rows="4" required placeholder="Schreib hier deinen Kommentar …"></textarea>
+          </label>
+          <!-- Honeypot gegen Bots: für Menschen unsichtbar, bitte leer lassen. -->
+          <div class="comment-hp" aria-hidden="true">
+            <label>Bitte freilassen<input type="text" id="comment-hp" tabindex="-1" autocomplete="off"></label>
+          </div>
+          <div class="comment-form__actions">
+            <button type="submit" class="button" id="comment-submit">Absenden</button>
+            <span id="comment-status" class="comment-status" role="status"></span>
+          </div>
+        </form>
+      </section>
+
+      <section class="comment-list-wrap" aria-labelledby="comment-list-title">
+        <div class="comment-list-head">
+          <h2 id="comment-list-title">Bisherige Kommentare</h2>
+          <button type="button" id="mod-toggle" class="comment-mod-toggle">Moderation</button>
+        </div>
+        <div id="mod-box" class="comment-mod-box" hidden>
+          <input type="password" id="mod-password" placeholder="Admin-Passwort" autocomplete="off">
+          <button type="button" class="button button--small" id="mod-login">Anmelden</button>
+          <span id="mod-status" class="comment-status"></span>
+        </div>
+        <ul id="comment-list" class="comment-list">
+          <li class="comment-empty">Kommentare werden geladen …</li>
+        </ul>
+      </section>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Finnvelo Programmwelten</span>
+    <a href="impressum.html">Impressum</a>
+    <a href="datenschutz.html">Datenschutz</a>
+  </footer>
+
+  <script>
+  (function () {
+    var list = document.getElementById('comment-list');
+    var form = document.getElementById('comment-form');
+    var nameEl = document.getElementById('comment-name');
+    var textEl = document.getElementById('comment-text');
+    var hpEl = document.getElementById('comment-hp');
+    var statusEl = document.getElementById('comment-status');
+    var submitBtn = document.getElementById('comment-submit');
+    var modToggle = document.getElementById('mod-toggle');
+    var modBox = document.getElementById('mod-box');
+    var modPw = document.getElementById('mod-password');
+    var modLogin = document.getElementById('mod-login');
+    var modStatus = document.getElementById('mod-status');
+    var adminPw = null;   // nur im Arbeitsspeicher, wird nirgends gespeichert
+
+    function fmtDate(ms) {
+      try { return new Date(ms).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }); }
+      catch (e) { return ''; }
+    }
+
+    function render(comments) {
+      list.innerHTML = '';
+      if (!comments.length) {
+        var empty = document.createElement('li');
+        empty.className = 'comment-empty';
+        empty.textContent = 'Noch keine Kommentare – sei der/die Erste!';
+        list.appendChild(empty);
+        return;
+      }
+      comments.forEach(function (c) {
+        var li = document.createElement('li');
+        li.className = 'comment' + (c.removed ? ' comment--removed' : '');
+
+        var head = document.createElement('div');
+        head.className = 'comment__head';
+        var who = document.createElement('span');
+        who.className = 'comment__name';
+        who.textContent = c.name || 'Anonym';
+        var when = document.createElement('span');
+        when.className = 'comment__date';
+        when.textContent = fmtDate(c.created);
+        head.appendChild(who);
+        head.appendChild(when);
+        li.appendChild(head);
+
+        var body = document.createElement('p');
+        body.className = 'comment__text';
+        if (c.removed) {
+          body.className += ' comment__text--removed';
+          body.textContent = '[Entfernt: ' + (c.removeReason || 'kein Grund angegeben') + ']';
+        } else {
+          body.textContent = c.text;   // textContent -> kein HTML, kein XSS
+        }
+        li.appendChild(body);
+
+        if (adminPw && !c.removed) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'comment__remove';
+          btn.textContent = 'Entfernen';
+          btn.addEventListener('click', function () { removeComment(c.id); });
+          li.appendChild(btn);
+        }
+        list.appendChild(li);
+      });
+    }
+
+    function load() {
+      fetch('/api/comments', { cache: 'no-store' })
+        .then(function (r) { return r.json(); })
+        .then(function (d) { render((d && d.comments) || []); })
+        .catch(function () {
+          list.innerHTML = '<li class="comment-empty">Kommentare konnten nicht geladen werden.</li>';
+        });
+    }
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var text = textEl.value.trim();
+      if (!text) { statusEl.textContent = 'Bitte einen Text eingeben.'; return; }
+      submitBtn.disabled = true;
+      statusEl.textContent = 'Wird gesendet …';
+      fetch('/api/comments', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: nameEl.value.trim(), text: text, hp: hpEl.value })
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; });
+      }).then(function (res) {
+        if (res.r.ok && res.d.ok) {
+          statusEl.textContent = 'Danke! Dein Kommentar ist veröffentlicht.';
+          textEl.value = '';
+          nameEl.value = '';
+          load();
+        } else if (res.r.status === 429) {
+          statusEl.textContent = 'Bitte kurz warten, bevor du erneut postest.';
+        } else {
+          statusEl.textContent = 'Konnte nicht gesendet werden.';
+        }
+      }).catch(function () {
+        statusEl.textContent = 'Netzwerkfehler.';
+      }).then(function () {
+        submitBtn.disabled = false;
+      });
+    });
+
+    modToggle.addEventListener('click', function () { modBox.hidden = !modBox.hidden; });
+
+    modLogin.addEventListener('click', function () {
+      var pw = modPw.value;
+      if (!pw) { modStatus.textContent = 'Passwort eingeben.'; return; }
+      modStatus.textContent = 'Prüfe …';
+      fetch('/api/comments/admin', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; });
+      }).then(function (res) {
+        if (res.d.ok) {
+          adminPw = pw;
+          modStatus.textContent = 'Moderation aktiv – „Entfernen" erscheint an jedem Kommentar.';
+          modPw.value = '';
+          load();
+        } else if (res.r.status === 503) {
+          modStatus.textContent = 'Admin-Passwort ist serverseitig noch nicht eingerichtet.';
+        } else {
+          modStatus.textContent = 'Falsches Passwort.';
+        }
+      }).catch(function () { modStatus.textContent = 'Netzwerkfehler.'; });
+    });
+
+    function removeComment(id) {
+      var reason = window.prompt('Grund für das Entfernen (wird öffentlich angezeigt):', 'Hasskommentar');
+      if (reason === null) return;
+      reason = reason.trim();
+      if (!reason) { window.alert('Bitte einen Grund angeben.'); return; }
+      fetch('/api/comments/remove', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ id: id, reason: reason, password: adminPw })
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; });
+      }).then(function (res) {
+        if (res.r.ok && res.d.ok) {
+          load();
+        } else if (res.r.status === 401) {
+          window.alert('Nicht autorisiert – bitte erneut anmelden.');
+          adminPw = null;
+        } else {
+          window.alert('Konnte nicht entfernt werden.');
+        }
+      }).catch(function () { window.alert('Netzwerkfehler.'); });
+    }
+
+    load();
+  })();
+  </script>
+  <script src="stats.js" defer></script>
+</body>
+</html>
