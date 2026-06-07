@@ -1156,3 +1156,26 @@ footer a {
 .comment__remove:hover {
   background: rgba(230, 120, 120, 0.12);
 }
+
+/* =====================================================================
+   Spenden vorerst KOMPLETT ausgeblendet (Markup bleibt im HTML erhalten).
+   --> Reaktivieren: einfach die folgende eine Regel wieder loeschen.
+   ===================================================================== */
+.support-stage { display: none !important; }
+
+/* =====================================================================
+   Rechtstexte (Impressum / Datenschutz): ruhige, gut lesbare Darstellung.
+   Auf diesen Seiten kein grosses Hintergrund-Logo, deckende Inhaltsbox.
+   Aktiv ueber <body class="legal-body"> auf impressum.html + datenschutz.html.
+   ===================================================================== */
+body.legal-body::before { display: none !important; }       /* Hintergrund-Logo aus */
+
+body.legal-body .page.legal-page {
+  padding-top: clamp(28px, 4vw, 52px);
+}
+
+body.legal-body .content-box.legal {
+  background: var(--bg-soft);                                /* deckend -> klar lesbar */
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
+}
