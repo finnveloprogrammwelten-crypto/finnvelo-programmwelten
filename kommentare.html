@@ -37,42 +37,25 @@
         </p>
       </div>
 
-      <section class="comment-form-card" aria-labelledby="comment-form-title">
-        <h2 id="comment-form-title">Kommentar schreiben</h2>
-        <form id="comment-form" autocomplete="off">
-          <label class="comment-field">
-            <span>Name (optional)</span>
-            <input type="text" id="comment-name" maxlength="60" placeholder="z. B. dein Name oder leer für Anonym">
-          </label>
-          <label class="comment-field">
-            <span>Dein Kommentar</span>
-            <textarea id="comment-text" maxlength="2000" rows="4" required placeholder="Schreib hier deinen Kommentar …"></textarea>
-          </label>
-          <!-- Honeypot gegen Bots: für Menschen unsichtbar, bitte leer lassen. -->
-          <div class="comment-hp" aria-hidden="true">
-            <label>Bitte freilassen<input type="text" id="comment-hp" tabindex="-1" autocomplete="off"></label>
-          </div>
-          <div class="comment-form__actions">
-            <button type="submit" class="button" id="comment-submit">Absenden</button>
-            <span id="comment-status" class="comment-status" role="status"></span>
-          </div>
-        </form>
-      </section>
-
       <section class="comment-list-wrap" aria-labelledby="comment-list-title">
-        <div class="comment-list-head">
-          <h2 id="comment-list-title">Bisherige Kommentare</h2>
-          <button type="button" id="mod-toggle" class="comment-mod-toggle">Moderation</button>
-        </div>
-        <div id="mod-box" class="comment-mod-box" hidden>
-          <input type="password" id="mod-password" placeholder="Admin-Passwort" autocomplete="off">
-          <button type="button" class="button button--small" id="mod-login">Anmelden</button>
-          <span id="mod-status" class="comment-status"></span>
-        </div>
+        <h2 id="comment-list-title">Bisherige Kommentare</h2>
         <ul id="comment-list" class="comment-list">
           <li class="comment-empty">Kommentare werden geladen …</li>
         </ul>
       </section>
+
+      <form id="comment-form" class="comment-composer" autocomplete="off" aria-label="Kommentar schreiben">
+        <input type="text" id="comment-name" class="comment-composer__name" maxlength="60" placeholder="Name (optional)">
+        <div class="comment-composer__row">
+          <textarea id="comment-text" class="comment-composer__text" maxlength="2000" rows="1" required placeholder="Dein Kommentar …"></textarea>
+          <button type="submit" class="button comment-composer__send" id="comment-submit">Senden</button>
+        </div>
+        <!-- Honeypot gegen Bots: für Menschen unsichtbar, bitte leer lassen. -->
+        <div class="comment-hp" aria-hidden="true">
+          <label>Bitte freilassen<input type="text" id="comment-hp" tabindex="-1" autocomplete="off"></label>
+        </div>
+        <span id="comment-status" class="comment-status" role="status"></span>
+      </form>
     </section>
   </main>
 
@@ -91,12 +74,9 @@
     var hpEl = document.getElementById('comment-hp');
     var statusEl = document.getElementById('comment-status');
     var submitBtn = document.getElementById('comment-submit');
-    var modToggle = document.getElementById('mod-toggle');
-    var modBox = document.getElementById('mod-box');
-    var modPw = document.getElementById('mod-password');
-    var modLogin = document.getElementById('mod-login');
-    var modStatus = document.getElementById('mod-status');
-    var adminPw = null;   // nur im Arbeitsspeicher, wird nirgends gespeichert
+    // Moderation ist an die Edit-Sitzung gekoppelt: wer ueber /admin eingeloggt ist,
+    // sieht hier automatisch die "Entfernen"-Schaltflaechen. Sonst nichts davon.
+    var adminPw = (function () { try { return sessionStorage.getItem('fv_admin_pw') || null; } catch (e) { return null; } })();
 
     function fmtDate(ms) {
       try { return new Date(ms).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }); }
@@ -189,34 +169,8 @@
       });
     });
 
-    modToggle.addEventListener('click', function () { modBox.hidden = !modBox.hidden; });
-
-    modLogin.addEventListener('click', function () {
-      var pw = modPw.value;
-      if (!pw) { modStatus.textContent = 'Passwort eingeben.'; return; }
-      modStatus.textContent = 'Prüfe …';
-      fetch('/api/comments/admin', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: pw })
-      }).then(function (r) {
-        return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; });
-      }).then(function (res) {
-        if (res.d.ok) {
-          adminPw = pw;
-          modStatus.textContent = 'Moderation aktiv – „Entfernen" erscheint an jedem Kommentar.';
-          modPw.value = '';
-          load();
-        } else if (res.r.status === 503) {
-          modStatus.textContent = 'Admin-Passwort ist serverseitig noch nicht eingerichtet.';
-        } else {
-          modStatus.textContent = 'Falsches Passwort.';
-        }
-      }).catch(function () { modStatus.textContent = 'Netzwerkfehler.'; });
-    });
-
     function removeComment(id) {
-      var reason = window.prompt('Grund für das Entfernen (wird öffentlich angezeigt):', 'Hasskommentar');
+      var reason = window.prompt('Grund für das Entfernen (wird öffentlich angezeigt):', 'Verstoß gegen die Regeln');
       if (reason === null) return;
       reason = reason.trim();
       if (!reason) { window.alert('Bitte einen Grund angeben.'); return; }
@@ -230,8 +184,7 @@
         if (res.r.ok && res.d.ok) {
           load();
         } else if (res.r.status === 401) {
-          window.alert('Nicht autorisiert – bitte erneut anmelden.');
-          adminPw = null;
+          window.alert('Nicht autorisiert – bitte über /admin neu anmelden.');
         } else {
           window.alert('Konnte nicht entfernt werden.');
         }

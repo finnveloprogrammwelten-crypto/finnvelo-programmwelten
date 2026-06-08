@@ -1179,3 +1179,48 @@ body.legal-body .content-box.legal {
   border-color: rgba(255, 255, 255, 0.12);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
 }
+
+/* =====================================================================
+   Inline-Editor – nur im Admin-Modus sichtbar (Klassen per JS gesetzt).
+   Fuer normale Besucher hat nichts davon eine Wirkung.
+   ===================================================================== */
+.fv-admin-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+  display: flex; gap: 12px; align-items: center; justify-content: space-between;
+  background: #10233f; color: #dce8fb; border-bottom: 1px solid rgba(255,255,255,.18);
+  padding: 8px 14px; font: 13px/1.3 system-ui, "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 4px 18px rgba(0,0,0,.35);
+}
+.fv-admin-bar .fv-admin-exit {
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  border-radius: 8px; padding: 5px 12px; font: inherit; cursor: pointer; white-space: nowrap;
+}
+.fv-admin-bar .fv-admin-exit:hover { background: rgba(255,255,255,.22); }
+body.fv-admin-on { padding-top: 40px; }
+body.fv-admin-on .site-header { top: 40px; }
+
+.fv-editable { outline: 1px dashed rgba(120,170,255,.55); outline-offset: 3px; border-radius: 3px; cursor: text; transition: background .15s; }
+.fv-editable:hover { background: rgba(120,170,255,.08); }
+.fv-editable:focus { outline: 2px solid var(--blue); background: rgba(120,170,255,.10); }
+.fv-editable-img { outline: 2px dashed rgba(120,170,255,.6); outline-offset: 3px; cursor: pointer; }
+.fv-editable-img:hover { outline-color: var(--blue); }
+.fv-drop { outline: 3px solid #4ade80 !important; }
+.fv-saving { opacity: .55; }
+.fv-saved { outline: 2px solid #4ade80 !important; }
+.fv-error { outline: 2px solid #ff6b6b !important; }
+
+/* Video setzen im Edit-Modus */
+.fv-vid-edit { margin: 10px 0; }
+.fv-vid-btn { background: rgba(120,170,255,.12); color: #dce8fb; border: 1px dashed rgba(120,170,255,.6);
+  border-radius: 9px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+.fv-vid-btn:hover { background: rgba(120,170,255,.2); }
+
+/* Kommentar-Schreibzeile (unten auf der Kommentarseite) */
+.comment-composer { margin-top: 26px; display: grid; gap: 10px; }
+.comment-composer__name { width: 100%; max-width: 320px; padding: 9px 12px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); color: var(--text); font: inherit; }
+.comment-composer__row { display: flex; gap: 10px; align-items: stretch; }
+.comment-composer__text { flex: 1; min-height: 46px; resize: vertical; padding: 11px 13px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); color: var(--text); font: inherit; line-height: 1.4; }
+.comment-composer__send { white-space: nowrap; align-self: flex-end; }
+@media (max-width: 560px) { .comment-composer__row { flex-direction: column; } .comment-composer__send { align-self: stretch; } }

@@ -25,6 +25,11 @@ const MAX_REASON = 200;
 const MAX_KEEP = 500;       // hoechstens so viele Kommentare aufbewahren
 const RL_MS = 20000;        // 20s Sperre zwischen Posts pro IP
 
+const MAX_CONTENT = 30000;             // max Laenge eines bearbeiteten Textblocks
+const MAX_IMG_BYTES = 2 * 1024 * 1024; // max 2 MB pro hochgeladenem Bild
+const PAGE_RE = /^[a-z0-9-]{1,40}$/;
+const BLOCK_RE = /^[tiv][0-9]{1,4}$/;
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -54,6 +59,17 @@ async function sha256hex(str) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+function checkAdmin(body, env) {
+  return !!env.ADMIN_PASSWORD && typeof body.password === "string" && body.password === env.ADMIN_PASSWORD;
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
 export class Counter extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -64,6 +80,13 @@ export class Counter extends DurableObject {
     );
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS comments (id TEXT PRIMARY KEY, name TEXT, body TEXT NOT NULL, created INTEGER NOT NULL, removed INTEGER NOT NULL DEFAULT 0, reason TEXT)"
+    );
+    // Inline-Editor: bearbeitete Texte/Bild-Verweise je Seite + hochgeladene Bilder.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS content (page TEXT NOT NULL, block TEXT NOT NULL, type TEXT NOT NULL, value TEXT NOT NULL, updated INTEGER NOT NULL, PRIMARY KEY (page, block))"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS images (id TEXT PRIMARY KEY, mime TEXT NOT NULL, data TEXT NOT NULL, created INTEGER NOT NULL)"
     );
     this.recentPosts = new Map();   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
   }
@@ -163,6 +186,68 @@ export class Counter extends DurableObject {
       if (!exists.length) return json({ error: "not_found" }, 404);
       this.sql.exec("UPDATE comments SET removed = 1, reason = ? WHERE id = ?", reason, id);
       return json({ ok: true });
+    }
+
+    // --- Inline-Editor: Inhalte ---
+    if (url.pathname === "/api/content" && method === "GET") {
+      const page = url.searchParams.get("page") || "";
+      if (!PAGE_RE.test(page)) return json({ items: [] });
+      const rows = this.sql.exec("SELECT block, type, value FROM content WHERE page = ?", page).toArray();
+      return json({ items: rows.map((r) => ({ block: r.block, type: r.type, value: r.value })) });
+    }
+
+    if (url.pathname === "/api/content" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      const page = String(body.page || "");
+      const block = String(body.block || "");
+      const type = String(body.type || "");
+      if (!PAGE_RE.test(page) || !BLOCK_RE.test(block) || (type !== "text" && type !== "image")) {
+        return json({ error: "bad_request" }, 400);
+      }
+      const value = String(body.value == null ? "" : body.value).slice(0, MAX_CONTENT);
+      this.sql.exec(
+        "INSERT INTO content (page, block, type, value, updated) VALUES (?, ?, ?, ?, ?) " +
+        "ON CONFLICT(page, block) DO UPDATE SET type = excluded.type, value = excluded.value, updated = excluded.updated",
+        page, block, type, value, Date.now()
+      );
+      return json({ ok: true });
+    }
+
+    // --- Inline-Editor: Bild hochladen + ausliefern ---
+    if (url.pathname === "/api/image" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      const dataUrl = String(body.dataUrl || "");
+      const comma = dataUrl.indexOf(",");
+      const b64 = (comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl).replace(/\s+/g, "");
+      if (!b64 || !/^[A-Za-z0-9+/=]+$/.test(b64)) return json({ error: "bad_image" }, 400);
+      if (b64.length * 0.75 > MAX_IMG_BYTES) return json({ error: "too_large" }, 413);
+      let mime = String(body.mime || "image/jpeg");
+      if (!/^image\/(png|jpeg|webp|gif)$/.test(mime)) mime = "image/jpeg";
+      const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+      this.sql.exec("INSERT INTO images (id, mime, data, created) VALUES (?, ?, ?, ?)", id, mime, b64, Date.now());
+      return json({ id, url: "/api/image/" + id });
+    }
+
+    if (url.pathname.startsWith("/api/image/") && method === "GET") {
+      const id = url.pathname.slice("/api/image/".length);
+      const rows = this.sql.exec("SELECT mime, data FROM images WHERE id = ?", id).toArray();
+      if (!rows.length) return new Response("Not found", { status: 404 });
+      return new Response(b64ToBytes(rows[0].data), {
+        status: 200,
+        headers: { "content-type": rows[0].mime, "cache-control": "public, max-age=31536000, immutable" }
+      });
+    }
+
+    // --- Inline-Editor: Login-Pruefung (nur Ja/Nein) ---
+    if (url.pathname === "/api/admin/login" && method === "POST") {
+      if (!env.ADMIN_PASSWORD) return json({ error: "admin_not_configured" }, 503);
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      return json({ ok: checkAdmin(body, env) });
     }
 
     return json({ error: "not_found" }, 404);

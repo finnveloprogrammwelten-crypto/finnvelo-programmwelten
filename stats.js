@@ -194,3 +194,244 @@
     start();
   }
 })();
+
+/* =====================================================================
+ * Finnvelo Inline-Editor  (versteckter Admin-Modus)
+ * - Fuer ALLE Besucher: bearbeitete Texte/Bilder werden angewendet.
+ * - Nur mit Passwort (ueber /admin freigeschaltet, in sessionStorage):
+ *   Texte direkt anklickbar/aenderbar, Bilder per Drag&Drop/Klick tauschbar.
+ * Komplett fail-safe gekapselt: bei Fehlern bleibt die Seite normal.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var API = '/api';
+    var PW_KEY = 'fv_admin_pw';
+
+    function adminPw() { try { return sessionStorage.getItem(PW_KEY) || ''; } catch (e) { return ''; } }
+    var ADMIN = !!adminPw();
+
+    function slug() {
+      var path = (location.pathname || '').toLowerCase();
+      var file = path.substring(path.lastIndexOf('/') + 1) || 'index.html';
+      var name = file.replace(/\.html?$/, '').replace(/[^a-z0-9-]/g, '');
+      return (!name || name === 'index') ? 'start' : name;
+    }
+    var SLUG = slug();
+    var TEXT_SEL = 'h1,h2,h3,h4,p,li,blockquote,figcaption';
+
+    function editRoot() { return document.querySelector('main'); }
+
+    function textEls() {
+      var root = editRoot(); if (!root) return [];
+      var out = [];
+      Array.prototype.forEach.call(root.querySelectorAll(TEXT_SEL), function (el) {
+        if (el.querySelector(TEXT_SEL)) return;                 // Container -> ueberspringen
+        if (el.querySelector('img')) return;                    // enthaelt Bild -> separat
+        if (!el.textContent || !el.textContent.trim()) return;  // leer
+        out.push(el);
+      });
+      return out;
+    }
+    function imgEls() {
+      var root = editRoot(); if (!root) return [];
+      return Array.prototype.slice.call(root.querySelectorAll('img'));
+    }
+
+    function keyed() {
+      var t = textEls(), i = imgEls();
+      t.forEach(function (el, idx) { el.setAttribute('data-fvk', 't' + idx); });
+      i.forEach(function (el, idx) { el.setAttribute('data-fvk', 'i' + idx); });
+      return { t: t, i: i };
+    }
+
+    function applyOverrides(k) {
+      return fetch(API + '/content?page=' + encodeURIComponent(SLUG), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          if (!res || !res.items) return;
+          var map = {}; res.items.forEach(function (it) { map[it.block] = it; });
+          k.t.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
+          k.i.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'image' && o.value) el.src = o.value; });
+          var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
+        })
+        .catch(function () {});
+    }
+
+    function save(block, type, value) {
+      return fetch(API + '/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: SLUG, block: block, type: type, value: value, password: adminPw() })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    function flash(el, ok) {
+      el.classList.remove('fv-saving');
+      el.classList.add(ok ? 'fv-saved' : 'fv-error');
+      setTimeout(function () { el.classList.remove('fv-saved', 'fv-error'); }, 1200);
+    }
+
+    function enableText(els) {
+      els.forEach(function (el) {
+        el.setAttribute('contenteditable', 'true');
+        el.classList.add('fv-editable');
+        el.setAttribute('spellcheck', 'false');
+        var orig = el.innerHTML;
+        el.addEventListener('blur', function () {
+          var v = el.innerHTML;
+          if (v === orig) return;
+          orig = v; el.classList.add('fv-saving');
+          save(el.getAttribute('data-fvk'), 'text', v).then(function (ok) { flash(el, ok); });
+        });
+      });
+    }
+
+    function downscale(file, cb) {
+      var img = new Image(), url = URL.createObjectURL(file);
+      img.onload = function () {
+        var max = 1600, w = img.width, h = img.height;
+        if (w > max || h > max) { if (w > h) { h = Math.round(h * max / w); w = max; } else { w = Math.round(w * max / h); h = max; } }
+        var c = document.createElement('canvas'); c.width = w; c.height = h;
+        c.getContext('2d').drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        var mime = (file.type === 'image/png' && w * h < 360000) ? 'image/png' : 'image/jpeg';
+        try { cb(c.toDataURL(mime, 0.85), mime); } catch (e) { cb(null); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
+      img.src = url;
+    }
+
+    function uploadImage(dataUrl, mime) {
+      return fetch(API + '/image', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw(), mime: mime, dataUrl: dataUrl })
+      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+
+    function enableImages(els) {
+      els.forEach(function (el) {
+        el.classList.add('fv-editable-img');
+        function handle(file) {
+          if (!file || !/^image\//.test(file.type)) return;
+          el.classList.add('fv-saving');
+          downscale(file, function (dataUrl, mime) {
+            if (!dataUrl) { flash(el, false); return; }
+            uploadImage(dataUrl, mime).then(function (res) {
+              if (res && res.url) {
+                el.src = res.url;
+                save(el.getAttribute('data-fvk'), 'image', res.url).then(function (ok) { flash(el, ok); });
+              } else { flash(el, false); }
+            });
+          });
+        }
+        el.addEventListener('dragover', function (e) { e.preventDefault(); el.classList.add('fv-drop'); });
+        el.addEventListener('dragleave', function () { el.classList.remove('fv-drop'); });
+        el.addEventListener('drop', function (e) {
+          e.preventDefault(); el.classList.remove('fv-drop');
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]);
+        });
+        el.addEventListener('click', function (e) {
+          e.preventDefault();
+          var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+          inp.onchange = function () { if (inp.files && inp.files[0]) handle(inp.files[0]); };
+          inp.click();
+        });
+      });
+    }
+
+    function ytId(u) {
+      u = String(u || '').trim();
+      var m = u.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{6,})/);
+      if (m) return m[1];
+      if (/^[A-Za-z0-9_-]{6,}$/.test(u)) return u;
+      return '';
+    }
+
+    function videoSection() {
+      var h = document.getElementById('tutorial-title');
+      return h ? (h.closest('section') || h.parentNode) : null;
+    }
+
+    function renderVideo(id) {
+      var h = document.getElementById('tutorial-title');
+      if (!h || !id) return;
+      var sec = videoSection();
+      var box = sec ? sec.querySelector('.video-embed.fv-video-box') : null;
+      if (!box) {
+        box = document.createElement('div');
+        box.className = 'video-embed fv-video-box';
+        var p = h.nextElementSibling;
+        while (p && p.tagName !== 'P') p = p.nextElementSibling;
+        if (p) p.style.display = 'none';
+        h.parentNode.insertBefore(box, h.nextSibling);
+      }
+      var host = 'https://www.youtube-nocookie.com';
+      box.innerHTML = '';
+      var facade = document.createElement('button');
+      facade.type = 'button';
+      facade.className = 'fv-video-facade';
+      facade.setAttribute('aria-label', 'Video abspielen');
+      facade.style.backgroundImage = "url('https://i.ytimg.com/vi/" + id + "/hqdefault.jpg')";
+      facade.innerHTML = '<span class="fv-video-play" aria-hidden="true"></span>';
+      facade.addEventListener('click', function () {
+        try {
+          fetch(API + '/hit', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: 'video:' + SLUG }), keepalive: true });
+        } catch (e) {}
+        var fr = document.createElement('iframe');
+        fr.setAttribute('src', host + '/embed/' + id + '?rel=0&autoplay=1');
+        fr.setAttribute('title', 'Video');
+        fr.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+        fr.setAttribute('allowfullscreen', '');
+        box.innerHTML = '';
+        box.appendChild(fr);
+      });
+      box.appendChild(facade);
+    }
+
+    function enableVideo() {
+      var h = document.getElementById('tutorial-title');
+      if (!h || document.querySelector('.fv-vid-edit')) return;
+      var bar = document.createElement('div');
+      bar.className = 'fv-vid-edit';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fv-vid-btn';
+      btn.textContent = '\u25B6 Video (YouTube-Link) setzen / \u00e4ndern';
+      btn.addEventListener('click', function () {
+        var u = window.prompt('YouTube-Link oder Video-ID einf\u00fcgen:');
+        if (u === null) return;
+        var id = ytId(u);
+        if (!id) { window.alert('Konnte keine YouTube-Video-ID erkennen.'); return; }
+        save('v0', 'video', id).then(function (ok) {
+          if (ok) renderVideo(id); else window.alert('Speichern fehlgeschlagen.');
+        });
+      });
+      bar.appendChild(btn);
+      h.parentNode.insertBefore(bar, h.nextSibling);
+    }
+
+    function banner() {
+      if (document.querySelector('.fv-admin-bar')) return;
+      var b = document.createElement('div');
+      b.className = 'fv-admin-bar';
+      b.innerHTML = '<span>\u270E Bearbeiten-Modus aktiv \u2013 Texte anklicken, Bilder per Drag&amp;Drop tauschen</span>'
+        + '<button type="button" class="fv-admin-exit">Verlassen</button>';
+      document.body.appendChild(b);
+      document.body.classList.add('fv-admin-on');
+      b.querySelector('.fv-admin-exit').addEventListener('click', function () {
+        try { sessionStorage.removeItem(PW_KEY); } catch (e) {}
+        location.reload();
+      });
+    }
+
+    function run() {
+      var k = keyed();
+      applyOverrides(k).then(function () {
+        if (ADMIN) { banner(); enableText(k.t); enableImages(k.i); enableVideo(); }
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
+    else run();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();

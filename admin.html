@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Anmeldung</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .fv-login-wrap { min-height: 72vh; display: flex; align-items: center; justify-content: center; padding: 40px 16px; }
+    .fv-login { width: 100%; max-width: 360px; background: var(--bg-soft); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 14px; padding: 26px; box-shadow: 0 24px 60px rgba(0,0,0,.3); }
+    .fv-login h1 { font-size: 20px; margin: 0 0 16px; }
+    .fv-login input { width: 100%; padding: 11px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18);
+      background: rgba(255,255,255,.05); color: var(--text); font: inherit; }
+    .fv-login button { width: 100%; margin-top: 12px; padding: 11px; border: 0; border-radius: 9px;
+      background: var(--blue); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+    .fv-login button:disabled { opacity: .6; cursor: default; }
+    .fv-login .msg { margin-top: 12px; font-size: 14px; min-height: 18px; }
+  </style>
+</head>
+<body class="legal-body">
+  <main class="page">
+    <div class="fv-login-wrap">
+      <div class="fv-login">
+        <h1>Anmeldung</h1>
+        <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password" autofocus>
+        <button type="button" id="go">Freischalten</button>
+        <p class="msg" id="msg"></p>
+      </div>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var pw = document.getElementById('pw'), msg = document.getElementById('msg'), go = document.getElementById('go');
+      function submit() {
+        var p = pw.value || ''; if (!p) return;
+        go.disabled = true; msg.style.color = '#95a6bf'; msg.textContent = 'Prüfe…';
+        fetch('/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: p }) })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (res) {
+            if (res && res.ok) { try { sessionStorage.setItem('fv_admin_pw', p); } catch (e) {} location.href = 'index.html'; }
+            else { go.disabled = false; msg.style.color = '#e6a4a4'; msg.textContent = 'Falsches Passwort.'; }
+          })
+          .catch(function () { go.disabled = false; msg.style.color = '#e6a4a4'; msg.textContent = 'Verbindungsfehler.'; });
+      }
+      go.addEventListener('click', submit);
+      pw.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+    })();
+  </script>
+</body>
+</html>
