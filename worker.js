@@ -28,7 +28,7 @@ const RL_MS = 20000;        // 20s Sperre zwischen Posts pro IP
 const MAX_CONTENT = 30000;             // max Laenge eines bearbeiteten Textblocks
 const MAX_IMG_BYTES = 2 * 1024 * 1024; // max 2 MB pro hochgeladenem Bild
 const PAGE_RE = /^[a-z0-9-]{1,40}$/;
-const BLOCK_RE = /^[tiv][0-9]{1,4}$/;
+const BLOCK_RE = /^[tivsd][0-9]{1,4}$/;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -203,7 +203,8 @@ export class Counter extends DurableObject {
       const page = String(body.page || "");
       const block = String(body.block || "");
       const type = String(body.type || "");
-      if (!PAGE_RE.test(page) || !BLOCK_RE.test(block) || (type !== "text" && type !== "image")) {
+      const ALLOWED_TYPES = ["text", "image", "video", "link"];
+      if (!PAGE_RE.test(page) || !BLOCK_RE.test(block) || ALLOWED_TYPES.indexOf(type) === -1) {
         return json({ error: "bad_request" }, 400);
       }
       const value = String(body.value == null ? "" : body.value).slice(0, MAX_CONTENT);

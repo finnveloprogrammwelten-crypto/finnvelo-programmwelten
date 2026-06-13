@@ -1204,6 +1204,8 @@ body.fv-admin-on .site-header { top: 40px; }
 .fv-editable:focus { outline: 2px solid var(--blue); background: rgba(120,170,255,.10); }
 .fv-editable-img { outline: 2px dashed rgba(120,170,255,.6); outline-offset: 3px; cursor: pointer; }
 .fv-editable-img:hover { outline-color: var(--blue); }
+.fv-editable-link { outline: 2px dashed rgba(120,170,255,.6); outline-offset: 3px; cursor: pointer; position: relative; }
+.fv-editable-link:hover { outline-color: var(--blue); }
 .fv-drop { outline: 3px solid #4ade80 !important; }
 .fv-saving { opacity: .55; }
 .fv-saved { outline: 2px solid #4ade80 !important; }

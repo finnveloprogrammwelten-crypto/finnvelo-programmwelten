@@ -237,12 +237,26 @@
       var root = editRoot(); if (!root) return [];
       return Array.prototype.slice.call(root.querySelectorAll('img'));
     }
+    // Status-Labels ("In Entwicklung" usw.) - eigene Kategorie, damit die t-Indizes
+    // der normalen Texte NICHT verschoben werden (sonst landen alte Speicherstaende
+    // auf falschen Elementen).
+    function statusEls() {
+      var root = editRoot(); if (!root) return [];
+      return Array.prototype.slice.call(root.querySelectorAll('.program-button__status, .status'));
+    }
+    // Download-/Aktions-Links, deren Ziel (href) bearbeitbar sein soll.
+    function linkEls() {
+      var root = editRoot(); if (!root) return [];
+      return Array.prototype.slice.call(root.querySelectorAll('.program-download-block a.button[href], .download-slot a.button[href]'));
+    }
 
     function keyed() {
-      var t = textEls(), i = imgEls();
+      var t = textEls(), i = imgEls(), s = statusEls(), d = linkEls();
       t.forEach(function (el, idx) { el.setAttribute('data-fvk', 't' + idx); });
       i.forEach(function (el, idx) { el.setAttribute('data-fvk', 'i' + idx); });
-      return { t: t, i: i };
+      s.forEach(function (el, idx) { el.setAttribute('data-fvk', 's' + idx); });
+      d.forEach(function (el, idx) { el.setAttribute('data-fvk', 'd' + idx); });
+      return { t: t, i: i, s: s, d: d };
     }
 
     function applyOverrides(k) {
@@ -253,6 +267,8 @@
           var map = {}; res.items.forEach(function (it) { map[it.block] = it; });
           k.t.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
           k.i.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'image' && o.value) el.src = o.value; });
+          k.s.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
+          k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^https?:\/\//i.test(o.value)) el.setAttribute('href', o.value); });
           var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
         })
         .catch(function () {});
@@ -276,6 +292,11 @@
         el.setAttribute('contenteditable', 'true');
         el.classList.add('fv-editable');
         el.setAttribute('spellcheck', 'false');
+        // Sitzt das Label in einem Link (z.B. Status in einer Programmkachel),
+        // darf der Klick zum Bearbeiten NICHT die Seite oeffnen.
+        if (el.closest('a')) {
+          el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
+        }
         var orig = el.innerHTML;
         el.addEventListener('blur', function () {
           var v = el.innerHTML;
@@ -341,9 +362,15 @@
 
     function ytId(u) {
       u = String(u || '').trim();
-      var m = u.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([A-Za-z0-9_-]{6,})/);
-      if (m) return m[1];
+      if (!u) return '';
+      // 1) Reine Video-ID (YouTube nutzt 11 Zeichen; wir erlauben 6+) ohne URL-Zeichen.
       if (/^[A-Za-z0-9_-]{6,}$/.test(u)) return u;
+      // 2) v=-Parameter an BELIEBIGER Stelle (watch?v=, ...&list=...&v=, m.youtube.com, ...).
+      var q = u.match(/[?&]v=([A-Za-z0-9_-]{6,})/);
+      if (q) return q[1];
+      // 3) Pfadformen: youtu.be/ID, /embed/ID, /shorts/ID, /v/ID, /live/ID (Gross/Klein egal).
+      var p = u.match(/(?:youtu\.be\/|\/(?:embed|shorts|v|live)\/)([A-Za-z0-9_-]{6,})/i);
+      if (p) return p[1];
       return '';
     }
 
@@ -388,6 +415,28 @@
       box.appendChild(facade);
     }
 
+    function enableLinks(els) {
+      els.forEach(function (el) {
+        el.classList.add('fv-editable-link');
+        el.setAttribute('title', 'Admin: Klicken, um das Download-Ziel (Link) zu \u00e4ndern');
+        el.addEventListener('click', function (e) {
+          // Im Admin-Modus NICHT herunterladen, sondern Ziel-URL bearbeiten.
+          e.preventDefault();
+          e.stopPropagation();
+          var cur = el.getAttribute('href') || '';
+          var u = window.prompt('Download-Link (vollst\u00e4ndige URL, z.B. GitHub-Release) einf\u00fcgen:', cur);
+          if (u === null) return;
+          u = String(u).trim();
+          if (u && !/^https?:\/\//i.test(u)) { window.alert('Bitte eine vollst\u00e4ndige URL mit https:// eingeben.'); return; }
+          el.classList.add('fv-saving');
+          save(el.getAttribute('data-fvk'), 'link', u).then(function (ok) {
+            if (ok && u) el.setAttribute('href', u);
+            flash(el, ok);
+          });
+        });
+      });
+    }
+
     function enableVideo() {
       var h = document.getElementById('tutorial-title');
       if (!h || document.querySelector('.fv-vid-edit')) return;
@@ -427,7 +476,7 @@
     function run() {
       var k = keyed();
       applyOverrides(k).then(function () {
-        if (ADMIN) { banner(); enableText(k.t); enableImages(k.i); enableVideo(); }
+        if (ADMIN) { banner(); enableText(k.t); enableImages(k.i); enableText(k.s); enableLinks(k.d); enableVideo(); }
       });
     }
 
