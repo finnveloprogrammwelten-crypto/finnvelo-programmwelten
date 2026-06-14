@@ -1226,3 +1226,43 @@ body.fv-admin-on .site-header { top: 40px; }
   border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); color: var(--text); font: inherit; line-height: 1.4; }
 .comment-composer__send { white-space: nowrap; align-self: flex-end; }
 @media (max-width: 560px) { .comment-composer__row { flex-direction: column; } .comment-composer__send { align-self: stretch; } }
+
+/* =====================================================================
+   Oberflaechen-Galerie (admin-gepflegt, ueber stats.js befuellt)
+   ===================================================================== */
+.fv-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 34px);
+  margin-top: clamp(20px, 2.4vw, 32px);
+}
+@media (max-width: 900px) {
+  .fv-gallery { grid-template-columns: 1fr; }
+}
+.fv-gallery__item { position: relative; margin: 0; padding: 0; }
+.fv-gallery__ctrls {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; gap: 6px;
+}
+.fv-gallery__btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(10,18,32,.82); color: #e8eef5;
+  font: 15px/1 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  transition: background .15s, border-color .15s;
+}
+.fv-gallery__btn:hover { background: rgba(20,40,70,.95); border-color: var(--blue); }
+.fv-gallery__btn--del:hover { background: rgba(120,20,30,.95); border-color: var(--red); }
+.fv-gallery__add {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  min-height: 170px; border-radius: 18px;
+  border: 2px dashed rgba(120,170,255,.55);
+  background: rgba(120,170,255,.06); color: var(--blue-light);
+  font: 600 15px/1.2 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.fv-gallery__add:hover { background: rgba(120,170,255,.12); border-color: var(--blue); }
+.fv-gallery__plus { font-size: 34px; line-height: 1; font-weight: 400; }
+.fv-gallery--drop { outline: 3px solid #4ade80; outline-offset: 6px; border-radius: 18px; }

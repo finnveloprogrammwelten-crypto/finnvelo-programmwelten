@@ -1,0 +1,47 @@
+FINNVELO PROGRAMMWELTEN – Update-Paket
+=======================================
+Zwei Themen in diesem Paket:
+
+A) SEO-Fix: "Seite mit Weiterleitung" in der Google Search Console
+B) Neue Funktion: admin-pflegbare Bildergalerie ("Oberfläche") auf den Programmseiten
+
+Alle Dateien liegen mit ihren Original-Pfaden (Projekt-Wurzel) im ZIP.
+Einfach über die gleichnamigen Dateien im Repo kopieren und deployen.
+
+
+A) SEO-FIX
+----------
+- sitemap.xml: listet jetzt die sauberen Ziel-URLs (ohne .html), z. B.
+  https://finnveloprogramme.com/programme statt /programme.html
+- Alle internen Links in den HTML-Seiten zeigen auf die sauberen URLs
+  (/programme, /kontakt, / ...). Die .html-Weiterleitung von Cloudflare
+  BLEIBT bestehen – alte Links/Lesezeichen funktionieren weiter.
+- <link rel="canonical"> in jeder öffentlichen Seite ergänzt.
+Ergebnis: Google crawlt direkt die Endadresse (200) statt der Weiterleitung.
+
+Nach dem Deploy in der Search Console:
+  Sitemaps -> sitemap.xml neu einreichen
+  Indexierungsbericht -> "Seite mit Weiterleitung" -> Behebung prüfen
+
+
+B) BILDERGALERIE ("Oberfläche")
+-------------------------------
+Auf Command Control, Archivar, Finanzmanager, Aufgabenplaner und Medienstudio.
+- Für normale Besucher: zeigt die hinterlegten Bilder als Karten-Raster.
+  Bei den "in Entwicklung"-Seiten bleibt die Sektion ausgeblendet, solange
+  noch kein Bild eingepflegt ist.
+- Als Admin (über /admin angemeldet): Kachel "+ Bild hinzufügen" – Datei
+  wählen ODER per Drag & Drop ablegen. Mehrere Bilder auf einmal möglich,
+  und jederzeit weitere ergänzen. Pro Bild: Reihenfolge (←/→) und Entfernen (✕).
+- Speicherung wie beim restlichen Inline-Editor: Bilder über /api/image,
+  die Bildliste im Inhaltsblock "g0" über /api/content (passwortgeschützt).
+
+WICHTIG: worker.js MUSS mitdeployt werden (eine Zeile geändert: der
+Galerie-Block "g0" wird sonst vom Server abgelehnt). Bei "wrangler deploy"
+werden Worker + statische Dateien ohnehin zusammen veröffentlicht.
+
+Geänderte Dateien gegenüber Worker/Editor-System:
+- worker.js : Block-Namen dürfen jetzt mit "g" beginnen (g0 = Galerie).
+- stats.js  : Galerie-Modul + Editor-Selektoren ignorieren Galerie-Bilder.
+- styles.css: Galerie-Styles (.fv-gallery ...).
+- 5 Programmseiten: Galerie-Container eingefügt.

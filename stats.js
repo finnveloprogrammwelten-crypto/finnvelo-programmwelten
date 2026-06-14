@@ -219,6 +219,7 @@
     }
     var SLUG = slug();
     var TEXT_SEL = 'h1,h2,h3,h4,p,li,blockquote,figcaption';
+    var galleryUrls = [];   // Bild-URLs der Oberflaechen-Galerie (Block g0)
 
     function editRoot() { return document.querySelector('main'); }
 
@@ -226,6 +227,7 @@
       var root = editRoot(); if (!root) return [];
       var out = [];
       Array.prototype.forEach.call(root.querySelectorAll(TEXT_SEL), function (el) {
+        if (el.closest('.fv-gallery')) return;                  // Galerie -> eigene Logik
         if (el.querySelector(TEXT_SEL)) return;                 // Container -> ueberspringen
         if (el.querySelector('img')) return;                    // enthaelt Bild -> separat
         if (!el.textContent || !el.textContent.trim()) return;  // leer
@@ -235,7 +237,9 @@
     }
     function imgEls() {
       var root = editRoot(); if (!root) return [];
-      return Array.prototype.slice.call(root.querySelectorAll('img'));
+      return Array.prototype.slice.call(root.querySelectorAll('img')).filter(function (el) {
+        return !el.closest('.fv-gallery');                      // Galerie -> eigene Logik
+      });
     }
     // Status-Labels ("In Entwicklung" usw.) - eigene Kategorie, damit die t-Indizes
     // der normalen Texte NICHT verschoben werden (sonst landen alte Speicherstaende
@@ -270,6 +274,8 @@
           k.s.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
           k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^https?:\/\//i.test(o.value)) el.setAttribute('href', o.value); });
           var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
+          parseGallery(map['g0']);   // Oberflaechen-Galerie (alle Besucher)
+          renderGallery();
         })
         .catch(function () {});
     }
@@ -457,6 +463,126 @@
       });
       bar.appendChild(btn);
       h.parentNode.insertBefore(bar, h.nextSibling);
+    }
+
+    /* ---- Oberflaechen-Galerie -------------------------------------------
+     * Bilder werden als JSON-Liste von /api/image/<id>-URLs im Inhaltsblock
+     * "g0" gespeichert. Anzeige fuer ALLE Besucher; Hinzufuegen/Entfernen/
+     * Sortieren nur im Admin-Modus. Reine Galerie-Sektionen (mit
+     * data-fv-gallery-section) werden ohne Bilder fuer Besucher ausgeblendet.
+     * ------------------------------------------------------------------- */
+    function galleryConts() {
+      var root = editRoot(); if (!root) return [];
+      return Array.prototype.slice.call(root.querySelectorAll('[data-fv-gallery]'));
+    }
+
+    function parseGallery(item) {
+      galleryUrls = [];
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var arr = JSON.parse(item.value);
+          if (Array.isArray(arr)) {
+            galleryUrls = arr.filter(function (u) {
+              return typeof u === 'string' && /^\/api\/image\//.test(u);
+            });
+          }
+        } catch (e) { /* defekte Daten ignorieren */ }
+      }
+    }
+
+    function saveGallery() {
+      return save('g0', 'text', JSON.stringify(galleryUrls));
+    }
+
+    function moveImg(idx, dir) {
+      var j = idx + dir;
+      if (j < 0 || j >= galleryUrls.length) return;
+      var t = galleryUrls[idx]; galleryUrls[idx] = galleryUrls[j]; galleryUrls[j] = t;
+      renderGallery(); saveGallery();
+    }
+
+    function removeImg(idx) {
+      if (idx < 0 || idx >= galleryUrls.length) return;
+      if (!window.confirm('Dieses Bild aus der Galerie entfernen?')) return;
+      galleryUrls.splice(idx, 1);
+      renderGallery(); saveGallery();
+    }
+
+    function addFiles(files) {
+      files = Array.prototype.slice.call(files || []).filter(function (f) {
+        return f && /^image\//.test(f.type);
+      });
+      if (!files.length) return;
+      var conts = galleryConts();
+      conts.forEach(function (c) { c.classList.add('fv-saving'); });
+      var queue = files.slice();
+      (function next() {
+        if (!queue.length) {
+          conts.forEach(function (c) { c.classList.remove('fv-saving'); });
+          renderGallery(); saveGallery();
+          return;
+        }
+        downscale(queue.shift(), function (dataUrl, mime) {
+          if (!dataUrl) { next(); return; }
+          uploadImage(dataUrl, mime).then(function (res) {
+            if (res && res.url) galleryUrls.push(res.url);
+            next();
+          });
+        });
+      })();
+    }
+
+    function pickImages() {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
+      inp.onchange = function () { addFiles(inp.files); };
+      inp.click();
+    }
+
+    function renderGallery() {
+      galleryConts().forEach(function (cont) {
+        cont.innerHTML = '';
+        galleryUrls.forEach(function (url, idx) {
+          var fig = document.createElement('figure');
+          fig.className = 'program-media-card fv-gallery__item';
+          var img = document.createElement('img');
+          img.src = url; img.alt = 'Programmoberfl\u00e4che'; img.loading = 'lazy';
+          fig.appendChild(img);
+          if (ADMIN) {
+            var ctr = document.createElement('div');
+            ctr.className = 'fv-gallery__ctrls';
+            ctr.innerHTML =
+              '<button type="button" class="fv-gallery__btn" data-a="l" title="Nach vorne">\u2190</button>'
+            + '<button type="button" class="fv-gallery__btn" data-a="r" title="Nach hinten">\u2192</button>'
+            + '<button type="button" class="fv-gallery__btn fv-gallery__btn--del" data-a="x" title="Entfernen">\u2715</button>';
+            ctr.querySelector('[data-a="l"]').addEventListener('click', function () { moveImg(idx, -1); });
+            ctr.querySelector('[data-a="r"]').addEventListener('click', function () { moveImg(idx, 1); });
+            ctr.querySelector('[data-a="x"]').addEventListener('click', function () { removeImg(idx); });
+            fig.appendChild(ctr);
+          }
+          cont.appendChild(fig);
+        });
+        if (ADMIN) {
+          var add = document.createElement('button');
+          add.type = 'button';
+          add.className = 'fv-gallery__add';
+          add.innerHTML = '<span class="fv-gallery__plus" aria-hidden="true">+</span><span>Bild hinzuf\u00fcgen</span>';
+          add.addEventListener('click', pickImages);
+          cont.appendChild(add);
+          if (!cont.getAttribute('data-fv-drop')) {
+            cont.setAttribute('data-fv-drop', '1');
+            cont.addEventListener('dragover', function (e) { e.preventDefault(); cont.classList.add('fv-gallery--drop'); });
+            cont.addEventListener('dragleave', function () { cont.classList.remove('fv-gallery--drop'); });
+            cont.addEventListener('drop', function (e) {
+              e.preventDefault(); cont.classList.remove('fv-gallery--drop');
+              if (e.dataTransfer && e.dataTransfer.files) addFiles(e.dataTransfer.files);
+            });
+          }
+        }
+        // Reine Galerie-Sektion ohne Bilder fuer normale Besucher ausblenden.
+        var sec = cont.closest('[data-fv-gallery-section]');
+        if (sec) sec.style.display = (!galleryUrls.length && !ADMIN) ? 'none' : '';
+      });
     }
 
     function banner() {

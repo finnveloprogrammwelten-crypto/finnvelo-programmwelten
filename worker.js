@@ -28,7 +28,7 @@ const RL_MS = 20000;        // 20s Sperre zwischen Posts pro IP
 const MAX_CONTENT = 30000;             // max Laenge eines bearbeiteten Textblocks
 const MAX_IMG_BYTES = 2 * 1024 * 1024; // max 2 MB pro hochgeladenem Bild
 const PAGE_RE = /^[a-z0-9-]{1,40}$/;
-const BLOCK_RE = /^[tivsd][0-9]{1,4}$/;
+const BLOCK_RE = /^[tivsdg][0-9]{1,4}$/;
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {

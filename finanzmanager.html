@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="Finnvelo Finanzmanager · Finnvelo Programmwelten.">
   <title>Finnvelo Finanzmanager · Finnvelo</title>
+  <link rel="canonical" href="https://finnveloprogramme.com/finanzmanager">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header class="site-header">
-    <a class="brand" href="index.html" aria-label="Finnvelo Programmwelten Startseite">
+    <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
       <img class="brand-logo" src="assets/images/finnvelo-plakette.png" alt="Finnvelo Plakette">
       <span class="brand-text">
         <strong>Finnvelo</strong>
@@ -17,10 +18,10 @@
       </span>
     </a>
     <nav aria-label="Hauptnavigation">
-      <a href="index.html">Start</a>
-      <a href="programme.html" aria-current="page">Programme</a>
-      <a href="kommentare.html">Kommentare</a>
-      <a href="kontakt.html">Kontakt</a>
+      <a href="/">Start</a>
+      <a href="/programme" aria-current="page">Programme</a>
+      <a href="/kommentare">Kommentare</a>
+      <a href="/kontakt">Kontakt</a>
     </nav>
   </header>
 
@@ -43,6 +44,12 @@
         <section class="program-info-block" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Finnvelo Finanzmanager ist als Haushaltsbuch und Finanzübersicht geplant. Einnahmen, Ausgaben, Kategorien und Auswertungen werden später hier beschrieben.</p>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
+          <h2 id="surface-title">Oberfläche</h2>
+          <p>Ansichten und Bildschirmfotos werden hier ergänzt.</p>
+          <div class="fv-gallery" data-fv-gallery></div>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
@@ -73,8 +80,8 @@
 
   <footer>
     <span>© 2026 Finnvelo Programmwelten</span>
-    <a href="impressum.html">Impressum</a>
-    <a href="datenschutz.html">Datenschutz</a>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
   </footer>
   <script src="stats.js" defer></script>
 </body>
