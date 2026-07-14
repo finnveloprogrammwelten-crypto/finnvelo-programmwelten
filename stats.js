@@ -11,7 +11,7 @@
   'use strict';
 
   var API = '/api';
-  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'tester'];
+  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'tester'];
 
   function pageKey() {
     var path = (location.pathname || '').toLowerCase();
@@ -251,7 +251,7 @@
     // Download-/Aktions-Links, deren Ziel (href) bearbeitbar sein soll.
     function linkEls() {
       var root = editRoot(); if (!root) return [];
-      return Array.prototype.slice.call(root.querySelectorAll('.program-download-block a.button[href], .download-slot a.button[href]'));
+      return Array.prototype.slice.call(root.querySelectorAll('.program-launch a.button[href], .program-download-block a.button[href], .download-slot a.button[href]'));
     }
 
     function keyed() {

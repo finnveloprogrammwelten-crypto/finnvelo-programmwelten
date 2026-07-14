@@ -1,0 +1,165 @@
+<!doctype html>
+<!--
+  ================================================================
+  KOPIERVORLAGE FUER EIN NEUES PROGRAMM
+  So benutzt du diese Datei (Details in der README, Abschnitt 5):
+    1. Diese Datei kopieren und in <slug>.html umbenennen
+       (Slug = Kurzname, nur Kleinbuchstaben/Zahlen/Bindestriche).
+    2. Unten alle mit  HIER:  markierten Stellen ersetzen.
+    3. Plaketten-Bild als assets/images/<slug>-label.png ablegen.
+    4. Kachel in index.html + Zeile in programme.html einfuegen.
+    5. Slug in stats.js -> PROGRAM_PAGES eintragen.
+  Feinschliff an Texten/Bildern geht danach im Bearbeiten-Modus.
+  ================================================================
+-->
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- HIER: kurze Beschreibung fuer Suchmaschinen -->
+  <meta name="description" content="HIER: kurze Beschreibung des Programms.">
+  <!-- HIER: Titel -->
+  <title>HIER: Programmname · Finnvelo</title>
+  <!-- HIER: Slug am Ende der Adresse -->
+  <link rel="canonical" href="https://finnveloprogramme.com/HIER-slug">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
+      <img class="brand-logo" src="assets/images/finnvelo-plakette.png" alt="Finnvelo Plakette">
+      <span class="brand-text">
+        <strong>Finnvelo</strong>
+        <small>Programmwelten</small>
+      </span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="/">Start</a>
+      <a href="/programme" aria-current="page">Programme</a>
+      <a href="/kommentare">Kommentare</a>
+      <a href="/kontakt">Kontakt</a>
+    </nav>
+  </header>
+
+  <main class="main-canvas program-detail-page">
+    <article class="program-detail" aria-labelledby="program-title">
+      <div class="program-detail__top">
+        <div class="program-detail__label">
+          <!-- HIER: Plaketten-Bild (assets/images/<slug>-label.png) -->
+          <img src="assets/images/HIER-slug-label.png" alt="HIER: Programmname">
+        </div>
+
+        <div class="program-detail__summary">
+          <!-- HIER: kurze Einordnung, z.B. "Archivieren · Entpacken · Kopieren" -->
+          <p class="section-kicker">HIER: Stichworte</p>
+          <!-- HIER: Titel -->
+          <h1 id="program-title">HIER: Programmname</h1>
+          <!-- Status-Schild: fuer "in Arbeit" die naechste Zeile drinlassen, sonst loeschen -->
+          <span class="status">In Entwicklung</span>
+          <!-- HIER: Einleitungstext -->
+          <p class="lead">HIER: Was macht das Programm? Ein bis zwei Saetze.</p>
+        </div>
+      </div>
+
+      <!--
+        OPTIONAL - nur fuer Programme, die direkt im Browser laufen (Web-App):
+        Diesen Block hier einfuegen und den Link auf den Web-App-Ordner setzen.
+        (Vorbild: haus-und-gartenplaner.html)
+
+        <section class="program-launch" aria-labelledby="launch-title">
+          <div class="program-launch__text">
+            <p class="section-kicker">Direkt im Browser</p>
+            <h2 id="launch-title">Sofort starten</h2>
+            <p>Laeuft direkt hier auf der Webseite - ohne Installation.</p>
+          </div>
+          <div class="program-launch__action">
+            <a class="button program-launch__btn" href="/planer/HIER-slug/">Jetzt oeffnen</a>
+            <span class="program-launch__note">Laeuft im Browser - keine Installation noetig</span>
+          </div>
+        </section>
+      -->
+
+      <div class="program-detail__body program-detail__body--archivar">
+        <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
+          <h2 id="description-title">Beschreibung</h2>
+          <!-- HIER: ausfuehrlicher Beschreibungstext (ein oder mehrere Absaetze) -->
+          <p>HIER: Ausfuehrliche Beschreibung.</p>
+
+          <div class="feature-grid" aria-label="Kernfunktionen">
+            <article><h3>HIER: Funktion 1</h3><p>HIER: kurze Erklaerung.</p></article>
+            <article><h3>HIER: Funktion 2</h3><p>HIER: kurze Erklaerung.</p></article>
+            <article><h3>HIER: Funktion 3</h3><p>HIER: kurze Erklaerung.</p></article>
+          </div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
+          <h2 id="surface-title">Oberflaeche</h2>
+          <p>Ansichten und Bildschirmfotos werden hier ergaenzt.</p>
+          <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
+          <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
+          <h2 id="tutorial-title">Tutorial-Video</h2>
+          <p>Ein Tutorial-Video wird hier ergaenzt, sobald es bereitsteht.</p>
+          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
+        </section>
+
+        <section class="program-info-block" aria-labelledby="advantages-title">
+          <h2 id="advantages-title">Besondere Vorteile</h2>
+          <ul class="feature-list">
+            <li>HIER: Vorteil 1</li>
+            <li>HIER: Vorteil 2</li>
+            <li>HIER: Vorteil 3</li>
+            <li>HIER: Vorteil 4</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block" aria-labelledby="target-title">
+          <h2 id="target-title">Zielgruppe</h2>
+          <!-- HIER: Fuer wen ist das Programm? -->
+          <p>HIER: Zielgruppe beschreiben.</p>
+        </section>
+
+        <section class="program-info-block program-download-block" aria-labelledby="download-title">
+          <h2 id="download-title">Download</h2>
+          <div class="download-slot">
+            <h3>Hauptdatei</h3>
+            <p>Download wird ergaenzt, sobald die erste oeffentliche Datei bereitsteht.</p>
+            <!--
+              Download-Knopf: die naechste Zeile einkommentieren, sobald es eine Datei gibt.
+              Ziel (href) kann danach jederzeit im Bearbeiten-Modus geaendert werden.
+              <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">Download starten</a>
+            -->
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Weitere Versionen und Patches</h3>
+            <p>Platzhalter fuer spaetere Updates, Patchdateien und aeltere Versionen.</p>
+          </div>
+        </section>
+      </div>
+    </article>
+    <section class="support-stage" aria-labelledby="support-title">
+      <div class="support-card">
+        <h2 id="support-title">Finnvelo unterstuetzen</h2>
+        <p>Alle Finnvelo-Programme sind kostenlos. Wenn sie dir helfen und gefallen, freue ich mich sehr ueber eine kleine Spende – sie haelt die Weiterentwicklung am Laufen.</p>
+        <a class="button donate-button" href="https://www.paypal.me/TatorasavoFinnvelo" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Mit PayPal spenden
+        </a>
+        <p class="donate-note">Sichere Abwicklung ueber PayPal.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Finnvelo Programmwelten</span>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+  </footer>
+  <script src="stats.js" defer></script>
+</body>
+</html>

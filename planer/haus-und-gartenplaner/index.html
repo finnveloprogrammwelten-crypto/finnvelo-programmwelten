@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Finnvelo Haus und Gartenplaner</title>
+  <!--
+    ================================================================
+    HIER KOMMT DER PLANER REIN.
+    Diese Datei ist nur ein Platzhalter. So bindest du deinen echten
+    Planer ein (ganz ohne Klaus):
+
+    Variante A - Planer ist EINE einzelne HTML-Datei:
+      Ersetze diese Datei (index.html) einfach durch deine Planer-HTML.
+      Dateiname MUSS "index.html" bleiben und in diesem Ordner liegen:
+        planer/haus-und-gartenplaner/index.html
+
+    Variante B - Planer besteht aus mehreren Dateien (HTML + JS + Bilder):
+      Kopiere ALLE Dateien deines Planers in diesen Ordner
+        planer/haus-und-gartenplaner/
+      Die Startdatei muss "index.html" heissen.
+
+    Der Knopf "Planer jetzt oeffnen" auf der Programmseite oeffnet
+    automatisch diesen Ordner - du musst dort nichts umstellen.
+    ================================================================
+  -->
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      background:
+        radial-gradient(1200px 600px at 50% -10%, rgba(49,124,255,.14), transparent 60%),
+        #03050a;
+      color: #f4f7fb;
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: center;
+    }
+    .wrap { width: 100%; max-width: 620px; }
+    .plaque {
+      width: min(360px, 78%);
+      height: auto;
+      margin: 0 auto 30px;
+      display: block;
+      filter: drop-shadow(0 24px 60px rgba(0,0,0,.55));
+    }
+    h1 { margin: 0 0 12px; font-size: clamp(24px, 3.4vw, 34px); letter-spacing: -.02em; }
+    p { margin: 0 auto 10px; max-width: 500px; color: #c7d3e7; line-height: 1.6; font-size: clamp(15px, 1.1vw, 17px); }
+    .hint {
+      margin-top: 26px;
+      padding: 16px 18px;
+      border-left: 3px solid #bdd7ff;
+      background: rgba(255,255,255,.03);
+      border-radius: 10px;
+      text-align: left;
+    }
+    .hint b { color: #bdd7ff; }
+    code {
+      padding: 2px 6px; border-radius: 6px;
+      background: rgba(255,255,255,.10); color: #fff; font-size: .95em;
+    }
+    .back {
+      display: inline-flex; align-items: center; justify-content: center;
+      margin-top: 28px; min-height: 46px; padding: 12px 22px;
+      border-radius: 14px; background: #317cff; color: #fff;
+      font-weight: 800; text-decoration: none;
+      box-shadow: 0 16px 38px rgba(49,124,255,.25);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="plaque" src="../../assets/images/haus-und-gartenplaner-label.png" alt="Finnvelo Haus und Gartenplaner">
+    <h1>Planer wird hier eingebunden</h1>
+    <p>An dieser Stelle laeuft spaeter der <strong>Finnvelo Haus und Gartenplaner</strong> direkt im Browser.</p>
+    <p>Aktuell siehst du nur den Platzhalter.</p>
+
+    <div class="hint">
+      <p style="margin:0 0 8px;"><b>So bindest du deinen Planer ein:</b></p>
+      <p style="margin:0;">Lege deine Planer-Datei als <code>index.html</code> in den Ordner<br>
+      <code>planer/haus-und-gartenplaner/</code> und ersetze damit diese Datei. Fertig - der Oeffnen-Knopf zeigt danach automatisch deinen Planer.</p>
+    </div>
+
+    <a class="back" href="/haus-und-gartenplaner">&larr; Zurueck zur Programmseite</a>
+  </div>
+</body>
+</html>

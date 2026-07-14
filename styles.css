@@ -279,7 +279,7 @@ h1 {
 
 .program-button-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: clamp(16px, 1.6vw, 30px);
   align-items: start;
 }
@@ -339,6 +339,12 @@ h1 {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.30);
+}
+
+.program-button__status--live {
+  background: rgba(9, 12, 21, 0.86);
+  border-color: rgba(45, 204, 112, 0.45);
+  color: #d9ffe8;
 }
 
 .program-button__description {
@@ -482,6 +488,72 @@ h1 {
   margin-top: clamp(48px, 6vw, 96px);
 }
 
+/* Prominenter "Planer direkt oeffnen"-Bereich (Web-App-Programme). */
+.program-launch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(24px, 4vw, 60px);
+  margin-top: clamp(36px, 4.4vw, 64px);
+  padding: clamp(24px, 2.6vw, 36px);
+  border: 1px solid rgba(45, 204, 112, 0.30);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(45, 204, 112, 0.10), transparent 60%),
+    var(--panel);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
+}
+
+.program-launch h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(24px, 2vw, 34px);
+  letter-spacing: -0.025em;
+}
+
+.program-launch__text p:not(.section-kicker) {
+  margin: 0;
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.program-launch__action {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.program-launch__btn {
+  min-height: 56px;
+  padding: 16px 34px;
+  font-size: clamp(16px, 1.05vw, 18px);
+  background: #22b56a;
+  box-shadow: 0 16px 40px rgba(34, 181, 106, 0.32);
+}
+
+.program-launch__btn:hover {
+  filter: brightness(1.06);
+}
+
+.program-launch__note {
+  color: var(--soft);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .program-launch {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+  .program-launch__action {
+    justify-items: stretch;
+  }
+  .program-launch__btn {
+    width: 100%;
+  }
+}
+
 .program-info-block {
   padding-top: 22px;
   border-top: 1px solid rgba(255, 255, 255, 0.13);
@@ -563,7 +635,8 @@ h1 {
   font-weight: 800;
 }
 
-.status--download {
+.status--download,
+.status--live {
   background: rgba(45, 204, 112, 0.16);
   color: #d9ffe8;
 }
