@@ -196,10 +196,15 @@
 })();
 
 /* =====================================================================
- * Finnvelo Inline-Editor  (versteckter Admin-Modus)
- * - Fuer ALLE Besucher: bearbeitete Texte/Bilder werden angewendet.
- * - Nur mit Passwort (ueber /admin freigeschaltet, in sessionStorage):
- *   Texte direkt anklickbar/aenderbar, Bilder per Drag&Drop/Klick tauschbar.
+ * Finnvelo Inline-Editor  (versteckter Admin-Modus)  v2
+ * - Fuer ALLE Besucher: gespeicherte Texte, Bilder, Status-Schilder,
+ *   Navigation/Fusszeile, Reihenfolge der Kacheln und Zusatztexte werden
+ *   angewendet.
+ * - Nur mit Passwort (ueber /admin freigeschaltet) UND eingeschaltetem
+ *   Bearbeiten-Modus: alles direkt auf der Seite bearbeitbar, Kacheln per
+ *   Ziehen sortierbar, Status-Schilder und Zusatztexte pflegbar.
+ * - Umschalter (Bearbeiten AN/AUS): als Admin gefahrlos navigieren, ohne
+ *   aus Versehen etwas zu aendern.
  * Komplett fail-safe gekapselt: bei Fehlern bleibt die Seite normal.
  * ===================================================================== */
 (function () {
@@ -207,9 +212,13 @@
   try {
     var API = '/api';
     var PW_KEY = 'fv_admin_pw';
+    var EDIT_KEY = 'fv_edit';
+    var GLOBAL = 'global';   // seiten-uebergreifende Inhalte (Navigation, Fusszeile, Marke)
 
     function adminPw() { try { return sessionStorage.getItem(PW_KEY) || ''; } catch (e) { return ''; } }
+    function editOn() { try { return sessionStorage.getItem(EDIT_KEY) === '1'; } catch (e) { return false; } }
     var ADMIN = !!adminPw();
+    var EDITING = ADMIN && editOn();
 
     function slug() {
       var path = (location.pathname || '').toLowerCase();
@@ -218,73 +227,149 @@
       return (!name || name === 'index') ? 'start' : name;
     }
     var SLUG = slug();
+
     var TEXT_SEL = 'h1,h2,h3,h4,p,li,blockquote,figcaption';
-    var galleryUrls = [];   // Bild-URLs der Oberflaechen-Galerie (Block g0)
+    var EXTRA_TEXT_SEL = '.program-button__description, .program-row__content > strong, .program-row__content > span';
+    var NAV_TEXT_SEL = '.site-header .brand-text strong, .site-header .brand-text small, .site-header nav a, footer span, footer a';
+    var STATUS_SEL = '.program-button__status, .status';
+    var LINK_SEL = '.program-launch a.button[href], .program-download-block a.button[href], .download-slot a.button[href]';
+    var SORTABLE_SEL = '.program-button-grid, .program-row-list';
+    var CARD_SEL = '.program-button, .program-row';
+
+    var galleryUrls = [];    // Bild-URLs der Oberflaechen-Galerie (Block g0)
+    var customBlocks = [];   // [{id, html}] Zusatz-Textfelder (Block x0)
 
     function editRoot() { return document.querySelector('main'); }
+    function qsa(root, sel) { return root ? Array.prototype.slice.call(root.querySelectorAll(sel)) : []; }
 
+    /* ---- Element-Sammler ---------------------------------------------- */
     function textEls() {
       var root = editRoot(); if (!root) return [];
-      var out = [];
-      Array.prototype.forEach.call(root.querySelectorAll(TEXT_SEL), function (el) {
-        if (el.closest('.fv-gallery')) return;                  // Galerie -> eigene Logik
+      var base = [];
+      qsa(root, TEXT_SEL).forEach(function (el) {
+        if (el.closest('.fv-gallery')) return;
+        if (el.closest('.fv-extra-zone')) return;               // Zusatztexte -> eigene Logik (x0)
         if (el.querySelector(TEXT_SEL)) return;                 // Container -> ueberspringen
         if (el.querySelector('img')) return;                    // enthaelt Bild -> separat
         if (!el.textContent || !el.textContent.trim()) return;  // leer
+        base.push(el);
+      });
+      var extra = [];
+      qsa(root, EXTRA_TEXT_SEL).forEach(function (el) {
+        if (el.closest('.fv-gallery')) return;
+        if (el.matches('.status') || el.closest('.status')) return;   // Status -> eigene Kategorie (s)
+        if (el.querySelector('img') || el.querySelector(TEXT_SEL)) return;
+        if (!el.textContent || !el.textContent.trim()) return;
+        extra.push(el);
+      });
+      return base.concat(extra);   // Zusatz-Spans IMMER nach den Basistexten -> stabile t-Indizes
+    }
+    function navEls() {
+      var out = [];
+      qsa(document, NAV_TEXT_SEL).forEach(function (el) {
+        if (!el.textContent || !el.textContent.trim()) return;
         out.push(el);
       });
       return out;
     }
     function imgEls() {
       var root = editRoot(); if (!root) return [];
-      return Array.prototype.slice.call(root.querySelectorAll('img')).filter(function (el) {
-        return !el.closest('.fv-gallery');                      // Galerie -> eigene Logik
-      });
+      return qsa(root, 'img').filter(function (el) { return !el.closest('.fv-gallery'); });
     }
-    // Status-Labels ("In Entwicklung" usw.) - eigene Kategorie, damit die t-Indizes
-    // der normalen Texte NICHT verschoben werden (sonst landen alte Speicherstaende
-    // auf falschen Elementen).
+    // Status-Schilder ("In Entwicklung" usw.) - eigene Kategorie. Bereits vorhandene
+    // zuerst, spaeter ergaenzte (data-fv-added) danach -> alte Speicherstaende bleiben
+    // auf den richtigen Schildern.
     function statusEls() {
       var root = editRoot(); if (!root) return [];
-      return Array.prototype.slice.call(root.querySelectorAll('.program-button__status, .status'));
+      var all = qsa(root, STATUS_SEL);
+      var pre = all.filter(function (el) { return !el.hasAttribute('data-fv-added'); });
+      var add = all.filter(function (el) { return el.hasAttribute('data-fv-added'); });
+      return pre.concat(add);
     }
-    // Download-/Aktions-Links, deren Ziel (href) bearbeitbar sein soll.
     function linkEls() {
       var root = editRoot(); if (!root) return [];
-      return Array.prototype.slice.call(root.querySelectorAll('.program-launch a.button[href], .program-download-block a.button[href], .download-slot a.button[href]'));
+      return qsa(root, LINK_SEL);
+    }
+    function sortableConts() { return qsa(editRoot(), SORTABLE_SEL); }
+    function cardsOf(cont) {
+      return Array.prototype.slice.call(cont.children).filter(function (c) {
+        return c.nodeType === 1 && c.matches && c.matches(CARD_SEL);
+      });
     }
 
     function keyed() {
-      var t = textEls(), i = imgEls(), s = statusEls(), d = linkEls();
+      var t = textEls(), i = imgEls(), s = statusEls(), d = linkEls(), n = navEls();
       t.forEach(function (el, idx) { el.setAttribute('data-fvk', 't' + idx); });
       i.forEach(function (el, idx) { el.setAttribute('data-fvk', 'i' + idx); });
       s.forEach(function (el, idx) { el.setAttribute('data-fvk', 's' + idx); });
       d.forEach(function (el, idx) { el.setAttribute('data-fvk', 'd' + idx); });
-      return { t: t, i: i, s: s, d: d };
+      n.forEach(function (el, idx) { el.setAttribute('data-fvk', 'n' + idx); });
+      return { t: t, i: i, s: s, d: d, n: n };
+    }
+
+    /* ---- Speichern / Laden -------------------------------------------- */
+    function save(block, type, value, page) {
+      return fetch(API + '/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: page || SLUG, block: block, type: type, value: value, password: adminPw() })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+    function fetchContent(page) {
+      return fetch(API + '/content?page=' + encodeURIComponent(page), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var map = {};
+          if (res && res.items) res.items.forEach(function (it) { map[it.block] = it; });
+          return map;
+        })
+        .catch(function () { return {}; });
+    }
+
+    // Leeres Status-Schild: fuer Besucher ausblenden; im Bearbeiten-Modus als
+    // Platzhalter sichtbar lassen (zum Befuellen).
+    function applyStatus(el) {
+      el.removeAttribute('hidden');   // ab jetzt steuert JS die Sichtbarkeit
+      var txt = (el.textContent || '').trim();
+      if (!txt) {
+        if (EDITING) { el.style.display = ''; el.classList.add('fv-status-empty'); }
+        else { el.style.display = 'none'; }
+      } else {
+        el.classList.remove('fv-status-empty');
+        el.style.display = '';
+      }
+    }
+
+    function applyOrder(map) {
+      sortableConts().forEach(function (cont, idx) {
+        var o = map['o' + idx];
+        if (!o || o.type !== 'text' || !o.value) return;
+        var order;
+        try { order = JSON.parse(o.value); } catch (e) { return; }
+        if (!Array.isArray(order)) return;
+        var cards = cardsOf(cont);
+        var byHref = {};
+        cards.forEach(function (c) { byHref[c.getAttribute('href')] = c; });
+        order.forEach(function (href) {
+          var c = byHref[href];
+          if (c) { cont.appendChild(c); delete byHref[href]; }
+        });
+        // uebrig gebliebene (neue) Karten bleiben am Ende in bisheriger Reihenfolge
+      });
     }
 
     function applyOverrides(k) {
-      return fetch(API + '/content?page=' + encodeURIComponent(SLUG), { method: 'GET' })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (res) {
-          if (!res || !res.items) return;
-          var map = {}; res.items.forEach(function (it) { map[it.block] = it; });
-          k.t.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
-          k.i.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'image' && o.value) el.src = o.value; });
-          k.s.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
-          k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^https?:\/\//i.test(o.value)) el.setAttribute('href', o.value); });
-          var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
-          parseGallery(map['g0']);   // Oberflaechen-Galerie (alle Besucher)
-          renderGallery();
-        })
-        .catch(function () {});
-    }
-
-    function save(block, type, value) {
-      return fetch(API + '/content', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ page: SLUG, block: block, type: type, value: value, password: adminPw() })
-      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+      return Promise.all([fetchContent(SLUG), fetchContent(GLOBAL)]).then(function (res) {
+        var map = res[0] || {}, gmap = res[1] || {};
+        k.t.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
+        k.i.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'image' && o.value) el.src = o.value; });
+        k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^https?:\/\//i.test(o.value)) el.setAttribute('href', o.value); });
+        k.s.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; applyStatus(el); });
+        k.n.forEach(function (el) { var o = gmap[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
+        var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
+        parseGallery(map['g0']); renderGallery();
+        applyOrder(map);
+        parseCustom(map['x0']); renderCustom();
+      }).catch(function () {});
     }
 
     function flash(el, ok) {
@@ -293,26 +378,51 @@
       setTimeout(function () { el.classList.remove('fv-saved', 'fv-error'); }, 1200);
     }
 
-    function enableText(els) {
+    /* ---- Texte bearbeiten (Body + Navigation) ------------------------- */
+    function editableText(el, page) {
+      el.setAttribute('contenteditable', 'true');
+      el.classList.add('fv-editable');
+      el.setAttribute('spellcheck', 'false');
+      // Sitzt der Text in einem Link (Kachel, Navigation), darf der Klick zum
+      // Bearbeiten die Seite NICHT oeffnen.
+      if (el.matches('a') || el.closest('a')) {
+        el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
+      }
+      var orig = el.innerHTML;
+      el.addEventListener('blur', function () {
+        var v = el.innerHTML;
+        if (v === orig) return;
+        orig = v; el.classList.add('fv-saving');
+        save(el.getAttribute('data-fvk'), 'text', v, page).then(function (ok) { flash(el, ok); });
+      });
+    }
+    function enableText(els, page) { els.forEach(function (el) { editableText(el, page); }); }
+    function enableNav(els) { els.forEach(function (el) { editableText(el, GLOBAL); }); }
+
+    /* ---- Status-Schilder bearbeiten (leer = ausgeblendet) ------------- */
+    function enableStatus(els) {
       els.forEach(function (el) {
         el.setAttribute('contenteditable', 'true');
         el.classList.add('fv-editable');
         el.setAttribute('spellcheck', 'false');
-        // Sitzt das Label in einem Link (z.B. Status in einer Programmkachel),
-        // darf der Klick zum Bearbeiten NICHT die Seite oeffnen.
+        el.style.display = '';
         if (el.closest('a')) {
           el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
         }
         var orig = el.innerHTML;
+        el.addEventListener('focus', function () { el.classList.remove('fv-status-empty'); });
         el.addEventListener('blur', function () {
           var v = el.innerHTML;
-          if (v === orig) return;
-          orig = v; el.classList.add('fv-saving');
-          save(el.getAttribute('data-fvk'), 'text', v).then(function (ok) { flash(el, ok); });
+          if (v === orig) { applyStatus(el); return; }
+          orig = v;
+          var store = el.textContent && el.textContent.trim() ? v : '';   // leer -> ausgeblendet
+          el.classList.add('fv-saving');
+          save(el.getAttribute('data-fvk'), 'text', store).then(function (ok) { flash(el, ok); applyStatus(el); });
         });
       });
     }
 
+    /* ---- Bilder tauschen ---------------------------------------------- */
     function downscale(file, cb) {
       var img = new Image(), url = URL.createObjectURL(file);
       img.onload = function () {
@@ -327,14 +437,12 @@
       img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
       img.src = url;
     }
-
     function uploadImage(dataUrl, mime) {
       return fetch(API + '/image', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ password: adminPw(), mime: mime, dataUrl: dataUrl })
       }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }
-
     function enableImages(els) {
       els.forEach(function (el) {
         el.classList.add('fv-editable-img');
@@ -358,7 +466,7 @@
           if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) handle(e.dataTransfer.files[0]);
         });
         el.addEventListener('click', function (e) {
-          e.preventDefault();
+          e.preventDefault(); e.stopPropagation();
           var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
           inp.onchange = function () { if (inp.files && inp.files[0]) handle(inp.files[0]); };
           inp.click();
@@ -366,25 +474,21 @@
       });
     }
 
+    /* ---- Video setzen -------------------------------------------------- */
     function ytId(u) {
       u = String(u || '').trim();
       if (!u) return '';
-      // 1) Reine Video-ID (YouTube nutzt 11 Zeichen; wir erlauben 6+) ohne URL-Zeichen.
       if (/^[A-Za-z0-9_-]{6,}$/.test(u)) return u;
-      // 2) v=-Parameter an BELIEBIGER Stelle (watch?v=, ...&list=...&v=, m.youtube.com, ...).
       var q = u.match(/[?&]v=([A-Za-z0-9_-]{6,})/);
       if (q) return q[1];
-      // 3) Pfadformen: youtu.be/ID, /embed/ID, /shorts/ID, /v/ID, /live/ID (Gross/Klein egal).
       var p = u.match(/(?:youtu\.be\/|\/(?:embed|shorts|v|live)\/)([A-Za-z0-9_-]{6,})/i);
       if (p) return p[1];
       return '';
     }
-
     function videoSection() {
       var h = document.getElementById('tutorial-title');
       return h ? (h.closest('section') || h.parentNode) : null;
     }
-
     function renderVideo(id) {
       var h = document.getElementById('tutorial-title');
       if (!h || !id) return;
@@ -420,29 +524,6 @@
       });
       box.appendChild(facade);
     }
-
-    function enableLinks(els) {
-      els.forEach(function (el) {
-        el.classList.add('fv-editable-link');
-        el.setAttribute('title', 'Admin: Klicken, um das Download-Ziel (Link) zu \u00e4ndern');
-        el.addEventListener('click', function (e) {
-          // Im Admin-Modus NICHT herunterladen, sondern Ziel-URL bearbeiten.
-          e.preventDefault();
-          e.stopPropagation();
-          var cur = el.getAttribute('href') || '';
-          var u = window.prompt('Download-Link (vollst\u00e4ndige URL, z.B. GitHub-Release) einf\u00fcgen:', cur);
-          if (u === null) return;
-          u = String(u).trim();
-          if (u && !/^https?:\/\//i.test(u)) { window.alert('Bitte eine vollst\u00e4ndige URL mit https:// eingeben.'); return; }
-          el.classList.add('fv-saving');
-          save(el.getAttribute('data-fvk'), 'link', u).then(function (ok) {
-            if (ok && u) el.setAttribute('href', u);
-            flash(el, ok);
-          });
-        });
-      });
-    }
-
     function enableVideo() {
       var h = document.getElementById('tutorial-title');
       if (!h || document.querySelector('.fv-vid-edit')) return;
@@ -465,53 +546,58 @@
       h.parentNode.insertBefore(bar, h.nextSibling);
     }
 
-    /* ---- Oberflaechen-Galerie -------------------------------------------
-     * Bilder werden als JSON-Liste von /api/image/<id>-URLs im Inhaltsblock
-     * "g0" gespeichert. Anzeige fuer ALLE Besucher; Hinzufuegen/Entfernen/
-     * Sortieren nur im Admin-Modus. Reine Galerie-Sektionen (mit
-     * data-fv-gallery-section) werden ohne Bilder fuer Besucher ausgeblendet.
-     * ------------------------------------------------------------------- */
-    function galleryConts() {
-      var root = editRoot(); if (!root) return [];
-      return Array.prototype.slice.call(root.querySelectorAll('[data-fv-gallery]'));
+    /* ---- Download-/Aktions-Links (Ziel-URL) --------------------------- */
+    function enableLinks(els) {
+      els.forEach(function (el) {
+        el.classList.add('fv-editable-link');
+        el.setAttribute('title', 'Admin: Klicken, um das Ziel (Link) zu \u00e4ndern');
+        el.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var cur = el.getAttribute('href') || '';
+          var u = window.prompt('Link/Ziel (vollst\u00e4ndige URL, z.B. GitHub-Release) einf\u00fcgen:', cur);
+          if (u === null) return;
+          u = String(u).trim();
+          if (u && !/^https?:\/\//i.test(u)) { window.alert('Bitte eine vollst\u00e4ndige URL mit https:// eingeben.'); return; }
+          el.classList.add('fv-saving');
+          save(el.getAttribute('data-fvk'), 'link', u).then(function (ok) {
+            if (ok && u) el.setAttribute('href', u);
+            flash(el, ok);
+          });
+        });
+      });
     }
 
+    /* ---- Oberflaechen-Galerie (Block g0) ------------------------------ */
+    function galleryConts() {
+      var root = editRoot(); if (!root) return [];
+      return qsa(root, '[data-fv-gallery]');
+    }
     function parseGallery(item) {
       galleryUrls = [];
       if (item && item.type === 'text' && item.value) {
         try {
           var arr = JSON.parse(item.value);
           if (Array.isArray(arr)) {
-            galleryUrls = arr.filter(function (u) {
-              return typeof u === 'string' && /^\/api\/image\//.test(u);
-            });
+            galleryUrls = arr.filter(function (u) { return typeof u === 'string' && /^\/api\/image\//.test(u); });
           }
-        } catch (e) { /* defekte Daten ignorieren */ }
+        } catch (e) {}
       }
     }
-
-    function saveGallery() {
-      return save('g0', 'text', JSON.stringify(galleryUrls));
-    }
-
+    function saveGallery() { return save('g0', 'text', JSON.stringify(galleryUrls)); }
     function moveImg(idx, dir) {
       var j = idx + dir;
       if (j < 0 || j >= galleryUrls.length) return;
       var t = galleryUrls[idx]; galleryUrls[idx] = galleryUrls[j]; galleryUrls[j] = t;
       renderGallery(); saveGallery();
     }
-
     function removeImg(idx) {
       if (idx < 0 || idx >= galleryUrls.length) return;
       if (!window.confirm('Dieses Bild aus der Galerie entfernen?')) return;
       galleryUrls.splice(idx, 1);
       renderGallery(); saveGallery();
     }
-
     function addFiles(files) {
-      files = Array.prototype.slice.call(files || []).filter(function (f) {
-        return f && /^image\//.test(f.type);
-      });
+      files = Array.prototype.slice.call(files || []).filter(function (f) { return f && /^image\//.test(f.type); });
       if (!files.length) return;
       var conts = galleryConts();
       conts.forEach(function (c) { c.classList.add('fv-saving'); });
@@ -531,14 +617,12 @@
         });
       })();
     }
-
     function pickImages() {
       var inp = document.createElement('input');
       inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
       inp.onchange = function () { addFiles(inp.files); };
       inp.click();
     }
-
     function renderGallery() {
       galleryConts().forEach(function (cont) {
         cont.innerHTML = '';
@@ -548,7 +632,7 @@
           var img = document.createElement('img');
           img.src = url; img.alt = 'Programmoberfl\u00e4che'; img.loading = 'lazy';
           fig.appendChild(img);
-          if (ADMIN) {
+          if (EDITING) {
             var ctr = document.createElement('div');
             ctr.className = 'fv-gallery__ctrls';
             ctr.innerHTML =
@@ -562,7 +646,7 @@
           }
           cont.appendChild(fig);
         });
-        if (ADMIN) {
+        if (EDITING) {
           var add = document.createElement('button');
           add.type = 'button';
           add.className = 'fv-gallery__add';
@@ -579,30 +663,187 @@
             });
           }
         }
-        // Reine Galerie-Sektion ohne Bilder fuer normale Besucher ausblenden.
         var sec = cont.closest('[data-fv-gallery-section]');
-        if (sec) sec.style.display = (!galleryUrls.length && !ADMIN) ? 'none' : '';
+        if (sec) sec.style.display = (!galleryUrls.length && !EDITING) ? 'none' : '';
       });
     }
 
-    function banner() {
+    /* ---- Kacheln sortieren (Ziehen, Block o0/o1/...) ------------------ */
+    function saveOrder(cont, idx) {
+      var hrefs = cardsOf(cont).map(function (c) { return c.getAttribute('href'); });
+      return save('o' + idx, 'text', JSON.stringify(hrefs));
+    }
+    var drag = null;
+    function onDragMove(e) {
+      if (!drag) return;
+      e.preventDefault();
+      var under = document.elementFromPoint(e.clientX, e.clientY);
+      var target = under && under.closest ? under.closest(CARD_SEL) : null;
+      if (!target || target === drag.card || target.parentNode !== drag.cont) return;
+      var r = target.getBoundingClientRect();
+      var horizontal = drag.cont.classList.contains('program-button-grid');
+      var before = horizontal ? (e.clientX < r.left + r.width / 2) : (e.clientY < r.top + r.height / 2);
+      drag.cont.insertBefore(drag.card, before ? target : target.nextSibling);
+    }
+    function onDragEnd() {
+      if (!drag) return;
+      var d = drag; drag = null;
+      d.card.classList.remove('fv-dragging');
+      d.card.style.pointerEvents = '';
+      document.removeEventListener('pointermove', onDragMove, true);
+      document.removeEventListener('pointerup', onDragEnd, true);
+      document.removeEventListener('pointercancel', onDragEnd, true);
+      saveOrder(d.cont, d.idx);
+      flash(d.card, true);
+    }
+    function startDrag(e, cont, card, idx, handle) {
+      e.preventDefault(); e.stopPropagation();
+      drag = { cont: cont, card: card, idx: idx };
+      card.classList.add('fv-dragging');
+      card.style.pointerEvents = 'none';   // damit elementFromPoint die Ziel-Karte findet
+      try { handle.setPointerCapture(e.pointerId); } catch (_e) {}
+      document.addEventListener('pointermove', onDragMove, true);
+      document.addEventListener('pointerup', onDragEnd, true);
+      document.addEventListener('pointercancel', onDragEnd, true);
+    }
+    function enableSortable() {
+      sortableConts().forEach(function (cont, idx) {
+        cont.classList.add('fv-sortable');
+        cardsOf(cont).forEach(function (card) {
+          if (card.querySelector(':scope > .fv-drag-handle')) return;
+          card.classList.add('fv-sortable-item');
+          // Im Bearbeiten-Modus nicht zur Programmseite navigieren (nur bearbeiten/ziehen).
+          card.addEventListener('click', function (e) { e.preventDefault(); }, true);
+          var h = document.createElement('div');
+          h.className = 'fv-drag-handle';
+          h.setAttribute('title', 'Ziehen zum Verschieben');
+          h.innerHTML = '\u2630';
+          card.appendChild(h);
+          h.addEventListener('pointerdown', function (e) { startDrag(e, cont, card, idx, h); });
+        });
+      });
+    }
+
+    /* ---- Zusatz-Textfelder (Block x0) --------------------------------- */
+    function parseCustom(item) {
+      customBlocks = [];
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var arr = JSON.parse(item.value);
+          if (Array.isArray(arr)) {
+            customBlocks = arr.filter(function (b) { return b && typeof b.id === 'string' && typeof b.html === 'string'; });
+          }
+        } catch (e) {}
+      }
+    }
+    function saveCustom() { return save('x0', 'text', JSON.stringify(customBlocks)); }
+    function extraZone() {
+      var root = editRoot(); if (!root) return null;
+      var z = root.querySelector('.fv-extra-zone');
+      if (!z) { z = document.createElement('div'); z.className = 'fv-extra-zone'; root.appendChild(z); }
+      return z;
+    }
+    function renderCustom() {
+      var z = extraZone(); if (!z) return;
+      z.innerHTML = '';
+      if (!customBlocks.length && !EDITING) { z.style.display = 'none'; return; }
+      z.style.display = '';
+      customBlocks.forEach(function (b, idx) {
+        var wrap = document.createElement('div');
+        wrap.className = 'fv-extra';
+        var p = document.createElement('p');
+        p.className = 'fv-extra__text';
+        p.setAttribute('data-fvx', b.id);
+        p.innerHTML = b.html;
+        wrap.appendChild(p);
+        if (EDITING) {
+          p.setAttribute('contenteditable', 'true');
+          p.setAttribute('spellcheck', 'false');
+          p.classList.add('fv-editable');
+          var orig = p.innerHTML;
+          p.addEventListener('blur', function () {
+            if (p.innerHTML === orig) return;
+            orig = p.innerHTML; customBlocks[idx].html = p.innerHTML;
+            p.classList.add('fv-saving');
+            saveCustom().then(function (ok) { flash(p, ok); });
+          });
+          var del = document.createElement('button');
+          del.type = 'button'; del.className = 'fv-extra__del'; del.textContent = '\u2715';
+          del.setAttribute('title', 'Textfeld entfernen');
+          del.addEventListener('click', function () {
+            if (!window.confirm('Dieses Textfeld entfernen?')) return;
+            customBlocks.splice(idx, 1); saveCustom().then(function () { renderCustom(); });
+          });
+          wrap.appendChild(del);
+        }
+        z.appendChild(wrap);
+      });
+      if (EDITING) {
+        var add = document.createElement('button');
+        add.type = 'button'; add.className = 'fv-extra-add';
+        add.innerHTML = '<span aria-hidden="true">+</span> Textfeld hinzuf\u00fcgen';
+        add.addEventListener('click', function () {
+          var id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+          customBlocks.push({ id: id, html: 'Neuer Text \u2013 hier klicken und bearbeiten.' });
+          saveCustom().then(function () {
+            renderCustom();
+            var last = z.querySelector('.fv-extra:last-of-type .fv-extra__text');
+            if (last) last.focus();
+          });
+        });
+        z.appendChild(add);
+      }
+    }
+
+    /* ---- Admin-Werkzeugleiste (mit Umschalter) ------------------------ */
+    function toolbar() {
       if (document.querySelector('.fv-admin-bar')) return;
-      var b = document.createElement('div');
-      b.className = 'fv-admin-bar';
-      b.innerHTML = '<span>\u270E Bearbeiten-Modus aktiv \u2013 Texte anklicken, Bilder per Drag&amp;Drop tauschen</span>'
-        + '<button type="button" class="fv-admin-exit">Verlassen</button>';
-      document.body.appendChild(b);
+      var bar = document.createElement('div');
+      bar.className = 'fv-admin-bar' + (EDITING ? ' fv-admin-bar--edit' : '');
+      var pageLabel = SLUG === 'start' ? 'Startseite' : SLUG;
+      var left = '<span class="fv-admin-title">\u2699\uFE0F Finnvelo-Admin</span>'
+               + '<span class="fv-admin-page">Seite: ' + pageLabel + '</span>';
+      var toggle = EDITING
+        ? '<button type="button" class="fv-tgl fv-tgl--on">\u270E Bearbeiten: AN</button>'
+        : '<button type="button" class="fv-tgl fv-tgl--off">\u270E Bearbeiten: AUS</button>';
+      var hint = EDITING
+        ? '<span class="fv-admin-hint">Texte anklicken \u00b7 Bilder klicken/ziehen \u00b7 Kacheln am Griff ziehen</span>'
+        : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
+      var right = '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
+      bar.innerHTML = '<div class="fv-admin-left">' + left + '</div>'
+                    + '<div class="fv-admin-mid">' + toggle + hint + '</div>'
+                    + '<div class="fv-admin-right">' + right + '</div>';
+      document.body.appendChild(bar);
       document.body.classList.add('fv-admin-on');
-      b.querySelector('.fv-admin-exit').addEventListener('click', function () {
-        try { sessionStorage.removeItem(PW_KEY); } catch (e) {}
+      if (EDITING) document.body.classList.add('fv-edit-on');
+      bar.querySelector('.fv-tgl').addEventListener('click', function () {
+        try {
+          if (EDITING) sessionStorage.removeItem(EDIT_KEY);
+          else sessionStorage.setItem(EDIT_KEY, '1');
+        } catch (e) {}
+        location.reload();
+      });
+      bar.querySelector('.fv-admin-logout').addEventListener('click', function () {
+        try { sessionStorage.removeItem(PW_KEY); sessionStorage.removeItem(EDIT_KEY); } catch (e) {}
         location.reload();
       });
     }
 
+    /* ---- Ablauf -------------------------------------------------------- */
     function run() {
       var k = keyed();
       applyOverrides(k).then(function () {
-        if (ADMIN) { banner(); enableText(k.t); enableImages(k.i); enableText(k.s); enableLinks(k.d); enableVideo(); }
+        if (ADMIN) toolbar();
+        if (EDITING) {
+          enableText(k.t, SLUG);
+          enableNav(k.n);
+          enableImages(k.i);
+          enableStatus(k.s);
+          enableLinks(k.d);
+          enableVideo();
+          enableSortable();
+          // renderCustom() lief bereits in applyOverrides (inkl. Bearbeiten-Affordances)
+        }
       });
     }
 

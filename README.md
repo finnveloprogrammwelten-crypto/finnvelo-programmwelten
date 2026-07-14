@@ -52,27 +52,51 @@ Besucher sichtbar**.
 2. Passwort eingeben und **Freischalten** klicken.
    (Das Passwort ist in Cloudflare als Secret `ADMIN_PASSWORD` hinterlegt -
    Dashboard -> Workers & Pages -> Projekt -> Settings -> Variables and Secrets.)
-3. Du landest wieder auf der Startseite. Oben erscheint ein Balken
-   **"Bearbeiten-Modus aktiv"**. Der Modus gilt fuer den ganzen Besuch, bis du
-   **Verlassen** klickst (oder den Browser-Tab schliesst).
+3. Du landest wieder auf der Startseite. Oben erscheint die **Admin-Leiste**.
 
-### Was du im Bearbeiten-Modus aendern kannst
-Wechsle einfach auf die jeweilige Seite (z.B. eine Programmseite) - dort gilt der Modus ebenfalls:
+### Umschalter: "Bearbeiten AN / AUS"  (NEU)
+In der Admin-Leiste gibt es einen Knopf **"Bearbeiten: AN / AUS"**:
 
-- **Texte:** Ueberschriften, Absaetze, Aufzaehlungen und Bildunterschriften
-  bekommen einen Rahmen. Anklicken, Text aendern, irgendwo daneben klicken -
-  gespeichert (kurzes gruenes Aufblinken = gespeichert).
-- **Bilder:** Auf ein Bild klicken und eine neue Datei auswaehlen, **oder** ein
-  Bild per Drag & Drop darauf ziehen. Wird automatisch verkleinert und gespeichert.
-- **Status-Schilder** (z.B. "In Entwicklung", "Web-App"): wie Texte anklickbar.
-- **Download-Link und "Planer oeffnen"-Knopf:** anklicken -> es oeffnet sich ein
-  kleines Fenster, in das du das neue Ziel (die vollstaendige `https://`-Adresse)
-  einfuegst.
+- **AUS (blaue Leiste):** Du bist als Admin angemeldet, kannst aber **ganz normal
+  auf der Seite navigieren** (Links, Menue, Kacheln funktionieren wie immer).
+  Nichts ist bearbeitbar - so aenderst du **nichts aus Versehen**.
+- **AN (gruene Leiste):** Jetzt ist alles bearbeitbar (siehe unten). Solange
+  Bearbeiten AN ist, oeffnen Klicks auf Links/Kacheln **nicht** die Zielseite -
+  sie dienen zum Bearbeiten. **Zum Seitenwechsel: kurz auf AUS schalten,
+  navigieren, wieder AN schalten.**
+
+Der Zustand gilt fuer den ganzen Besuch (bis Browser-Tab zu). **Abmelden** beendet
+den Admin-Modus ganz.
+
+### Was du im Bearbeiten-Modus (AN) aendern kannst
+Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
+
+- **Alle Texte:** Ueberschriften, Absaetze, Aufzaehlungen, **Kachel-Beschreibungen
+  und Kachel-Namen** bekommen einen Rahmen. Anklicken, aendern, daneben klicken -
+  gespeichert (kurzes gruenes Aufblinken).
+- **Navigation, Marke und Fusszeile (NEU):** Auch "Start", "Programme",
+  "Finnvelo/Programmwelten" oben und "Impressum/Datenschutz" unten sind
+  anklickbar. Diese Aenderungen gelten **auf allen Seiten gleichzeitig**
+  (seitenuebergreifend).
+- **Bilder:** Auf ein Bild klicken und Datei auswaehlen, **oder** per Drag & Drop
+  darauf ziehen. Wird automatisch verkleinert und gespeichert.
+- **Status-Schilder** (z.B. "In Entwicklung", "Web-App"): anklickbar. **NEU: Ist
+  das Feld leer, wird gar kein Schild angezeigt.** So blendest du ein Schild aus
+  (Text loeschen) oder gibst einer Kachel ohne Schild eins (jede Kachel hat im
+  Bearbeiten-Modus einen Platzhalter **"+ Status"**).
+- **Kacheln sortieren (NEU):** Jede Kachel/Zeile hat oben rechts einen **Griff
+  (Symbol mit drei Strichen)**. Damit ziehst du die Kachel an eine andere Stelle -
+  die neue Reihenfolge wird gespeichert und gilt fuer alle Besucher.
+- **Zusatz-Textfelder hinzufuegen (NEU):** Ganz unten im Inhalt gibt es den Knopf
+  **"+ Textfeld hinzufuegen"**. Damit legst du beliebig viele eigene Textabsaetze
+  an (anklickbar zum Bearbeiten, mit **x** wieder entfernbar).
+- **Download-Link / "Planer oeffnen"-Knopf:** anklicken -> Fenster -> neue
+  vollstaendige `https://`-Adresse einfuegen.
 - **Tutorial-Video:** Auf einer Programmseite mit Abschnitt "Tutorial-Video"
-  erscheint ein Knopf **"Video (YouTube-Link) setzen / aendern"**. YouTube-Link
-  oder Video-ID einfuegen - fertig.
-- **Oberflaechen-Galerie:** Im Abschnitt "Oberflaeche" kannst du Bilder
-  **hinzufuegen** (+), per Pfeil **sortieren** und mit **x entfernen**.
+  erscheint **"Video (YouTube-Link) setzen / aendern"**. Link oder Video-ID
+  einfuegen - fertig.
+- **Oberflaechen-Galerie:** Im Abschnitt "Oberflaeche" Bilder **hinzufuegen** (+),
+  per Pfeil **sortieren**, mit **x entfernen**.
 
 ### Wichtig zu wissen
 - Diese Inhalts-Aenderungen werden **auf dem Server** gespeichert, nicht in den
@@ -81,6 +105,12 @@ Wechsle einfach auf die jeweilige Seite (z.B. eine Programmseite) - dort gilt de
   in der HTML-Datei stehen und dient als Ausgangspunkt.
 - Faellt der Server aus, zeigt die Seite einfach wieder den Originalinhalt aus
   der HTML-Datei - es geht also nichts kaputt.
+
+> **Einmalig noetig:** Diese Erweiterung braucht die **neue `worker.js`** auf dem
+> Server. Deshalb muss der Worker **einmal neu veroeffentlicht** werden (siehe
+> Abschnitt 6, "Programm-/Design-Aenderungen"): `git push` bzw.
+> `npx wrangler deploy`. Danach funktionieren Navigation-, Reihenfolge- und
+> Zusatzfeld-Speichern. (Texte/Bilder/Status wie bisher liefen auch vorher schon.)
 
 ---
 
