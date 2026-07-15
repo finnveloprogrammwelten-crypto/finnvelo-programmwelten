@@ -1400,3 +1400,12 @@ body.fv-admin-on .site-header { top: 44px; }
   font: 600 14px/1.2 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
 }
 .fv-extra-add:hover { background: rgba(120,170,255,.14); border-color: var(--blue); }
+
+/* Planer/HTML-App im Bearbeiten-Modus hochladen (Startknopf). */
+.fv-app-edit { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.fv-app-btn {
+  background: rgba(120,170,255,.12); color: #dce8fb; border: 1px dashed rgba(120,170,255,.6);
+  border-radius: 9px; padding: 8px 14px; font: 600 14px/1.2 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+}
+.fv-app-btn:hover { background: rgba(120,170,255,.2); border-color: var(--blue); }
+.fv-app-status { font: 12px/1.4 system-ui, "Segoe UI", Arial, sans-serif; color: var(--soft); }

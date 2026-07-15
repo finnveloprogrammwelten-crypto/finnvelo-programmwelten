@@ -362,7 +362,7 @@
         var map = res[0] || {}, gmap = res[1] || {};
         k.t.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
         k.i.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'image' && o.value) el.src = o.value; });
-        k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^https?:\/\//i.test(o.value)) el.setAttribute('href', o.value); });
+        k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^(https?:\/\/|\/)/i.test(o.value)) el.setAttribute('href', o.value); });
         k.s.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; applyStatus(el); });
         k.n.forEach(function (el) { var o = gmap[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
         var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
@@ -557,7 +557,7 @@
           var u = window.prompt('Link/Ziel (vollst\u00e4ndige URL, z.B. GitHub-Release) einf\u00fcgen:', cur);
           if (u === null) return;
           u = String(u).trim();
-          if (u && !/^https?:\/\//i.test(u)) { window.alert('Bitte eine vollst\u00e4ndige URL mit https:// eingeben.'); return; }
+          if (u && !/^(https?:\/\/|\/)/i.test(u)) { window.alert('Bitte eine vollst\u00e4ndige URL (https://...) ODER einen seiteninternen Pfad, der mit / beginnt, eingeben.'); return; }
           el.classList.add('fv-saving');
           save(el.getAttribute('data-fvk'), 'link', u).then(function (ok) {
             if (ok && u) el.setAttribute('href', u);
@@ -565,6 +565,67 @@
           });
         });
       });
+    }
+
+    /* ---- Planer/HTML-App hochladen (Startknopf oeffnet die Datei) ------
+     * Der Admin laedt EINE in sich geschlossene HTML-Datei hoch. Sie wird auf
+     * dem Server gespeichert (/api/app/<slug>) und der Startknopf zeigt darauf.
+     * Fuer ALLE Besucher oeffnet der Knopf dann diese Datei.
+     * ------------------------------------------------------------------- */
+    function uploadApp(appSlug, html) {
+      return fetch(API + '/app', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw(), slug: appSlug, html: html })
+      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    function enableAppUpload() {
+      var root = editRoot(); if (!root) return;
+      var btn = root.querySelector('.program-launch a.button, .program-launch__btn');
+      if (!btn || document.querySelector('.fv-app-edit')) return;
+      var action = btn.closest('.program-launch__action') || btn.parentNode;
+      var bar = document.createElement('div');
+      bar.className = 'fv-app-edit';
+      var up = document.createElement('button');
+      up.type = 'button'; up.className = 'fv-app-btn';
+      up.innerHTML = '\uD83C\uDF10 Planer-HTML-Datei hochladen';
+      var status = document.createElement('span');
+      status.className = 'fv-app-status';
+      status.textContent = 'Eine in sich geschlossene .html-Datei \u2013 der Knopf oeffnet sie danach.';
+      up.addEventListener('click', function () {
+        var inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = '.html,.htm,text/html';
+        inp.onchange = function () {
+          var f = inp.files && inp.files[0]; if (!f) return;
+          if (f.size > 6 * 1024 * 1024) {
+            window.alert('Die Datei ist gr\u00f6\u00dfer als 6 MB. Bitte eine kleinere, in sich geschlossene HTML-Datei verwenden \u2013 oder die Ordner-Methode (Datei in planer/haus-und-gartenplaner/ ablegen und ver\u00f6ffentlichen).');
+            return;
+          }
+          var reader = new FileReader();
+          reader.onload = function () {
+            var html = String(reader.result || '');
+            status.textContent = 'Wird hochgeladen \u2026';
+            btn.classList.add('fv-saving');
+            uploadApp(SLUG, html).then(function (res) {
+              btn.classList.remove('fv-saving');
+              if (res && res.url) {
+                btn.setAttribute('href', res.url);
+                var fvk = btn.getAttribute('data-fvk');
+                if (fvk) save(fvk, 'link', res.url);
+                status.textContent = '\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deinen Planer.';
+                flash(btn, true);
+              } else {
+                status.textContent = '\u2717 Fehlgeschlagen (zu gro\u00df, oder Server noch nicht aktualisiert?).';
+                flash(btn, false);
+              }
+            });
+          };
+          reader.onerror = function () { status.textContent = '\u2717 Datei konnte nicht gelesen werden.'; };
+          reader.readAsText(f);
+        };
+        inp.click();
+      });
+      bar.appendChild(up); bar.appendChild(status);
+      action.appendChild(bar);
     }
 
     /* ---- Oberflaechen-Galerie (Block g0) ------------------------------ */
@@ -840,6 +901,7 @@
           enableImages(k.i);
           enableStatus(k.s);
           enableLinks(k.d);
+          enableAppUpload();
           enableVideo();
           enableSortable();
           // renderCustom() lief bereits in applyOverrides (inkl. Bearbeiten-Affordances)

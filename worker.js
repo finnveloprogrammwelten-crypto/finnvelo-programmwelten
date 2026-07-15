@@ -27,7 +27,9 @@ const RL_MS = 20000;        // 20s Sperre zwischen Posts pro IP
 
 const MAX_CONTENT = 30000;             // max Laenge eines bearbeiteten Textblocks
 const MAX_IMG_BYTES = 2 * 1024 * 1024; // max 2 MB pro hochgeladenem Bild
+const MAX_APP = 6 * 1024 * 1024;       // max 6 MB pro hochgeladener HTML-App (z.B. Planer)
 const PAGE_RE = /^[a-z0-9-]{1,40}$/;
+const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
 //   t=Text  i=Bild  v=Video  s=Status  d=Download-Link  g=Galerie
 //   n=Navigation/Fusszeile/Marke (Seite "global")  o=Reihenfolge  x=Zusatztexte
@@ -90,6 +92,11 @@ export class Counter extends DurableObject {
     );
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS images (id TEXT PRIMARY KEY, mime TEXT NOT NULL, data TEXT NOT NULL, created INTEGER NOT NULL)"
+    );
+    // Inline-Editor: hochgeladene HTML-App (z.B. der Haus- und Gartenplaner),
+    // die der Startknopf direkt oeffnet. Eine Datei pro slug.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS apps (slug TEXT PRIMARY KEY, html TEXT NOT NULL, updated INTEGER NOT NULL)"
     );
     this.recentPosts = new Map();   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
   }
@@ -243,6 +250,34 @@ export class Counter extends DurableObject {
       return new Response(b64ToBytes(rows[0].data), {
         status: 200,
         headers: { "content-type": rows[0].mime, "cache-control": "public, max-age=31536000, immutable" }
+      });
+    }
+
+    // --- Inline-Editor: HTML-App (Planer) hochladen + ausliefern ---
+    if (url.pathname === "/api/app" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      const slug = String(body.slug || "");
+      const html = String(body.html == null ? "" : body.html);
+      if (!APP_RE.test(slug)) return json({ error: "bad_slug" }, 400);
+      if (!html) return json({ error: "empty" }, 400);
+      if (html.length > MAX_APP) return json({ error: "too_large" }, 413);
+      this.sql.exec(
+        "INSERT INTO apps (slug, html, updated) VALUES (?, ?, ?) " +
+        "ON CONFLICT(slug) DO UPDATE SET html = excluded.html, updated = excluded.updated",
+        slug, html, Date.now()
+      );
+      return json({ ok: true, url: "/api/app/" + slug });
+    }
+
+    if (url.pathname.startsWith("/api/app/") && method === "GET") {
+      const slug = url.pathname.slice("/api/app/".length);
+      const rows = this.sql.exec("SELECT html FROM apps WHERE slug = ?", slug).toArray();
+      if (!rows.length) return new Response("Not found", { status: 404 });
+      return new Response(rows[0].html, {
+        status: 200,
+        headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }
       });
     }
 

@@ -136,17 +136,31 @@ Download-Zaehler mitgezaehlt).
 
 ## 4. Den Haus- und Gartenplaner (Web-App) einbinden oder austauschen
 
-Der Knopf **"Planer jetzt oeffnen"** auf der Seite `haus-und-gartenplaner.html`
-oeffnet den Ordner `planer/haus-und-gartenplaner/`. Dort liegt aktuell nur ein
-Platzhalter. So kommt dein echter Planer rein:
+Es gibt jetzt **zwei Wege**. Weg A ist der bequemste (ohne Datei-Push).
 
-- **Planer ist eine einzelne HTML-Datei:** benenne sie in `index.html` um und
-  lege sie in `planer/haus-und-gartenplaner/` (ersetzt den Platzhalter).
-- **Planer besteht aus mehreren Dateien:** kopiere **alle** Dateien in diesen
-  Ordner; die Startdatei muss `index.html` heissen.
+### Weg A - HTML direkt hochladen (NEU, empfohlen bei EINER Datei)
+Voraussetzung: dein Planer ist **eine einzige, in sich geschlossene HTML-Datei**
+(alles Noetige steckt drin bzw. wird aus dem Internet/CDN geladen - keine
+separaten JS-/Bild-Dateien daneben).
 
-Am Knopf selbst musst du **nichts** aendern - er zeigt immer auf diesen Ordner.
-Danach einmal veroeffentlichen (Abschnitt 6), weil es eine Datei-Aenderung ist.
+1. `/admin` -> Passwort -> auf der Planer-Seite **Bearbeiten: AN** schalten.
+2. Im gruenen Start-Kasten erscheint unter dem Knopf **"Planer-HTML-Datei
+   hochladen"**. Anklicken, deine `.html` auswaehlen.
+3. Fertig - der Knopf **"Planer jetzt oeffnen"** oeffnet ab sofort deinen Planer
+   (fuer alle Besucher). Nichts zu veroeffentlichen. Max. 6 MB pro Datei.
+
+Zum Aktualisieren einfach eine neue Datei hochladen (ueberschreibt die alte).
+
+### Weg B - Ordner + veroeffentlichen (bei MEHREREN Dateien)
+Wenn der Planer aus mehreren Dateien besteht (HTML + eigene JS-/Bild-Dateien):
+
+- Kopiere **alle** Dateien in den Ordner `planer/haus-und-gartenplaner/`;
+  die Startdatei muss `index.html` heissen.
+- Einmal veroeffentlichen (Abschnitt 6), weil es eine Datei-Aenderung ist.
+
+Standardmaessig zeigt der Knopf auf diesen Ordner. (Falls du vorher Weg A benutzt
+hast und wieder auf den Ordner willst: im Bearbeiten-Modus den Knopf anklicken und
+als Ziel `/planer/haus-und-gartenplaner/` eintragen.)
 
 ---
 
