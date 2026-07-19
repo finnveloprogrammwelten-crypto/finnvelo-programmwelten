@@ -3,8 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mischwald – Punktezettel</title>
-<meta name="description" content="Kostenloser Punkterechner für das Kartenspiel Mischwald – Punkte pro Spieler bequem im Browser zusammenzählen. Ohne Installation, ohne Anmeldung.">
+<title>Mischwald / Forest Shuffle – Punktezettel online | Finnvelo</title>
+<meta name="description" content="Digitaler Punktezettel für das Kartenspiel Mischwald (englisch: Forest Shuffle): Punkte für alle Mitspieler im Browser zusammenzählen, Summe automatisch. Kostenlos, ohne Anmeldung, ohne Installation.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Finnvelo Programmwelten">
+<meta property="og:locale" content="de_DE">
+<meta property="og:title" content="Mischwald / Forest Shuffle – Punktezettel online | Finnvelo">
+<meta property="og:description" content="Digitaler Punktezettel für das Kartenspiel Mischwald (englisch: Forest Shuffle): Punkte für alle Mitspieler im Browser zusammenzählen, Summe automatisch. Kostenlos, ohne Anmeldung, ohne Installation.">
+<meta property="og:url" content="https://finnveloprogramme.com/mischwald">
+<meta property="og:image" content="https://finnveloprogramme.com/assets/images/programmwelten-cover.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mischwald / Forest Shuffle – Punktezettel online | Finnvelo">
+<meta name="twitter:description" content="Digitaler Punktezettel für das Kartenspiel Mischwald (englisch: Forest Shuffle): Punkte für alle Mitspieler im Browser zusammenzählen, Summe automatisch. Kostenlos, ohne Anmeldung, ohne Installation.">
+<meta name="twitter:image" content="https://finnveloprogramme.com/assets/images/programmwelten-cover.jpg">
 <link rel="canonical" href="https://finnveloprogramme.com/mischwald">
 <style>
   :root{
@@ -320,12 +331,50 @@
 
   @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Mischwald-Punkterechner",
+  "alternateName": "Forest Shuffle Score Sheet",
+  "url": "https://finnveloprogramme.com/mischwald",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "Alle (im Browser)",
+  "browserRequirements": "Benötigt JavaScript.",
+  "inLanguage": "de-DE",
+  "description": "Punkterechner für das Kartenspiel Mischwald – Punkte pro Spieler direkt im Browser zusammenzählen, ohne Installation und ohne Anmeldung.",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Tatorasa"
+  }
+}
+</script>
+<style>
+  .info-teil{max-width:900px;margin:34px auto 46px;padding:26px 22px;background:var(--banner,#e7dec6);
+    border:1px solid var(--banner-rand,#cfc3a4);border-radius:14px;color:var(--tinte,#2b2a24);line-height:1.62}
+  .info-teil h2{margin:0 0 12px;font-size:22px;color:var(--gruen,#1d4a37)}
+  .info-teil h3{margin:22px 0 8px;font-size:17px;color:var(--gruen,#1d4a37)}
+  .info-teil p{margin:0 0 12px}
+  .info-teil ul{margin:0 0 12px;padding-left:20px}
+  .info-teil li{margin:0 0 6px}
+  .info-teil a{color:var(--eichel,#7c4f2c)}
+  .info-teil .englisch{padding:12px 14px;background:rgba(29,74,55,.07);border-left:3px solid var(--gruen-hell,#2a6a4e);border-radius:8px;font-size:14px}
+  .info-teil .hinweis{margin-top:20px;padding-top:14px;border-top:1px solid var(--banner-rand,#cfc3a4);
+    font-size:13px;opacity:.82}
+  @media(max-width:640px){.info-teil{margin:24px 12px 34px;padding:20px 16px}}
+</style>
 </head>
 <body>
 
 <header>
   <div class="mitte">
-    <h1>Mischwald</h1>
+    <h1>Mischwald Punktezettel</h1>
     <a href="/" style="display:inline-block;margin-top:4px;font-size:13px;color:#f4edda;opacity:.7;text-decoration:none">← Finnvelo Programmwelten</a>
     <div class="tafel-block">
       <div class="tafel-innen">
@@ -777,5 +826,31 @@
   rendern();
 })();
 </script>
+
+<section class="info-teil">
+  <h2>Digitaler Punktezettel für Mischwald</h2>
+  <p>Am Ende einer Partie Mischwald steht die Auswertung &ndash; und die ist erfahrungsgemäß der zäheste Teil des Abends. Für jede Kartenart gelten eigene Bedingungen, es fallen Zwischenrechnungen an, und das Ganze noch einmal für jede Mitspielerin und jeden Mitspieler. Dieser Punktezettel nimmt dir das Rechnen ab: eintragen, fertig.</p>
+
+  <h3>Was er kann</h3>
+  <ul>
+    <li>Eine eigene Spalte pro Person &ndash; Spieler lassen sich anlegen und wieder entfernen.</li>
+    <li>Pro Kartennummer bis zu acht Einträge; leere Felder zählen als null.</li>
+    <li>Die Gesamtpunkte werden bei jeder Eingabe sofort neu berechnet.</li>
+    <li>In der Zähl-Legende kannst du Zwischenstände festhalten, etwa die Anzahl vollständig belegter Bäume.</li>
+    <li>Alles wird automatisch gesichert &ndash; der Zettel ist beim nächsten Öffnen noch da.</li>
+  </ul>
+
+  <h3>Ohne Anmeldung, ohne Datenübertragung</h3>
+  <p>Der Punktezettel läuft vollständig in deinem Browser. Es gibt keine Anmeldung, keine Konten und keine Übertragung an einen Server &ndash; deine Eingaben bleiben auf deinem eigenen Gerät. Das heißt umgekehrt auch: Handy, Tablet und Rechner führen jeweils ihren eigenen Zettel.</p>
+
+  <h3>Noch mehr zum Ausprobieren</h3>
+  <p>Der Punktezettel ist Teil von <a href="/">Finnvelo Programmwelten</a>, einer Sammlung kostenloser Hobby-Programme. Ebenfalls direkt im Browser läuft der <a href="/planer/haus-und-gartenplaner/">Haus- und Gartenplaner</a>, ein 3D-Planer für Räume, Möbel und Gärten.</p>
+
+  <h3>Auch bekannt als &bdquo;Forest Shuffle&ldquo;</h3>
+  <p>International erscheint Mischwald unter dem Titel <strong>Forest Shuffle</strong>. Wer das Spiel unter diesem Namen kennt, ist hier also richtig &ndash; gezählt wird identisch.</p>
+  <p lang="en" class="englisch"><strong>English:</strong> This is a free score sheet for <strong>Forest Shuffle</strong> (German title: Mischwald). The interface is in German, but it works the same way: enter the points for each card number, and the total is calculated automatically. Nothing is sent to a server &ndash; your entries stay in your own browser.</p>
+
+  <p class="hinweis">Inoffizielles Hilfsmittel, entstanden als privates Hobbyprojekt. &bdquo;Mischwald&ldquo; ist ein Kartenspiel von Kosch, erschienen bei Lookout Spiele. Diese Seite steht in keiner Verbindung zum Verlag und enthält weder Spielregeln noch Kartendaten &ndash; sie hilft ausschließlich beim Zusammenzählen der Punkte.</p>
+</section>
 </body>
 </html>

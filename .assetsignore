@@ -22,3 +22,6 @@ wrangler.toml
 .gitignore
 README.md
 ANLEITUNG-Zaehler.txt
+
+# Hilfsskripte (nicht oeffentlich)
+tools

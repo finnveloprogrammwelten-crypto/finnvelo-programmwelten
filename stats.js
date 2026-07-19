@@ -245,14 +245,15 @@
     /* ---- Element-Sammler ---------------------------------------------- */
     function textEls() {
       var root = editRoot(); if (!root) return [];
-      var base = [];
+      var base = [], spaet = [];
       qsa(root, TEXT_SEL).forEach(function (el) {
         if (el.closest('.fv-gallery')) return;
         if (el.closest('.fv-extra-zone')) return;               // Zusatztexte -> eigene Logik (x0)
         if (el.querySelector(TEXT_SEL)) return;                 // Container -> ueberspringen
         if (el.querySelector('img')) return;                    // enthaelt Bild -> separat
         if (!el.textContent || !el.textContent.trim()) return;  // leer
-        base.push(el);
+        if (el.closest('[data-fv-text-extra]')) spaet.push(el); // nachtraeglich ergaenzt -> ans Ende
+        else base.push(el);
       });
       var extra = [];
       qsa(root, EXTRA_TEXT_SEL).forEach(function (el) {
@@ -262,7 +263,9 @@
         if (!el.textContent || !el.textContent.trim()) return;
         extra.push(el);
       });
-      return base.concat(extra);   // Zusatz-Spans IMMER nach den Basistexten -> stabile t-Indizes
+      // Reihenfolge fest: Basistexte, dann Kachel-Beschreibungen, dann spaeter
+      // ergaenzte Bloecke -> bereits gespeicherte t-Indizes bleiben unveraendert.
+      return base.concat(extra).concat(spaet);
     }
     function navEls() {
       var base = [], extra = [];

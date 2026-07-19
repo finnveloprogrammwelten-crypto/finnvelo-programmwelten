@@ -5,7 +5,9 @@
   "main": "worker.js",
   "assets": {
     "directory": ".",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // Unbekannte Adressen zeigen die freundliche Fehlerseite 404.html
+    "not_found_handling": "404-page"
   },
   // Durable Object fuer die Zaehler - wird beim Deploy automatisch angelegt.
   // KEIN KV-Namespace, KEINE ID noetig.

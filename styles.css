@@ -47,7 +47,7 @@ body::before {
   bottom: calc(var(--footer-space) + var(--background-inset));
   left: var(--background-inset);
   z-index: 0;
-  background-image: url("assets/images/programmwelten-cover.png");
+  background-image: url("assets/images/programmwelten-hintergrund.webp");
   background-repeat: no-repeat;
   background-position: center center;
   background-size: contain;
@@ -411,6 +411,7 @@ h1 {
 .program-row__image img {
   display: block;
   width: 100%;
+  aspect-ratio: 1.5 / 1;
   object-fit: contain;
 }
 
@@ -1449,3 +1450,28 @@ body.fv-admin-on .site-header { top: 44px; }
   .nav-apps { position: static; }
   .nav-apps__menu { left: 0; right: 0; min-width: 0; }
 }
+
+/* Hinweisblock "Web-Apps" auf der Startseite (gruener Akzent = laeuft im Browser). */
+.webapp-note {
+  margin-top: clamp(18px, 2vw, 26px);
+  max-width: 560px;
+  padding: 16px 18px;
+  border-left: 3px solid #4ad991;
+  background: rgba(74, 217, 145, 0.055);
+  border-radius: 10px;
+}
+.webapp-note__label {
+  margin: 0 0 6px;
+  color: #8bf0bd;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 900;
+}
+.webapp-note__text {
+  margin: 0;
+  color: #d7e2f5;
+  font-size: clamp(15px, 1.05vw, 17px);
+  line-height: 1.6;
+}
+.webapp-note__text strong { color: #ffffff; }
