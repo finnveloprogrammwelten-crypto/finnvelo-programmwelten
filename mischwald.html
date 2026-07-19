@@ -356,23 +356,43 @@
 }
 </script>
 <style>
-  .info-teil{max-width:900px;margin:34px auto 46px;padding:26px 22px;background:var(--banner,#e7dec6);
-    border:1px solid var(--banner-rand,#cfc3a4);border-radius:14px;color:var(--tinte,#2b2a24);line-height:1.62}
-  .info-teil h2{margin:0 0 12px;font-size:22px;color:var(--gruen,#1d4a37)}
-  .info-teil h3{margin:22px 0 8px;font-size:17px;color:var(--gruen,#1d4a37)}
-  .info-teil p{margin:0 0 12px}
-  .info-teil ul{margin:0 0 12px;padding-left:20px}
-  .info-teil li{margin:0 0 6px}
-  .info-teil a{color:var(--eichel,#7c4f2c)}
-  .kopfzeile-unten{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:4px}
+  /* Kopfzeilen-Knoepfe (Sprache / Erklaerung) */
+  .kopfzeile-unten{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:4px}
   .zurueck-link{font-size:13px;color:#f4edda;opacity:.7;text-decoration:none}
   .sprach-knopf{font:600 12px/1 inherit;padding:5px 11px;border-radius:999px;cursor:pointer;
     background:rgba(244,237,218,.12);color:#f4edda;border:1px solid rgba(244,237,218,.38)}
   .sprach-knopf:hover{background:rgba(244,237,218,.24)}
-  .info-teil .englisch{padding:12px 14px;background:rgba(29,74,55,.07);border-left:3px solid var(--gruen-hell,#2a6a4e);border-radius:8px;font-size:14px}
-  .info-teil .hinweis{margin-top:20px;padding-top:14px;border-top:1px solid var(--banner-rand,#cfc3a4);
+
+  /* Erklaerung als Pop-up - liegt ueber der Seite und beeinflusst das Layout nicht */
+  #infoModal{position:fixed;inset:0;z-index:210;display:none;
+    background:rgba(15,43,32,.78);align-items:center;justify-content:center;padding:20px}
+  #infoModal.offen{display:flex}
+  #infoModal .ibox{background:var(--pergament,#f4edda);border:3px solid var(--gruen,#1d4a37);
+    border-radius:14px;width:100%;max-width:760px;max-height:86vh;display:flex;flex-direction:column;
+    box-shadow:0 16px 40px rgba(0,0,0,.55);overflow:hidden}
+  #infoModal .ikopf{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;
+    background:var(--banner,#e7dec6);border-bottom:2px solid var(--banner-rand,#cfc3a4);
+    padding:10px 14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+    font-size:13px;color:var(--gruen,#1d4a37)}
+  #infoModal .izu{background:none;border:none;cursor:pointer;font-size:18px;line-height:1;
+    color:var(--gruen,#1d4a37);padding:2px 6px;border-radius:6px}
+  #infoModal .izu:hover{background:rgba(29,74,55,.12)}
+  #infoModal .iinhalt{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:20px 22px 24px;color:var(--tinte,#2b2a24);line-height:1.62}
+  #infoModal h2{margin:0 0 12px;font-size:21px;color:var(--gruen,#1d4a37)}
+  #infoModal h3{margin:22px 0 8px;font-size:16px;color:var(--gruen,#1d4a37)}
+  #infoModal p{margin:0 0 12px}
+  #infoModal ul{margin:0 0 12px;padding-left:20px}
+  #infoModal li{margin:0 0 6px}
+  #infoModal a{color:var(--eichel,#7c4f2c)}
+  #infoModal .hinweis{margin-top:20px;padding-top:14px;border-top:1px solid var(--banner-rand,#cfc3a4);
     font-size:13px;opacity:.82}
-  @media(max-width:640px){.info-teil{margin:24px 12px 34px;padding:20px 16px}}
+  @media(max-width:640px){
+    #infoModal{padding:10px}
+    #infoModal .ibox{max-height:92vh}
+    #infoModal .iinhalt{padding:16px 15px 20px}
+    #infoModal h2{font-size:19px}
+  }
 </style>
 </head>
 <body>
@@ -382,6 +402,7 @@
     <h1>Mischwald Punktezettel</h1>
     <div class="kopfzeile-unten">
       <a class="zurueck-link" href="/">← Finnvelo Programmwelten</a>
+      <button type="button" id="infoKnopf" class="sprach-knopf" title="Erklärung anzeigen">? Erklärung</button>
       <button type="button" id="sprachKnopf" class="sprach-knopf" title="Sprache wechseln / switch language">English</button>
     </div>
     <div class="tafel-block">
@@ -458,6 +479,41 @@
       <button class="btn loesch" id="modalJa" type="button">Ja, löschen</button>
     </div>
   </div>
+</div>
+
+<div id="infoModal" role="dialog" aria-modal="true" aria-labelledby="infoKopf">
+  <div class="ibox">
+    <div class="ikopf">
+      <span id="infoKopf">Erklärung</span>
+      <button type="button" id="infoZu" class="izu" aria-label="Schließen">&#10005;</button>
+    </div>
+    <div class="iinhalt">
+<div class="info-de">
+  <h2>Digitaler Punktezettel für Mischwald</h2>
+  <p>Am Ende einer Partie Mischwald steht die Auswertung &ndash; und die ist erfahrungsgemäß der zäheste Teil des Abends. Für jede Kartenart gelten eigene Bedingungen, es fallen Zwischenrechnungen an, und das Ganze noch einmal für jede Mitspielerin und jeden Mitspieler. Dieser Punktezettel nimmt dir das Rechnen ab: eintragen, fertig.</p>
+
+  <h3>Was er kann</h3>
+  <ul>
+    <li>Eine eigene Spalte pro Person &ndash; bis zu fünf Spieler.</li>
+    <li>Pro Kartennummer bis zu acht Einträge; leere Felder zählen als null.</li>
+    <li>Die Gesamtpunkte werden bei jeder Eingabe sofort neu berechnet.</li>
+    <li>Zähl-Legende mit allen Kartenarten zum Mitzählen &ndash; Bäume, Vögel, Schmetterlinge, Pilze und mehr, dazu eigene Einträge.</li>
+    <li>Alles wird automatisch gesichert &ndash; der Zettel ist beim nächsten Öffnen noch da.</li>
+  </ul>
+
+  <h3>Auch für die Erweiterungen</h3>
+  <p>Die Zähl-Legende enthält auch die Einträge aus <strong>Mischwald: Alpin</strong> (Zirbelkiefern, Europäische Lärchen, Karten mit Alpin-Symbol) und <strong>Mischwald: Waldrand</strong> (Sträucher). Grundspiel und Erweiterungen lassen sich damit gemeinsam auswerten.</p>
+
+  <h3>Ohne Anmeldung, ohne Datenübertragung</h3>
+  <p>Der Punktezettel läuft vollständig in deinem Browser. Es gibt keine Anmeldung, keine Konten und keine Übertragung an einen Server &ndash; deine Eingaben bleiben auf deinem eigenen Gerät. Das heißt umgekehrt auch: Handy, Tablet und Rechner führen jeweils ihren eigenen Zettel.</p>
+
+  <h3>Auch bekannt als &bdquo;Forest Shuffle&ldquo;</h3>
+  <p>International erscheint Mischwald unter dem Titel <strong>Forest Shuffle</strong>. Wer das Spiel unter diesem Namen kennt, ist hier also richtig &ndash; gezählt wird identisch. Über den Knopf oben lässt sich die Seite auf Englisch umstellen.</p>
+
+  <h3>Noch mehr zum Ausprobieren</h3>
+  <p>Der Punktezettel ist Teil von <a href="/">Finnvelo Programmwelten</a>, einer Sammlung kostenloser Hobby-Programme. Ebenfalls direkt im Browser läuft der <a href="/planer/haus-und-gartenplaner/">Haus- und Gartenplaner</a>, ein 3D-Planer für Räume, Möbel und Gärten.</p>
+
+  <p class="hinweis">Inoffizielles Hilfsmittel, entstanden als privates Hobbyprojekt. &bdquo;Mischwald&ldquo; ist ein Kartenspiel von Kosch, erschienen bei Lookout Spiele. Diese Seite steht in keiner Verbindung zum Verlag und enthält weder Spielregeln noch Kartendaten &ndash; sie hilft ausschließlich beim Zusammenzählen der Punkte.</p>
 </div>
 
 <script>
@@ -538,7 +594,9 @@
     ["#modalKopf","Really clear?"],
     ["#modalNein","Cancel"],
     ["#modalJa","Yes, clear"],
-    [".zurueck-link","← Finnvelo Programmwelten"]
+    [".zurueck-link","← Finnvelo Programmwelten"],
+    ["#infoKnopf","? About"],
+    ["#infoKopf","About this tool"]
   ];
   var sprache = "de";
   try {
@@ -919,38 +977,31 @@
       sprachAnwenden();
     });
   }
+  /* ---------- Erklaerung als Pop-up ---------- */
+  var infoModal = document.getElementById("infoModal");
+  function infoOeffnen(){
+    if (!infoModal) return;
+    infoModal.classList.add("offen");
+    var inhalt = infoModal.querySelector(".iinhalt");
+    if (inhalt) inhalt.scrollTop = 0;
+  }
+  function infoSchliessen(){ if (infoModal) infoModal.classList.remove("offen"); }
+  var infoKnopf = document.getElementById("infoKnopf");
+  var infoZu = document.getElementById("infoZu");
+  if (infoKnopf) infoKnopf.addEventListener("click", infoOeffnen);
+  if (infoZu) infoZu.addEventListener("click", infoSchliessen);
+  if (infoModal) infoModal.addEventListener("click", function(e){
+    if (e.target === infoModal) infoSchliessen();
+  });
+  document.addEventListener("keydown", function(e){
+    if (e.key === "Escape" || e.keyCode === 27) infoSchliessen();
+  });
+
   sprachAnwenden();
 })();
 </script>
 
-<section class="info-teil">
-<div class="info-de">
-  <h2>Digitaler Punktezettel für Mischwald</h2>
-  <p>Am Ende einer Partie Mischwald steht die Auswertung &ndash; und die ist erfahrungsgemäß der zäheste Teil des Abends. Für jede Kartenart gelten eigene Bedingungen, es fallen Zwischenrechnungen an, und das Ganze noch einmal für jede Mitspielerin und jeden Mitspieler. Dieser Punktezettel nimmt dir das Rechnen ab: eintragen, fertig.</p>
 
-  <h3>Was er kann</h3>
-  <ul>
-    <li>Eine eigene Spalte pro Person &ndash; bis zu fünf Spieler.</li>
-    <li>Pro Kartennummer bis zu acht Einträge; leere Felder zählen als null.</li>
-    <li>Die Gesamtpunkte werden bei jeder Eingabe sofort neu berechnet.</li>
-    <li>Zähl-Legende mit allen Kartenarten zum Mitzählen &ndash; Bäume, Vögel, Schmetterlinge, Pilze und mehr, dazu eigene Einträge.</li>
-    <li>Alles wird automatisch gesichert &ndash; der Zettel ist beim nächsten Öffnen noch da.</li>
-  </ul>
-
-  <h3>Auch für die Erweiterungen</h3>
-  <p>Die Zähl-Legende enthält auch die Einträge aus <strong>Mischwald: Alpin</strong> (Zirbelkiefern, Europäische Lärchen, Karten mit Alpin-Symbol) und <strong>Mischwald: Waldrand</strong> (Sträucher). Grundspiel und Erweiterungen lassen sich damit gemeinsam auswerten.</p>
-
-  <h3>Ohne Anmeldung, ohne Datenübertragung</h3>
-  <p>Der Punktezettel läuft vollständig in deinem Browser. Es gibt keine Anmeldung, keine Konten und keine Übertragung an einen Server &ndash; deine Eingaben bleiben auf deinem eigenen Gerät. Das heißt umgekehrt auch: Handy, Tablet und Rechner führen jeweils ihren eigenen Zettel.</p>
-
-  <h3>Auch bekannt als &bdquo;Forest Shuffle&ldquo;</h3>
-  <p>International erscheint Mischwald unter dem Titel <strong>Forest Shuffle</strong>. Wer das Spiel unter diesem Namen kennt, ist hier also richtig &ndash; gezählt wird identisch. Über den Knopf oben lässt sich die Seite auf Englisch umstellen.</p>
-
-  <h3>Noch mehr zum Ausprobieren</h3>
-  <p>Der Punktezettel ist Teil von <a href="/">Finnvelo Programmwelten</a>, einer Sammlung kostenloser Hobby-Programme. Ebenfalls direkt im Browser läuft der <a href="/planer/haus-und-gartenplaner/">Haus- und Gartenplaner</a>, ein 3D-Planer für Räume, Möbel und Gärten.</p>
-
-  <p class="hinweis">Inoffizielles Hilfsmittel, entstanden als privates Hobbyprojekt. &bdquo;Mischwald&ldquo; ist ein Kartenspiel von Kosch, erschienen bei Lookout Spiele. Diese Seite steht in keiner Verbindung zum Verlag und enthält weder Spielregeln noch Kartendaten &ndash; sie hilft ausschließlich beim Zusammenzählen der Punkte.</p>
-</div>
 
 <div class="info-en" lang="en" hidden>
   <h2>Digital score sheet for Forest Shuffle</h2>
@@ -979,6 +1030,9 @@
 
   <p class="hinweis">Unofficial fan-made tool, built as a private hobby project. &bdquo;Forest Shuffle&ldquo; / &bdquo;Mischwald&ldquo; is a card game by Kosch, published by Lookout Games. This page is not affiliated with the publisher and contains neither rules nor card data &ndash; it only helps with adding up the points.</p>
 </div>
-</section>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
