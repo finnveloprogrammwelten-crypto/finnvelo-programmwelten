@@ -293,8 +293,32 @@ export class Counter extends DurableObject {
   }
 }
 
+// --- Web-Apps: Oeffnungen mitzaehlen -----------------------------------
+// Wird serverseitig gezaehlt, damit es auch zaehlt, wenn jemand die App
+// direkt aufruft (z.B. ueber einen Link oder aus der Google-Suche).
+function webAppKey(pathname) {
+  const p = String(pathname || "").toLowerCase().replace(/\/+$/, "");
+  if (p === "/mischwald" || p === "/mischwald.html") return "open:mischwald";
+  if (p === "/planer/haus-und-gartenplaner" || p === "/planer/haus-und-gartenplaner/index.html") return "open:planer";
+  return "";
+}
+
+// Nur echte Seitenaufrufe zaehlen - keine Bilder, Suchmaschinen oder Messdienste.
+function isEchterAufruf(request) {
+  if ((request.method || "GET") !== "GET") return false;
+  const h = request.headers;
+  const accept = (h.get("accept") || "").toLowerCase();
+  if (accept && !accept.includes("text/html")) return false;
+  const modus = (h.get("sec-fetch-mode") || "").toLowerCase();
+  if (modus && modus !== "navigate") return false;
+  const ua = (h.get("user-agent") || "").toLowerCase();
+  if (!ua) return false;
+  if (/bot|crawl|spider|slurp|preview|monitor|curl|wget|python-requests|headless|lighthouse|pingdom|uptime|facebookexternalhit|whatsapp|telegram/.test(ua)) return false;
+  return true;
+}
+
 export default {
-  async fetch(request, env, _ctx) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
       if (!env || !env.COUNTERS) return json({ error: "storage_not_configured" }, 503);
@@ -302,6 +326,21 @@ export default {
       const stub = env.COUNTERS.get(id);
       return stub.fetch(request);
     }
+
+    // Wurde eine Web-App geoeffnet? Dann leise mitzaehlen (blockiert nichts).
+    const appKey = webAppKey(url.pathname);
+    if (appKey && env && env.COUNTERS && isEchterAufruf(request)) {
+      try {
+        const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+        const zaehlen = stub.fetch(new Request("https://zaehler/api/hit", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ key: appKey })
+        }));
+        if (ctx && ctx.waitUntil) ctx.waitUntil(zaehlen);
+      } catch (_e) { /* Zaehlen darf die Seite nie stoeren */ }
+    }
+
     // Alles andere: statische Datei ausliefern.
     if (env && env.ASSETS) return env.ASSETS.fetch(request);
     return new Response("Not found", { status: 404 });

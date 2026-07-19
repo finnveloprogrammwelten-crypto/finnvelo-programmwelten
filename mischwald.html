@@ -364,6 +364,11 @@
   .info-teil ul{margin:0 0 12px;padding-left:20px}
   .info-teil li{margin:0 0 6px}
   .info-teil a{color:var(--eichel,#7c4f2c)}
+  .kopfzeile-unten{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:4px}
+  .zurueck-link{font-size:13px;color:#f4edda;opacity:.7;text-decoration:none}
+  .sprach-knopf{font:600 12px/1 inherit;padding:5px 11px;border-radius:999px;cursor:pointer;
+    background:rgba(244,237,218,.12);color:#f4edda;border:1px solid rgba(244,237,218,.38)}
+  .sprach-knopf:hover{background:rgba(244,237,218,.24)}
   .info-teil .englisch{padding:12px 14px;background:rgba(29,74,55,.07);border-left:3px solid var(--gruen-hell,#2a6a4e);border-radius:8px;font-size:14px}
   .info-teil .hinweis{margin-top:20px;padding-top:14px;border-top:1px solid var(--banner-rand,#cfc3a4);
     font-size:13px;opacity:.82}
@@ -375,7 +380,10 @@
 <header>
   <div class="mitte">
     <h1>Mischwald Punktezettel</h1>
-    <a href="/" style="display:inline-block;margin-top:4px;font-size:13px;color:#f4edda;opacity:.7;text-decoration:none">← Finnvelo Programmwelten</a>
+    <div class="kopfzeile-unten">
+      <a class="zurueck-link" href="/">← Finnvelo Programmwelten</a>
+      <button type="button" id="sprachKnopf" class="sprach-knopf" title="Sprache wechseln / switch language">English</button>
+    </div>
     <div class="tafel-block">
       <div class="tafel-innen">
         <div class="tafel" id="tafel"></div>
@@ -484,6 +492,66 @@
   ];
   var EIGENE = "Eigene Kategorie …";
 
+  /* ---------- Sprache: Deutsch / Englisch ----------
+     WICHTIG: Gespeichert wird immer die deutsche Bezeichnung (als fester
+     Schluessel). Uebersetzt wird nur die Anzeige - dadurch bleiben alte
+     Punktezettel beim Sprachwechsel unveraendert erhalten. */
+  var SPRACHKEY = "mischwald_sprache";
+  var EN = {
+    "Allgemeine Zählungen":"General counts",
+    "Baumarten (Anzahl)":"Tree species (count)",
+    "Kartentypen / Symbole":"Card types / symbols",
+    "Bestimmte Karten":"Specific cards",
+    "Sonstiges":"Other",
+    "Vollständig belegte Bäume":"Fully occupied trees",
+    "Unterschiedliche Baumarten":"Different tree species",
+    "Unterschiedliche Schmetterlinge":"Different butterflies",
+    "Karten in der Höhle":"Cards in the cave",
+    "Bäume gesamt":"Trees in total",
+    "Sträucher gesamt (Waldrand)":"Shrubs in total (Woodland Edge)",
+    "Karten mit Alpin-Symbol (Berg)":"Cards with alpine symbol",
+    "Weißtannen":"Silver firs","Buchen":"Beeches","Eichen":"Oaks","Douglasien":"Douglas firs",
+    "Rosskastanien (Kastanien)":"Horse chestnuts","Linden":"Lindens","Birken":"Birches",
+    "Bergahorne":"Sycamore maples","Zirbelkiefern (Alpin)":"Swiss stone pines (Alpine)",
+    "Europ. Lärchen (Alpin)":"European larches (Alpine)",
+    "Schmetterlinge":"Butterflies","Vögel":"Birds","Paarhufer (Hufe)":"Hoofed animals",
+    "Pfoten-Tiere":"Paw animals","Insekten":"Insects","Amphibien":"Amphibians",
+    "Fledermäuse":"Bats","Pilze":"Mushrooms","Pflanzen":"Plants",
+    "Feldhasen":"Hares","Hasen gesamt (Feld- + Schneehase)":"Hares in total (incl. mountain hare)",
+    "Frischlinge":"Boar piglets","Rehe / Rotwild":"Deer","Farne":"Ferns",
+    "Eigene Kategorie …":"Custom category …",
+    "Eigene Bezeichnung eintragen":"Enter your own label",
+    "Anz.":"Qty","Eintrag entfernen":"Remove entry",
+    "Nr. ":"No. ","Feld ":"field ","Name Spieler ":"Player name ","Spieler ":"Player "
+  };
+  var STATISCH = [
+    ["h1","Forest Shuffle Score Sheet"],
+    ["#reset","Clear player"],
+    ["#resetAll","Clear all"],
+    ["#wertung .hinweis","40 numbers · 8 fields each · empty = 0"],
+    ["#ptab thead th:first-child","No."],
+    ["#ptab thead th:last-child","Total"],
+    ["#ptab tfoot td:first-child","Total points"],
+    ["#legende .titel","Counting legend"],
+    ["#legende .hinweis","Note counts, e.g.<br>fully occupied trees"],
+    ["#lplus","+ Add entry"],
+    ["#modalKopf","Really clear?"],
+    ["#modalNein","Cancel"],
+    ["#modalJa","Yes, clear"],
+    [".zurueck-link","← Finnvelo Programmwelten"]
+  ];
+  var sprache = "de";
+  try {
+    var gespeichert = window.localStorage ? localStorage.getItem(SPRACHKEY) : null;
+    if (gespeichert === "de" || gespeichert === "en") sprache = gespeichert;
+    else if (!/^de/i.test(navigator.language || "de")) sprache = "en";
+  } catch(e){}
+  function T(x){ return (sprache === "en" && EN[x]) ? EN[x] : x; }
+  function TX(de, en){ return sprache === "en" ? en : de; }
+  function anzeigeName(sp, i){
+    return (sp.name === "Spieler " + (i+1)) ? (T("Spieler ") + (i+1)) : sp.name;
+  }
+
   /* ---------- Zustand ---------- */
   function leererSpieler(i){
     return {
@@ -535,7 +603,7 @@
     for (var z=0;z<ZEILEN;z++) sum += zeilenSumme(s, z);
     return sum;
   }
-  function fmt(n){ return (Math.round(n*100)/100).toLocaleString("de-DE"); }
+  function fmt(n){ return (Math.round(n*100)/100).toLocaleString(sprache === "en" ? "en-US" : "de-DE"); }
 
   /* ---------- Tabelle aufbauen ---------- */
   var tbody = document.getElementById("ptbody");
@@ -555,7 +623,7 @@
         inp.type = "text"; inp.inputMode = "decimal";
         inp.className = "pf"; inp.placeholder = "·";
         inp.dataset.z = z; inp.dataset.f = f;
-        inp.setAttribute("aria-label","Nr. "+(z+1)+" Feld "+(f+1));
+        inp.setAttribute("aria-label", T("Nr. ")+(z+1)+" "+T("Feld ")+(f+1));
         td.appendChild(inp); tr.appendChild(td);
         inputs[z][f] = inp;
       }
@@ -607,23 +675,23 @@
 
     var btn = document.createElement("button");
     btn.type = "button"; btn.className = "dd-btn";
-    btn.textContent = eintrag.kat;
+    btn.textContent = T(eintrag.kat);
     dd.appendChild(btn);
 
     var liste = document.createElement("div");
     liste.className = "dd-liste";
     KATEGORIEN.forEach(function(gr){
       var h = document.createElement("div");
-      h.className = "dd-gruppe"; h.textContent = gr.g;
+      h.className = "dd-gruppe"; h.textContent = T(gr.g);
       liste.appendChild(h);
       gr.o.forEach(function(name){
         var o = document.createElement("div");
         o.className = "dd-opt" + (name===eintrag.kat ? " gewaehlt" : "");
-        o.textContent = name;
+        o.textContent = T(name);
         o.addEventListener("click", function(){
           liste.querySelectorAll(".dd-opt").forEach(function(x){ x.classList.remove("gewaehlt"); });
           o.classList.add("gewaehlt");
-          btn.textContent = name;
+          btn.textContent = T(name);
           dd.classList.remove("offen");
           beiWahl(name);
         });
@@ -656,7 +724,7 @@
 
       var frei = document.createElement("input");
       frei.type = "text"; frei.className = "frei";
-      frei.placeholder = "Eigene Bezeichnung eintragen";
+      frei.placeholder = T("Eigene Bezeichnung eintragen");
       frei.value = eintrag.frei || "";
 
       function eigenModus(an){
@@ -674,12 +742,12 @@
 
       var anz = document.createElement("input");
       anz.type = "text"; anz.inputMode = "numeric"; anz.className = "anz";
-      anz.placeholder = "Anz."; anz.value = eintrag.anz || "";
+      anz.placeholder = T("Anz."); anz.value = eintrag.anz || "";
       row.appendChild(anz);
 
       var del = document.createElement("button");
       del.className = "del"; del.type = "button";
-      del.title = "Eintrag entfernen"; del.textContent = "✕";
+      del.title = T("Eintrag entfernen"); del.textContent = "✕";
       row.appendChild(del);
 
       eigenModus(eintrag.kat === EIGENE);
@@ -737,7 +805,7 @@
     tabEls.forEach(function(t, i){
       var sp = zustand.spieler[i];
       t.classList.toggle("aktiv", i===zustand.aktiv);
-      t.querySelector(".tn").textContent = sp.name;
+      t.querySelector(".tn").textContent = anzeigeName(sp, i);
       t.querySelector(".tp").textContent = fmt(gesamtSumme(i));
     });
   }
@@ -753,9 +821,9 @@
   /* ---------- Spieler wechseln / rendern ---------- */
   function rendern(){
     var s = zustand.aktiv, sp = zustand.spieler[s];
-    document.getElementById("tabTitel").textContent = sp.name + " – Wertung";
+    document.getElementById("tabTitel").textContent = anzeigeName(sp, zustand.aktiv) + TX(" – Wertung", " – scoring");
     nameFeld.value = (sp.name === "Spieler "+(s+1)) ? "" : sp.name;
-    nameFeld.placeholder = "Name Spieler " + (s+1);
+    nameFeld.placeholder = T("Name Spieler ") + (s+1);
     for (var z=0; z<ZEILEN; z++){
       for (var f=0; f<FELDER; f++){
         inputs[z][f].value = sp.punkte[z][f] || "";
@@ -806,7 +874,7 @@
 
   document.getElementById("reset").addEventListener("click", function(){
     var sp = zustand.spieler[zustand.aktiv];
-    frage("„" + sp.name + "“ wird komplett geleert: alle Punkte und alle Legenden-Einträge.", function(){
+    frage(TX("„" + sp.name + "“ wird komplett geleert: alle Punkte und alle Legenden-Einträge.", "\u201c" + anzeigeName(sp, zustand.aktiv) + "\u201d will be cleared completely: all points and all legend entries."), function(){
       zustand.spieler[zustand.aktiv] = leererSpieler(zustand.aktiv);
       rendern();
       sofortSpeichern();
@@ -814,7 +882,7 @@
   });
 
   document.getElementById("resetAll").addEventListener("click", function(){
-    frage("Alle 5 Spieler werden geleert: sämtliche Punkte, Namen und Legenden-Einträge.", function(){
+    frage(TX("Alle 5 Spieler werden geleert: sämtliche Punkte, Namen und Legenden-Einträge.", "All 5 players will be cleared: all points, names and legend entries."), function(){
       zustand = { aktiv:0, spieler:[] };
       for (var i=0;i<SPIELER;i++) zustand.spieler.push(leererSpieler(i));
       rendern();
@@ -824,33 +892,93 @@
 
   tabsBauen();
   rendern();
+
+  /* ---------- Sprache anwenden / umschalten ---------- */
+  function sprachAnwenden(){
+    document.documentElement.lang = sprache;
+    STATISCH.forEach(function(paar){
+      var el = document.querySelector(paar[0]);
+      if (!el) return;
+      if (el.getAttribute("data-de") === null) el.setAttribute("data-de", el.innerHTML);
+      el.innerHTML = (sprache === "en") ? paar[1] : el.getAttribute("data-de");
+    });
+    var de = document.querySelector(".info-de"), en = document.querySelector(".info-en");
+    if (de && en) { de.hidden = (sprache === "en"); en.hidden = (sprache !== "en"); }
+    var knopf = document.getElementById("sprachKnopf");
+    if (knopf) knopf.textContent = (sprache === "en") ? "Deutsch" : "English";
+    document.title = TX("Mischwald / Forest Shuffle \u2013 Punktezettel online | Finnvelo",
+                        "Forest Shuffle score sheet \u2013 count points online | Finnvelo");
+    rendern();
+  }
+
+  var sprachKnopf = document.getElementById("sprachKnopf");
+  if (sprachKnopf) {
+    sprachKnopf.addEventListener("click", function(){
+      sprache = (sprache === "en") ? "de" : "en";
+      try { if (window.localStorage) localStorage.setItem(SPRACHKEY, sprache); } catch(e){}
+      sprachAnwenden();
+    });
+  }
+  sprachAnwenden();
 })();
 </script>
 
 <section class="info-teil">
+<div class="info-de">
   <h2>Digitaler Punktezettel für Mischwald</h2>
   <p>Am Ende einer Partie Mischwald steht die Auswertung &ndash; und die ist erfahrungsgemäß der zäheste Teil des Abends. Für jede Kartenart gelten eigene Bedingungen, es fallen Zwischenrechnungen an, und das Ganze noch einmal für jede Mitspielerin und jeden Mitspieler. Dieser Punktezettel nimmt dir das Rechnen ab: eintragen, fertig.</p>
 
   <h3>Was er kann</h3>
   <ul>
-    <li>Eine eigene Spalte pro Person &ndash; Spieler lassen sich anlegen und wieder entfernen.</li>
+    <li>Eine eigene Spalte pro Person &ndash; bis zu fünf Spieler.</li>
     <li>Pro Kartennummer bis zu acht Einträge; leere Felder zählen als null.</li>
     <li>Die Gesamtpunkte werden bei jeder Eingabe sofort neu berechnet.</li>
-    <li>In der Zähl-Legende kannst du Zwischenstände festhalten, etwa die Anzahl vollständig belegter Bäume.</li>
+    <li>Zähl-Legende mit allen Kartenarten zum Mitzählen &ndash; Bäume, Vögel, Schmetterlinge, Pilze und mehr, dazu eigene Einträge.</li>
     <li>Alles wird automatisch gesichert &ndash; der Zettel ist beim nächsten Öffnen noch da.</li>
   </ul>
+
+  <h3>Auch für die Erweiterungen</h3>
+  <p>Die Zähl-Legende enthält auch die Einträge aus <strong>Mischwald: Alpin</strong> (Zirbelkiefern, Europäische Lärchen, Karten mit Alpin-Symbol) und <strong>Mischwald: Waldrand</strong> (Sträucher). Grundspiel und Erweiterungen lassen sich damit gemeinsam auswerten.</p>
 
   <h3>Ohne Anmeldung, ohne Datenübertragung</h3>
   <p>Der Punktezettel läuft vollständig in deinem Browser. Es gibt keine Anmeldung, keine Konten und keine Übertragung an einen Server &ndash; deine Eingaben bleiben auf deinem eigenen Gerät. Das heißt umgekehrt auch: Handy, Tablet und Rechner führen jeweils ihren eigenen Zettel.</p>
 
+  <h3>Auch bekannt als &bdquo;Forest Shuffle&ldquo;</h3>
+  <p>International erscheint Mischwald unter dem Titel <strong>Forest Shuffle</strong>. Wer das Spiel unter diesem Namen kennt, ist hier also richtig &ndash; gezählt wird identisch. Über den Knopf oben lässt sich die Seite auf Englisch umstellen.</p>
+
   <h3>Noch mehr zum Ausprobieren</h3>
   <p>Der Punktezettel ist Teil von <a href="/">Finnvelo Programmwelten</a>, einer Sammlung kostenloser Hobby-Programme. Ebenfalls direkt im Browser läuft der <a href="/planer/haus-und-gartenplaner/">Haus- und Gartenplaner</a>, ein 3D-Planer für Räume, Möbel und Gärten.</p>
 
-  <h3>Auch bekannt als &bdquo;Forest Shuffle&ldquo;</h3>
-  <p>International erscheint Mischwald unter dem Titel <strong>Forest Shuffle</strong>. Wer das Spiel unter diesem Namen kennt, ist hier also richtig &ndash; gezählt wird identisch.</p>
-  <p lang="en" class="englisch"><strong>English:</strong> This is a free score sheet for <strong>Forest Shuffle</strong> (German title: Mischwald). The interface is in German, but it works the same way: enter the points for each card number, and the total is calculated automatically. Nothing is sent to a server &ndash; your entries stay in your own browser.</p>
-
   <p class="hinweis">Inoffizielles Hilfsmittel, entstanden als privates Hobbyprojekt. &bdquo;Mischwald&ldquo; ist ein Kartenspiel von Kosch, erschienen bei Lookout Spiele. Diese Seite steht in keiner Verbindung zum Verlag und enthält weder Spielregeln noch Kartendaten &ndash; sie hilft ausschließlich beim Zusammenzählen der Punkte.</p>
+</div>
+
+<div class="info-en" lang="en" hidden>
+  <h2>Digital score sheet for Forest Shuffle</h2>
+  <p>Scoring is the slowest part of a game of Forest Shuffle. Every card type has its own conditions, there are sub-totals to work out, and all of it has to be repeated for each player. This score sheet does the adding up for you: type in the numbers and you are done.</p>
+
+  <h3>What it does</h3>
+  <ul>
+    <li>A separate column for each person &ndash; up to five players.</li>
+    <li>Up to eight entries per card number; empty fields count as zero.</li>
+    <li>The total is recalculated instantly with every entry.</li>
+    <li>A counting legend with all card types &ndash; trees, birds, butterflies, mushrooms and more, plus your own custom entries.</li>
+    <li>Everything is saved automatically, so your sheet is still there next time.</li>
+  </ul>
+
+  <h3>Expansions included</h3>
+  <p>The counting legend also covers entries from <strong>Forest Shuffle: Alpine</strong> (Swiss stone pines, European larches, cards with the alpine symbol) and <strong>Forest Shuffle: Woodland Edge</strong> (shrubs), so you can score the base game together with its expansions.</p>
+
+  <h3>No sign-up, no data sent anywhere</h3>
+  <p>The score sheet runs entirely in your browser. There are no accounts, no sign-up and nothing is sent to a server &ndash; your entries stay on your own device. The flip side: your phone, tablet and computer each keep their own sheet.</p>
+
+  <h3>Originally &bdquo;Mischwald&ldquo;</h3>
+  <p>The game was first published in German as <strong>Mischwald</strong>. This tool was built in German first, which is why you can switch back with the button at the top. The scoring works exactly the same either way.</p>
+
+  <h3>More to try</h3>
+  <p>This score sheet is part of <a href="/">Finnvelo Programmwelten</a>, a small collection of free hobby software. Also running straight in the browser: a <a href="/planer/haus-und-gartenplaner/">3D planner</a> for rooms, furniture and gardens (German interface).</p>
+
+  <p class="hinweis">Unofficial fan-made tool, built as a private hobby project. &bdquo;Forest Shuffle&ldquo; / &bdquo;Mischwald&ldquo; is a card game by Kosch, published by Lookout Games. This page is not affiliated with the publisher and contains neither rules nor card data &ndash; it only helps with adding up the points.</p>
+</div>
 </section>
 </body>
 </html>

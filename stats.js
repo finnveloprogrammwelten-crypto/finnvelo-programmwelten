@@ -67,7 +67,7 @@
       + '.fv-video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:50px;border-radius:14px;background:rgba(20,20,20,.85);z-index:1;transition:background .15s;}'
       + '.fv-video-play::before{content:"";position:absolute;top:50%;left:54%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff;}'
       + '.fv-video-facade:hover .fv-video-play,.fv-video-facade:focus-visible .fv-video-play{background:#ff0000;}'
-      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 9px;gap:6px;top:auto;bottom:12px;right:12px;left:auto;}}';
+      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 9px;gap:5px;top:auto;bottom:12px;right:12px;left:12px;flex-wrap:wrap;justify-content:center;white-space:normal;border-radius:14px;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
@@ -91,7 +91,12 @@
   function renderBadge() {
     if (!badgeEl) return;
     if (isHome) {
-      badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>';
+      badgeEl.innerHTML =
+        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>'
+        + '<span class="fv-sep">\u00b7</span>'
+        + '<span>\uD83C\uDFE1 Planer: <b>' + fmt(counts['open:planer']) + '</b></span>'
+        + '<span class="fv-sep">\u00b7</span>'
+        + '<span>\uD83C\uDF32 Mischwald: <b>' + fmt(counts['open:mischwald']) + '</b></span>';
     } else if (isProgram) {
       badgeEl.innerHTML =
         '<span>\uD83D\uDC41\uFE0F Besucher: <b>' + fmt(counts['views:' + key]) + '</b></span>'
@@ -170,7 +175,7 @@
     if (isHome) {
       badgeEl = makeBadge('home');
       badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
-      keysToShow = ['views:site'];
+      keysToShow = ['views:site', 'open:planer', 'open:mischwald'];
     } else if (isProgram) {
       badgeEl = makeBadge('page');
       badgeEl.innerHTML = '<span>Lädt…</span>';
