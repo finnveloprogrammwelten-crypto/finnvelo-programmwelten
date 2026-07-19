@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mischwald – Punktezettel</title>
+<meta name="description" content="Kostenloser Punkterechner für das Kartenspiel Mischwald – Punkte pro Spieler bequem im Browser zusammenzählen. Ohne Installation, ohne Anmeldung.">
+<link rel="canonical" href="https://finnveloprogramme.com/mischwald">
+<style>
+  :root{
+    --gruen:#1d4a37;
+    --gruen-dunkel:#0f2b20;
+    --gruen-hell:#2a6a4e;
+    --pergament:#f4edda;
+    --banner:#e7dec6;
+    --banner-rand:#cfc3a4;
+    --tinte:#2b2a24;
+    --eichel:#7c4f2c;
+    --rot:#b4432e;
+    --zeile-a:#f4edda;
+    --zeile-b:#ece3cb;
+    --fokus:#3f8f66;
+    --radius:10px;
+    /* Inhaltsbreite = Wertungstabelle 420 + Abstand 10 + Zähl-Legende 360 */
+    --inhalt:790px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  .mitte{width:100%;max-width:var(--inhalt);margin:0 auto}
+
+  /* ---------- Scrollbalken im Mischwald-Look ---------- */
+  *{scrollbar-width:thin;scrollbar-color:var(--gruen-hell) var(--banner)}
+  ::-webkit-scrollbar{width:11px;height:11px}
+  ::-webkit-scrollbar-track{background:var(--banner);border-radius:7px}
+  ::-webkit-scrollbar-thumb{
+    background:var(--gruen-hell);
+    border:2px solid var(--banner);
+    border-radius:7px;
+  }
+  ::-webkit-scrollbar-thumb:hover{background:var(--gruen)}
+  ::-webkit-scrollbar-corner{background:var(--banner)}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background:var(--gruen-dunkel);
+    background-image:
+      radial-gradient(1200px 500px at 50% -200px, rgba(63,143,102,.25), transparent 70%),
+      repeating-linear-gradient(45deg, rgba(255,255,255,.015) 0 2px, transparent 2px 14px);
+    color:var(--tinte);
+    display:flex;flex-direction:column;height:100vh;overflow:hidden;
+  }
+
+  /* ---------- Kopfzeile / Anzeigetafel ---------- */
+  header{
+    flex:0 0 auto;
+    padding:9px 10px 6px;
+    color:var(--pergament);
+    display:block;
+  }
+  header h1{
+    font-size:19px;letter-spacing:.16em;text-transform:uppercase;
+    font-weight:700;white-space:nowrap;margin-bottom:8px;
+  }
+  .tafel-block{
+    display:block;width:100%;
+    overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    padding-bottom:5px;
+  }
+  .tafel-block::-webkit-scrollbar{height:7px}
+  .tafel-innen{
+    display:flex;align-items:stretch;gap:8px;
+    width:100%;min-width:min-content;   /* füllt die Breite, scrollt wenn zu eng */
+  }
+  .tafel{
+    display:grid;grid-template-columns:repeat(6,minmax(36px,1fr));gap:6px;
+    flex:1 1 auto;min-width:0;
+  }
+  .tafel .chip{
+    grid-column:span 2;
+    background:rgba(255,255,255,.07);
+    border:1px solid rgba(244,237,218,.25);
+    border-radius:8px;
+    padding:4px 4px;text-align:center;cursor:pointer;min-width:0;
+    transition:background .15s,border-color .15s;
+  }
+  .tafel .chip:nth-child(4){grid-column:2 / span 2}   /* mittig unter 1–3 */
+  .tafel .chip:nth-child(5){grid-column:4 / span 2}
+  .tafel .chip:hover{background:rgba(255,255,255,.14)}
+  .tafel .chip.aktiv{background:var(--pergament);color:var(--tinte);border-color:var(--pergament)}
+  .tafel .chip .cn{font-size:10.5px;letter-spacing:.02em;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tafel .chip .cp{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.2}
+  .tafel .chip.aktiv .cp{color:var(--gruen)}
+
+  .trenner{width:2px;background:rgba(244,237,218,.3);border-radius:2px;flex:0 0 auto}
+  .tafelAktionen{
+    display:grid;grid-template-rows:1fr 1fr;gap:6px;   /* gleiche Höhe wie die Kachelreihen */
+    flex:0 0 auto;
+  }
+  .tafelAktionen .btn{
+    width:92px;height:100%;padding:4px 6px;font-size:11.5px;line-height:1.2;
+    white-space:normal;text-align:center;
+    display:flex;align-items:center;justify-content:center;
+  }
+
+  /* ---------- Hauptbereich: nebeneinander, beidseitig scrollbar ---------- */
+  main{
+    flex:1 1 auto;min-height:0;
+    overflow:auto;                 /* hoch/runter UND zur Seite scrollbar */
+    padding:0 10px 10px;
+    -webkit-overflow-scrolling:touch;
+  }
+  .spalten{
+    display:flex;gap:10px;align-items:stretch;
+    width:max-content;margin:0 auto;   /* mittig, scrollt wenn zu eng */
+    height:100%;
+  }
+
+  .karte{
+    background:var(--pergament);
+    border:3px solid var(--gruen);
+    border-radius:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,.35);
+    display:flex;flex-direction:column;min-height:0;overflow:hidden;
+    height:100%;
+  }
+  #wertung{width:420px;flex:0 0 auto}
+  #legende{width:360px;flex:0 0 auto}
+
+  .karte>.kkopf{
+    flex:0 0 auto;
+    background:var(--banner);
+    border-bottom:2px solid var(--banner-rand);
+    padding:8px 14px;
+    display:flex;align-items:center;gap:10px;
+  }
+  .karte>.kkopf .titel{
+    font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:13px;
+    color:var(--gruen);white-space:nowrap;
+  }
+  .karte>.kkopf .hinweis{font-size:11px;color:#6d6a5d;margin-left:auto;text-align:right}
+
+  /* ---------- Punktetabelle ---------- */
+  #tabellenScroll{flex:1 1 auto;overflow:auto;min-height:0}
+  table{border-collapse:collapse;width:100%}
+  thead th{
+    position:sticky;top:0;z-index:2;
+    background:var(--gruen);color:var(--pergament);
+    font-size:10px;letter-spacing:.04em;font-weight:600;
+    padding:5px 2px;text-align:center;white-space:nowrap;
+  }
+  tbody td{padding:2px 1px;text-align:center;border-bottom:1px solid #d9cfae}
+  tbody tr:nth-child(odd){background:var(--zeile-a)}
+  tbody tr:nth-child(even){background:var(--zeile-b)}
+  td.nr{
+    font-weight:700;color:var(--gruen);width:28px;font-size:13px;
+    font-variant-numeric:tabular-nums;background:rgba(29,74,55,.08);
+  }
+  td.summe{
+    width:52px;font-weight:700;font-variant-numeric:tabular-nums;
+    color:var(--eichel);font-size:14px;background:rgba(124,79,44,.08);
+  }
+  input.pf{
+    width:100%;max-width:38px;height:32px;
+    border:1px solid #cbbf9c;border-radius:5px;
+    background:#fffdf6;color:var(--tinte);
+    text-align:center;font-size:13px;font-variant-numeric:tabular-nums;
+    padding:0 1px;
+  }
+  input.pf:focus{outline:2px solid var(--fokus);outline-offset:0;border-color:var(--fokus)}
+  input.pf::placeholder{color:#c9bfa0}
+  tfoot td{
+    position:sticky;bottom:0;z-index:2;
+    background:var(--gruen);color:var(--pergament);
+    padding:8px 6px;font-weight:700;
+  }
+  tfoot .gp{font-size:20px;font-variant-numeric:tabular-nums;color:#ffd9a0}
+
+  /* ---------- Zähl-Legende ---------- */
+  #legendeScroll{flex:1 1 auto;overflow:auto;padding:10px;min-height:0}
+  .lrow{
+    display:grid;grid-template-columns:minmax(0,1fr) 74px 34px;gap:6px;
+    margin-bottom:8px;align-items:start;
+  }
+  .lrow input.anz{
+    width:100%;height:40px;border:1px solid #cbbf9c;border-radius:8px;
+    background:#fffdf6;text-align:center;font-size:16px;font-weight:700;
+    color:var(--eichel);font-variant-numeric:tabular-nums;
+  }
+  .lrow input.anz:focus{outline:2px solid var(--fokus);border-color:var(--fokus)}
+  .lrow input.frei{
+    width:100%;height:40px;border:1px solid #cbbf9c;border-radius:8px;
+    background:#fffdf6;color:var(--tinte);padding:0 10px;font-size:14px;
+  }
+  .lrow input.frei:focus{outline:2px solid var(--fokus);border-color:var(--fokus)}
+  /* Eigene Kategorie: Dropdown oben über volle Breite,
+     darunter Freitext mit Anzahl + Löschen direkt dahinter */
+  .lrow.eigen .dd{grid-column:1 / -1}
+  .lrow.eigen .dd .dd-liste{right:0}
+  .lrow.eigen input.frei{grid-column:1;margin-top:2px}
+  .lrow.eigen input.anz,
+  .lrow.eigen button.del{margin-top:2px}
+  .lrow button.del{
+    height:40px;border:none;border-radius:8px;background:transparent;
+    color:var(--rot);font-size:18px;cursor:pointer;line-height:1;
+  }
+  .lrow button.del:hover{background:rgba(180,67,46,.12)}
+
+  /* Eigenes Dropdown (statt System-Auswahl) */
+  .dd{position:relative;min-width:0}
+  .dd-btn{
+    width:100%;height:40px;border:1px solid #cbbf9c;border-radius:8px;
+    background:#fffdf6;color:var(--tinte);
+    padding:0 30px 0 10px;font-size:14px;text-align:left;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative;
+  }
+  .dd-btn::after{
+    content:"";position:absolute;right:11px;top:50%;
+    width:8px;height:8px;border-right:2px solid var(--gruen);border-bottom:2px solid var(--gruen);
+    transform:translateY(-70%) rotate(45deg);
+  }
+  .dd.offen .dd-btn{border-color:var(--fokus);outline:2px solid var(--fokus)}
+  .dd-liste{
+    display:none;position:absolute;left:0;right:-114px;top:44px;z-index:30;
+    background:var(--pergament);
+    border:2px solid var(--gruen);border-radius:10px;
+    box-shadow:0 10px 24px rgba(0,0,0,.45);
+    max-height:300px;overflow:auto;
+  }
+  .dd.offen .dd-liste{display:block}
+  .dd-gruppe{
+    position:sticky;top:0;
+    background:var(--gruen);color:var(--pergament);
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;
+    padding:6px 12px;
+  }
+  .dd-opt{
+    padding:10px 12px;font-size:14px;cursor:pointer;
+    border-bottom:1px solid #e2d8ba;
+  }
+  .dd-opt:hover{background:var(--banner)}
+  .dd-opt.gewaehlt{
+    background:var(--gruen);color:var(--pergament);font-weight:600;
+  }
+
+  .lfuss{
+    flex:0 0 auto;padding:10px;border-top:2px solid var(--banner-rand);
+    background:var(--banner);display:flex;gap:8px;
+  }
+  .btn{
+    border:none;border-radius:8px;padding:9px 14px;font-size:13px;font-weight:600;
+    cursor:pointer;letter-spacing:.03em;
+  }
+  .btn.gruen{background:var(--gruen);color:var(--pergament)}
+  .btn.gruen:hover{background:var(--gruen-hell)}
+  .btn.rot{background:transparent;color:var(--rot);border:1px solid var(--rot)}
+  .btn.rot:hover{background:rgba(180,67,46,.1)}
+  .btn.rothell{background:transparent;color:#eb9880;border:1px solid rgba(235,152,128,.55)}
+  .btn.rothell:hover{background:rgba(235,152,128,.16)}
+
+  /* ---------- Reiterleiste unten ---------- */
+  nav#reiter{
+    flex:0 0 auto;
+    background:var(--gruen);
+    border-top:2px solid rgba(244,237,218,.25);
+    display:block;
+    padding:6px 10px 8px;overflow-x:auto;
+  }
+  .reiter-innen{
+    display:flex;align-items:stretch;gap:4px;
+    width:100%;max-width:var(--inhalt);min-width:max-content;margin:0 auto;
+  }
+  nav#reiter .tab{
+    background:rgba(244,237,218,.12);
+    color:var(--pergament);
+    border:1px solid rgba(244,237,218,.3);
+    border-radius:8px 8px 0 0;border-bottom:none;
+    padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;
+    white-space:nowrap;display:flex;align-items:center;gap:8px;
+    transition:background .15s;
+  }
+  nav#reiter .tab:hover{background:rgba(244,237,218,.22)}
+  nav#reiter .tab.aktiv{
+    background:var(--pergament);color:var(--gruen);border-color:var(--pergament);
+  }
+  nav#reiter .tab .tp{
+    font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;
+    background:rgba(0,0,0,.12);border-radius:999px;padding:1px 8px;
+  }
+  nav#reiter .tab.aktiv .tp{background:var(--gruen);color:var(--pergament)}
+  nav#reiter input#spielerName{
+    align-self:stretch;flex:0 0 auto;
+    border:1px solid rgba(244,237,218,.4);border-radius:8px;
+    background:rgba(255,255,255,.1);color:var(--pergament);
+    padding:0 12px;font-size:14px;width:158px;margin-right:6px;
+  }
+  nav#reiter input#spielerName::placeholder{color:rgba(244,237,218,.5)}
+  nav#reiter input#spielerName:focus{outline:2px solid var(--fokus)}
+
+  /* ---------- Rückfrage-Fenster (ersetzt System-confirm) ---------- */
+  #modal{
+    position:fixed;inset:0;z-index:200;display:none;
+    background:rgba(15,43,32,.75);
+    align-items:center;justify-content:center;padding:20px;
+  }
+  #modal.offen{display:flex}
+  #modal .box{
+    background:var(--pergament);border:3px solid var(--gruen);border-radius:14px;
+    width:100%;max-width:360px;box-shadow:0 14px 34px rgba(0,0,0,.55);overflow:hidden;
+  }
+  #modal .mkopf{
+    background:var(--banner);border-bottom:2px solid var(--banner-rand);
+    padding:10px 14px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;font-size:13px;color:var(--gruen);
+  }
+  #modal .mtext{padding:16px 14px;font-size:15px;line-height:1.45}
+  #modal .mfuss{display:flex;gap:8px;padding:0 14px 14px;justify-content:flex-end}
+  #modal .btn{padding:11px 18px;font-size:14px}
+  #modal .btn.loesch{background:var(--rot);color:#fff;border:none}
+  #modal .btn.loesch:hover{background:#9a3626}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mitte">
+    <h1>Mischwald</h1>
+    <a href="/" style="display:inline-block;margin-top:4px;font-size:13px;color:#f4edda;opacity:.7;text-decoration:none">← Finnvelo Programmwelten</a>
+    <div class="tafel-block">
+      <div class="tafel-innen">
+        <div class="tafel" id="tafel"></div>
+        <div class="trenner"></div>
+        <div class="tafelAktionen">
+          <button class="btn rothell" id="reset" type="button">Spieler löschen</button>
+          <button class="btn rothell" id="resetAll" type="button">Alle löschen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="spalten">
+
+    <!-- Punktetabelle -->
+    <section class="karte" id="wertung" aria-label="Punktetabelle">
+      <div class="kkopf">
+        <span class="titel" id="tabTitel">Spieler 1 – Wertung</span>
+        <span class="hinweis">40 Nummern · je 8 Felder · leer = 0</span>
+      </div>
+      <div id="tabellenScroll">
+        <table id="ptab">
+          <thead>
+            <tr>
+              <th>Nr.</th>
+              <th>1</th><th>2</th><th>3</th><th>4</th>
+              <th>5</th><th>6</th><th>7</th><th>8</th>
+              <th>Gesamt</th>
+            </tr>
+          </thead>
+          <tbody id="ptbody"></tbody>
+          <tfoot>
+            <tr>
+              <td colspan="9" style="text-align:right;letter-spacing:.08em;text-transform:uppercase;font-size:12px">Gesamtpunkte</td>
+              <td class="gp" id="gesamt">0</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- Zähl-Legende -->
+    <section class="karte" id="legende" aria-label="Zähl-Legende">
+      <div class="kkopf">
+        <span class="titel">Zähl-Legende</span>
+        <span class="hinweis">Anzahlen merken,<br>z.&nbsp;B. voll belegte Bäume</span>
+      </div>
+      <div id="legendeScroll"></div>
+      <div class="lfuss">
+        <button class="btn gruen" id="lplus">+ Eintrag hinzufügen</button>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<nav id="reiter">
+  <div class="reiter-innen" id="reiterInnen">
+    <input type="text" id="spielerName" placeholder="Name Spieler 1" maxlength="18">
+    <!-- Reiter per JS -->
+  </div>
+</nav>
+
+<div id="modal" role="dialog" aria-modal="true" aria-labelledby="modalKopf">
+  <div class="box">
+    <div class="mkopf" id="modalKopf">Wirklich löschen?</div>
+    <div class="mtext" id="modalText"></div>
+    <div class="mfuss">
+      <button class="btn rot" id="modalNein" type="button">Abbrechen</button>
+      <button class="btn loesch" id="modalJa" type="button">Ja, löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var ZEILEN = 40, FELDER = 8, SPIELER = 5;
+  var SKEY = "mischwald_punktezettel_v2";
+
+  /* ---------- Kategorien aus den Spielregeln (Grundspiel + 3 Erweiterungen) ---------- */
+  var KATEGORIEN = [
+    {g:"Allgemeine Zählungen", o:[
+      "Vollständig belegte Bäume",
+      "Unterschiedliche Baumarten",
+      "Unterschiedliche Schmetterlinge",
+      "Karten in der Höhle",
+      "Bäume gesamt",
+      "Sträucher gesamt (Waldrand)",
+      "Karten mit Alpin-Symbol (Berg)"
+    ]},
+    {g:"Baumarten (Anzahl)", o:[
+      "Weißtannen","Buchen","Eichen","Douglasien","Rosskastanien (Kastanien)",
+      "Linden","Birken","Bergahorne","Zirbelkiefern (Alpin)","Europ. Lärchen (Alpin)"
+    ]},
+    {g:"Kartentypen / Symbole", o:[
+      "Schmetterlinge","Vögel","Paarhufer (Hufe)","Pfoten-Tiere","Insekten",
+      "Amphibien","Fledermäuse","Pilze","Pflanzen"
+    ]},
+    {g:"Bestimmte Karten", o:[
+      "Feldhasen","Hasen gesamt (Feld- + Schneehase)","Frischlinge","Rehe / Rotwild","Farne"
+    ]},
+    {g:"Sonstiges", o:["Eigene Kategorie …"]}
+  ];
+  var EIGENE = "Eigene Kategorie …";
+
+  /* ---------- Zustand ---------- */
+  function leererSpieler(i){
+    return {
+      name: "Spieler " + (i+1),
+      punkte: Array.from({length:ZEILEN}, function(){ return Array(FELDER).fill(""); }),
+      legende: [ {kat:"Vollständig belegte Bäume", frei:"", anz:""} ]
+    };
+  }
+  var zustand = { aktiv:0, spieler:[] };
+  for (var i=0;i<SPIELER;i++) zustand.spieler.push(leererSpieler(i));
+
+  // Laden (fehlertolerant, migriert alte 10-Felder-Stände auf 8)
+  try{
+    var roh = window.localStorage ? (localStorage.getItem(SKEY) || localStorage.getItem("mischwald_punktezettel_v1")) : null;
+    if(roh){
+      var g = JSON.parse(roh);
+      if(g && g.spieler && g.spieler.length===SPIELER){
+        g.spieler.forEach(function(sp){
+          sp.punkte = sp.punkte.map(function(z){
+            z = z.slice(0, FELDER);
+            while(z.length < FELDER) z.push("");
+            return z;
+          });
+        });
+        zustand = g;
+      }
+    }
+  }catch(e){}
+
+  var speicherTimer = null;
+  function speichern(){
+    clearTimeout(speicherTimer);
+    speicherTimer = setTimeout(function(){
+      try{ localStorage.setItem(SKEY, JSON.stringify(zustand)); }catch(e){}
+    }, 300);
+  }
+
+  function zahl(v){
+    var n = parseFloat(String(v).replace(",","."));
+    return isFinite(n) ? n : 0;
+  }
+  function zeilenSumme(s, z){
+    var sum = 0, arr = zustand.spieler[s].punkte[z];
+    for (var k=0;k<FELDER;k++) sum += zahl(arr[k]);
+    return sum;
+  }
+  function gesamtSumme(s){
+    var sum = 0;
+    for (var z=0;z<ZEILEN;z++) sum += zeilenSumme(s, z);
+    return sum;
+  }
+  function fmt(n){ return (Math.round(n*100)/100).toLocaleString("de-DE"); }
+
+  /* ---------- Tabelle aufbauen ---------- */
+  var tbody = document.getElementById("ptbody");
+  var inputs = [];
+  var summenZellen = [];
+  (function bauen(){
+    var frag = document.createDocumentFragment();
+    for (var z=0; z<ZEILEN; z++){
+      var tr = document.createElement("tr");
+      var tdN = document.createElement("td");
+      tdN.className = "nr"; tdN.textContent = (z+1);
+      tr.appendChild(tdN);
+      inputs[z] = [];
+      for (var f=0; f<FELDER; f++){
+        var td = document.createElement("td");
+        var inp = document.createElement("input");
+        inp.type = "text"; inp.inputMode = "decimal";
+        inp.className = "pf"; inp.placeholder = "·";
+        inp.dataset.z = z; inp.dataset.f = f;
+        inp.setAttribute("aria-label","Nr. "+(z+1)+" Feld "+(f+1));
+        td.appendChild(inp); tr.appendChild(td);
+        inputs[z][f] = inp;
+      }
+      var tdS = document.createElement("td");
+      tdS.className = "summe"; tdS.textContent = "0";
+      tr.appendChild(tdS);
+      summenZellen[z] = tdS;
+      frag.appendChild(tr);
+    }
+    tbody.appendChild(frag);
+  })();
+
+  tbody.addEventListener("input", function(ev){
+    var t = ev.target;
+    if(!t.classList.contains("pf")) return;
+    var z = +t.dataset.z, f = +t.dataset.f;
+    zustand.spieler[zustand.aktiv].punkte[z][f] = t.value;
+    summenZellen[z].textContent = fmt(zeilenSumme(zustand.aktiv, z));
+    document.getElementById("gesamt").textContent = fmt(gesamtSumme(zustand.aktiv));
+    tafelAktualisieren();
+    tabsAktualisieren();
+    speichern();
+  });
+  tbody.addEventListener("focusin", function(ev){
+    if(ev.target.classList.contains("pf")) ev.target.select();
+  });
+  tbody.addEventListener("keydown", function(ev){
+    if(ev.key !== "Enter") return;
+    var t = ev.target;
+    if(!t.classList.contains("pf")) return;
+    ev.preventDefault();
+    var z = +t.dataset.z, f = +t.dataset.f;
+    var nz = z, nf = f+1;
+    if(nf >= FELDER){ nf = 0; nz = (z+1) % ZEILEN; }
+    inputs[nz][nf].focus();
+  });
+
+  /* ---------- Eigenes Dropdown ---------- */
+  function ddSchliessenAlle(){
+    document.querySelectorAll(".dd.offen").forEach(function(d){ d.classList.remove("offen"); });
+  }
+  document.addEventListener("pointerdown", function(ev){
+    if(!ev.target.closest(".dd")) ddSchliessenAlle();
+  });
+
+  function ddBauen(eintrag, beiWahl){
+    var dd = document.createElement("div");
+    dd.className = "dd";
+
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "dd-btn";
+    btn.textContent = eintrag.kat;
+    dd.appendChild(btn);
+
+    var liste = document.createElement("div");
+    liste.className = "dd-liste";
+    KATEGORIEN.forEach(function(gr){
+      var h = document.createElement("div");
+      h.className = "dd-gruppe"; h.textContent = gr.g;
+      liste.appendChild(h);
+      gr.o.forEach(function(name){
+        var o = document.createElement("div");
+        o.className = "dd-opt" + (name===eintrag.kat ? " gewaehlt" : "");
+        o.textContent = name;
+        o.addEventListener("click", function(){
+          liste.querySelectorAll(".dd-opt").forEach(function(x){ x.classList.remove("gewaehlt"); });
+          o.classList.add("gewaehlt");
+          btn.textContent = name;
+          dd.classList.remove("offen");
+          beiWahl(name);
+        });
+        liste.appendChild(o);
+      });
+    });
+    dd.appendChild(liste);
+
+    btn.addEventListener("click", function(){
+      var warOffen = dd.classList.contains("offen");
+      ddSchliessenAlle();
+      if(!warOffen){
+        dd.classList.add("offen");
+        var g = liste.querySelector(".dd-opt.gewaehlt");
+        if(g) liste.scrollTop = Math.max(0, g.offsetTop - 60);
+      }
+    });
+    return dd;
+  }
+
+  /* ---------- Zähl-Legende ---------- */
+  var lScroll = document.getElementById("legendeScroll");
+
+  function legendeRendern(){
+    lScroll.innerHTML = "";
+    var sp = zustand.spieler[zustand.aktiv];
+    sp.legende.forEach(function(eintrag, idx){
+      var row = document.createElement("div");
+      row.className = "lrow";
+
+      var frei = document.createElement("input");
+      frei.type = "text"; frei.className = "frei";
+      frei.placeholder = "Eigene Bezeichnung eintragen";
+      frei.value = eintrag.frei || "";
+
+      function eigenModus(an){
+        row.classList.toggle("eigen", an);
+        frei.style.display = an ? "" : "none";
+      }
+
+      var dd = ddBauen(eintrag, function(name){
+        eintrag.kat = name;
+        eigenModus(name === EIGENE);
+        speichern();
+      });
+      row.appendChild(dd);
+      row.appendChild(frei);
+
+      var anz = document.createElement("input");
+      anz.type = "text"; anz.inputMode = "numeric"; anz.className = "anz";
+      anz.placeholder = "Anz."; anz.value = eintrag.anz || "";
+      row.appendChild(anz);
+
+      var del = document.createElement("button");
+      del.className = "del"; del.type = "button";
+      del.title = "Eintrag entfernen"; del.textContent = "✕";
+      row.appendChild(del);
+
+      eigenModus(eintrag.kat === EIGENE);
+
+      anz.addEventListener("input", function(){ eintrag.anz = anz.value; speichern(); });
+      anz.addEventListener("focus", function(){ anz.select(); });
+      frei.addEventListener("input", function(){ eintrag.frei = frei.value; speichern(); });
+      del.addEventListener("click", function(){
+        sp.legende.splice(idx,1);
+        legendeRendern(); speichern();
+      });
+
+      lScroll.appendChild(row);
+    });
+  }
+
+  document.getElementById("lplus").addEventListener("click", function(){
+    zustand.spieler[zustand.aktiv].legende.push({kat:KATEGORIEN[0].o[0], frei:"", anz:""});
+    legendeRendern(); speichern();
+    lScroll.scrollTop = lScroll.scrollHeight;
+  });
+
+  /* ---------- Anzeigetafel & Reiter ---------- */
+  var tafel = document.getElementById("tafel");
+  var reiter = document.getElementById("reiterInnen");
+  var nameFeld = document.getElementById("spielerName");
+
+  function tafelAktualisieren(){
+    tafel.innerHTML = "";
+    zustand.spieler.forEach(function(sp, i){
+      var c = document.createElement("div");
+      c.className = "chip" + (i===zustand.aktiv ? " aktiv" : "");
+      c.innerHTML = '<div class="cn"></div><div class="cp"></div>';
+      c.querySelector(".cn").textContent = sp.name;
+      c.querySelector(".cp").textContent = fmt(gesamtSumme(i));
+      c.addEventListener("click", function(){ wechseln(i); });
+      tafel.appendChild(c);
+    });
+  }
+
+  var tabEls = [];
+  function tabsBauen(){
+    tabEls = [];
+    zustand.spieler.forEach(function(sp, i){
+      var t = document.createElement("button");
+      t.className = "tab"; t.type = "button";
+      t.innerHTML = '<span class="tn"></span><span class="tp"></span>';
+      t.addEventListener("click", function(){ wechseln(i); });
+      reiter.appendChild(t);
+      tabEls.push(t);
+    });
+    tabsAktualisieren();
+  }
+  function tabsAktualisieren(){
+    tabEls.forEach(function(t, i){
+      var sp = zustand.spieler[i];
+      t.classList.toggle("aktiv", i===zustand.aktiv);
+      t.querySelector(".tn").textContent = sp.name;
+      t.querySelector(".tp").textContent = fmt(gesamtSumme(i));
+    });
+  }
+
+  nameFeld.addEventListener("input", function(){
+    var v = nameFeld.value.trim();
+    zustand.spieler[zustand.aktiv].name = v || ("Spieler " + (zustand.aktiv+1));
+    document.getElementById("tabTitel").textContent =
+      zustand.spieler[zustand.aktiv].name + " – Wertung";
+    tabsAktualisieren(); tafelAktualisieren(); speichern();
+  });
+
+  /* ---------- Spieler wechseln / rendern ---------- */
+  function rendern(){
+    var s = zustand.aktiv, sp = zustand.spieler[s];
+    document.getElementById("tabTitel").textContent = sp.name + " – Wertung";
+    nameFeld.value = (sp.name === "Spieler "+(s+1)) ? "" : sp.name;
+    nameFeld.placeholder = "Name Spieler " + (s+1);
+    for (var z=0; z<ZEILEN; z++){
+      for (var f=0; f<FELDER; f++){
+        inputs[z][f].value = sp.punkte[z][f] || "";
+      }
+      summenZellen[z].textContent = fmt(zeilenSumme(s, z));
+    }
+    document.getElementById("gesamt").textContent = fmt(gesamtSumme(s));
+    legendeRendern();
+    tafelAktualisieren();
+    tabsAktualisieren();
+  }
+  function wechseln(i){
+    if(i === zustand.aktiv) return;
+    zustand.aktiv = i;
+    rendern(); speichern();
+    document.getElementById("tabellenScroll").scrollTop = 0;
+  }
+
+  /* ---------- Zurücksetzen (eigenes Rückfrage-Fenster) ---------- */
+  var modal = document.getElementById("modal");
+  var modalText = document.getElementById("modalText");
+  var modalAktion = null;
+
+  function modalZu(){ modal.classList.remove("offen"); modalAktion = null; }
+  function frage(text, beiJa){
+    modalText.textContent = text;
+    modalAktion = beiJa;
+    modal.classList.add("offen");
+  }
+  document.getElementById("modalNein").addEventListener("click", modalZu);
+  document.getElementById("modalJa").addEventListener("click", function(){
+    var a = modalAktion;
+    modalZu();
+    if (typeof a === "function") a();
+  });
+  modal.addEventListener("click", function(ev){ if(ev.target === modal) modalZu(); });
+  document.addEventListener("keydown", function(ev){
+    if(ev.key === "Escape" && modal.classList.contains("offen")) modalZu();
+  });
+
+  function sofortSpeichern(){
+    clearTimeout(speicherTimer);
+    try{
+      localStorage.removeItem("mischwald_punktezettel_v1");
+      localStorage.setItem(SKEY, JSON.stringify(zustand));
+    }catch(e){}
+  }
+
+  document.getElementById("reset").addEventListener("click", function(){
+    var sp = zustand.spieler[zustand.aktiv];
+    frage("„" + sp.name + "“ wird komplett geleert: alle Punkte und alle Legenden-Einträge.", function(){
+      zustand.spieler[zustand.aktiv] = leererSpieler(zustand.aktiv);
+      rendern();
+      sofortSpeichern();
+    });
+  });
+
+  document.getElementById("resetAll").addEventListener("click", function(){
+    frage("Alle 5 Spieler werden geleert: sämtliche Punkte, Namen und Legenden-Einträge.", function(){
+      zustand = { aktiv:0, spieler:[] };
+      for (var i=0;i<SPIELER;i++) zustand.spieler.push(leererSpieler(i));
+      rendern();
+      sofortSpeichern();
+    });
+  });
+
+  tabsBauen();
+  rendern();
+})();
+</script>
+</body>
+</html>

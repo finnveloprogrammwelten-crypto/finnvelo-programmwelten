@@ -265,12 +265,15 @@
       return base.concat(extra);   // Zusatz-Spans IMMER nach den Basistexten -> stabile t-Indizes
     }
     function navEls() {
-      var out = [];
+      var base = [], extra = [];
       qsa(document, NAV_TEXT_SEL).forEach(function (el) {
         if (!el.textContent || !el.textContent.trim()) return;
-        out.push(el);
+        if (el.hasAttribute('data-fv-nav-extra')) extra.push(el);
+        else base.push(el);
       });
-      return out;
+      // Spaeter ergaenzte Eintraege (z.B. Schnellauswahl "Web-Apps") IMMER hinten
+      // anhaengen -> bereits gespeicherte n-Indizes bleiben unveraendert.
+      return base.concat(extra);
     }
     function imgEls() {
       var root = editRoot(); if (!root) return [];
@@ -911,5 +914,61 @@
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
     else run();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Schnellauswahl "Web-Apps" in der Hauptnavigation
+ * Klick auf "Web-Apps" klappt die Liste der Browser-Programme auf.
+ * Im Bearbeiten-Modus bleibt die Liste dauerhaft offen, damit die
+ * Eintraege angeklickt und umbenannt werden koennen.
+ * Eigenstaendig gekapselt: faellt aus, ohne die Seite zu stoeren.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var EDIT = false;
+    try {
+      EDIT = !!sessionStorage.getItem('fv_admin_pw') && sessionStorage.getItem('fv_edit') === '1';
+    } catch (e) { EDIT = false; }
+
+    function init() {
+      var wraps = document.querySelectorAll('.nav-apps');
+      Array.prototype.forEach.call(wraps, function (wrap) {
+        var btn = wrap.querySelector('.nav-apps__btn');
+        var menu = wrap.querySelector('.nav-apps__menu');
+        if (!btn || !menu) return;
+
+        function open() {
+          menu.hidden = false;
+          wrap.classList.add('nav-apps--open');
+          btn.setAttribute('aria-expanded', 'true');
+        }
+        function close() {
+          menu.hidden = true;
+          wrap.classList.remove('nav-apps--open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+
+        if (EDIT) { open(); return; }   // Bearbeiten-Modus: offen lassen
+
+        btn.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          if (menu.hidden) open(); else close();
+        });
+        menu.addEventListener('click', function (e) {
+          if (e.target && e.target.closest && e.target.closest('a')) close();
+        });
+        document.addEventListener('click', function (e) {
+          if (!wrap.contains(e.target)) close();
+        });
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' || e.keyCode === 27) close();
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
