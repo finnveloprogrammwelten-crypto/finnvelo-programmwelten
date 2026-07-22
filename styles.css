@@ -279,7 +279,7 @@ h1 {
 
 .program-button-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: clamp(16px, 1.6vw, 30px);
   align-items: start;
 }
@@ -762,6 +762,12 @@ footer a {
 }
 
 @media (max-width: 1380px) {
+  .program-button-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1040px) {
   .program-button-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
