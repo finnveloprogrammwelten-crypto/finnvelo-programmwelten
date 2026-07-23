@@ -1481,3 +1481,25 @@ body.fv-admin-on .site-header { top: 44px; }
   line-height: 1.6;
 }
 .webapp-note__text strong { color: #ffffff; }
+
+/* Bildraster fuer Hochformat-Aufnahmen (Handy-Bildschirmfotos). */
+.program-media-grid--hoch {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 22px);
+}
+.program-media-grid--hoch img {
+  height: auto;          /* sonst wird die Hoehenangabe im HTML woertlich genommen */
+  aspect-ratio: 1080 / 2340;
+  object-fit: cover;
+  border-radius: 14px;
+}
+.program-media-grid--hoch figcaption {
+  font-size: 13px;
+  line-height: 1.4;
+}
+@media (max-width: 1080px) {
+  .program-media-grid--hoch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .program-media-grid--hoch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
