@@ -1503,3 +1503,99 @@ body.fv-admin-on .site-header { top: 44px; }
 @media (max-width: 700px) {
   .program-media-grid--hoch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* =====================================================================
+   Bedienfeld "App-Aktualisierung" (nur im Bearbeiten-Modus sichtbar)
+   ===================================================================== */
+.fv-update-box {
+  margin-top: clamp(20px, 2.4vw, 32px);
+  padding: 18px 20px 20px;
+  background: rgba(120, 170, 255, 0.06);
+  border: 2px dashed rgba(120, 170, 255, 0.45);
+  border-radius: 14px;
+}
+.fv-update-titel {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--blue-light);
+}
+.fv-update-titel span { font-weight: 400; font-size: 13px; opacity: 0.7; }
+.fv-update-hilfe { margin: 0 0 14px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.fv-update-hilfe code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 12.5px;
+}
+.fv-update-gitter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fv-update-box label,
+.fv-update-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+  text-transform: uppercase;
+}
+.fv-update-box input {
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-update-box input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-update-zeile { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.fv-update-btn {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 18px;
+  font: 700 14px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-update-btn:hover { background: #4a90ff; }
+.fv-update-link { font-size: 13px; color: var(--blue-light); }
+.fv-update-mehr {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--soft);
+  border-radius: 9px;
+  padding: 8px 13px;
+  font: 400 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-update-mehr:hover { color: var(--text); border-color: var(--blue); }
+.fv-update-melde { font-size: 13px; font-weight: 700; }
+.fv-update-melde.gut { color: #4ad991; }
+.fv-update-melde.schlecht { color: var(--red); }
+.fv-update-roh {
+  width: 100%;
+  min-height: 150px;
+  margin-top: 12px;
+  padding: 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--text);
+  font: 400 13px/1.5 ui-monospace, "Consolas", monospace;
+  resize: vertical;
+}
+.fv-update-warn {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  .fv-update-gitter { grid-template-columns: 1fr; }
+}

@@ -980,3 +980,143 @@
     else init();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * App-Aktualisierung im Bearbeiten-Modus pflegen
+ * Die Android-App fragt beim Start /mischwaldrechner/version.json ab.
+ * Dieses Feld schreibt genau diese Datei - ohne die Webseite neu zu
+ * veroeffentlichen. Erscheint nur als Admin mit Bearbeiten: AN.
+ * Eigenstaendig gekapselt: faellt aus, ohne die Seite zu stoeren.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var APP = 'mischwald';           // Ablage-Seite (Block u0)
+    var SEITE = 'mischwaldrechner';  // nur auf dieser Programmseite anzeigen
+    var PRUEF = '/mischwaldrechner/version.json';
+
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+
+    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    if (pfad.indexOf(SEITE) === -1) return;
+
+    function vorlage() {
+      return { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: '', hinweis: '' };
+    }
+
+    function laden() {
+      return fetch('/api/content?page=' + encodeURIComponent(APP), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var roh = '';
+          if (res && res.items) {
+            res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
+          }
+          if (!roh) return vorlage();
+          try { return JSON.parse(roh); } catch (e) { return vorlage(); }
+        })
+        .catch(function () { return vorlage(); });
+    }
+
+    function speichern(obj) {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          page: APP, block: 'u0', type: 'text',
+          value: JSON.stringify(obj, null, 2), password: pw
+        })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    function bauen(daten) {
+      var ziel = document.querySelector('.program-download-block') || document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-update-box')) return;
+
+      var box = document.createElement('div');
+      box.className = 'fv-update-box';
+      box.innerHTML =
+        '<h3 class="fv-update-titel">\u2699\uFE0F App-Aktualisierung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-update-hilfe">Die Android-App fragt beim Start <code>' + PRUEF + '</code> ab. '
+      + 'Trage hier die neue Fassung ein \u2013 die App bietet das Update dann an. '
+      + 'Die Webseite muss daf\u00fcr <strong>nicht</strong> neu ver\u00f6ffentlicht werden.</p>'
+      + '<div class="fv-update-gitter">'
+      + '  <label>Versionsnummer<input type="text" id="fvVName" placeholder="z. B. 1.0.2"></label>'
+      + '  <label>Versions-Code (Zahl)<input type="number" id="fvVCode" min="1" step="1" placeholder="z. B. 2"></label>'
+      + '</div>'
+      + '<label class="fv-update-lang">Download-Adresse der APK'
+      + '  <input type="text" id="fvVUrl" placeholder="https://github.com/.../Mischwald.apk"></label>'
+      + '<label class="fv-update-lang">Was ist neu (kurzer Hinweis)'
+      + '  <input type="text" id="fvVHinweis" placeholder="z. B. Kartenerkennung verbessert"></label>'
+      + '<div class="fv-update-zeile">'
+      + '  <button type="button" class="fv-update-btn" id="fvVSave">Speichern</button>'
+      + '  <a class="fv-update-link" href="' + PRUEF + '" target="_blank" rel="noopener">Datei ansehen</a>'
+      + '  <button type="button" class="fv-update-mehr" id="fvVMehr">JSON direkt bearbeiten</button>'
+      + '  <span class="fv-update-melde" id="fvVMelde"></span>'
+      + '</div>'
+      + '<textarea id="fvVRoh" class="fv-update-roh" spellcheck="false" hidden></textarea>'
+      + '<p class="fv-update-warn">Wichtig: Der <strong>Versions-Code</strong> muss bei jeder neuen Fassung '
+      + 'gr\u00f6\u00dfer sein als vorher \u2013 daran erkennt die App, dass es etwas Neues gibt.</p>';
+      ziel.appendChild(box);
+
+      var vName = box.querySelector('#fvVName'), vCode = box.querySelector('#fvVCode');
+      var vUrl = box.querySelector('#fvVUrl'), vHinweis = box.querySelector('#fvVHinweis');
+      var roh = box.querySelector('#fvVRoh'), melde = box.querySelector('#fvVMelde');
+
+      function ausFeldern() {
+        var name = (vName.value || '').trim();
+        return {
+          versionCode: parseInt(vCode.value, 10) || 0,
+          versionName: name,
+          version: name,
+          download: (vUrl.value || '').trim(),
+          hinweis: (vHinweis.value || '').trim()
+        };
+      }
+      function inFelder(o) {
+        vName.value = o.versionName || o.version || '';
+        vCode.value = o.versionCode || '';
+        vUrl.value = o.download || '';
+        vHinweis.value = o.hinweis || '';
+        roh.value = JSON.stringify(o, null, 2);
+      }
+      inFelder(daten);
+
+      function sagen(text, gut) {
+        melde.textContent = text;
+        melde.className = 'fv-update-melde ' + (gut ? 'gut' : 'schlecht');
+        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 4000);
+      }
+
+      box.querySelector('#fvVMehr').addEventListener('click', function () {
+        if (roh.hidden) { roh.value = JSON.stringify(ausFeldern(), null, 2); roh.hidden = false; }
+        else { roh.hidden = true; }
+      });
+
+      box.querySelector('#fvVSave').addEventListener('click', function () {
+        var obj;
+        if (!roh.hidden) {
+          try { obj = JSON.parse(roh.value); }
+          catch (e) { sagen('\u2717 Das ist kein g\u00fcltiges JSON.', false); return; }
+        } else {
+          obj = ausFeldern();
+        }
+        if (!obj.versionCode || obj.versionCode < 1) { sagen('\u2717 Versions-Code fehlt.', false); return; }
+        if (obj.download && !/^https?:\/\//i.test(obj.download)) {
+          sagen('\u2717 Die Download-Adresse muss mit https:// beginnen.', false); return;
+        }
+        speichern(obj).then(function (ok) {
+          if (ok) { inFelder(obj); sagen('\u2713 Gespeichert \u2013 die App sieht die neue Fassung sofort.', true); }
+          else { sagen('\u2717 Speichern fehlgeschlagen.', false); }
+        });
+      });
+    }
+
+    function start() { laden().then(bauen); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();

@@ -253,6 +253,31 @@ export class Counter extends DurableObject {
       });
     }
 
+    // --- App-Aktualisierung: version.json fuer die Android-App ---
+    // Wird im Bearbeiten-Modus gepflegt und liegt in der normalen Inhalts-
+    // ablage (Seite "mischwald", Block "u0"). Die App fragt diese Datei ab,
+    // um zu erkennen, ob eine neuere Fassung bereitsteht.
+    if (url.pathname === "/api/version" && method === "GET") {
+      const app = url.searchParams.get("app") || "";
+      if (!PAGE_RE.test(app)) return new Response("Not found", { status: 404 });
+      const rows = this.sql.exec(
+        "SELECT value FROM content WHERE page = ? AND block = 'u0'", app
+      ).toArray();
+      // Noch nichts hinterlegt: gueltige Antwort mit versionCode 0 ->
+      // die App meldet dann einfach "kein Update", statt einen Fehler zu zeigen.
+      const inhalt = rows.length && rows[0].value
+        ? rows[0].value
+        : JSON.stringify({ versionCode: 0, versionName: "", version: "", download: "", hinweis: "" });
+      return new Response(inhalt, {
+        status: 200,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store, no-cache, must-revalidate",
+          "access-control-allow-origin": "*"
+        }
+      });
+    }
+
     // --- Inline-Editor: HTML-App (Planer) hochladen + ausliefern ---
     if (url.pathname === "/api/app" && method === "POST") {
       let body = {};
@@ -325,6 +350,14 @@ export default {
       const id = env.COUNTERS.idFromName("global");
       const stub = env.COUNTERS.get(id);
       return stub.fetch(request);
+    }
+
+    // Versionsdatei der Android-App (feste Adresse, die in der App steckt).
+    const versionPfad = url.pathname.toLowerCase().replace(/\/+$/, "");
+    if (versionPfad === "/mischwaldrechner/version.json") {
+      if (!env || !env.COUNTERS) return new Response("Not found", { status: 404 });
+      const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+      return stub.fetch(new Request("https://zaehler/api/version?app=mischwald", { method: "GET" }));
     }
 
     // Wurde eine Web-App geoeffnet? Dann leise mitzaehlen (blockiert nichts).
