@@ -253,9 +253,9 @@ export class Counter extends DurableObject {
       });
     }
 
-    // --- App-Aktualisierung: version.json fuer die Android-App ---
+    // --- App-Aktualisierung: version.json fuer die Android-Apps ---
     // Wird im Bearbeiten-Modus gepflegt und liegt in der normalen Inhalts-
-    // ablage (Seite "mischwald", Block "u0"). Die App fragt diese Datei ab,
+    // ablage (Seite = App-Name, Block "u0"). Die Apps fragen ihre Datei ab,
     // um zu erkennen, ob eine neuere Fassung bereitsteht.
     if (url.pathname === "/api/version" && method === "GET") {
       const app = url.searchParams.get("app") || "";
@@ -263,11 +263,14 @@ export class Counter extends DurableObject {
       const rows = this.sql.exec(
         "SELECT value FROM content WHERE page = ? AND block = 'u0'", app
       ).toArray();
-      // Noch nichts hinterlegt: gueltige Antwort mit versionCode 0 ->
-      // die App meldet dann einfach "kein Update", statt einen Fehler zu zeigen.
-      const inhalt = rows.length && rows[0].value
-        ? rows[0].value
-        : JSON.stringify({ versionCode: 0, versionName: "", version: "", download: "", hinweis: "" });
+      // Noch nichts hinterlegt: gueltige Antwort mit versionCode 0, damit die
+      // App "kein Update" meldet statt einen Fehler zu zeigen. Jede App hat ihr
+      // eigenes Feldformat.
+      const leer = {
+        aufgabenplaner: { schluessel: "FINNVELO-AUFGABENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" }
+      };
+      const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
+      const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
       return new Response(inhalt, {
         status: 200,
         headers: {
@@ -352,12 +355,16 @@ export default {
       return stub.fetch(request);
     }
 
-    // Versionsdatei der Android-App (feste Adresse, die in der App steckt).
+    // Versionsdateien der Android-Apps (feste Adressen, die in den Apps stecken).
     const versionPfad = url.pathname.toLowerCase().replace(/\/+$/, "");
-    if (versionPfad === "/mischwaldrechner/version.json") {
+    const VERSION_ROUTEN = {
+      "/mischwaldrechner/version.json": "mischwald",
+      "/finnvelo/aufgabenplaner/version.json": "aufgabenplaner"
+    };
+    if (VERSION_ROUTEN[versionPfad]) {
       if (!env || !env.COUNTERS) return new Response("Not found", { status: 404 });
       const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
-      return stub.fetch(new Request("https://zaehler/api/version?app=mischwald", { method: "GET" }));
+      return stub.fetch(new Request("https://zaehler/api/version?app=" + VERSION_ROUTEN[versionPfad], { method: "GET" }));
     }
 
     // Wurde eine Web-App geoeffnet? Dann leise mitzaehlen (blockiert nichts).

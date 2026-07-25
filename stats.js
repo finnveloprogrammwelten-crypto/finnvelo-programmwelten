@@ -982,18 +982,53 @@
 })();
 
 /* =====================================================================
- * App-Aktualisierung im Bearbeiten-Modus pflegen
- * Die Android-App fragt beim Start /mischwaldrechner/version.json ab.
- * Dieses Feld schreibt genau diese Datei - ohne die Webseite neu zu
- * veroeffentlichen. Erscheint nur als Admin mit Bearbeiten: AN.
- * Eigenstaendig gekapselt: faellt aus, ohne die Seite zu stoeren.
+ * App-Aktualisierung im Bearbeiten-Modus pflegen (mehrere Apps)
+ * Die Android-Apps fragen beim Start ihre version.json ab. Dieses Feld
+ * schreibt genau diese Datei - ohne die Webseite neu zu veroeffentlichen.
+ * Erscheint nur als Admin mit Bearbeiten: AN, auf der jeweiligen
+ * Programmseite. Eigenstaendig gekapselt: faellt aus, ohne die Seite zu
+ * stoeren.
  * ===================================================================== */
 (function () {
   'use strict';
   try {
-    var APP = 'mischwald';           // Ablage-Seite (Block u0)
-    var SEITE = 'mischwaldrechner';  // nur auf dieser Programmseite anzeigen
-    var PRUEF = '/mischwaldrechner/version.json';
+    // Pro App: wo das Feld erscheint (seite), wo gespeichert wird (ablage),
+    // welche Adresse die App abfragt (pruef), welche Felder es gibt und welche
+    // festen Werte immer mitgeschrieben werden (fest).
+    var APPS = [
+      {
+        seite: 'mischwaldrechner',
+        ablage: 'mischwald',
+        pruef: '/mischwaldrechner/version.json',
+        titel: 'Mischwaldrechner',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.0.2', auch: ['version'] },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 2' },
+          { key: 'download', label: 'Download-Adresse der APK', typ: 'url', ph: 'https://github.com/.../Mischwald.apk' },
+          { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Kartenerkennung verbessert' }
+        ],
+        fest: {},
+        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: '', hinweis: '' }
+      },
+      {
+        seite: 'aufgabenplaner',
+        ablage: 'aufgabenplaner',
+        pruef: '/FinnVelo/Aufgabenplaner/version.json',
+        titel: 'Aufgabenplaner',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.2' },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 22' },
+          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url', ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-2.2.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Erinnerungen verbessert' }
+        ],
+        fest: { schluessel: 'FINNVELO-AUFGABENPLANER' },
+        vorgabe: {
+          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 21, versionName: '2.1',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-2.1.apk',
+          hinweise: ''
+        }
+      }
+    ];
 
     var pw = '';
     try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
@@ -1002,33 +1037,29 @@
     if (!pw || !editAn) return;
 
     var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
-    if (pfad.indexOf(SEITE) === -1) return;
-
-    function vorlage() {
-      return { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: '', hinweis: '' };
+    var cfg = null;
+    for (var i = 0; i < APPS.length; i++) {
+      if (pfad.indexOf(APPS[i].seite) !== -1) { cfg = APPS[i]; break; }
     }
+    if (!cfg) return;
 
     function laden() {
-      return fetch('/api/content?page=' + encodeURIComponent(APP), { method: 'GET' })
+      return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
           var roh = '';
-          if (res && res.items) {
-            res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
-          }
-          if (!roh) return vorlage();
-          try { return JSON.parse(roh); } catch (e) { return vorlage(); }
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
+          if (!roh) return copy(cfg.vorgabe);
+          try { return JSON.parse(roh); } catch (e) { return copy(cfg.vorgabe); }
         })
-        .catch(function () { return vorlage(); });
+        .catch(function () { return copy(cfg.vorgabe); });
     }
+    function copy(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
 
     function speichern(obj) {
       return fetch('/api/content', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          page: APP, block: 'u0', type: 'text',
-          value: JSON.stringify(obj, null, 2), password: pw
-        })
+        body: JSON.stringify({ page: cfg.ablage, block: 'u0', type: 'text', value: JSON.stringify(obj, null, 2), password: pw })
       }).then(function (r) { return r.ok; }).catch(function () { return false; });
     }
 
@@ -1038,74 +1069,83 @@
 
       var box = document.createElement('div');
       box.className = 'fv-update-box';
+      var felderHtml = '';
+      cfg.felder.forEach(function (f) {
+        var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
+        var extra = (f.typ === 'zahl') ? ' min="1" step="1"' : '';
+        felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
+                    + ' data-key="' + f.key + '" placeholder="' + f.ph + '"></label>';
+      });
+
       box.innerHTML =
-        '<h3 class="fv-update-titel">\u2699\uFE0F App-Aktualisierung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
-      + '<p class="fv-update-hilfe">Die Android-App fragt beim Start <code>' + PRUEF + '</code> ab. '
+        '<h3 class="fv-update-titel">\u2699\uFE0F App-Aktualisierung \u2013 ' + cfg.titel + ' <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-update-hilfe">Die App fragt beim Start <code>' + cfg.pruef + '</code> ab. '
       + 'Trage hier die neue Fassung ein \u2013 die App bietet das Update dann an. '
       + 'Die Webseite muss daf\u00fcr <strong>nicht</strong> neu ver\u00f6ffentlicht werden.</p>'
-      + '<div class="fv-update-gitter">'
-      + '  <label>Versionsnummer<input type="text" id="fvVName" placeholder="z. B. 1.0.2"></label>'
-      + '  <label>Versions-Code (Zahl)<input type="number" id="fvVCode" min="1" step="1" placeholder="z. B. 2"></label>'
-      + '</div>'
-      + '<label class="fv-update-lang">Download-Adresse der APK'
-      + '  <input type="text" id="fvVUrl" placeholder="https://github.com/.../Mischwald.apk"></label>'
-      + '<label class="fv-update-lang">Was ist neu (kurzer Hinweis)'
-      + '  <input type="text" id="fvVHinweis" placeholder="z. B. Kartenerkennung verbessert"></label>'
+      + '<div class="fv-update-felder">' + felderHtml + '</div>'
       + '<div class="fv-update-zeile">'
-      + '  <button type="button" class="fv-update-btn" id="fvVSave">Speichern</button>'
-      + '  <a class="fv-update-link" href="' + PRUEF + '" target="_blank" rel="noopener">Datei ansehen</a>'
-      + '  <button type="button" class="fv-update-mehr" id="fvVMehr">JSON direkt bearbeiten</button>'
-      + '  <span class="fv-update-melde" id="fvVMelde"></span>'
+      + '  <button type="button" class="fv-update-btn" data-a="save">Speichern</button>'
+      + '  <a class="fv-update-link" href="' + cfg.pruef + '" target="_blank" rel="noopener">Datei ansehen</a>'
+      + '  <button type="button" class="fv-update-mehr" data-a="mehr">JSON direkt bearbeiten</button>'
+      + '  <span class="fv-update-melde" data-a="melde"></span>'
       + '</div>'
-      + '<textarea id="fvVRoh" class="fv-update-roh" spellcheck="false" hidden></textarea>'
+      + '<textarea class="fv-update-roh" data-a="roh" spellcheck="false" hidden></textarea>'
       + '<p class="fv-update-warn">Wichtig: Der <strong>Versions-Code</strong> muss bei jeder neuen Fassung '
       + 'gr\u00f6\u00dfer sein als vorher \u2013 daran erkennt die App, dass es etwas Neues gibt.</p>';
       ziel.appendChild(box);
 
-      var vName = box.querySelector('#fvVName'), vCode = box.querySelector('#fvVCode');
-      var vUrl = box.querySelector('#fvVUrl'), vHinweis = box.querySelector('#fvVHinweis');
-      var roh = box.querySelector('#fvVRoh'), melde = box.querySelector('#fvVMelde');
+      var roh = box.querySelector('[data-a="roh"]');
+      var melde = box.querySelector('[data-a="melde"]');
 
       function ausFeldern() {
-        var name = (vName.value || '').trim();
-        return {
-          versionCode: parseInt(vCode.value, 10) || 0,
-          versionName: name,
-          version: name,
-          download: (vUrl.value || '').trim(),
-          hinweis: (vHinweis.value || '').trim()
-        };
+        var o = copy(cfg.fest);
+        cfg.felder.forEach(function (f) {
+          var el = box.querySelector('[data-key="' + f.key + '"]');
+          var v = (el.value || '').trim();
+          if (f.typ === 'zahl') v = parseInt(v, 10) || 0;
+          o[f.key] = v;
+          if (f.auch) f.auch.forEach(function (k2) { o[k2] = v; });
+        });
+        return o;
       }
       function inFelder(o) {
-        vName.value = o.versionName || o.version || '';
-        vCode.value = o.versionCode || '';
-        vUrl.value = o.download || '';
-        vHinweis.value = o.hinweis || '';
-        roh.value = JSON.stringify(o, null, 2);
+        cfg.felder.forEach(function (f) {
+          var el = box.querySelector('[data-key="' + f.key + '"]');
+          el.value = (o[f.key] === undefined || o[f.key] === null) ? '' : o[f.key];
+        });
+        roh.value = JSON.stringify(mischKomplett(o), null, 2);
+      }
+      function mischKomplett(o) {
+        // sichert, dass feste Felder immer enthalten sind
+        var r = copy(cfg.fest);
+        for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k];
+        return r;
       }
       inFelder(daten);
 
       function sagen(text, gut) {
         melde.textContent = text;
         melde.className = 'fv-update-melde ' + (gut ? 'gut' : 'schlecht');
-        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 4000);
+        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 4500);
       }
 
-      box.querySelector('#fvVMehr').addEventListener('click', function () {
+      box.querySelector('[data-a="mehr"]').addEventListener('click', function () {
         if (roh.hidden) { roh.value = JSON.stringify(ausFeldern(), null, 2); roh.hidden = false; }
         else { roh.hidden = true; }
       });
 
-      box.querySelector('#fvVSave').addEventListener('click', function () {
+      box.querySelector('[data-a="save"]').addEventListener('click', function () {
         var obj;
         if (!roh.hidden) {
           try { obj = JSON.parse(roh.value); }
           catch (e) { sagen('\u2717 Das ist kein g\u00fcltiges JSON.', false); return; }
+          obj = mischKomplett(obj);
         } else {
           obj = ausFeldern();
         }
         if (!obj.versionCode || obj.versionCode < 1) { sagen('\u2717 Versions-Code fehlt.', false); return; }
-        if (obj.download && !/^https?:\/\//i.test(obj.download)) {
+        var urlWert = obj.apk || obj.download || '';
+        if (urlWert && !/^https?:\/\//i.test(urlWert)) {
           sagen('\u2717 Die Download-Adresse muss mit https:// beginnen.', false); return;
         }
         speichern(obj).then(function (ok) {

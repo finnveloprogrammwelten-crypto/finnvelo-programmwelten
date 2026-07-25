@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, follow">
+<link rel="canonical" href="https://finnveloprogramme.com/aufgabenplaner">
+<title>FINNVELO Aufgabenplaner – Download</title>
+<style>
+    :root {
+        --grund: #0d0d0f;
+        --flaeche: #17171a;
+        --erhoeht: #232326;
+        --akzent: #e01010;
+        --text: #e8e8ec;
+        --matt: #9a9aa2;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        background: var(--grund);
+        color: var(--text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        line-height: 1.6;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+    .karte {
+        background: var(--flaeche);
+        border-radius: 18px;
+        padding: 40px 32px;
+        max-width: 480px;
+        width: 100%;
+        text-align: center;
+        border: 1px solid var(--erhoeht);
+    }
+    h1 {
+        font-size: 1.6rem;
+        margin-bottom: 6px;
+        letter-spacing: 0.5px;
+    }
+    .marke { color: var(--akzent); font-weight: 700; }
+    .version {
+        display: inline-block;
+        background: var(--erhoeht);
+        color: var(--matt);
+        font-size: 0.85rem;
+        padding: 4px 12px;
+        border-radius: 20px;
+        margin: 12px 0 24px;
+    }
+    .knopf {
+        display: block;
+        background: var(--akzent);
+        color: #fff;
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 700;
+        padding: 16px;
+        border-radius: 12px;
+        margin: 20px 0;
+        transition: transform 0.1s, filter 0.1s;
+    }
+    .knopf:active { transform: scale(0.98); filter: brightness(1.1); }
+    .hinweis {
+        background: var(--erhoeht);
+        border-radius: 10px;
+        padding: 16px;
+        text-align: left;
+        font-size: 0.9rem;
+        color: var(--matt);
+        margin-top: 24px;
+    }
+    .hinweis strong { color: var(--text); }
+    .schritte { text-align: left; margin: 16px 0; padding-left: 20px; }
+    .schritte li { margin-bottom: 8px; color: var(--matt); }
+    .schritte li strong { color: var(--text); }
+</style>
+</head>
+<body>
+    <div class="karte">
+        <h1><span class="marke">FINNVELO</span> Aufgabenplaner</h1>
+        <div class="version">Version 2.1</div>
+
+        <p>Der sprachgesteuerte Aufgaben- und Terminplaner mit
+        Offline-Erkennung, Kalenderansichten und Erinnerungen.</p>
+
+        <a class="knopf" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-2.1.apk" rel="noopener">
+            App herunterladen (Android)
+        </a>
+
+        <ol class="schritte">
+            <li><strong>Herunterladen</strong> – auf den Knopf tippen.</li>
+            <li><strong>Öffnen</strong> – die geladene Datei im
+                Downloads-Ordner antippen.</li>
+            <li><strong>Installieren</strong> – falls gefragt, die
+                Installation aus unbekannter Quelle einmalig erlauben.</li>
+        </ol>
+
+        <div class="hinweis">
+            <strong>Hinweis zu Google Play Protect:</strong> Da die App nicht
+            aus dem Play Store kommt, kann eine Sicherheitsmeldung erscheinen.
+            Über „Weitere Details" lässt sich die Installation fortsetzen. Die
+            App ist mit einem eigenen Zertifikat signiert.
+        </div>
+    </div>
+</body>
+</html>

@@ -1527,7 +1527,7 @@ body.fv-admin-on .site-header { top: 44px; }
   border-radius: 5px;
   font-size: 12.5px;
 }
-.fv-update-gitter { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fv-update-felder { display: flex; flex-direction: column; gap: 2px; }
 .fv-update-box label,
 .fv-update-lang {
   display: flex;
@@ -1597,5 +1597,5 @@ body.fv-admin-on .site-header { top: 44px; }
   color: var(--muted);
 }
 @media (max-width: 700px) {
-  .fv-update-gitter { grid-template-columns: 1fr; }
+  .fv-update-felder { gap: 2px; }
 }

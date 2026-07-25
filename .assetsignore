@@ -25,3 +25,15 @@ ANLEITUNG-Zaehler.txt
 
 # Hilfsskripte (nicht oeffentlich)
 tools
+
+# --- Signaturschluessel & Geheimnisse: NIEMALS ausliefern ---
+*.jks
+*.keystore
+*.p12
+*.pem
+SCHLUESSEL-WICHTIG.txt
+finnvelo-release.jks
+
+# Projekt-Dokumentation (nicht oeffentlich noetig)
+ANLEITUNG-Webseite.md
+version-vorlage.json
