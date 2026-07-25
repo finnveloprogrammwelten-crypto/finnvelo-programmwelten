@@ -1008,7 +1008,7 @@
           { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Kartenerkennung verbessert' }
         ],
         fest: {},
-        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: '', hinweis: '' }
+        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloMischwaldrechner/Mischwald.apk', hinweis: '' }
       },
       {
         seite: 'aufgabenplaner',
