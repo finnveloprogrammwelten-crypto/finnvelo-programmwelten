@@ -266,7 +266,10 @@
         if (el.matches('.status') || el.closest('.status')) return;   // Status -> eigene Kategorie (s)
         if (el.querySelector('img') || el.querySelector(TEXT_SEL)) return;
         if (!el.textContent || !el.textContent.trim()) return;
-        extra.push(el);
+        // Nachtraeglich eingesetzte Kacheln (eigene Programme) ans Ende, damit
+        // bereits gespeicherte Texte auf ihren Feldern bleiben.
+        if (el.closest('[data-fv-text-extra]')) spaet.push(el);
+        else extra.push(el);
       });
       // Reihenfolge fest: Basistexte, dann Kachel-Beschreibungen, dann spaeter
       // ergaenzte Bloecke -> bereits gespeicherte t-Indizes bleiben unveraendert.
@@ -285,7 +288,14 @@
     }
     function imgEls() {
       var root = editRoot(); if (!root) return [];
-      return qsa(root, 'img').filter(function (el) { return !el.closest('.fv-gallery'); });
+      var alle = qsa(root, 'img').filter(function (el) {
+        return !el.closest('.fv-gallery') && !el.closest('.fv-extra-zone');
+      });
+      // Nachtraeglich eingesetzte Bilder (eigene Programme) ans Ende ->
+      // bereits gespeicherte Bilder bleiben auf ihren Plaetzen.
+      var pre = alle.filter(function (el) { return !el.closest('[data-fv-text-extra]'); });
+      var spaet = alle.filter(function (el) { return !!el.closest('[data-fv-text-extra]'); });
+      return pre.concat(spaet);
     }
     // Status-Schilder ("In Entwicklung" usw.) - eigene Kategorie. Bereits vorhandene
     // zuerst, spaeter ergaenzte (data-fv-added) danach -> alte Speicherstaende bleiben
@@ -1370,6 +1380,153 @@
           if (ok) { inFelder(obj); sagen('\u2713 Gespeichert \u2013 die App sieht die neue Fassung sofort.', true); }
           else { sagen('\u2717 Speichern fehlgeschlagen.', false); }
         });
+      });
+    }
+
+    function start() { laden().then(bauen); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Eigene Programme anlegen und entfernen (nur Admin, Bearbeiten AN)
+ * Erscheint auf der Seite "Programme". Angelegte Programme bekommen
+ * automatisch eine eigene Seite, eine Kachel auf der Startseite und
+ * eine Zeile in der Programmliste - ohne Veroeffentlichen.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+
+    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    if (pfad !== '/programme') return;
+
+    function kurzname(text) {
+      return String(text || '')
+        .toLowerCase()
+        .replace(/\u00e4/g, 'ae').replace(/\u00f6/g, 'oe').replace(/\u00fc/g, 'ue').replace(/\u00df/g, 'ss')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 40);
+    }
+
+    function laden() {
+      return fetch('/api/programme', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { return (d && Array.isArray(d.programme)) ? d.programme : []; })
+        .catch(function () { return []; });
+    }
+
+    function senden(daten) {
+      daten.password = pw;
+      return fetch('/api/programme', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(daten)
+      }).then(function (r) {
+        return r.json().then(function (d) { return { ok: r.ok, daten: d }; });
+      }).catch(function () { return { ok: false, daten: {} }; });
+    }
+
+    function bauen(liste) {
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-prog-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\u2699\uFE0F Programme verwalten <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Hier legst du ein neues Programm an. Es bekommt sofort eine eigene Seite, '
+      + 'eine Kachel auf der Startseite und eine Zeile in dieser Liste \u2013 <strong>ohne Ver\u00f6ffentlichen</strong>. '
+      + 'Texte, Bilder und Download-Knopf danach ganz normal im Bearbeiten-Modus \u00e4ndern.</p>'
+      + '<div class="fv-prog-felder">'
+      + '  <label>Name des Programms<input type="text" id="fvPName" placeholder="z. B. Finnvelo Notizbuch"></label>'
+      + '  <label>Adresse (wird automatisch gebildet)<input type="text" id="fvPSlug" placeholder="finnvelo-notizbuch"></label>'
+      + '  <label>Kurzbeschreibung (steht auf der Kachel)<input type="text" id="fvPKurz" placeholder="Wof\u00fcr ist das Programm da?"></label>'
+      + '</div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" id="fvPNeu">Programm anlegen</button>'
+      + '  <span class="fv-prog-melde" id="fvPMelde"></span>'
+      + '</div>'
+      + '<div class="fv-prog-liste" id="fvPListe"></div>';
+      ziel.appendChild(box);
+
+      var nName = box.querySelector('#fvPName');
+      var nSlug = box.querySelector('#fvPSlug');
+      var nKurz = box.querySelector('#fvPKurz');
+      var melde = box.querySelector('#fvPMelde');
+      var listeEl = box.querySelector('#fvPListe');
+      var slugManuell = false;
+
+      nSlug.addEventListener('input', function () { slugManuell = true; });
+      nName.addEventListener('input', function () {
+        if (!slugManuell) nSlug.value = kurzname(nName.value);
+      });
+
+      function sagen(text, gut) {
+        melde.textContent = text;
+        melde.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { melde.textContent = ''; melde.className = 'fv-prog-melde'; }, 6000);
+      }
+
+      function listeZeigen(arr) {
+        listeEl.innerHTML = '';
+        if (!arr.length) {
+          listeEl.innerHTML = '<p class="fv-prog-leer">Noch keine eigenen Programme angelegt.</p>';
+          return;
+        }
+        var kopf = document.createElement('p');
+        kopf.className = 'fv-prog-kopf';
+        kopf.textContent = 'Selbst angelegte Programme (' + arr.length + ')';
+        listeEl.appendChild(kopf);
+        arr.forEach(function (p) {
+          var z = document.createElement('div');
+          z.className = 'fv-prog-eintrag';
+          z.innerHTML = '<strong>' + p.name + '</strong>'
+                      + '<a href="/' + p.slug + '" target="_blank" rel="noopener">/' + p.slug + '</a>';
+          var weg = document.createElement('button');
+          weg.type = 'button'; weg.className = 'fv-prog-weg'; weg.textContent = 'entfernen';
+          weg.addEventListener('click', function () {
+            if (!window.confirm('\u201e' + p.name + '\u201c wirklich entfernen?\n\n'
+              + 'Die Seite und die Kachel verschwinden. Bereits eingetragene Texte und Bilder '
+              + 'dieser Seite bleiben gespeichert und w\u00e4ren bei gleichem Kurznamen wieder da.')) return;
+            senden({ aktion: 'entfernen', slug: p.slug }).then(function (a) {
+              if (a.ok) { listeZeigen(a.daten.programme || []); sagen('\u2713 Entfernt. Seite neu laden, um die Liste zu aktualisieren.', true); }
+              else sagen('\u2717 Entfernen fehlgeschlagen.', false);
+            });
+          });
+          z.appendChild(weg);
+          listeEl.appendChild(z);
+        });
+      }
+      listeZeigen(liste);
+
+      box.querySelector('#fvPNeu').addEventListener('click', function () {
+        var name = (nName.value || '').trim();
+        var slug = kurzname(nSlug.value || nName.value);
+        if (!name) { sagen('\u2717 Bitte einen Namen eintragen.', false); return; }
+        if (!slug) { sagen('\u2717 Die Adresse ist leer \u2013 bitte Namen pr\u00fcfen.', false); return; }
+        senden({ aktion: 'anlegen', slug: slug, name: name, kurz: (nKurz.value || '').trim() })
+          .then(function (a) {
+            if (a.ok) {
+              listeZeigen(a.daten.programme || []);
+              nName.value = ''; nSlug.value = ''; nKurz.value = ''; slugManuell = false;
+              sagen('\u2713 Angelegt! Die Seite ist unter /' + slug + ' erreichbar. Seite neu laden, damit die Kachel erscheint.', true);
+            } else if (a.daten && a.daten.error === 'slug_belegt') {
+              sagen('\u2717 Diese Adresse ist schon vergeben \u2013 bitte eine andere w\u00e4hlen.', false);
+            } else if (a.daten && a.daten.error === 'bad_slug') {
+              sagen('\u2717 Ung\u00fcltige Adresse (nur Kleinbuchstaben, Zahlen, Bindestriche).', false);
+            } else if (a.daten && a.daten.error === 'zu_viele') {
+              sagen('\u2717 Es sind schon sehr viele Programme angelegt.', false);
+            } else {
+              sagen('\u2717 Anlegen fehlgeschlagen.', false);
+            }
+          });
       });
     }
 

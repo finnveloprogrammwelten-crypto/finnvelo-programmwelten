@@ -279,7 +279,9 @@ h1 {
 
 .program-button-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  /* Passt sich der Anzahl an: solange Platz ist, stehen alle Kacheln in einer
+     Reihe - kommen neue Programme dazu, wird automatisch umgebrochen. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: clamp(16px, 1.6vw, 30px);
   align-items: start;
 }
@@ -1681,4 +1683,91 @@ body.fv-admin-on .site-header { top: 44px; }
 }
 @media (max-width: 700px) {
   .fv-update-felder { gap: 2px; }
+}
+
+/* =====================================================================
+   Bedienfeld "Programme verwalten" (nur im Bearbeiten-Modus sichtbar)
+   ===================================================================== */
+.fv-prog-box {
+  margin: clamp(24px, 3vw, 40px) clamp(22px, 5.6vw, 110px) clamp(30px, 4vw, 50px);
+  padding: 20px 22px 22px;
+  background: rgba(120, 170, 255, 0.06);
+  border: 2px dashed rgba(120, 170, 255, 0.45);
+  border-radius: 14px;
+}
+.fv-prog-titel { margin: 0 0 6px; font-size: 16px; color: var(--blue-light); }
+.fv-prog-titel span { font-weight: 400; font-size: 13px; opacity: 0.7; }
+.fv-prog-hilfe { margin: 0 0 16px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.fv-prog-felder { display: flex; flex-direction: column; gap: 12px; }
+.fv-prog-box label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.fv-prog-box input {
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-prog-box input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-prog-zeile { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.fv-prog-btn {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 20px;
+  font: 700 14px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-prog-btn:hover { background: #4a90ff; }
+.fv-prog-melde { font-size: 13px; font-weight: 700; line-height: 1.4; }
+.fv-prog-melde.gut { color: #4ad991; }
+.fv-prog-melde.schlecht { color: var(--red); }
+.fv-prog-liste { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.fv-prog-kopf {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.fv-prog-leer { margin: 0; font-size: 13px; color: var(--muted); }
+.fv-prog-eintrag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid var(--line);
+}
+.fv-prog-eintrag strong { font-size: 14px; }
+.fv-prog-eintrag a { font-size: 13px; color: var(--blue-light); }
+.fv-prog-weg {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: 400 12.5px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-prog-weg:hover { background: rgba(160, 30, 44, 0.9); border-color: var(--red); color: #fff; }
+@media (max-width: 700px) {
+  .fv-prog-box { margin-left: 14px; margin-right: 14px; padding: 16px; }
 }

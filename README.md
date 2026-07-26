@@ -40,12 +40,13 @@ direkt auf der fertigen Webseite. Sie sind **sofort fuer alle sichtbar**:
 - **Ziel** von Download- und Oeffnen-Knoepfen
 - **App-Updates: Versionsnummer, Versions-Code, APK-Adresse, Hinweise**
   (Abschnitt 5)
+- **komplett neue Programme anlegen** - mit eigener Seite, Kachel und
+  Listenzeile (Abschnitt 6)
 
 **B) Struktur - braucht einmal Veroeffentlichen**
 Diese Dinge stehen in Dateien. Nach der Aenderung einmal `git push` bzw.
 `npx wrangler deploy` (Abschnitt 7):
 
-- eine **komplett neue Programmseite** anlegen (Abschnitt 6)
 - eine **neue App** an die Update-Adresse anschliessen (die feste Adresse
   `/.../version.json` muss der Server kennen - in `worker.js`)
 - **Layout und Design** (`styles.css`), z.B. Raster, Abstaende, Farben
@@ -297,45 +298,55 @@ JSON-Text erscheinen. Danach in der App "Nach Updates suchen" antippen.
 
 ---
 
-## 6. Ein komplett neues Programm hinzufuegen
+## 6. Ein neues Programm anlegen
 
-Beispiel: neues Programm mit Kurzname (Slug) `mein-tool`. Der Slug darf nur
-Kleinbuchstaben, Zahlen und Bindestriche enthalten.
+### Der einfache Weg (empfohlen) - direkt auf der Webseite
 
-**Schritt 1 - Plakette (Label-Bild):**
-Lege das Plaketten-Bild als `assets/images/mein-tool-label.webp` ab
-(Format 3:2, Breite ca. 960 Pixel - so wie die anderen `*-label.webp`).
-WebP ist deutlich kleiner als PNG und laedt schneller.
+1. `/admin` -> Passwort -> auf die Seite **Programme** gehen
+2. **Bearbeiten: AN**
+3. Ganz unten erscheint das Feld **"Programme verwalten"** (nur du siehst es)
+4. Eintragen:
 
-**Schritt 2 - Eigene Seite:**
-Kopiere `_vorlage-programm.html` und benenne die Kopie in `mein-tool.html`.
-Oeffne sie und ersetze alle mit `HIER:` markierten Platzhalter (Slug, Titel,
-Beschreibung, Bildname). Feinschliff am Text geht spaeter bequem im
-Bearbeiten-Modus.
+| Feld | Bedeutung |
+|---|---|
+| Name des Programms | z.B. *Finnvelo Notizbuch* |
+| Adresse | wird automatisch gebildet (`finnvelo-notizbuch`), kann geaendert werden |
+| Kurzbeschreibung | der Text, der auf der Kachel steht |
 
-**Schritt 3 - Kachel auf der Startseite:**
-In `index.html` einen der bestehenden `<a class="program-button" ...>`-Bloecke
-kopieren, direkt darunter einfuegen und anpassen (Link `/mein-tool`, Bildname,
-Beschreibung). Wenn "In Entwicklung" stehen soll, das `program-button__status`-
-Schild drinlassen; wenn nicht, die Zeile loeschen.
+5. **"Programm anlegen"** klicken. Fertig.
 
-**Schritt 4 - Zeile in der Programmliste:**
-In `programme.html` genauso einen `<a class="program-row" ...>`-Block kopieren,
-einfuegen und anpassen.
+Sofort danach gibt es:
+- eine eigene Seite unter `/<adresse>` mit allen Abschnitten
+  (Beschreibung, Oberflaeche, Tutorial-Video, Vorteile, Zielgruppe, Download)
+- eine **Kachel** auf der Startseite
+- eine **Zeile** in der Programmliste
 
-**Schritt 5 - Zaehler aktivieren:**
-In `stats.js` den Slug in die Liste `PROGRAM_PAGES` aufnehmen, damit die Seite
-Besucher-, Video- und Download-Zahlen bekommt:
+**Kein Veroeffentlichen noetig.** Seite einmal neu laden, damit die Kachel
+erscheint. Alles Weitere - Texte, Plakette, Bildschirmfotos, Download-Knopf,
+Status-Schild - aenderst du danach ganz normal im Bearbeiten-Modus.
 
-```js
-var PROGRAM_PAGES = ['command-control', 'archivar', ... , 'mein-tool', 'tester'];
-```
+**Entfernen:** im selben Feld steht die Liste der selbst angelegten Programme,
+jeweils mit **entfernen**. Die eingetragenen Texte und Bilder bleiben dabei
+gespeichert - legst du dasselbe Programm mit derselben Adresse noch einmal an,
+sind sie wieder da.
 
-**Schritt 6 - Veroeffentlichen** (Abschnitt 7).
+**Was nicht geht:** Adressen, die schon belegt sind (z.B. `programme`,
+`kontakt`, `mischwald`, `admin`) - die Meldung sagt es dir. Erlaubt sind nur
+Kleinbuchstaben, Zahlen und Bindestriche; Umlaute werden automatisch
+umgeschrieben (ae, oe, ue).
 
-Tipp: Am schnellsten geht es, wenn du dir die bestehende Seite
-`haus-und-gartenplaner.html` als Vorbild danebenlegst und Block fuer Block
-vergleichst.
+### Der Datei-Weg (nur noch selten noetig)
+
+Wenn du eine Seite mit eigenem Aufbau brauchst, die sich stark von den anderen
+unterscheidet, gibt es weiter die Kopiervorlage `_vorlage-programm.html`:
+
+1. Datei kopieren, in `<adresse>.html` umbenennen
+2. alle mit `HIER:` markierten Stellen ersetzen
+   (dabei die `noindex`-Zeile im Kopf loeschen)
+3. Plakette als `assets/images/<adresse>-label.webp` ablegen
+4. Kachel in `index.html` und Zeile in `programme.html` einfuegen
+5. Adresse in `stats.js` bei `PROGRAM_PAGES` eintragen (fuer die Zaehler)
+6. Veroeffentlichen (Abschnitt 7)
 
 ---
 
