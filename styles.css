@@ -1392,21 +1392,104 @@ body.fv-admin-on .site-header { top: 44px; }
 .fv-dragging { opacity: .5; outline: 2px dashed var(--blue); outline-offset: 2px; }
 
 /* Zusatz-Textfelder (unten im Inhalt hinzufuegbar). */
-.fv-extra-zone { margin-top: clamp(18px, 2.4vw, 30px); display: flex; flex-direction: column; gap: 14px; }
-.fv-extra { position: relative; }
+/* =====================================================================
+   Zusatz-Felder (Text + Bild), frei platzierbar im Bearbeiten-Modus
+   ===================================================================== */
+.fv-extra-zone {
+  margin-top: clamp(16px, 2vw, 26px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: clamp(12px, 1.4vw, 20px);
+}
+.fv-extra { position: relative; flex: 0 0 auto; min-width: 0; }
+.fv-extra--voll    { width: 100%; }
+.fv-extra--halb    { width: calc(50% - clamp(12px, 1.4vw, 20px) / 2); }
+.fv-extra--drittel { width: calc(33.333% - clamp(12px, 1.4vw, 20px) * 2 / 3); }
+.fv-extra--viertel { width: calc(25% - clamp(12px, 1.4vw, 20px) * 3 / 4); }
+
 .fv-extra__text { margin: 0; color: var(--muted); line-height: 1.6; }
-.fv-extra__del {
-  position: absolute; top: -8px; right: -8px; width: 26px; height: 26px; border-radius: 7px;
-  background: rgba(120,20,30,.9); color: #fff; border: 1px solid rgba(255,255,255,.25);
-  cursor: pointer; font-size: 13px; line-height: 1;
+
+.fv-extra__figur { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.fv-extra__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.24);
 }
-.fv-extra__del:hover { background: rgba(160,30,44,.98); border-color: var(--red); }
+.fv-extra__bu { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+
+/* Werkzeugleiste je Feld - nur im Bearbeiten-Modus vorhanden */
+.fv-extra__leiste {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 5px;
+  border-radius: 10px;
+  background: rgba(8, 12, 20, 0.93);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+  z-index: 6;
+}
+.fv-extra__k {
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--soft);
+  font: 700 13px/1 inherit;
+  cursor: pointer;
+}
+.fv-extra__k:hover { background: rgba(120, 170, 255, 0.2); color: #fff; border-color: var(--blue); }
+.fv-extra__k--aus { opacity: 0.3; cursor: default; }
+.fv-extra__k--weg:hover { background: rgba(160, 30, 44, 0.95); border-color: var(--red); color: #fff; }
+.fv-extra__sel {
+  height: 26px;
+  max-width: 120px;
+  padding: 0 5px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.42);
+  color: var(--soft);
+  font: 400 12px/1 inherit;
+  cursor: pointer;
+}
+.fv-extra__sel--ziel { max-width: 150px; }
+
+/* Knopfleiste zum Anlegen - je Abschnitt eine */
+.fv-extra-add-box {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
 .fv-extra-add {
-  align-self: flex-start; background: rgba(120,170,255,.08); color: var(--blue-light);
-  border: 2px dashed rgba(120,170,255,.5); border-radius: 10px; padding: 9px 16px;
-  font: 600 14px/1.2 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+  background: rgba(120, 170, 255, 0.07);
+  border: 1px dashed rgba(120, 170, 255, 0.5);
+  color: var(--blue-light);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
 }
-.fv-extra-add:hover { background: rgba(120,170,255,.14); border-color: var(--blue); }
+.fv-extra-add:hover { background: rgba(120, 170, 255, 0.16); border-color: var(--blue); }
+.fv-extra-add__wo { font-size: 12px; color: var(--muted); opacity: 0.85; }
+
+/* Auf schmalen Bildschirmen steht jedes Feld fuer sich - sonst wird es unlesbar */
+@media (max-width: 820px) {
+  .fv-extra--halb,
+  .fv-extra--drittel,
+  .fv-extra--viertel { width: 100%; }
+}
 
 /* Planer/HTML-App im Bearbeiten-Modus hochladen (Startknopf). */
 .fv-app-edit { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }

@@ -6,7 +6,8 @@
     1. Diese Datei kopieren und in <slug>.html umbenennen
        (Slug = Kurzname, nur Kleinbuchstaben/Zahlen/Bindestriche).
     2. Unten alle mit  HIER:  markierten Stellen ersetzen.
-    3. Plaketten-Bild als assets/images/<slug>-label.png ablegen.
+    3. Plaketten-Bild als assets/images/<slug>-label.webp ablegen
+       (WebP ist deutlich kleiner als PNG - die Seite nutzt ueberall WebP).
     4. Kachel in index.html + Zeile in programme.html einfuegen.
     5. Slug in stats.js -> PROGRAM_PAGES eintragen.
   Feinschliff an Texten/Bildern geht danach im Bearbeiten-Modus.
@@ -16,6 +17,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Diese Vorlage soll NICHT in der Google-Suche landen.
+       Beim Anlegen einer echten Programmseite diese Zeile loeschen. -->
+  <meta name="robots" content="noindex, nofollow">
   <!-- HIER: kurze Beschreibung fuer Suchmaschinen -->
   <meta name="description" content="HIER: kurze Beschreibung des Programms.">
   <!-- HIER: Titel -->
@@ -55,8 +59,8 @@
     <article class="program-detail" aria-labelledby="program-title">
       <div class="program-detail__top">
         <div class="program-detail__label">
-          <!-- HIER: Plaketten-Bild (assets/images/<slug>-label.png) -->
-          <img src="assets/images/HIER-slug-label.png" alt="HIER: Programmname">
+          <!-- HIER: Plaketten-Bild (assets/images/<slug>-label.webp) -->
+          <img src="assets/images/HIER-slug-label.webp" alt="HIER: Programmname">
         </div>
 
         <div class="program-detail__summary">

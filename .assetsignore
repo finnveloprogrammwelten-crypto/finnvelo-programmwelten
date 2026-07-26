@@ -37,3 +37,6 @@ finnvelo-release.jks
 # Projekt-Dokumentation (nicht oeffentlich noetig)
 ANLEITUNG-Webseite.md
 version-vorlage.json
+
+# Kopiervorlage - keine echte Seite
+_vorlage-programm.html

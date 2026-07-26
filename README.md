@@ -6,13 +6,64 @@ meist nur **Abschnitt 2 (Bearbeiten-Modus)**.
 
 Inhalt:
 
+0. **Was kann ich selbst? Was braucht Veroeffentlichen?** (Uebersicht)
 1. Aufbau der Webseite (welche Datei macht was)
 2. Bearbeiten-Modus: Texte, Bilder, Links, Video, Galerie selbst aendern
 3. Download (Windows-Programm) verlinken
 4. Den Haus- und Gartenplaner (Web-App) einbinden oder austauschen
-5. Ein komplett neues Programm hinzufuegen
-6. Aenderungen veroeffentlichen (online stellen)
-7. Kurz-Spickzettel
+5. **Android-Apps: neue Version veroeffentlichen (Update-Feld)**
+6. Ein komplett neues Programm hinzufuegen
+7. Aenderungen veroeffentlichen (online stellen)
+8. Kurz-Spickzettel
+9. **Sicherheit: der Signaturschluessel**
+
+---
+
+## 0. Was kann ich selbst? Was braucht Veroeffentlichen?
+
+Es gibt genau **zwei Sorten** von Aenderungen. Das ist der wichtigste
+Unterschied auf dieser Seite:
+
+**A) Inhalte - sofort live, ohne Veroeffentlichen**
+Diese Dinge liegen in der Datenbank. Du aenderst sie im Bearbeiten-Modus
+direkt auf der fertigen Webseite. Sie sind **sofort fuer alle sichtbar**:
+
+- alle Texte: Ueberschriften, Absaetze, Aufzaehlungen, Bildunterschriften
+- Kachel-Namen und Kachel-Beschreibungen
+- Navigation oben, Markenname, Fusszeile (gilt auf allen Seiten)
+- Status-Schilder ("In Entwicklung", "Web-App", ...) - auch entfernen
+- Reihenfolge der Kacheln (per Ziehen am Griff)
+- eigene Textfelder hinzufuegen ("+ Textfeld hinzufuegen")
+- Bilder austauschen (anklicken oder darauf ziehen)
+- Screenshots im Abschnitt "Oberflaeche" (hinzufuegen, sortieren, entfernen)
+- Tutorial-Video setzen (YouTube-Link)
+- **Ziel** von Download- und Oeffnen-Knoepfen
+- **App-Updates: Versionsnummer, Versions-Code, APK-Adresse, Hinweise**
+  (Abschnitt 5)
+
+**B) Struktur - braucht einmal Veroeffentlichen**
+Diese Dinge stehen in Dateien. Nach der Aenderung einmal `git push` bzw.
+`npx wrangler deploy` (Abschnitt 7):
+
+- eine **komplett neue Programmseite** anlegen (Abschnitt 6)
+- eine **neue App** an die Update-Adresse anschliessen (die feste Adresse
+  `/.../version.json` muss der Server kennen - in `worker.js`)
+- **Layout und Design** (`styles.css`), z.B. Raster, Abstaende, Farben
+- **Beschriftung** von Knoepfen (z.B. "Android-App herunterladen (11 MB)") -
+  bearbeitbar ist bisher nur das *Ziel* eines Knopfes, nicht sein Text
+- neue Dateien wie eine Web-App im Ordner `planer/`
+
+> Merksatz: **Inhalt = sofort. Neue Seiten und Server-Adressen = veroeffentlichen.**
+
+### Grundregel fuer Dateien
+
+**Auf die Webseite kommen nur HTML-Seiten (und was sie zum Anzeigen braucht:
+Bilder, `styles.css`, `stats.js`).**
+**Alles Herunterladbare - APK, EXE, ZIP - liegt bei GitHub** als *Release*.
+
+Warum: Downloads blaehen jedes Veroeffentlichen auf, und Cloudflare erlaubt
+ohnehin nur 25 MB pro Datei. Bei GitHub tauschst du eine Datei aus, ohne die
+Webseite anzufassen - der Link auf der Seite bleibt derselbe.
 
 ---
 
@@ -25,13 +76,17 @@ Alles liegt flach in einem Ordner. Die wichtigsten Dateien:
 | `index.html` | Startseite mit der Programm-Kacheluebersicht |
 | `programme.html` | Seite "Programme" (Liste aller Programme) |
 | `archivar.html`, `finanzmanager.html`, `haus-und-gartenplaner.html`, ... | je EINE Seite pro Programm |
-| `_vorlage-programm.html` | **Kopiervorlage** fuer ein neues Programm (siehe Abschnitt 5) |
+| `_vorlage-programm.html` | **Kopiervorlage** fuer ein neues Programm (siehe Abschnitt 6) |
 | `styles.css` | das gesamte Design (Farben, Abstaende, Raster) |
 | `stats.js` | Besucherzaehler **und** der versteckte Bearbeiten-Modus |
 | `worker.js` | Server-Teil (Zaehler, Kommentare, gespeicherte Bearbeitungen) |
-| `assets/images/` | alle Bilder, u.a. die Programm-Plaketten `*-label.png` |
+| `assets/images/` | alle Bilder, u.a. die Programm-Plaketten `*-label.webp` |
 | `planer/haus-und-gartenplaner/` | hier liegt die Planer-Web-App |
+| `mischwald.html` | Mischwald-Auswertung (Web-App, unveraendert uebernommen) |
+| `tess/` | Texterkennung fuer die Mischwald-Auswertung (nicht anfassen) |
+| `FinnVelo/Aufgabenplaner/` | Download-Seite des Aufgabenplaners |
 | `admin.html` | Anmeldung fuer den Bearbeiten-Modus (Adresse `/admin`) |
+| `.assetsignore` | legt fest, was **nicht** ausgeliefert wird (u.a. Schluessel) |
 
 Jedes Programm besteht aus **drei** Auftritten:
 - einer **Kachel** auf der Startseite (`index.html`),
@@ -87,9 +142,29 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
 - **Kacheln sortieren (NEU):** Jede Kachel/Zeile hat oben rechts einen **Griff
   (Symbol mit drei Strichen)**. Damit ziehst du die Kachel an eine andere Stelle -
   die neue Reihenfolge wird gespeichert und gilt fuer alle Besucher.
-- **Zusatz-Textfelder hinzufuegen (NEU):** Ganz unten im Inhalt gibt es den Knopf
-  **"+ Textfeld hinzufuegen"**. Damit legst du beliebig viele eigene Textabsaetze
-  an (anklickbar zum Bearbeiten, mit **x** wieder entfernbar).
+- **Eigene Text- und Bildfelder (NEU, erweitert):** In **jedem** Abschnitt einer
+  Seite stehen im Bearbeiten-Modus zwei Knoepfe: **"+ Textfeld"** und
+  **"+ Bildfeld"**. Darunter steht jeweils, wohin das Feld kommt
+  (z.B. *in "Besondere Vorteile"*). Jedes angelegte Feld hat oben rechts eine
+  kleine Leiste:
+
+  | Bedienelement | Wirkung |
+  |---|---|
+  | Pfeil hoch / runter | Feld innerhalb des Abschnitts verschieben |
+  | Erstes Auswahlfeld | Breite: 1/4, 1/3, 1/2 oder volle Breite |
+  | Zweites Auswahlfeld | in welchen **Abschnitt** das Feld gehoert |
+  | x | Feld entfernen |
+
+  Bildfelder: auf das Bild klicken (oder eine Datei darauf ziehen) und
+  auswaehlen; darunter laesst sich eine Bildunterschrift eintippen - sie darf
+  auch leer bleiben. Alles wird sofort gespeichert.
+
+  > **Warum keine freie Platzierung per Maus?** Die Seite passt sich der
+  > Bildschirmbreite an (7 Kacheln nebeneinander am Rechner, 1 auf dem Handy).
+  > Feste Pixel-Positionen wuerden auf dem Handy uebereinanderliegen oder aus
+  > dem Bild laufen. Deshalb: Abschnitt + Breite waehlen - das sieht auf jedem
+  > Geraet richtig aus. Auf schmalen Bildschirmen steht automatisch jedes Feld
+  > fuer sich.
 - **Download-Link / "Planer oeffnen"-Knopf:** anklicken -> Fenster -> neue
   vollstaendige `https://`-Adresse einfuegen.
 - **Tutorial-Video:** Auf einer Programmseite mit Abschnitt "Tutorial-Video"
@@ -97,6 +172,9 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
   einfuegen - fertig.
 - **Oberflaechen-Galerie:** Im Abschnitt "Oberflaeche" Bilder **hinzufuegen** (+),
   per Pfeil **sortieren**, mit **x entfernen**.
+- **App-Aktualisierung (NEU):** Auf den Seiten `/mischwaldrechner` und
+  `/aufgabenplaner` erscheint unten das Feld **"App-Aktualisierung"**. Damit
+  meldest du deinen Android-Apps eine neue Version - siehe Abschnitt 5.
 
 ### Wichtig zu wissen
 - Diese Inhalts-Aenderungen werden **auf dem Server** gespeichert, nicht in den
@@ -108,7 +186,7 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
 
 > **Einmalig noetig:** Diese Erweiterung braucht die **neue `worker.js`** auf dem
 > Server. Deshalb muss der Worker **einmal neu veroeffentlicht** werden (siehe
-> Abschnitt 6, "Programm-/Design-Aenderungen"): `git push` bzw.
+> Abschnitt 7): `git push` bzw.
 > `npx wrangler deploy`. Danach funktionieren Navigation-, Reihenfolge- und
 > Zusatzfeld-Speichern. (Texte/Bilder/Status wie bisher liefen auch vorher schon.)
 
@@ -156,7 +234,7 @@ Wenn der Planer aus mehreren Dateien besteht (HTML + eigene JS-/Bild-Dateien):
 
 - Kopiere **alle** Dateien in den Ordner `planer/haus-und-gartenplaner/`;
   die Startdatei muss `index.html` heissen.
-- Einmal veroeffentlichen (Abschnitt 6), weil es eine Datei-Aenderung ist.
+- Einmal veroeffentlichen (Abschnitt 7), weil es eine Datei-Aenderung ist.
 
 Standardmaessig zeigt der Knopf auf diesen Ordner. (Falls du vorher Weg A benutzt
 hast und wieder auf den Ordner willst: im Bearbeiten-Modus den Knopf anklicken und
@@ -164,14 +242,70 @@ als Ziel `/planer/haus-und-gartenplaner/` eintragen.)
 
 ---
 
-## 5. Ein komplett neues Programm hinzufuegen
+## 5. Android-Apps: neue Version veroeffentlichen
+
+Es gibt zwei Android-Apps, die sich **selbst nach Updates erkundigen**:
+
+| App | Programmseite | Adresse, die die App abfragt |
+|---|---|---|
+| Mischwaldrechner | `/mischwaldrechner` | `/mischwaldrechner/version.json` |
+| Aufgabenplaner | `/aufgabenplaner` | `/FinnVelo/Aufgabenplaner/version.json` |
+
+Diese Adressen liefert der Server **aus der Datenbank** - du pflegst sie also
+im Bearbeiten-Modus, **ohne zu veroeffentlichen**.
+
+### Ablauf bei einer neuen App-Version
+
+**Schritt 1 - APK bei GitHub ablegen.**
+APK-Dateien kommen grundsaetzlich **nicht** auf die Webseite, sondern immer
+als *Release* zu GitHub (siehe Grundregel in Abschnitt 0):
+
+- Mischwaldrechner: Release `FinnveloMischwaldrechner`
+- Aufgabenplaner: Release `FinnveloAufgabenplaner`
+
+Neue Datei hochladen. **Wichtig:** die alte Datei im Release vorher loeschen,
+sonst benennt GitHub die neue in `...1.apk` um.
+
+**Schritt 2 - Versionsauskunft aendern (auf der Webseite).**
+1. `/admin` -> Passwort -> auf die Programmseite der App gehen
+2. **Bearbeiten: AN**
+3. Unten erscheint das Feld **"App-Aktualisierung"** (nur du siehst es)
+4. Eintragen und **Speichern**:
+
+| Feld | Was hinein muss |
+|---|---|
+| Versionsnummer | z.B. `2.3` |
+| Versions-Code | eine **Zahl, die groesser ist als vorher** (21 -> 22 -> 23) |
+| Download-Adresse | die **vollstaendige GitHub-Adresse** der neuen APK |
+| Was ist neu | kurzer Satz, den die App dem Nutzer anzeigt |
+
+**Schritt 3 - Pruefen.**
+Die Adresse aus der Tabelle oben im Browser oeffnen - dort muss der
+JSON-Text erscheinen. Danach in der App "Nach Updates suchen" antippen.
+
+### Die zwei haeufigsten Fehler
+
+1. **Versions-Code nicht erhoeht.** Die App vergleicht nur diese Zahl. Ist sie
+   gleich oder kleiner, meldet die App "kein Update" - egal was sonst drinsteht.
+2. **Download-Adresse zeigt auf finnveloprogramme.com.** Dort liegen keine
+   APK-Dateien - die Adresse muss immer auf **GitHub** zeigen. Sonst meldet
+   die App zwar ein Update, findet die Datei aber nicht.
+
+> Der Aufgabenplaner prueft zusaetzlich ein festes Erkennungsmerkmal
+> (`FINNVELO-AUFGABENPLANER`). Das traegt das Feld automatisch ein - du musst
+> nichts tun, aber im JSON-Direktmodus bitte nicht aendern.
+
+---
+
+## 6. Ein komplett neues Programm hinzufuegen
 
 Beispiel: neues Programm mit Kurzname (Slug) `mein-tool`. Der Slug darf nur
 Kleinbuchstaben, Zahlen und Bindestriche enthalten.
 
 **Schritt 1 - Plakette (Label-Bild):**
-Lege das Plaketten-Bild als `assets/images/mein-tool-label.png` ab
-(Format 3:2, also z.B. 1536 x 1024 - so wie die anderen `*-label.png`).
+Lege das Plaketten-Bild als `assets/images/mein-tool-label.webp` ab
+(Format 3:2, Breite ca. 960 Pixel - so wie die anderen `*-label.webp`).
+WebP ist deutlich kleiner als PNG und laedt schneller.
 
 **Schritt 2 - Eigene Seite:**
 Kopiere `_vorlage-programm.html` und benenne die Kopie in `mein-tool.html`.
@@ -197,7 +331,7 @@ Besucher-, Video- und Download-Zahlen bekommt:
 var PROGRAM_PAGES = ['command-control', 'archivar', ... , 'mein-tool', 'tester'];
 ```
 
-**Schritt 6 - Veroeffentlichen** (Abschnitt 6).
+**Schritt 6 - Veroeffentlichen** (Abschnitt 7).
 
 Tipp: Am schnellsten geht es, wenn du dir die bestehende Seite
 `haus-und-gartenplaner.html` als Vorbild danebenlegst und Block fuer Block
@@ -205,7 +339,7 @@ vergleichst.
 
 ---
 
-## 6. Aenderungen veroeffentlichen (online stellen)
+## 7. Aenderungen veroeffentlichen (online stellen)
 
 Es gibt **zwei Arten** von Aenderungen:
 
@@ -230,7 +364,7 @@ Browser nicht die alte Version aus dem Zwischenspeicher zeigt.
 
 ---
 
-## 7. Kurz-Spickzettel
+## 8. Kurz-Spickzettel
 
 - **Text/Bild/Link schnell aendern:** `/admin` -> Passwort -> Seite oeffnen ->
   anklicken -> aendern. Kein Deploy noetig.
@@ -241,3 +375,36 @@ Browser nicht die alte Version aus dem Zwischenspeicher zeigt.
 - **Neues Programm:** Label-Bild ablegen -> `_vorlage-programm.html` kopieren ->
   Kachel in `index.html` + Zeile in `programme.html` einfuegen -> Slug in
   `stats.js` -> veroeffentlichen.
+- **Neue App-Version melden:** APK ins GitHub-Release -> Programmseite ->
+  Bearbeiten: AN -> Feld "App-Aktualisierung" -> Versions-Code **erhoehen** ->
+  Speichern. Kein Deploy noetig.
+- **Faustregel:** Text, Bild, Link, App-Version = sofort. Neue Seite,
+  neues Design, neue Server-Adresse = veroeffentlichen.
+
+---
+
+## 9. Sicherheit: der Signaturschluessel
+
+Zu den Android-Apps gehoert die Schluesseldatei **`finnvelo-release.jks`**
+(mit `SCHLUESSEL-WICHTIG.txt`). Diese Datei gehoert **niemals** auf die
+Webseite und **niemals** in ein oeffentliches GitHub-Repository.
+
+**Warum das wichtig ist:**
+
+1. **Wer den Schluessel hat, kann gefaelschte Updates bauen.** Ein Fremder
+   koennte eine manipulierte App erzeugen, die dein Handy als echtes Update
+   deiner App annimmt.
+2. **Geht der Schluessel verloren, kannst du deine Apps nie wieder
+   aktualisieren.** Android akzeptiert Updates nur mit demselben Schluessel.
+   Dann muessten alle Nutzer die App loeschen und neu installieren - inklusive
+   Datenverlust.
+
+**Was zu tun ist:**
+
+- Die Datei nur lokal aufbewahren, zusaetzlich eine private Sicherung
+  (z.B. verschluesselt oder auf einem Datentraeger im Schrank).
+- Nicht in den Webseiten-Ordner legen. Zur Sicherheit steht in `.assetsignore`,
+  dass `*.jks`, `*.keystore`, `*.p12` und `*.pem` **nie** ausgeliefert werden.
+- Sollte die Datei versehentlich schon in GitHub liegen: dort entfernen.
+  Achtung - im Git-Verlauf bleibt sie sonst trotzdem auffindbar, das braucht
+  einen zusaetzlichen Schritt.

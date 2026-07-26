@@ -11,7 +11,7 @@
   'use strict';
 
   var API = '/api';
-  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'tester'];
+  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tester'];
 
   function pageKey() {
     var path = (location.pathname || '').toLowerCase();
@@ -796,75 +796,293 @@
       });
     }
 
-    /* ---- Zusatz-Textfelder (Block x0) --------------------------------- */
+    /* ---- Zusatz-Bloecke: Text + Bild (Block x0) ------------------------
+       Ein Block sieht so aus:
+         { id, typ:'text'|'bild', html, url, alt, breite, ziel }
+       breite: 'viertel' | 'drittel' | 'halb' | 'voll'
+       ziel:   id des Abschnitts, in dem der Block sitzt ('' = Seitenende)
+       Alte Bloecke (nur id+html) werden automatisch ergaenzt.
+       ------------------------------------------------------------------ */
+    function normBlock(b) {
+      if (!b || typeof b.id !== 'string') return null;
+      return {
+        id: b.id,
+        typ: (b.typ === 'bild') ? 'bild' : 'text',
+        html: typeof b.html === 'string' ? b.html : '',
+        url: typeof b.url === 'string' ? b.url : '',
+        alt: typeof b.alt === 'string' ? b.alt : '',
+        breite: ['viertel', 'drittel', 'halb', 'voll'].indexOf(b.breite) !== -1 ? b.breite : 'voll',
+        ziel: typeof b.ziel === 'string' ? b.ziel : ''
+      };
+    }
     function parseCustom(item) {
       customBlocks = [];
       if (item && item.type === 'text' && item.value) {
         try {
           var arr = JSON.parse(item.value);
           if (Array.isArray(arr)) {
-            customBlocks = arr.filter(function (b) { return b && typeof b.id === 'string' && typeof b.html === 'string'; });
+            arr.forEach(function (b) { var n = normBlock(b); if (n) customBlocks.push(n); });
           }
         } catch (e) {}
       }
     }
     function saveCustom() { return save('x0', 'text', JSON.stringify(customBlocks)); }
-    function extraZone() {
-      var root = editRoot(); if (!root) return null;
-      var z = root.querySelector('.fv-extra-zone');
-      if (!z) { z = document.createElement('div'); z.className = 'fv-extra-zone'; root.appendChild(z); }
+
+    /* Moegliche Ablagestellen: jeder Abschnitt mit Ueberschrift + Seitenende */
+    function zielListe() {
+      var root = editRoot(); if (!root) return [];
+      var out = [];
+      qsa(root, 'section[aria-labelledby], article[aria-labelledby]').forEach(function (sec) {
+        var id = sec.getAttribute('aria-labelledby');
+        var h = id ? document.getElementById(id) : null;
+        if (!h) return;
+        var name = (h.textContent || '').trim();
+        if (!name) return;
+        if (out.length > 24) return;
+        out.push({ id: id, name: name.length > 34 ? name.slice(0, 33) + '\u2026' : name, el: sec });
+      });
+      out.push({ id: '', name: 'Seitenende', el: root });
+      return out;
+    }
+    function zoneIn(container, zielId) {
+      var z = container.querySelector(':scope > .fv-extra-zone');
+      if (!z) {
+        z = document.createElement('div');
+        z.className = 'fv-extra-zone';
+        z.setAttribute('data-fv-zone', zielId);
+        container.appendChild(z);
+      }
       return z;
     }
+    function alleZonen() {
+      var root = editRoot(); if (!root) return [];
+      return qsa(root, '.fv-extra-zone');
+    }
+
     function renderCustom() {
-      var z = extraZone(); if (!z) return;
-      z.innerHTML = '';
-      if (!customBlocks.length && !EDITING) { z.style.display = 'none'; return; }
-      z.style.display = '';
-      customBlocks.forEach(function (b, idx) {
-        var wrap = document.createElement('div');
-        wrap.className = 'fv-extra';
-        var p = document.createElement('p');
-        p.className = 'fv-extra__text';
-        p.setAttribute('data-fvx', b.id);
-        p.innerHTML = b.html;
-        wrap.appendChild(p);
-        if (EDITING) {
-          p.setAttribute('contenteditable', 'true');
-          p.setAttribute('spellcheck', 'false');
-          p.classList.add('fv-editable');
-          var orig = p.innerHTML;
-          p.addEventListener('blur', function () {
-            if (p.innerHTML === orig) return;
-            orig = p.innerHTML; customBlocks[idx].html = p.innerHTML;
-            p.classList.add('fv-saving');
-            saveCustom().then(function (ok) { flash(p, ok); });
-          });
-          var del = document.createElement('button');
-          del.type = 'button'; del.className = 'fv-extra__del'; del.textContent = '\u2715';
-          del.setAttribute('title', 'Textfeld entfernen');
-          del.addEventListener('click', function () {
-            if (!window.confirm('Dieses Textfeld entfernen?')) return;
-            customBlocks.splice(idx, 1); saveCustom().then(function () { renderCustom(); });
-          });
-          wrap.appendChild(del);
-        }
-        z.appendChild(wrap);
-      });
-      if (EDITING) {
-        var add = document.createElement('button');
-        add.type = 'button'; add.className = 'fv-extra-add';
-        add.innerHTML = '<span aria-hidden="true">+</span> Textfeld hinzuf\u00fcgen';
-        add.addEventListener('click', function () {
-          var id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-          customBlocks.push({ id: id, html: 'Neuer Text \u2013 hier klicken und bearbeiten.' });
-          saveCustom().then(function () {
-            renderCustom();
-            var last = z.querySelector('.fv-extra:last-of-type .fv-extra__text');
-            if (last) last.focus();
-          });
+      var root = editRoot(); if (!root) return;
+      var ziele = zielListe();
+      // alle Zonen leeren
+      alleZonen().forEach(function (z) { z.innerHTML = ''; z.style.display = 'none'; });
+
+      ziele.forEach(function (ziel) {
+        var eigene = [];
+        customBlocks.forEach(function (b, i) {
+          var zz = b.ziel;
+          // unbekanntes Ziel -> ans Seitenende
+          var bekannt = false;
+          ziele.forEach(function (t) { if (t.id === zz) bekannt = true; });
+          if (!bekannt) zz = '';
+          if (zz === ziel.id) eigene.push({ b: b, i: i });
         });
-        z.appendChild(add);
-      }
+        if (!eigene.length && !EDITING) return;
+
+        var z = zoneIn(ziel.el, ziel.id);
+        z.style.display = '';
+
+        eigene.forEach(function (paar, pos) {
+          var b = paar.b, idx = paar.i;
+          var wrap = document.createElement('div');
+          wrap.className = 'fv-extra fv-extra--' + b.breite + (b.typ === 'bild' ? ' fv-extra--bild' : '');
+
+          if (b.typ === 'bild') {
+            var fig = document.createElement('figure');
+            fig.className = 'fv-extra__figur';
+            var img = document.createElement('img');
+            img.className = 'fv-extra__img';
+            img.setAttribute('data-fvx', b.id);
+            img.src = b.url || 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(
+              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 400">' +
+              '<rect width="600" height="400" fill="%23151b28"/>' +
+              '<text x="300" y="205" fill="%237b8ba6" font-family="sans-serif" font-size="26" text-anchor="middle">Bild w\u00e4hlen</text></svg>');
+            img.alt = b.alt || '';
+            img.loading = 'lazy';
+            fig.appendChild(img);
+            var cap = document.createElement('figcaption');
+            cap.className = 'fv-extra__bu';
+            cap.setAttribute('data-fvx', b.id + '-bu');
+            cap.innerHTML = b.html || '';
+            if (!EDITING && !b.html) cap.style.display = 'none';
+            fig.appendChild(cap);
+            wrap.appendChild(fig);
+
+            if (EDITING) {
+              img.classList.add('fv-editable-img');
+              (function (bild, nr) {
+                function nimm(file) {
+                  if (!file || !/^image\//.test(file.type)) return;
+                  bild.classList.add('fv-saving');
+                  downscale(file, function (dataUrl, mime) {
+                    if (!dataUrl) { flash(bild, false); return; }
+                    uploadImage(dataUrl, mime).then(function (res) {
+                      if (res && res.url) {
+                        bild.src = res.url; customBlocks[nr].url = res.url;
+                        saveCustom().then(function (ok) { flash(bild, ok); });
+                      } else { flash(bild, false); }
+                    });
+                  });
+                }
+                bild.addEventListener('click', function (e) {
+                  e.preventDefault(); e.stopPropagation();
+                  var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'image/*';
+                  inp.onchange = function () { if (inp.files && inp.files[0]) nimm(inp.files[0]); };
+                  inp.click();
+                });
+                bild.addEventListener('dragover', function (e) { e.preventDefault(); bild.classList.add('fv-drop'); });
+                bild.addEventListener('dragleave', function () { bild.classList.remove('fv-drop'); });
+                bild.addEventListener('drop', function (e) {
+                  e.preventDefault(); bild.classList.remove('fv-drop');
+                  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) nimm(e.dataTransfer.files[0]);
+                });
+              })(img, idx);
+
+              cap.setAttribute('contenteditable', 'true');
+              cap.setAttribute('spellcheck', 'false');
+              cap.classList.add('fv-editable');
+              cap.setAttribute('data-platzhalter', 'Bildunterschrift (darf leer bleiben)');
+              (function (feld, nr) {
+                var orig = feld.innerHTML;
+                feld.addEventListener('blur', function () {
+                  if (feld.innerHTML === orig) return;
+                  orig = feld.innerHTML; customBlocks[nr].html = feld.innerHTML;
+                  feld.classList.add('fv-saving');
+                  saveCustom().then(function (ok) { flash(feld, ok); });
+                });
+              })(cap, idx);
+            }
+          } else {
+            var p = document.createElement('div');
+            p.className = 'fv-extra__text';
+            p.setAttribute('data-fvx', b.id);
+            p.innerHTML = b.html;
+            wrap.appendChild(p);
+            if (EDITING) {
+              p.setAttribute('contenteditable', 'true');
+              p.setAttribute('spellcheck', 'false');
+              p.classList.add('fv-editable');
+              (function (feld, nr) {
+                var orig = feld.innerHTML;
+                feld.addEventListener('blur', function () {
+                  if (feld.innerHTML === orig) return;
+                  orig = feld.innerHTML; customBlocks[nr].html = feld.innerHTML;
+                  feld.classList.add('fv-saving');
+                  saveCustom().then(function (ok) { flash(feld, ok); });
+                });
+              })(p, idx);
+            }
+          }
+
+          if (EDITING) {
+            var leiste = document.createElement('div');
+            leiste.className = 'fv-extra__leiste';
+
+            function knopf(zeichen, titel, fn, aus) {
+              var k = document.createElement('button');
+              k.type = 'button'; k.className = 'fv-extra__k'; k.innerHTML = zeichen;
+              k.setAttribute('title', titel);
+              if (aus) { k.disabled = true; k.classList.add('fv-extra__k--aus'); }
+              else k.addEventListener('click', fn);
+              leiste.appendChild(k);
+              return k;
+            }
+
+            // Reihenfolge innerhalb desselben Abschnitts
+            knopf('\u2191', 'Nach oben schieben', function () {
+              var vorher = null;
+              for (var i = idx - 1; i >= 0; i--) {
+                if ((customBlocks[i].ziel || '') === (b.ziel || '')) { vorher = i; break; }
+              }
+              if (vorher === null) return;
+              var tmp = customBlocks[vorher]; customBlocks[vorher] = customBlocks[idx]; customBlocks[idx] = tmp;
+              saveCustom().then(renderCustom);
+            }, pos === 0);
+
+            knopf('\u2193', 'Nach unten schieben', function () {
+              var nach = null;
+              for (var i = idx + 1; i < customBlocks.length; i++) {
+                if ((customBlocks[i].ziel || '') === (b.ziel || '')) { nach = i; break; }
+              }
+              if (nach === null) return;
+              var tmp = customBlocks[nach]; customBlocks[nach] = customBlocks[idx]; customBlocks[idx] = tmp;
+              saveCustom().then(renderCustom);
+            }, pos === eigene.length - 1);
+
+            // Breite
+            var brSel = document.createElement('select');
+            brSel.className = 'fv-extra__sel';
+            brSel.setAttribute('title', 'Breite des Feldes');
+            [['viertel', '\u00bc Breite'], ['drittel', '\u2153 Breite'], ['halb', '\u00bd Breite'], ['voll', 'Volle Breite']]
+              .forEach(function (o) {
+                var op = document.createElement('option');
+                op.value = o[0]; op.textContent = o[1];
+                if (b.breite === o[0]) op.selected = true;
+                brSel.appendChild(op);
+              });
+            brSel.addEventListener('change', function () {
+              customBlocks[idx].breite = brSel.value;
+              saveCustom().then(renderCustom);
+            });
+            leiste.appendChild(brSel);
+
+            // Abschnitt (wohin gehoert der Block?)
+            var zSel = document.createElement('select');
+            zSel.className = 'fv-extra__sel fv-extra__sel--ziel';
+            zSel.setAttribute('title', 'In welchen Abschnitt soll das Feld?');
+            ziele.forEach(function (t) {
+              var op = document.createElement('option');
+              op.value = t.id; op.textContent = t.name;
+              if ((b.ziel || '') === t.id) op.selected = true;
+              zSel.appendChild(op);
+            });
+            zSel.addEventListener('change', function () {
+              customBlocks[idx].ziel = zSel.value;
+              saveCustom().then(renderCustom);
+            });
+            leiste.appendChild(zSel);
+
+            knopf('\u2715', 'Feld entfernen', function () {
+              if (!window.confirm('Dieses Feld wirklich entfernen?')) return;
+              customBlocks.splice(idx, 1);
+              saveCustom().then(renderCustom);
+            });
+            leiste.querySelector('.fv-extra__k:last-child').classList.add('fv-extra__k--weg');
+
+            wrap.appendChild(leiste);
+          }
+
+          z.appendChild(wrap);
+        });
+
+        if (EDITING) {
+          var box = document.createElement('div');
+          box.className = 'fv-extra-add-box';
+
+          function anlegen(typ) {
+            var id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            customBlocks.push(normBlock({
+              id: id, typ: typ, ziel: ziel.id, breite: typ === 'bild' ? 'halb' : 'voll',
+              html: typ === 'bild' ? '' : 'Neuer Text \u2013 hier klicken und bearbeiten.'
+            }));
+            saveCustom().then(renderCustom);
+          }
+          var bT = document.createElement('button');
+          bT.type = 'button'; bT.className = 'fv-extra-add';
+          bT.innerHTML = '<span aria-hidden="true">+</span> Textfeld';
+          bT.addEventListener('click', function () { anlegen('text'); });
+          var bB = document.createElement('button');
+          bB.type = 'button'; bB.className = 'fv-extra-add';
+          bB.innerHTML = '<span aria-hidden="true">+</span> Bildfeld';
+          bB.addEventListener('click', function () { anlegen('bild'); });
+          box.appendChild(bT); box.appendChild(bB);
+
+          var wo = document.createElement('span');
+          wo.className = 'fv-extra-add__wo';
+          wo.textContent = ziel.id ? ('in \u201e' + ziel.name + '\u201c') : 'am Seitenende';
+          box.appendChild(wo);
+
+          z.appendChild(box);
+        }
+      });
     }
 
     /* ---- Admin-Werkzeugleiste (mit Umschalter) ------------------------ */
@@ -1016,16 +1234,16 @@
         pruef: '/FinnVelo/Aufgabenplaner/version.json',
         titel: 'Aufgabenplaner',
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.2' },
-          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 22' },
-          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url', ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-2.2.apk' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 3.2' },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 32' },
+          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url', ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-3.2.apk' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Erinnerungen verbessert' }
         ],
         fest: { schluessel: 'FINNVELO-AUFGABENPLANER' },
         vorgabe: {
-          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 21, versionName: '2.1',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-2.1.apk',
-          hinweise: ''
+          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 32, versionName: '3.2',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-3.2.apk',
+          hinweise: 'Bearbeitungsmaske repariert und mit Klappbereichen: Titel, Notiz, Stand offen - Wann, Prioritaet, Erinnerungen und Co als Dropdown mit Zusammenfassung'
         }
       }
     ];
