@@ -1433,20 +1433,20 @@ body.fv-admin-on .site-header { top: 44px; }
   align-items: center;
   padding: 4px 5px;
   border-radius: 10px;
-  background: rgba(8, 12, 20, 0.93);
-  border: 1px solid var(--line);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
+  background-color: #070b14;
+  border: 1px solid rgba(120, 170, 255, 0.4);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
   z-index: 6;
 }
 .fv-extra__k {
-  width: 26px;
-  height: 26px;
+  width: 27px;
+  height: 27px;
   padding: 0;
   border-radius: 7px;
-  border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--soft);
-  font: 700 13px/1 inherit;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 14px/1 inherit;
   cursor: pointer;
 }
 .fv-extra__k:hover { background: rgba(120, 170, 255, 0.2); color: #fff; border-color: var(--blue); }
@@ -1454,15 +1454,26 @@ body.fv-admin-on .site-header { top: 44px; }
 .fv-extra__k--weg:hover { background: rgba(160, 30, 44, 0.95); border-color: var(--red); color: #fff; }
 .fv-extra__sel {
   height: 26px;
-  max-width: 120px;
-  padding: 0 5px;
+  max-width: 130px;
+  padding: 0 6px;
   border-radius: 7px;
-  border: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.42);
-  color: var(--soft);
-  font: 400 12px/1 inherit;
+  border: 1px solid rgba(120, 170, 255, 0.55);
+  /* Deckende Farben: bei durchsichtigem Hintergrund zeichnet Windows die
+     Klappliste hell und der helle Text darauf ist nicht mehr lesbar. */
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 600 12px/1 inherit;
   cursor: pointer;
 }
+.fv-extra__sel:hover { border-color: var(--blue); background-color: #16223a; }
+.fv-extra__sel:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+/* Die aufgeklappte Liste selbst - ohne diese Regel ist sie hell auf hell. */
+.fv-extra__sel option {
+  background-color: #101827;
+  color: #eaf1ff;
+  font-weight: 600;
+}
+.fv-extra__sel option:checked { background-color: #2a6adf; color: #ffffff; }
 .fv-extra__sel--ziel { max-width: 150px; }
 
 /* Knopfleiste zum Anlegen - je Abschnitt eine */
@@ -1770,4 +1781,52 @@ body.fv-admin-on .site-header { top: 44px; }
 .fv-prog-weg:hover { background: rgba(160, 30, 44, 0.9); border-color: var(--red); color: #fff; }
 @media (max-width: 700px) {
   .fv-prog-box { margin-left: 14px; margin-right: 14px; padding: 16px; }
+}
+
+/* =====================================================================
+   Ausblenden vorhandener Elemente (nur im Bearbeiten-Modus bedienbar)
+   ===================================================================== */
+.fv-weg-btn {
+  position: absolute;
+  z-index: 90;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: #a01e2c;
+  color: #ffffff;
+  font: 700 13px/1 inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+.fv-weg-btn:hover { background-color: #c9283a; transform: scale(1.08); }
+
+/* Ausgeblendetes Element im Bearbeiten-Modus: blass und durchgestrichen */
+.fv-verborgen {
+  opacity: 0.32 !important;
+  filter: grayscale(1);
+  outline: 1px dashed rgba(200, 60, 80, 0.7) !important;
+  outline-offset: 2px;
+}
+.fv-zurueck {
+  display: inline-block;
+  margin: 6px 0 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 12px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-zurueck:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+
+/* Auch die Auswahlfelder im Programm-Feld deckend halten */
+.fv-prog-box select,
+.fv-prog-box select option,
+.fv-update-box select,
+.fv-update-box select option {
+  background-color: #101827;
+  color: #eaf1ff;
 }

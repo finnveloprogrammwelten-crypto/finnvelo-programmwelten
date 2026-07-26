@@ -159,6 +159,11 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
   Bildfelder: auf das Bild klicken (oder eine Datei darauf ziehen) und
   auswaehlen; darunter laesst sich eine Bildunterschrift eintippen - sie darf
   auch leer bleiben. Alles wird sofort gespeichert.
+- **Vorhandene Elemente ausblenden (NEU):** Zeigst du im Bearbeiten-Modus auf
+  einen Text, ein Bild oder ein Schild, erscheint oben rechts ein **rotes x**.
+  Ein Klick blendet das Element aus - Besucher sehen es dann nicht mehr.
+  Fuer dich bleibt es blass sichtbar, mit dem Knopf **"wieder einblenden"**
+  darunter. So laesst sich nichts versehentlich unwiederbringlich loeschen.
 
   > **Warum keine freie Platzierung per Maus?** Die Seite passt sich der
   > Bildschirmbreite an (7 Kacheln nebeneinander am Rechner, 1 auf dem Handy).

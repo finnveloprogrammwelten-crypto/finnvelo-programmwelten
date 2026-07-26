@@ -378,6 +378,97 @@
       });
     }
 
+    /* ---- Vorhandene Elemente ausblenden (Block h0) ---------------------
+       Gespeichert wird eine Liste von Schluesseln, z.B. ["t7","i3"].
+       Besucher sehen diese Elemente gar nicht. Im Bearbeiten-Modus bleiben
+       sie blass sichtbar, damit du sie wieder einblenden kannst. */
+    var versteckt = [];
+    function parseHidden(item) {
+      versteckt = [];
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var a = JSON.parse(item.value);
+          if (Array.isArray(a)) versteckt = a.filter(function (x) { return typeof x === 'string'; });
+        } catch (e) {}
+      }
+    }
+    function saveHidden() { return save('h0', 'text', JSON.stringify(versteckt)); }
+    function istVersteckt(key) { return versteckt.indexOf(key) !== -1; }
+
+    function applyHidden(k) {
+      var alle = [].concat(k.t, k.i, k.s, k.d);
+      alle.forEach(function (el) {
+        var key = el.getAttribute('data-fvk');
+        if (!key) return;
+        el.classList.remove('fv-verborgen');
+        var alt = el.parentNode && el.parentNode.querySelector
+          ? el.parentNode.querySelector('.fv-zurueck[data-fuer="' + key + '"]') : null;
+        if (alt) alt.parentNode.removeChild(alt);
+
+        if (!istVersteckt(key)) { el.style.removeProperty('display'); return; }
+
+        if (!EDITING) { el.style.display = 'none'; return; }
+
+        // Bearbeiten-Modus: blass zeigen + Knopf zum Wiedereinblenden
+        el.style.removeProperty('display');
+        el.classList.add('fv-verborgen');
+        var zurueck = document.createElement('button');
+        zurueck.type = 'button';
+        zurueck.className = 'fv-zurueck';
+        zurueck.setAttribute('data-fuer', key);
+        zurueck.textContent = '\u21BA wieder einblenden';
+        zurueck.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var i = versteckt.indexOf(key);
+          if (i !== -1) versteckt.splice(i, 1);
+          saveHidden().then(function () { applyHidden(k); });
+        });
+        if (el.parentNode) el.parentNode.insertBefore(zurueck, el.nextSibling);
+      });
+    }
+
+    /* Schwebender Knopf zum Ausblenden - erscheint beim Zeigen auf ein Element */
+    function hideButton(k) {
+      if (!EDITING || document.querySelector('.fv-weg-btn')) return;
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'fv-weg-btn';
+      btn.innerHTML = '\u2715';
+      btn.setAttribute('title', 'Dieses Element ausblenden');
+      btn.style.display = 'none';
+      document.body.appendChild(btn);
+
+      var ziel = null, weg = null;
+      function zeigen(el) {
+        if (!el || el.classList.contains('fv-verborgen')) { verstecken(); return; }
+        ziel = el;
+        var r = el.getBoundingClientRect();
+        if (r.width < 12 || r.height < 12) { verstecken(); return; }
+        btn.style.display = 'block';
+        btn.style.top = Math.max(4, r.top + window.scrollY - 10) + 'px';
+        btn.style.left = Math.max(4, r.right + window.scrollX - 12) + 'px';
+      }
+      function verstecken() { clearTimeout(weg); weg = setTimeout(function () { btn.style.display = 'none'; ziel = null; }, 260); }
+
+      document.addEventListener('mouseover', function (e) {
+        if (!e.target || !e.target.closest) return;
+        if (e.target.closest('.fv-weg-btn') || e.target.closest('.fv-admin-bar')) { clearTimeout(weg); return; }
+        var el = e.target.closest('[data-fvk]');
+        if (el && !el.closest('.site-header') && !el.closest('footer')) { clearTimeout(weg); zeigen(el); }
+        else verstecken();
+      });
+      btn.addEventListener('mouseenter', function () { clearTimeout(weg); });
+      btn.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        if (!ziel) return;
+        var key = ziel.getAttribute('data-fvk');
+        if (!key || istVersteckt(key)) return;
+        versteckt.push(key);
+        btn.style.display = 'none';
+        saveHidden().then(function () { applyHidden(k); });
+      });
+    }
+
     function applyOverrides(k) {
       return Promise.all([fetchContent(SLUG), fetchContent(GLOBAL)]).then(function (res) {
         var map = res[0] || {}, gmap = res[1] || {};
@@ -390,6 +481,7 @@
         parseGallery(map['g0']); renderGallery();
         applyOrder(map);
         parseCustom(map['x0']); renderCustom();
+        parseHidden(map['h0']); applyHidden(k); hideButton(k);
       }).catch(function () {});
     }
 
