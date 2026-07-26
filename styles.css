@@ -1830,3 +1830,69 @@ body.fv-admin-on .site-header { top: 44px; }
   background-color: #101827;
   color: #eaf1ff;
 }
+
+/* Knopf zum Aendern des Link-Ziels (nur im Bearbeiten-Modus) */
+.fv-ziel-btn {
+  display: inline-block;
+  margin: 0 0 0 8px;
+  vertical-align: middle;
+  padding: 6px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.55);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 12px/1.2 inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fv-ziel-btn:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+
+/* Selbst angelegte Knopf-Felder */
+.fv-extra__knopf { display: inline-block; }
+.fv-extra--knopf .fv-extra__leiste { top: -10px; }
+
+/* Zeichenzaehler im Google-Eintrag-Feld */
+.fv-zaehl {
+  font-weight: 400;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  opacity: 0.85;
+}
+.fv-zaehl.warn { color: #f0b429; opacity: 1; }
+
+/* Neue Ueberschrift als eigenes Feld */
+.fv-extra__ueberschrift {
+  margin: 6px 0 2px;
+  font-size: clamp(19px, 1.5vw, 23px);
+  color: var(--text);
+}
+
+/* Pfeile zum Umsortieren ganzer Abschnitte */
+.program-info-block { position: relative; }
+.fv-sec-leiste {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 5px;
+  padding: 4px 5px;
+  border-radius: 10px;
+  background-color: #070b14;
+  border: 1px solid rgba(120, 170, 255, 0.4);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+}
+.fv-sec-k {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 14px/1 inherit;
+  cursor: pointer;
+}
+.fv-sec-k:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }

@@ -263,6 +263,60 @@ export class Counter extends DurableObject {
       });
     }
 
+    // --- Sicherung: alle Inhalte ausgeben (nur Admin) ------------------
+    // Liefert saemtliche gespeicherten Inhalte als eine Datei. Damit laesst
+    // sich alles, was ueber den Bearbeiten-Modus eingetragen wurde, sichern.
+    if (url.pathname === "/api/export" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      const rows = this.sql.exec(
+        "SELECT page, block, type, value, updated FROM content ORDER BY page, block"
+      ).toArray();
+      return new Response(JSON.stringify({
+        art: "finnvelo-sicherung",
+        fassung: 1,
+        erstellt: new Date().toISOString(),
+        anzahl: rows.length,
+        inhalte: rows
+      }, null, 2), {
+        status: 200,
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "cache-control": "no-store"
+        }
+      });
+    }
+
+    // --- Sicherung einspielen (nur Admin) ------------------------------
+    if (url.pathname === "/api/import" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      const daten = body.daten;
+      if (!daten || daten.art !== "finnvelo-sicherung" || !Array.isArray(daten.inhalte)) {
+        return json({ error: "keine_sicherung" }, 400);
+      }
+      const ALLOWED_TYPES = ["text", "image", "video", "link"];
+      let uebernommen = 0, uebersprungen = 0;
+      for (const z of daten.inhalte) {
+        const page = String(z && z.page || "");
+        const block = String(z && z.block || "");
+        const type = String(z && z.type || "");
+        if (!PAGE_RE.test(page) || !BLOCK_RE.test(block) || ALLOWED_TYPES.indexOf(type) === -1) {
+          uebersprungen++; continue;
+        }
+        const value = String(z.value == null ? "" : z.value).slice(0, MAX_CONTENT);
+        this.sql.exec(
+          "INSERT INTO content (page, block, type, value, updated) VALUES (?, ?, ?, ?, ?) " +
+          "ON CONFLICT(page, block) DO UPDATE SET type = excluded.type, value = excluded.value, updated = excluded.updated",
+          page, block, type, value, Date.now()
+        );
+        uebernommen++;
+      }
+      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen });
+    }
+
     // --- Eigene Programme: Liste lesen (oeffentlich) -------------------
     // Ablage: page "system", block "p0" -> JSON-Liste
     //   [{ slug, name, kurz, stich, bild }]
@@ -470,6 +524,18 @@ ${KOPFZEILE}
         </div>
       </div>
 
+      <section class="program-launch" aria-labelledby="launch-title">
+        <div class="program-launch__text">
+          <p class="section-kicker">Direkt im Browser</p>
+          <h2 id="launch-title">Sofort starten</h2>
+          <p>L&auml;uft direkt hier auf der Webseite &ndash; ohne Installation.</p>
+        </div>
+        <div class="program-launch__action">
+          <a class="button program-launch__btn" href="/programme">Jetzt &ouml;ffnen</a>
+          <span class="program-launch__note">L&auml;uft im Browser &ndash; keine Installation n&ouml;tig</span>
+        </div>
+      </section>
+
       <div class="program-detail__body program-detail__body--archivar">
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
@@ -539,6 +605,43 @@ function programmZeile(p) {
         </a>`;
 }
 
+async function seitenKopf(env, slug) {
+  try {
+    if (!env || !env.COUNTERS || !PAGE_RE.test(slug)) return null;
+    const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+    const r = await stub.fetch(new Request(
+      "https://zaehler/api/content?page=" + encodeURIComponent(slug), { method: "GET" }));
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (!d || !Array.isArray(d.items)) return null;
+    let titel = "", besch = "";
+    for (const it of d.items) {
+      if (it.block === "m1" && it.type === "text") titel = String(it.value || "").trim();
+      if (it.block === "m2" && it.type === "text") besch = String(it.value || "").trim();
+    }
+    if (!titel && !besch) return null;
+    return { titel: titel, besch: besch };
+  } catch (_e) { return null; }
+}
+
+// Titel und Beschreibung in einer fertigen HTML-Seite austauschen.
+function kopfErsetzen(html, kopf) {
+  if (!kopf) return html;
+  if (kopf.titel) {
+    const t = esc(kopf.titel);
+    html = html.replace(/<title>[\s\S]*?<\/title>/i, "<title>" + t + "</title>");
+    html = html.replace(/(<meta property="og:title" content=")[^"]*(")/i, "$1" + t + "$2");
+    html = html.replace(/(<meta name="twitter:title" content=")[^"]*(")/i, "$1" + t + "$2");
+  }
+  if (kopf.besch) {
+    const b = esc(kopf.besch);
+    html = html.replace(/(<meta name="description" content=")[^"]*(")/i, "$1" + b + "$2");
+    html = html.replace(/(<meta property="og:description" content=")[^"]*(")/i, "$1" + b + "$2");
+    html = html.replace(/(<meta name="twitter:description" content=")[^"]*(")/i, "$1" + b + "$2");
+  }
+  return html;
+}
+
 async function eigeneProgramme(env) {
   try {
     if (!env || !env.COUNTERS) return [];
@@ -593,6 +696,27 @@ export default {
       return stub.fetch(new Request("https://zaehler/api/version?app=" + VERSION_ROUTEN[versionPfad], { method: "GET" }));
     }
 
+    // --- Sitemap: selbst angelegte Programme ergaenzen -----------------
+    // Ohne das waeren neu angelegte Programmseiten fuer Suchmaschinen unsichtbar.
+    if (url.pathname === "/sitemap.xml" && env && env.ASSETS) {
+      const liste = await eigeneProgramme(env);
+      const antwort = await env.ASSETS.fetch(request);
+      if (!antwort.ok || !liste.length) return antwort;
+      let xml = await antwort.text();
+      if (xml.indexOf("</urlset>") !== -1) {
+        const heute = new Date().toISOString().slice(0, 10);
+        const zusatz = liste.map((p) =>
+          "  <url><loc>https://finnveloprogramme.com/" + esc(p.slug) +
+          "</loc><lastmod>" + heute + "</lastmod></url>"
+        ).join("\n");
+        xml = xml.replace("</urlset>", zusatz + "\n</urlset>");
+      }
+      return new Response(xml, {
+        status: 200,
+        headers: { "content-type": "application/xml; charset=utf-8", "cache-control": "no-cache" }
+      });
+    }
+
     // --- Eigene Programme: Seite erzeugen oder Kacheln einsetzen -------
     const pfad = url.pathname.replace(/\/+$/, "") || "/";
     const istUebersicht = (pfad === "/" || pfad === "/index.html" ||
@@ -608,7 +732,8 @@ export default {
       if (koennteProgramm) {
         const treffer = liste.filter((p) => p && p.slug === moeglicherSlug)[0];
         if (treffer) {
-          return new Response(programmSeite(treffer), {
+          const kopf = await seitenKopf(env, moeglicherSlug);
+          return new Response(kopfErsetzen(programmSeite(treffer), kopf), {
             status: 200,
             headers: {
               "content-type": "text/html; charset=utf-8",
@@ -628,6 +753,8 @@ export default {
             const istListe = (pfad === "/programme" || pfad === "/programme.html");
             const teile = liste.map((p) => istListe ? programmZeile(p) : programmKachel(p)).join("\n");
             html = html.replace("<!--FV-PROGRAMME-->", teile);
+            const slugU = (pfad === "/" || pfad === "/index.html") ? "start" : "programme";
+            html = kopfErsetzen(html, await seitenKopf(env, slugU));
             const kopf = new Headers(antwort.headers);
             kopf.delete("content-length");
             kopf.set("cache-control", "no-cache");
@@ -654,7 +781,25 @@ export default {
     }
 
     // Alles andere: statische Datei ausliefern.
-    if (env && env.ASSETS) return env.ASSETS.fetch(request);
+    if (env && env.ASSETS) {
+      const antwort = await env.ASSETS.fetch(request);
+      // Bei HTML-Seiten koennen Titel und Beschreibung aus dem Bearbeiten-Modus
+      // stammen. Klappt das nicht, wird einfach die Originalseite ausgeliefert.
+      const typ = antwort.headers.get("content-type") || "";
+      if (antwort.ok && typ.indexOf("text/html") !== -1) {
+        const slug = (pfad === "/" ? "start" : pfad.replace(/^\//, "").replace(/\.html$/, ""));
+        if (PAGE_RE.test(slug)) {
+          const kopf = await seitenKopf(env, slug);
+          if (kopf) {
+            const html = kopfErsetzen(await antwort.text(), kopf);
+            const kopfzeilen = new Headers(antwort.headers);
+            kopfzeilen.delete("content-length");
+            return new Response(html, { status: antwort.status, headers: kopfzeilen });
+          }
+        }
+      }
+      return antwort;
+    }
     return new Response("Not found", { status: 404 });
   }
 };

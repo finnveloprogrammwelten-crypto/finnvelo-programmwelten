@@ -279,6 +279,7 @@
       var base = [], extra = [];
       qsa(document, NAV_TEXT_SEL).forEach(function (el) {
         if (!el.textContent || !el.textContent.trim()) return;
+        if (el.hasAttribute('data-fv-nav-dyn')) return;   // aus der Liste gepflegt
         if (el.hasAttribute('data-fv-nav-extra')) extra.push(el);
         else base.push(el);
       });
@@ -320,6 +321,9 @@
 
     function keyed() {
       var t = textEls(), i = imgEls(), s = statusEls(), d = linkEls(), n = navEls();
+      // Knopf-Beschriftung: eigener Schluessel am selben Element (b0, b1 ...),
+      // damit Text UND Ziel getrennt gespeichert werden koennen.
+      d.forEach(function (el, idx) { el.setAttribute('data-fvkb', 'b' + idx); });
       t.forEach(function (el, idx) { el.setAttribute('data-fvk', 't' + idx); });
       i.forEach(function (el, idx) { el.setAttribute('data-fvk', 'i' + idx); });
       s.forEach(function (el, idx) { el.setAttribute('data-fvk', 's' + idx); });
@@ -469,12 +473,71 @@
       });
     }
 
+    /* ---- Abschnitte umsortieren (Block q0) -----------------------------
+       Gespeichert wird die Reihenfolge der Abschnitts-Kennungen. Abschnitte,
+       die nicht in der Liste stehen, bleiben am Ende in bisheriger Folge. */
+    function abschnitte() {
+      var root = editRoot(); if (!root) return [];
+      var traeger = root.querySelector('.program-detail__body');
+      if (!traeger) return [];
+      return qsa(traeger, ':scope > section[aria-labelledby]');
+    }
+    function applySectionOrder(map) {
+      var liste = abschnitte(); if (!liste.length) return;
+      var traeger = liste[0].parentNode;
+      var o = map['q0'];
+      if (o && o.type === 'text' && o.value) {
+        var reihe;
+        try { reihe = JSON.parse(o.value); } catch (e) { reihe = null; }
+        if (Array.isArray(reihe)) {
+          var nach = {};
+          liste.forEach(function (sec) { nach[sec.getAttribute('aria-labelledby')] = sec; });
+          reihe.forEach(function (id) {
+            if (nach[id]) { traeger.appendChild(nach[id]); delete nach[id]; }
+          });
+        }
+      }
+      if (!EDITING) return;
+
+      // Pfeile zum Verschieben einsetzen
+      abschnitte().forEach(function (sec) {
+        if (sec.querySelector(':scope > .fv-sec-leiste')) return;
+        var leiste = document.createElement('div');
+        leiste.className = 'fv-sec-leiste';
+        function knopf(z, titel, richtung) {
+          var b = document.createElement('button');
+          b.type = 'button'; b.className = 'fv-sec-k'; b.innerHTML = z;
+          b.setAttribute('title', titel);
+          b.addEventListener('click', function (e) {
+            e.preventDefault(); e.stopPropagation();
+            var alle = abschnitte();
+            var i = alle.indexOf(sec);
+            var j = i + richtung;
+            if (j < 0 || j >= alle.length) return;
+            if (richtung < 0) sec.parentNode.insertBefore(sec, alle[j]);
+            else sec.parentNode.insertBefore(alle[j], sec);
+            var neueReihe = abschnitte().map(function (x) { return x.getAttribute('aria-labelledby'); });
+            save('q0', 'text', JSON.stringify(neueReihe));
+          });
+          leiste.appendChild(b);
+        }
+        knopf('\u2191', 'Abschnitt nach oben', -1);
+        knopf('\u2193', 'Abschnitt nach unten', 1);
+        sec.appendChild(leiste);
+      });
+    }
+
     function applyOverrides(k) {
       return Promise.all([fetchContent(SLUG), fetchContent(GLOBAL)]).then(function (res) {
         var map = res[0] || {}, gmap = res[1] || {};
         k.t.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
         k.i.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'image' && o.value) el.src = o.value; });
-        k.d.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'link' && /^(https?:\/\/|\/)/i.test(o.value)) el.setAttribute('href', o.value); });
+        k.d.forEach(function (el) {
+          var o = map[el.getAttribute('data-fvk')];
+          if (o && o.type === 'link' && /^(https?:\/\/|\/)/i.test(o.value)) el.setAttribute('href', o.value);
+          var b = map[el.getAttribute('data-fvkb')];
+          if (b && b.type === 'text' && b.value) el.textContent = b.value;
+        });
         k.s.forEach(function (el) { var o = map[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; applyStatus(el); });
         k.n.forEach(function (el) { var o = gmap[el.getAttribute('data-fvk')]; if (o && o.type === 'text') el.innerHTML = o.value; });
         var vo = map['v0']; if (vo && vo.type === 'video' && vo.value) renderVideo(vo.value);
@@ -482,6 +545,7 @@
         applyOrder(map);
         parseCustom(map['x0']); renderCustom();
         parseHidden(map['h0']); applyHidden(k); hideButton(k);
+        applySectionOrder(map);
       }).catch(function () {});
     }
 
@@ -660,23 +724,61 @@
     }
 
     /* ---- Download-/Aktions-Links (Ziel-URL) --------------------------- */
+    /* Knoepfe: Beschriftung direkt bearbeiten, Ziel ueber das Ketten-Symbol.
+       So laesst sich beides getrennt aendern, ohne sich in die Quere zu kommen. */
+    function zielAendern(el, key, fertig) {
+      var cur = el.getAttribute('href') || '';
+      var u = window.prompt('Wohin soll der Knopf f\u00fchren?\n\n'
+        + 'Vollst\u00e4ndige Adresse (https://\u2026) oder ein Pfad auf dieser Seite (/programme):', cur);
+      if (u === null) return;
+      u = String(u).trim();
+      if (u && !/^(https?:\/\/|\/)/i.test(u)) {
+        window.alert('Bitte eine vollst\u00e4ndige Adresse mit https:// eingeben \u2013 '
+          + 'oder einen Pfad dieser Seite, der mit / beginnt.');
+        return;
+      }
+      el.classList.add('fv-saving');
+      if (typeof fertig === 'function') { fertig(u, el); return; }
+      save(key, 'link', u).then(function (ok) {
+        if (ok && u) el.setAttribute('href', u);
+        flash(el, ok);
+      });
+    }
+
     function enableLinks(els) {
       els.forEach(function (el) {
         el.classList.add('fv-editable-link');
-        el.setAttribute('title', 'Admin: Klicken, um das Ziel (Link) zu \u00e4ndern');
-        el.addEventListener('click', function (e) {
-          e.preventDefault(); e.stopPropagation();
-          var cur = el.getAttribute('href') || '';
-          var u = window.prompt('Link/Ziel (vollst\u00e4ndige URL, z.B. GitHub-Release) einf\u00fcgen:', cur);
-          if (u === null) return;
-          u = String(u).trim();
-          if (u && !/^(https?:\/\/|\/)/i.test(u)) { window.alert('Bitte eine vollst\u00e4ndige URL (https://...) ODER einen seiteninternen Pfad, der mit / beginnt, eingeben.'); return; }
-          el.classList.add('fv-saving');
-          save(el.getAttribute('data-fvk'), 'link', u).then(function (ok) {
-            if (ok && u) el.setAttribute('href', u);
-            flash(el, ok);
+        el.setAttribute('title', 'Beschriftung anklicken zum \u00c4ndern \u2013 Kettensymbol f\u00fcr das Ziel');
+
+        // a) Beschriftung bearbeiten
+        el.setAttribute('contenteditable', 'true');
+        el.setAttribute('spellcheck', 'false');
+        el.classList.add('fv-editable');
+        el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
+        (function (knopf) {
+          var orig = knopf.textContent;
+          knopf.addEventListener('blur', function () {
+            var neu = (knopf.textContent || '').trim();
+            if (neu === (orig || '').trim()) return;
+            orig = neu;
+            knopf.classList.add('fv-saving');
+            save(knopf.getAttribute('data-fvkb'), 'text', neu).then(function (ok) { flash(knopf, ok); });
           });
+        })(el);
+
+        // b) Ziel aendern
+        if (!el.parentNode || el.parentNode.querySelector('.fv-ziel-btn[data-fuer="' + el.getAttribute('data-fvk') + '"]')) return;
+        var zb = document.createElement('button');
+        zb.type = 'button';
+        zb.className = 'fv-ziel-btn';
+        zb.setAttribute('data-fuer', el.getAttribute('data-fvk'));
+        zb.innerHTML = '\uD83D\uDD17 Ziel';
+        zb.setAttribute('title', 'Wohin der Knopf f\u00fchrt');
+        zb.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          zielAendern(el, el.getAttribute('data-fvk'));
         });
+        el.parentNode.insertBefore(zb, el.nextSibling);
       });
     }
 
@@ -700,7 +802,7 @@
       bar.className = 'fv-app-edit';
       var up = document.createElement('button');
       up.type = 'button'; up.className = 'fv-app-btn';
-      up.innerHTML = '\uD83C\uDF10 Planer-HTML-Datei hochladen';
+      up.innerHTML = '\uD83C\uDF10 Web-App (HTML-Datei) hochladen';
       var status = document.createElement('span');
       status.className = 'fv-app-status';
       status.textContent = 'Eine in sich geschlossene .html-Datei \u2013 der Knopf oeffnet sie danach.';
@@ -724,7 +826,7 @@
                 btn.setAttribute('href', res.url);
                 var fvk = btn.getAttribute('data-fvk');
                 if (fvk) save(fvk, 'link', res.url);
-                status.textContent = '\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deinen Planer.';
+                status.textContent = '\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.';
                 flash(btn, true);
               } else {
                 status.textContent = '\u2717 Fehlgeschlagen (zu gro\u00df, oder Server noch nicht aktualisiert?).';
@@ -909,7 +1011,7 @@
       if (!b || typeof b.id !== 'string') return null;
       return {
         id: b.id,
-        typ: (b.typ === 'bild') ? 'bild' : 'text',
+        typ: ['bild', 'knopf', 'ueberschrift'].indexOf(b.typ) !== -1 ? b.typ : 'text',
         html: typeof b.html === 'string' ? b.html : '',
         url: typeof b.url === 'string' ? b.url : '',
         alt: typeof b.alt === 'string' ? b.alt : '',
@@ -1052,6 +1154,67 @@
                 });
               })(cap, idx);
             }
+          } else if (b.typ === 'ueberschrift') {
+            var h = document.createElement('h2');
+            h.className = 'fv-extra__ueberschrift';
+            h.setAttribute('data-fvx', b.id);
+            h.innerHTML = b.html || 'Neue \u00dcberschrift';
+            wrap.appendChild(h);
+            if (EDITING) {
+              h.setAttribute('contenteditable', 'true');
+              h.setAttribute('spellcheck', 'false');
+              h.classList.add('fv-editable');
+              (function (feld, nr) {
+                var orig = feld.innerHTML;
+                feld.addEventListener('blur', function () {
+                  if (feld.innerHTML === orig) return;
+                  orig = feld.innerHTML; customBlocks[nr].html = feld.innerHTML;
+                  feld.classList.add('fv-saving');
+                  saveCustom().then(function (ok) { flash(feld, ok); });
+                });
+              })(h, idx);
+            }
+          } else if (b.typ === 'knopf') {
+            var a = document.createElement('a');
+            a.className = 'button fv-extra__knopf';
+            a.setAttribute('data-fvx', b.id);
+            a.setAttribute('href', b.url || '#');
+            if (/^https?:/i.test(b.url || '')) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); }
+            a.textContent = b.html || 'Neuer Knopf';
+            wrap.appendChild(a);
+
+            if (EDITING) {
+              a.setAttribute('contenteditable', 'true');
+              a.setAttribute('spellcheck', 'false');
+              a.classList.add('fv-editable');
+              a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
+              (function (knopf, nr) {
+                var orig = knopf.textContent;
+                knopf.addEventListener('blur', function () {
+                  var t = (knopf.textContent || '').trim();
+                  if (t === (orig || '').trim()) return;
+                  orig = t; customBlocks[nr].html = t;
+                  knopf.classList.add('fv-saving');
+                  saveCustom().then(function (ok) { flash(knopf, ok); });
+                });
+              })(a, idx);
+
+              var zb = document.createElement('button');
+              zb.type = 'button';
+              zb.className = 'fv-ziel-btn';
+              zb.innerHTML = '\uD83D\uDD17 Ziel';
+              zb.setAttribute('title', 'Wohin der Knopf f\u00fchrt');
+              (function (knopf, nr) {
+                zb.addEventListener('click', function (e) {
+                  e.preventDefault(); e.stopPropagation();
+                  zielAendern(knopf, null, function (u) {
+                    customBlocks[nr].url = u;
+                    saveCustom().then(function (ok) { flash(knopf, ok); renderCustom(); });
+                  });
+                });
+              })(a, idx);
+              wrap.appendChild(zb);
+            }
           } else {
             var p = document.createElement('div');
             p.className = 'fv-extra__text';
@@ -1161,9 +1324,15 @@
 
           function anlegen(typ) {
             var id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+            var vorgabeText = 'Neuer Text \u2013 hier klicken und bearbeiten.';
+            if (typ === 'bild') vorgabeText = '';
+            if (typ === 'knopf') vorgabeText = 'Herunterladen';
+            if (typ === 'ueberschrift') vorgabeText = 'Neue \u00dcberschrift';
             customBlocks.push(normBlock({
-              id: id, typ: typ, ziel: ziel.id, breite: typ === 'bild' ? 'halb' : 'voll',
-              html: typ === 'bild' ? '' : 'Neuer Text \u2013 hier klicken und bearbeiten.'
+              id: id, typ: typ, ziel: ziel.id,
+              breite: (typ === 'bild') ? 'halb' : (typ === 'knopf' ? 'drittel' : 'voll'),
+              html: vorgabeText,
+              url: typ === 'knopf' ? 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases' : ''
             }));
             saveCustom().then(renderCustom);
           }
@@ -1175,7 +1344,15 @@
           bB.type = 'button'; bB.className = 'fv-extra-add';
           bB.innerHTML = '<span aria-hidden="true">+</span> Bildfeld';
           bB.addEventListener('click', function () { anlegen('bild'); });
-          box.appendChild(bT); box.appendChild(bB);
+          var bK = document.createElement('button');
+          bK.type = 'button'; bK.className = 'fv-extra-add';
+          bK.innerHTML = '<span aria-hidden="true">+</span> Knopf';
+          bK.addEventListener('click', function () { anlegen('knopf'); });
+          var bU = document.createElement('button');
+          bU.type = 'button'; bU.className = 'fv-extra-add';
+          bU.innerHTML = '<span aria-hidden="true">+</span> \u00dcberschrift';
+          bU.addEventListener('click', function () { anlegen('ueberschrift'); });
+          box.appendChild(bU); box.appendChild(bT); box.appendChild(bB); box.appendChild(bK);
 
           var wo = document.createElement('span');
           wo.className = 'fv-extra-add__wo';
@@ -1625,5 +1802,355 @@
     function start() { laden().then(bauen); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Web-Apps-Menue aus der Datenbank
+ * Die zwei fest eingebauten Eintraege bleiben, wie sie sind. Zusaetzliche
+ * Eintraege werden hier ergaenzt - fuer alle Besucher, ohne Veroeffentlichen.
+ * Ablage: Seite "system", Block "m0".
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    var eintraege = [];
+
+    function laden() {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var roh = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'm0') roh = it.value || ''; });
+          if (!roh) return [];
+          try {
+            var a = JSON.parse(roh);
+            return Array.isArray(a) ? a.filter(function (e) { return e && e.name && e.url; }) : [];
+          } catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+
+    function speichern() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: 'system', block: 'm0', type: 'text',
+                               value: JSON.stringify(eintraege), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    function menueFuellen() {
+      var menue = document.querySelector('.nav-apps__menu');
+      if (!menue) return;
+      // alte dynamische Eintraege entfernen
+      Array.prototype.slice.call(menue.querySelectorAll('[data-fv-nav-dyn]'))
+        .forEach(function (a) { a.parentNode.removeChild(a); });
+      eintraege.forEach(function (e) {
+        var a = document.createElement('a');
+        a.setAttribute('href', e.url);
+        a.setAttribute('data-fv-nav-dyn', '');
+        if (/^https?:/i.test(e.url)) { a.setAttribute('rel', 'noopener'); }
+        a.setAttribute('target', '_blank');
+        a.textContent = e.name;
+        menue.appendChild(a);
+      });
+    }
+
+    function verwaltung() {
+      if (!pw || !editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-menue-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-menue-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\u2699\uFE0F Men\u00fc "Web-Apps" verwalten <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Hier erg\u00e4nzt du Eintr\u00e4ge im Ausklappmen\u00fc oben. '
+      + 'Die beiden festen Eintr\u00e4ge (Haus- und Gartenplaner, Mischwaldrechner) bleiben unber\u00fchrt \u2013 '
+      + 'ihre Beschriftung \u00e4nderst du wie gewohnt durch Anklicken im Men\u00fc.</p>'
+      + '<div class="fv-prog-felder">'
+      + '  <label>Beschriftung<input type="text" id="fvMName" placeholder="z. B. Notizbuch"></label>'
+      + '  <label>Adresse<input type="text" id="fvMUrl" placeholder="/notizbuch oder https://\u2026"></label>'
+      + '</div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" id="fvMNeu">Eintrag hinzuf\u00fcgen</button>'
+      + '  <span class="fv-prog-melde" id="fvMMelde"></span>'
+      + '</div>'
+      + '<div class="fv-prog-liste" id="fvMListe"></div>';
+      ziel.appendChild(box);
+
+      var nName = box.querySelector('#fvMName'), nUrl = box.querySelector('#fvMUrl');
+      var melde = box.querySelector('#fvMMelde'), listeEl = box.querySelector('#fvMListe');
+
+      function sagen(t, gut) {
+        melde.textContent = t;
+        melde.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { melde.textContent = ''; }, 5000);
+      }
+      function zeigen() {
+        listeEl.innerHTML = '';
+        if (!eintraege.length) {
+          listeEl.innerHTML = '<p class="fv-prog-leer">Keine zus\u00e4tzlichen Men\u00fceintr\u00e4ge.</p>'; return;
+        }
+        eintraege.forEach(function (e, i) {
+          var z = document.createElement('div');
+          z.className = 'fv-prog-eintrag';
+          z.innerHTML = '<strong>' + e.name + '</strong><a href="' + e.url + '">' + e.url + '</a>';
+          var hoch = document.createElement('button');
+          hoch.type = 'button'; hoch.className = 'fv-prog-weg'; hoch.textContent = '\u2191';
+          hoch.addEventListener('click', function () {
+            if (i === 0) return;
+            var t = eintraege[i - 1]; eintraege[i - 1] = eintraege[i]; eintraege[i] = t;
+            speichern().then(function () { zeigen(); menueFuellen(); });
+          });
+          var weg = document.createElement('button');
+          weg.type = 'button'; weg.className = 'fv-prog-weg'; weg.textContent = 'entfernen';
+          weg.addEventListener('click', function () {
+            if (!window.confirm('Eintrag \u201e' + e.name + '\u201c aus dem Men\u00fc entfernen?')) return;
+            eintraege.splice(i, 1);
+            speichern().then(function () { zeigen(); menueFuellen(); sagen('\u2713 Entfernt.', true); });
+          });
+          z.appendChild(hoch); z.appendChild(weg);
+          listeEl.appendChild(z);
+        });
+      }
+      zeigen();
+
+      box.querySelector('#fvMNeu').addEventListener('click', function () {
+        var name = (nName.value || '').trim();
+        var url = (nUrl.value || '').trim();
+        if (!name) { sagen('\u2717 Bitte eine Beschriftung eintragen.', false); return; }
+        if (!/^(https?:\/\/|\/)/i.test(url)) {
+          sagen('\u2717 Die Adresse muss mit https:// oder mit / beginnen.', false); return;
+        }
+        if (eintraege.length >= 12) { sagen('\u2717 Das Men\u00fc w\u00e4re zu lang.', false); return; }
+        eintraege.push({ name: name, url: url });
+        speichern().then(function (ok) {
+          if (ok) { nName.value = ''; nUrl.value = ''; zeigen(); menueFuellen(); sagen('\u2713 Hinzugef\u00fcgt.', true); }
+          else sagen('\u2717 Speichern fehlgeschlagen.', false);
+        });
+      });
+    }
+
+    function start() {
+      laden().then(function (a) { eintraege = a; menueFuellen(); verwaltung(); });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Seitentitel und Suchmaschinen-Beschreibung bearbeiten
+ * Das sind die beiden Texte, die Google im Suchergebnis anzeigt.
+ * Ablage: Block m1 (Titel) und m2 (Beschreibung) der jeweiligen Seite.
+ * Der Server setzt sie beim Ausliefern ein - also auch fuer Suchmaschinen.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+
+    function seite() {
+      var p = (location.pathname || '').toLowerCase();
+      var f = p.substring(p.lastIndexOf('/') + 1) || 'index.html';
+      var n = f.replace(/\.html?$/, '').replace(/[^a-z0-9-]/g, '');
+      if (!n || n === 'index') return 'start';
+      return n;
+    }
+    var SEITE = seite();
+
+    function sichern(block, wert) {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: SEITE, block: block, type: 'text', value: wert, password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    function bauen(titel, besch) {
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-kopf-box')) return;
+      var jetztTitel = (document.title || '').trim();
+      var mb = document.querySelector('meta[name="description"]');
+      var jetztBesch = mb ? (mb.getAttribute('content') || '') : '';
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-kopf-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\u2699\uFE0F Google-Eintrag dieser Seite <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Diese zwei Texte zeigt Google im Suchergebnis. '
+      + 'Guter Richtwert: Titel 50\u201360 Zeichen, Beschreibung 120\u2013160 Zeichen. '
+      + 'Leer lassen = der urspr\u00fcngliche Text aus der Datei bleibt.</p>'
+      + '<div class="fv-prog-felder">'
+      + '  <label>Seitentitel <span class="fv-zaehl" id="fvKT"></span>'
+      + '    <input type="text" id="fvKTitel" maxlength="120"></label>'
+      + '  <label>Beschreibung <span class="fv-zaehl" id="fvKB"></span>'
+      + '    <input type="text" id="fvKBesch" maxlength="300"></label>'
+      + '</div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" id="fvKSave">Speichern</button>'
+      + '  <span class="fv-prog-melde" id="fvKMelde"></span>'
+      + '</div>';
+      ziel.appendChild(box);
+
+      var iT = box.querySelector('#fvKTitel'), iB = box.querySelector('#fvKBesch');
+      var zT = box.querySelector('#fvKT'), zB = box.querySelector('#fvKB');
+      var melde = box.querySelector('#fvKMelde');
+      iT.value = titel || jetztTitel;
+      iB.value = besch || jetztBesch;
+
+      function zaehlen() {
+        var t = iT.value.length, b = iB.value.length;
+        zT.textContent = t + ' Zeichen' + (t > 65 ? ' \u2013 etwas lang' : '');
+        zT.className = 'fv-zaehl' + (t > 65 ? ' warn' : '');
+        zB.textContent = b + ' Zeichen' + (b > 170 ? ' \u2013 etwas lang' : (b && b < 70 ? ' \u2013 etwas kurz' : ''));
+        zB.className = 'fv-zaehl' + (b > 170 ? ' warn' : '');
+      }
+      iT.addEventListener('input', zaehlen);
+      iB.addEventListener('input', zaehlen);
+      zaehlen();
+
+      box.querySelector('#fvKSave').addEventListener('click', function () {
+        Promise.all([sichern('m1', iT.value.trim()), sichern('m2', iB.value.trim())])
+          .then(function (r) {
+            var ok = r[0] && r[1];
+            melde.textContent = ok
+              ? '\u2713 Gespeichert \u2013 beim n\u00e4chsten Aufruf der Seite ist es aktiv.'
+              : '\u2717 Speichern fehlgeschlagen.';
+            melde.className = 'fv-prog-melde ' + (ok ? 'gut' : 'schlecht');
+            if (ok) { document.title = iT.value.trim() || document.title; }
+            setTimeout(function () { melde.textContent = ''; }, 6000);
+          });
+      });
+    }
+
+    fetch('/api/content?page=' + encodeURIComponent(SEITE), { method: 'GET' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (res) {
+        var t = '', b = '';
+        if (res && res.items) res.items.forEach(function (it) {
+          if (it.block === 'm1') t = it.value || '';
+          if (it.block === 'm2') b = it.value || '';
+        });
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function () { bauen(t, b); });
+        } else bauen(t, b);
+      }).catch(function () {});
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Sicherung: alle Inhalte herunterladen und wieder einspielen
+ * Schuetzt alles, was ueber den Bearbeiten-Modus eingetragen wurde -
+ * das steht sonst nur in der Datenbank und nirgends sonst.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    if (!pw) return;
+
+    function bauen() {
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-sich-box')) return;
+      var editAn = false;
+      try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+      if (!editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;   // ein fester Ort genuegt
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-sich-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83D\uDCBE Sicherung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Alles, was du im Bearbeiten-Modus eintr\u00e4gst \u2013 Texte, Bilder, '
+      + 'Zusatzfelder, ausgeblendete Elemente, App-Versionen, angelegte Programme \u2013 liegt nur in der '
+      + 'Datenbank auf dem Server. In den Dateien steht nur der Ursprungstext. '
+      + '<strong>Lade dir ab und zu eine Sicherung herunter</strong>, am besten nach gr\u00f6\u00dferen \u00c4nderungen.</p>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" id="fvSDown">Sicherung herunterladen</button>'
+      + '  <button type="button" class="fv-prog-weg" id="fvSUp" style="margin-left:0">Sicherung einspielen</button>'
+      + '  <span class="fv-prog-melde" id="fvSMelde"></span>'
+      + '</div>';
+      ziel.appendChild(box);
+
+      var melde = box.querySelector('#fvSMelde');
+      function sagen(t, gut) {
+        melde.textContent = t;
+        melde.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { melde.textContent = ''; }, 8000);
+      }
+
+      box.querySelector('#fvSDown').addEventListener('click', function () {
+        sagen('Wird erstellt \u2026', true);
+        fetch('/api/export', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ password: pw })
+        }).then(function (r) { return r.ok ? r.text() : null; })
+          .then(function (txt) {
+            if (!txt) { sagen('\u2717 Sicherung fehlgeschlagen.', false); return; }
+            var d = new Date();
+            var name = 'finnvelo-sicherung-'
+              + d.getFullYear() + '-'
+              + String(d.getMonth() + 1).padStart(2, '0') + '-'
+              + String(d.getDate()).padStart(2, '0') + '.json';
+            var blob = new Blob([txt], { type: 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = name;
+            document.body.appendChild(a); a.click();
+            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+            var anzahl = 0;
+            try { anzahl = (JSON.parse(txt).anzahl) || 0; } catch (e) {}
+            sagen('\u2713 Heruntergeladen: ' + name + ' (' + anzahl + ' Eintr\u00e4ge)', true);
+          }).catch(function () { sagen('\u2717 Sicherung fehlgeschlagen.', false); });
+      });
+
+      box.querySelector('#fvSUp').addEventListener('click', function () {
+        var inp = document.createElement('input');
+        inp.type = 'file'; inp.accept = '.json,application/json';
+        inp.onchange = function () {
+          var f = inp.files && inp.files[0]; if (!f) return;
+          var leser = new FileReader();
+          leser.onload = function () {
+            var daten;
+            try { daten = JSON.parse(String(leser.result || '')); }
+            catch (e) { sagen('\u2717 Das ist keine g\u00fcltige Sicherungsdatei.', false); return; }
+            if (!daten || daten.art !== 'finnvelo-sicherung') {
+              sagen('\u2717 Das ist keine Finnvelo-Sicherung.', false); return;
+            }
+            if (!window.confirm('Sicherung vom ' + (daten.erstellt || '?').slice(0, 10)
+              + ' mit ' + (daten.anzahl || 0) + ' Eintr\u00e4gen einspielen?\n\n'
+              + 'Vorhandene Inhalte mit denselben Feldern werden dabei \u00fcberschrieben.')) return;
+            sagen('Wird eingespielt \u2026', true);
+            fetch('/api/import', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ password: pw, daten: daten })
+            }).then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (res) {
+                if (res && res.ok) {
+                  sagen('\u2713 ' + res.uebernommen + ' Eintr\u00e4ge eingespielt. Seite neu laden.', true);
+                } else sagen('\u2717 Einspielen fehlgeschlagen.', false);
+              }).catch(function () { sagen('\u2717 Einspielen fehlgeschlagen.', false); });
+          };
+          leser.readAsText(f);
+        };
+        inp.click();
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
+    else bauen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();

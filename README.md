@@ -42,6 +42,11 @@ direkt auf der fertigen Webseite. Sie sind **sofort fuer alle sichtbar**:
   (Abschnitt 5)
 - **komplett neue Programme anlegen** - mit eigener Seite, Kachel und
   Listenzeile (Abschnitt 6)
+- **Web-Apps hochladen** (eine in sich geschlossene HTML-Datei) und starten
+- **Menü "Web-Apps"** erweitern, umsortieren, Eintraege entfernen
+- **Seitentitel und Google-Beschreibung** je Seite
+- **Abschnitte umsortieren** und eigene Überschriften anlegen
+- **Sicherung** aller Inhalte herunterladen und wieder einspielen
 
 **B) Struktur - braucht einmal Veroeffentlichen**
 Diese Dinge stehen in Dateien. Nach der Aenderung einmal `git push` bzw.
@@ -171,13 +176,37 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
   > dem Bild laufen. Deshalb: Abschnitt + Breite waehlen - das sieht auf jedem
   > Geraet richtig aus. Auf schmalen Bildschirmen steht automatisch jedes Feld
   > fuer sich.
-- **Download-Link / "Planer oeffnen"-Knopf:** anklicken -> Fenster -> neue
-  vollstaendige `https://`-Adresse einfuegen.
+- **Knoepfe: Beschriftung UND Ziel (NEU):** Bei jedem Knopf (Download,
+  "Jetzt oeffnen" usw.) laesst sich beides getrennt aendern:
+  - **Beschriftung:** direkt auf den Knopftext klicken und tippen
+    (z.B. "Aufgabenplaner herunterladen (17 MB)" -> "Version 3.2 laden").
+  - **Ziel:** daneben erscheint ein Knopf **"🔗 Ziel"**. Anklicken und
+    die vollstaendige Adresse einfuegen (`https://...`) oder einen Pfad
+    dieser Seite (`/programme`).
+- **Neue Knoepfe anlegen (NEU):** In jedem Abschnitt gibt es neben
+  "+ Textfeld" und "+ Bildfeld" jetzt auch **"+ Knopf"**. Damit legst du
+  beliebig viele weitere Download- oder Weiter-Knoepfe an - Beschriftung und
+  Ziel wie oben.
 - **Tutorial-Video:** Auf einer Programmseite mit Abschnitt "Tutorial-Video"
   erscheint **"Video (YouTube-Link) setzen / aendern"**. Link oder Video-ID
   einfuegen - fertig.
 - **Oberflaechen-Galerie:** Im Abschnitt "Oberflaeche" Bilder **hinzufuegen** (+),
   per Pfeil **sortieren**, mit **x entfernen**.
+- **Web-App hochladen (NEU):** Jede Programmseite mit Start-Block hat im
+  Bearbeiten-Modus den Knopf **"Web-App (HTML-Datei) hochladen"**. Eine in
+  sich geschlossene `.html` bis 6 MB auswaehlen - der Startknopf oeffnet sie
+  danach fuer alle Besucher. Selbst angelegte Programme haben diesen Block
+  automatisch.
+- **Menü "Web-Apps" (NEU):** Auf der Seite *Programme* gibt es das Feld
+  **"Menü Web-Apps verwalten"**: Eintraege hinzufuegen, hochschieben,
+  entfernen. Die zwei festen Eintraege bleiben unberuehrt.
+- **Google-Eintrag (NEU):** Auf jeder Seite unten das Feld
+  **"Google-Eintrag dieser Seite"** - Titel und Beschreibung, die in der
+  Suche erscheinen, mit Zeichenzaehler. Der Server setzt sie beim Ausliefern
+  ein, Suchmaschinen sehen sie also auch.
+- **Abschnitte umsortieren (NEU):** Jeder Abschnitt hat oben rechts Pfeile
+  hoch/runter. Und mit **"+ Überschrift"** legst du eigene Zwischen-
+  ueberschriften an.
 - **App-Aktualisierung (NEU):** Auf den Seiten `/mischwaldrechner` und
   `/aufgabenplaner` erscheint unten das Feld **"App-Aktualisierung"**. Damit
   meldest du deinen Android-Apps eine neue Version - siehe Abschnitt 5.
@@ -352,6 +381,30 @@ unterscheidet, gibt es weiter die Kopiervorlage `_vorlage-programm.html`:
 4. Kachel in `index.html` und Zeile in `programme.html` einfuegen
 5. Adresse in `stats.js` bei `PROGRAM_PAGES` eintragen (fuer die Zaehler)
 6. Veroeffentlichen (Abschnitt 7)
+
+---
+
+## 6b. Sicherung deiner Inhalte (wichtig!)
+
+Alles, was du im Bearbeiten-Modus eintraegst, liegt **nur in der Datenbank auf
+dem Server** - in den HTML-Dateien steht weiterhin nur der Ursprungstext.
+Betroffen sind: Texte, hochgeladene Bilder, Zusatzfelder, ausgeblendete
+Elemente, Reihenfolgen, App-Versionen, angelegte Programme, Menueeintraege,
+Seitentitel.
+
+**Deshalb: ab und zu eine Sicherung herunterladen.**
+
+1. `/admin` -> Passwort -> Seite **Programme** -> **Bearbeiten: AN**
+2. Feld **"Sicherung"** -> **"Sicherung herunterladen"**
+3. Die Datei heisst z.B. `finnvelo-sicherung-2026-07-26.json`.
+   Am besten neben den Signaturschluessel legen.
+
+**Wiederherstellen:** im selben Feld auf **"Sicherung einspielen"**, Datei
+auswaehlen, bestaetigen. Felder mit gleichem Namen werden ueberschrieben,
+alles andere bleibt.
+
+> Gute Zeitpunkte: nach groesseren Textarbeiten, nach dem Anlegen neuer
+> Programme, vor groesseren Umbauten.
 
 ---
 
