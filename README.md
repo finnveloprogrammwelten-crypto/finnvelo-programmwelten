@@ -279,7 +279,35 @@ als Ziel `/planer/haus-und-gartenplaner/` eintragen.)
 
 ## 5. Android-Apps: neue Version veroeffentlichen
 
-Es gibt zwei Android-Apps, die sich **selbst nach Updates erkundigen**:
+### Fuer eine neue eigene App einrichten (NEU)
+
+Die Update-Pruefung laesst sich auf **jeder** Programmseite einschalten -
+auch auf selbst angelegten:
+
+1. Programmseite oeffnen -> **Bearbeiten: AN**
+2. Unten im Feld **"App-Aktualisierung"** steht ein Schalter
+   **"Nicht aktiv"**. Einmal anklicken -> **"Aktiv"**.
+3. Jetzt erscheinen die Einstellungen:
+
+| Einstellung | Bedeutung |
+|---|---|
+| Adresse | Was deine App abfragt, z.B. `/meinapp/version.json`. Vorgeschlagen wird `/<seitenname>/version.json`. Muss mit `/` beginnen und auf `version.json` enden |
+| Aufbau der Versionsdatei | *Wie Mischwaldrechner* (Felder `versionCode`, `versionName`, `download`, `hinweis`) oder *Wie Aufgabenplaner* (Felder `versionCode`, `versionName`, `apk`, `hinweise`) |
+| Erkennungsmerkmal | Nur ausfuellen, wenn deine App eines prueft (der Aufgabenplaner tut das). Sonst leer lassen |
+
+4. Darunter die Versionsdaten eintragen und **Speichern**.
+5. Zum Pruefen die Adresse im Browser oeffnen - dort muss der JSON-Text stehen.
+
+**Der Schalter ist der Hauptschalter:** Steht er auf *Nicht aktiv*, antwortet
+die Adresse nicht (die Seite zeigt dann eine normale Fehlermeldung). Das ist
+praktisch, solange du eine App noch baust.
+
+> Beim Bauen der App musst du genau diese Adresse eintragen und einen der
+> beiden Aufbauten verwenden - sonst versteht die App die Antwort nicht.
+
+### Die zwei fest eingebauten Apps
+
+Diese haben feste Adressen und brauchen keinen Schalter:
 
 | App | Programmseite | Adresse, die die App abfragt |
 |---|---|---|

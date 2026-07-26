@@ -1534,11 +1534,104 @@
     if (!pw || !editAn) return;
 
     var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    var slug = pfad.replace(/^\//, '') || 'start';
     var cfg = null;
     for (var i = 0; i < APPS.length; i++) {
       if (pfad.indexOf(APPS[i].seite) !== -1) { cfg = APPS[i]; break; }
     }
-    if (!cfg) return;
+    var festeApp = !!cfg;   // die zwei eingebauten Apps haben feste Adressen
+
+    /* Bauplaene fuer selbst angelegte Update-Pruefungen.
+       Welche Feldnamen die App liest, haengt davon ab, wie sie gebaut wurde. */
+    var BAUPLAENE = {
+      mischwald: {
+        name: 'Wie Mischwaldrechner',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.0.2', auch: ['version'] },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 2' },
+          { key: 'download', label: 'Download-Adresse (GitHub)', typ: 'url', ph: 'https://github.com/.../App.apk' },
+          { key: 'hinweis', label: 'Was ist neu', typ: 'text', ph: 'kurzer Hinweis' }
+        ],
+        fest: {},
+        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: '', hinweis: '' }
+      },
+      finnvelo: {
+        name: 'Wie Aufgabenplaner (mit Erkennungsmerkmal)',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.1' },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 11' },
+          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url', ph: 'https://github.com/.../App-1.1.apk' },
+          { key: 'hinweise', label: 'Was ist neu', typ: 'text', ph: 'kurzer Hinweis' }
+        ],
+        fest: {},
+        vorgabe: { versionCode: 1, versionName: '1.0', apk: '', hinweise: '' }
+      }
+    };
+
+    var einstellung = { aktiv: false, pfad: '/' + slug + '/version.json', bauplan: 'mischwald', merkmal: '' };
+
+    if (!cfg) {
+      // Nur auf Programmseiten anbieten (dort, wo es einen Download-Bereich gibt)
+      if (!document.querySelector('.program-download-block')) return;
+      cfg = { seite: slug, ablage: slug, pruef: einstellung.pfad, titel: 'diese App',
+              felder: BAUPLAENE.mischwald.felder, fest: {}, vorgabe: BAUPLAENE.mischwald.vorgabe };
+    }
+
+    function ladeEinstellung() {
+      return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          if (res && res.items) {
+            res.items.forEach(function (it) {
+              if (it.block !== 'u1' || !it.value) return;
+              try {
+                var e = JSON.parse(it.value);
+                if (e && typeof e === 'object') {
+                  einstellung.aktiv = !!e.aktiv;
+                  if (e.pfad) einstellung.pfad = e.pfad;
+                  if (e.bauplan && BAUPLAENE[e.bauplan]) einstellung.bauplan = e.bauplan;
+                  if (typeof e.merkmal === 'string') einstellung.merkmal = e.merkmal;
+                }
+              } catch (er) {}
+            });
+          }
+          if (!festeApp) {
+            var bp = BAUPLAENE[einstellung.bauplan];
+            cfg.felder = bp.felder; cfg.vorgabe = bp.vorgabe; cfg.pruef = einstellung.pfad;
+            cfg.fest = einstellung.merkmal ? { schluessel: einstellung.merkmal } : {};
+          }
+        }).catch(function () {});
+    }
+
+    function speichereEinstellung() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: cfg.ablage, block: 'u1', type: 'text',
+                               value: JSON.stringify(einstellung), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* Verzeichnis der Adressen pflegen, damit der Server sie ausliefert */
+    function verzeichnisPflegen(anlegen) {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var routen = {};
+          if (res && res.items) res.items.forEach(function (it) {
+            if (it.block === 'v0' && it.value) { try { routen = JSON.parse(it.value) || {}; } catch (e) {} }
+          });
+          // alte Adresse dieser Seite entfernen
+          for (var p in routen) {
+            if (routen.hasOwnProperty(p) && routen[p] === cfg.ablage) delete routen[p];
+          }
+          if (anlegen) routen[einstellung.pfad.toLowerCase()] = cfg.ablage;
+          return fetch('/api/content', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ page: 'system', block: 'v0', type: 'text',
+                                   value: JSON.stringify(routen), password: pw })
+          }).then(function (r) { return r.ok; });
+        }).catch(function () { return false; });
+    }
 
     function laden() {
       return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
@@ -1574,12 +1667,42 @@
                     + ' data-key="' + f.key + '" placeholder="' + f.ph + '"></label>';
       });
 
+      var einstellHtml = '';
+      if (!festeApp) {
+        var planOpt = '';
+        for (var bp in BAUPLAENE) {
+          if (!BAUPLAENE.hasOwnProperty(bp)) continue;
+          planOpt += '<option value="' + bp + '"' + (einstellung.bauplan === bp ? ' selected' : '') + '>'
+                   + BAUPLAENE[bp].name + '</option>';
+        }
+        einstellHtml =
+          '<div class="fv-update-schalter">'
+        + '  <button type="button" class="fv-schalter' + (einstellung.aktiv ? ' an' : '') + '" data-a="schalter">'
+        + '    <span class="fv-schalter__punkt"></span>'
+        + '    <span class="fv-schalter__text">' + (einstellung.aktiv ? 'Aktiv' : 'Nicht aktiv') + '</span>'
+        + '  </button>'
+        + '  <span class="fv-schalter__hinweis">Erst wenn dies aktiv ist, beantwortet die Webseite die Update-Anfragen deiner App.</span>'
+        + '</div>'
+        + '<div class="fv-update-einstell" data-a="einstell"' + (einstellung.aktiv ? '' : ' hidden') + '>'
+        + '  <label>Adresse, die deine App abfragt'
+        + '    <input type="text" data-a="pfad" value="' + einstellung.pfad + '" placeholder="/meinapp/version.json"></label>'
+        + '  <label>Aufbau der Versionsdatei'
+        + '    <select data-a="bauplan">' + planOpt + '</select></label>'
+        + '  <label>Erkennungsmerkmal (nur falls deine App eines pr\u00fcft \u2013 sonst leer lassen)'
+        + '    <input type="text" data-a="merkmal" value="' + (einstellung.merkmal || '') + '" placeholder="z. B. FINNVELO-MEINEAPP"></label>'
+        + '</div>';
+      }
+
       box.innerHTML =
         '<h3 class="fv-update-titel">\u2699\uFE0F App-Aktualisierung \u2013 ' + cfg.titel + ' <span>(nur f\u00fcr dich sichtbar)</span></h3>'
-      + '<p class="fv-update-hilfe">Die App fragt beim Start <code>' + cfg.pruef + '</code> ab. '
+      + '<p class="fv-update-hilfe">' + (festeApp
+          ? ('Die App fragt beim Start <code>' + cfg.pruef + '</code> ab. ')
+          : ('Damit kann eine eigene Android-App auf dieser Webseite nach Updates suchen. '
+             + 'Du legst die Adresse fest, deine App fragt sie ab. '))
       + 'Trage hier die neue Fassung ein \u2013 die App bietet das Update dann an. '
       + 'Die Webseite muss daf\u00fcr <strong>nicht</strong> neu ver\u00f6ffentlicht werden.</p>'
-      + '<div class="fv-update-felder">' + felderHtml + '</div>'
+      + einstellHtml
+      + '<div class="fv-update-felder"' + ((!festeApp && !einstellung.aktiv) ? ' hidden' : '') + ' data-a="felderbox">' + felderHtml + '</div>'
       + '<div class="fv-update-zeile">'
       + '  <button type="button" class="fv-update-btn" data-a="save">Speichern</button>'
       + '  <a class="fv-update-link" href="' + cfg.pruef + '" target="_blank" rel="noopener">Datei ansehen</a>'
@@ -1593,6 +1716,67 @@
 
       var roh = box.querySelector('[data-a="roh"]');
       var melde = box.querySelector('[data-a="melde"]');
+
+      if (!festeApp) {
+        var schalter = box.querySelector('[data-a="schalter"]');
+        var einstellBox = box.querySelector('[data-a="einstell"]');
+        var felderBox = box.querySelector('[data-a="felderbox"]');
+        var zeileBox = box.querySelector('.fv-update-zeile');
+
+        function ansichtSetzen() {
+          schalter.classList.toggle('an', einstellung.aktiv);
+          schalter.querySelector('.fv-schalter__text').textContent = einstellung.aktiv ? 'Aktiv' : 'Nicht aktiv';
+          einstellBox.hidden = !einstellung.aktiv;
+          felderBox.hidden = !einstellung.aktiv;
+          if (zeileBox) zeileBox.hidden = !einstellung.aktiv;
+        }
+        ansichtSetzen();
+
+        schalter.addEventListener('click', function () {
+          einstellung.aktiv = !einstellung.aktiv;
+          ansichtSetzen();
+          Promise.all([speichereEinstellung(), verzeichnisPflegen(einstellung.aktiv)]).then(function () {
+            melde.textContent = einstellung.aktiv
+              ? '\u2713 Scharfgeschaltet \u2013 die Adresse antwortet jetzt.'
+              : '\u2713 Abgeschaltet \u2013 die Adresse antwortet nicht mehr.';
+            melde.className = 'fv-update-melde gut';
+            setTimeout(function () { melde.textContent = ''; }, 5000);
+          });
+        });
+
+        box.querySelector('[data-a="pfad"]').addEventListener('change', function (e) {
+          var v = (e.target.value || '').trim().toLowerCase();
+          if (!/^\/[a-z0-9\/_-]*version\.json$/.test(v)) {
+            melde.textContent = '\u2717 Die Adresse muss mit / beginnen und auf version.json enden.';
+            melde.className = 'fv-update-melde schlecht';
+            e.target.value = einstellung.pfad;
+            return;
+          }
+          einstellung.pfad = v; cfg.pruef = v;
+          var link = box.querySelector('.fv-update-link');
+          if (link) link.setAttribute('href', v);
+          Promise.all([speichereEinstellung(), verzeichnisPflegen(einstellung.aktiv)]).then(function () {
+            melde.textContent = '\u2713 Adresse gespeichert.';
+            melde.className = 'fv-update-melde gut';
+            setTimeout(function () { melde.textContent = ''; }, 4000);
+          });
+        });
+
+        box.querySelector('[data-a="bauplan"]').addEventListener('change', function (e) {
+          einstellung.bauplan = e.target.value;
+          speichereEinstellung().then(function () { location.reload(); });
+        });
+
+        box.querySelector('[data-a="merkmal"]').addEventListener('change', function (e) {
+          einstellung.merkmal = (e.target.value || '').trim();
+          cfg.fest = einstellung.merkmal ? { schluessel: einstellung.merkmal } : {};
+          speichereEinstellung().then(function () {
+            melde.textContent = '\u2713 Erkennungsmerkmal gespeichert.';
+            melde.className = 'fv-update-melde gut';
+            setTimeout(function () { melde.textContent = ''; }, 4000);
+          });
+        });
+      }
 
       function ausFeldern() {
         var o = copy(cfg.fest);
@@ -1652,7 +1836,7 @@
       });
     }
 
-    function start() { laden().then(bauen); }
+    function start() { ladeEinstellung().then(laden).then(bauen); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }

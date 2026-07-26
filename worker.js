@@ -317,6 +317,22 @@ export class Counter extends DurableObject {
       return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen });
     }
 
+    // --- Verzeichnis der Update-Adressen (oeffentlich) -----------------
+    // Ablage: page "system", block "v0" -> { "/pfad/version.json": "ablage" }
+    if (url.pathname === "/api/versionsrouten" && method === "GET") {
+      const rows = this.sql.exec(
+        "SELECT value FROM content WHERE page = 'system' AND block = 'v0'"
+      ).toArray();
+      let routen = {};
+      if (rows.length && rows[0].value) {
+        try { const o = JSON.parse(rows[0].value); if (o && typeof o === "object") routen = o; } catch (_e) {}
+      }
+      return new Response(JSON.stringify({ routen: routen }), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" }
+      });
+    }
+
     // --- Eigene Programme: Liste lesen (oeffentlich) -------------------
     // Ablage: page "system", block "p0" -> JSON-Liste
     //   [{ slug, name, kurz, stich, bild }]
@@ -642,6 +658,17 @@ function kopfErsetzen(html, kopf) {
   return html;
 }
 
+async function versionsRouten(env) {
+  try {
+    if (!env || !env.COUNTERS) return {};
+    const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+    const r = await stub.fetch(new Request("https://zaehler/api/versionsrouten", { method: "GET" }));
+    if (!r.ok) return {};
+    const d = await r.json();
+    return (d && d.routen && typeof d.routen === "object") ? d.routen : {};
+  } catch (_e) { return {}; }
+}
+
 async function eigeneProgramme(env) {
   try {
     if (!env || !env.COUNTERS) return [];
@@ -686,14 +713,24 @@ export default {
 
     // Versionsdateien der Android-Apps (feste Adressen, die in den Apps stecken).
     const versionPfad = url.pathname.toLowerCase().replace(/\/+$/, "");
+    // Fest eingebaute Update-Adressen (bleiben immer erreichbar)
     const VERSION_ROUTEN = {
       "/mischwaldrechner/version.json": "mischwald",
       "/finnvelo/aufgabenplaner/version.json": "aufgabenplaner"
     };
-    if (VERSION_ROUTEN[versionPfad]) {
-      if (!env || !env.COUNTERS) return new Response("Not found", { status: 404 });
-      const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
-      return stub.fetch(new Request("https://zaehler/api/version?app=" + VERSION_ROUTEN[versionPfad], { method: "GET" }));
+    if (versionPfad.endsWith("/version.json")) {
+      let ablage = VERSION_ROUTEN[versionPfad];
+      if (!ablage) {
+        // Selbst angelegte Adressen aus dem Verzeichnis
+        const routen = await versionsRouten(env);
+        const treffer = routen[versionPfad];
+        if (typeof treffer === "string" && PAGE_RE.test(treffer)) ablage = treffer;
+      }
+      if (ablage) {
+        if (!env || !env.COUNTERS) return new Response("Not found", { status: 404 });
+        const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+        return stub.fetch(new Request("https://zaehler/api/version?app=" + ablage, { method: "GET" }));
+      }
     }
 
     // --- Sitemap: selbst angelegte Programme ergaenzen -----------------
