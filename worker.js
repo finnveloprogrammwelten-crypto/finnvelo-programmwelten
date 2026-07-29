@@ -923,13 +923,6 @@ function isEchterAufruf(request) {
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/api/")) {
-      if (!env || !env.COUNTERS) return json({ error: "storage_not_configured" }, 503);
-      const id = env.COUNTERS.idFromName("global");
-      const stub = env.COUNTERS.get(id);
-      return stub.fetch(request);
-    }
-
     /* =================================================================
      * Gerätekopplung: alles unter /api/kanal/ ...
      * Jeder Kanal hat ein eigenes Durable Object. Der Worker sucht anhand
@@ -1055,6 +1048,16 @@ export default {
       daten.kanaele = kanaele;
       daten.zeit = new Date().toISOString();
       return json(daten);
+    }
+
+    // Alle uebrigen Schnittstellen laufen ueber das gemeinsame Objekt.
+    // WICHTIG: Dieser Durchreicher muss NACH den besonderen Wegen stehen
+    // (/api/kanal/... und /api/serverstatus), sonst verschluckt er sie.
+    if (url.pathname.startsWith("/api/")) {
+      if (!env || !env.COUNTERS) return json({ error: "storage_not_configured" }, 503);
+      const id = env.COUNTERS.idFromName("global");
+      const stub = env.COUNTERS.get(id);
+      return stub.fetch(request);
     }
 
     // Fingerabdruck-Datei fuer den Android-App-Link: muss als JSON kommen
