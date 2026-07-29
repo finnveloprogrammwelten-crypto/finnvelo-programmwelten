@@ -47,6 +47,10 @@ direkt auf der fertigen Webseite. Sie sind **sofort fuer alle sichtbar**:
 - **Seitentitel und Google-Beschreibung** je Seite
 - **Abschnitte umsortieren** und eigene Überschriften anlegen
 - **Sicherung** aller Inhalte herunterladen und wieder einspielen
+- **Programme umbenennen** (Adresse und Name) - Inhalte ziehen mit um
+- **reine Info-Seiten** anlegen (ohne Wappen und Download)
+- **Fußzeilen-Links** ergänzen und entfernen
+- **hochgeladene Bilder** ansehen und ungenutzte entfernen
 
 **B) Struktur - braucht einmal Veroeffentlichen**
 Diese Dinge stehen in Dateien. Nach der Aenderung einmal `git push` bzw.
@@ -207,6 +211,12 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
 - **Abschnitte umsortieren (NEU):** Jeder Abschnitt hat oben rechts Pfeile
   hoch/runter. Und mit **"+ Überschrift"** legst du eigene Zwischen-
   ueberschriften an.
+- **Fußzeile (NEU):** Auf der Seite *Programme* das Feld
+  **"Fußzeile verwalten"** - zusätzliche Links für alle Seiten.
+  Impressum und Datenschutz bleiben fest.
+- **Bilder-Übersicht (NEU):** Ebenfalls dort: alle hochgeladenen Bilder mit
+  Größe. Bilder mit dem Vermerk **ungenutzt** werden auf keiner Seite mehr
+  verwendet und lassen sich gefahrlos entfernen.
 - **App-Aktualisierung (NEU):** Auf den Seiten `/mischwaldrechner` und
   `/aufgabenplaner` erscheint unten das Feld **"App-Aktualisierung"**. Damit
   meldest du deinen Android-Apps eine neue Version - siehe Abschnitt 5.
@@ -371,7 +381,8 @@ JSON-Text erscheinen. Danach in der App "Nach Updates suchen" antippen.
 
 | Feld | Bedeutung |
 |---|---|
-| Name des Programms | z.B. *Finnvelo Notizbuch* |
+| Was soll entstehen? | **Programmseite** (Wappen, Download, Update-Feld) oder **Info-Seite** (schlicht, nur Text und Bilder) |
+| Name der Seite | z.B. *Finnvelo Notizbuch* |
 | Adresse | wird automatisch gebildet (`finnvelo-notizbuch`), kann geaendert werden |
 | Kurzbeschreibung | der Text, der auf der Kachel steht |
 
@@ -386,6 +397,15 @@ Sofort danach gibt es:
 **Kein Veroeffentlichen noetig.** Seite einmal neu laden, damit die Kachel
 erscheint. Alles Weitere - Texte, Plakette, Bildschirmfotos, Download-Knopf,
 Status-Schild - aenderst du danach ganz normal im Bearbeiten-Modus.
+
+**Info-Seiten** erscheinen bewusst **nicht** in der Programmübersicht - sie
+sind für Dinge wie *Über mich*, eine Anleitung oder einen Änderungsverlauf
+gedacht. Verlinke sie über die **Fußzeile** oder das **Web-Apps-Menü**.
+
+**Umbenennen:** in der Liste steht bei jedem Eintrag **umbenennen**. Damit
+lässt sich Name und Adresse ändern; alle eingetragenen Texte und Bilder
+ziehen automatisch mit um. Achtung: Alte Links auf die Seite funktionieren
+danach nicht mehr.
 
 **Entfernen:** im selben Feld steht die Liste der selbst angelegten Programme,
 jeweils mit **entfernen**. Die eingetragenen Texte und Bilder bleiben dabei

@@ -13,10 +13,13 @@
   // KEIN KV-Namespace, KEINE ID noetig.
   "durable_objects": {
     "bindings": [
-      { "name": "COUNTERS", "class_name": "Counter" }
+      { "name": "COUNTERS", "class_name": "Counter" },
+      // Ein eigenes Objekt je Kanal des Aufgabenplaners
+      { "name": "KANAELE", "class_name": "Kanal" }
     ]
   },
   "migrations": [
-    { "tag": "v1", "new_sqlite_classes": ["Counter"] }
+    { "tag": "v1", "new_sqlite_classes": ["Counter"] },
+    { "tag": "v2", "new_sqlite_classes": ["Kanal"] }
   ]
 }

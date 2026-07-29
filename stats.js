@@ -84,7 +84,10 @@
 
   var key = pageKey();
   var isHome = (key === 'start');
-  var isProgram = PROGRAM_PAGES.indexOf(key) !== -1;
+  // Programmseite erkennen: entweder aus der festen Liste oder daran, dass die
+  // Seite den Aufbau einer Programmseite hat (gilt auch fuer selbst angelegte).
+  var isProgram = PROGRAM_PAGES.indexOf(key) !== -1
+    || !!document.querySelector('article.program-detail');
   var counts = {};
   var badgeEl = null;
 
@@ -279,7 +282,8 @@
       var base = [], extra = [];
       qsa(document, NAV_TEXT_SEL).forEach(function (el) {
         if (!el.textContent || !el.textContent.trim()) return;
-        if (el.hasAttribute('data-fv-nav-dyn')) return;   // aus der Liste gepflegt
+        if (el.hasAttribute('data-fv-nav-dyn')) return;   // Menü: aus der Liste gepflegt
+        if (el.hasAttribute('data-fv-fuss-dyn')) return;  // Fußzeile: aus der Liste gepflegt
         if (el.hasAttribute('data-fv-nav-extra')) extra.push(el);
         else base.push(el);
       });
@@ -1520,9 +1524,9 @@
         ],
         fest: { schluessel: 'FINNVELO-AUFGABENPLANER' },
         vorgabe: {
-          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 32, versionName: '3.2',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-3.2.apk',
-          hinweise: 'Bearbeitungsmaske repariert und mit Klappbereichen: Titel, Notiz, Stand offen - Wann, Prioritaet, Erinnerungen und Co als Dropdown mit Zusammenfassung'
+          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 88, versionName: '7.18',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-7.18.apk',
+          hinweise: 'Neu: Zahnrad neben der Listenauswahl, Listenverzeichnis und Passwortschutz je Liste.'
         }
       }
     ];
@@ -1888,17 +1892,22 @@
 
     function bauen(liste) {
       var ziel = document.querySelector('main');
-      if (!ziel || document.querySelector('.fv-prog-box')) return;
+      if (!ziel || document.querySelector('.fv-progverw-box')) return;
 
       var box = document.createElement('section');
-      box.className = 'fv-prog-box';
+      box.className = 'fv-prog-box fv-progverw-box';
       box.innerHTML =
         '<h3 class="fv-prog-titel">\u2699\uFE0F Programme verwalten <span>(nur f\u00fcr dich sichtbar)</span></h3>'
       + '<p class="fv-prog-hilfe">Hier legst du ein neues Programm an. Es bekommt sofort eine eigene Seite, '
       + 'eine Kachel auf der Startseite und eine Zeile in dieser Liste \u2013 <strong>ohne Ver\u00f6ffentlichen</strong>. '
       + 'Texte, Bilder und Download-Knopf danach ganz normal im Bearbeiten-Modus \u00e4ndern.</p>'
       + '<div class="fv-prog-felder">'
-      + '  <label>Name des Programms<input type="text" id="fvPName" placeholder="z. B. Finnvelo Notizbuch"></label>'
+      + '  <label>Was soll entstehen?'
+      + '    <select id="fvPArt">'
+      + '      <option value="programm">Programmseite (mit Wappen, Download, Update-Feld)</option>'
+      + '      <option value="info">Info-Seite (schlicht, nur Text und Bilder)</option>'
+      + '    </select></label>'
+      + '  <label>Name der Seite<input type="text" id="fvPName" placeholder="z. B. Finnvelo Notizbuch"></label>'
       + '  <label>Adresse (wird automatisch gebildet)<input type="text" id="fvPSlug" placeholder="finnvelo-notizbuch"></label>'
       + '  <label>Kurzbeschreibung (steht auf der Kachel)<input type="text" id="fvPKurz" placeholder="Wof\u00fcr ist das Programm da?"></label>'
       + '</div>'
@@ -1941,7 +1950,30 @@
           var z = document.createElement('div');
           z.className = 'fv-prog-eintrag';
           z.innerHTML = '<strong>' + p.name + '</strong>'
-                      + '<a href="/' + p.slug + '" target="_blank" rel="noopener">/' + p.slug + '</a>';
+                      + '<a href="/' + p.slug + '" target="_blank" rel="noopener">/' + p.slug + '</a>'
+                      + '<span class="fv-prog-art">' + (p.art === 'info' ? 'Info-Seite' : 'Programm') + '</span>';
+          var um = document.createElement('button');
+          um.type = 'button'; um.className = 'fv-prog-weg'; um.textContent = 'umbenennen';
+          um.addEventListener('click', function () {
+            var nameNeu = window.prompt('Neuer Name:', p.name);
+            if (nameNeu === null) return;
+            var slugNeu = window.prompt(
+              'Neue Adresse (nur Kleinbuchstaben, Zahlen, Bindestriche).\n\n'
+              + 'Achtung: Alte Links auf diese Seite funktionieren danach nicht mehr.\n'
+              + 'Alle eingetragenen Texte und Bilder ziehen automatisch mit um.',
+              p.slug);
+            if (slugNeu === null) return;
+            senden({ aktion: 'umbenennen', slug: p.slug,
+                     slugNeu: kurzname(slugNeu), name: (nameNeu || '').trim() })
+              .then(function (a) {
+                if (a.ok) { listeZeigen(a.daten.programme || []); sagen('\u2713 Ge\u00e4ndert. Seite neu laden.', true); }
+                else if (a.daten && a.daten.error === 'slug_belegt') sagen('\u2717 Diese Adresse ist schon vergeben.', false);
+                else if (a.daten && a.daten.error === 'bad_slug') sagen('\u2717 Ung\u00fcltige Adresse.', false);
+                else sagen('\u2717 \u00c4ndern fehlgeschlagen.', false);
+              });
+          });
+          z.appendChild(um);
+
           var weg = document.createElement('button');
           weg.type = 'button'; weg.className = 'fv-prog-weg'; weg.textContent = 'entfernen';
           weg.addEventListener('click', function () {
@@ -1964,12 +1996,16 @@
         var slug = kurzname(nSlug.value || nName.value);
         if (!name) { sagen('\u2717 Bitte einen Namen eintragen.', false); return; }
         if (!slug) { sagen('\u2717 Die Adresse ist leer \u2013 bitte Namen pr\u00fcfen.', false); return; }
-        senden({ aktion: 'anlegen', slug: slug, name: name, kurz: (nKurz.value || '').trim() })
+        var art = (box.querySelector('#fvPArt') || {}).value || 'programm';
+        senden({ aktion: 'anlegen', slug: slug, name: name, art: art, kurz: (nKurz.value || '').trim() })
           .then(function (a) {
             if (a.ok) {
               listeZeigen(a.daten.programme || []);
               nName.value = ''; nSlug.value = ''; nKurz.value = ''; slugManuell = false;
-              sagen('\u2713 Angelegt! Die Seite ist unter /' + slug + ' erreichbar. Seite neu laden, damit die Kachel erscheint.', true);
+              sagen('\u2713 Angelegt! Die Seite ist unter /' + slug + ' erreichbar.'
+                + (art === 'info'
+                    ? ' Info-Seiten erscheinen bewusst nicht in der Programm\u00fcbersicht \u2013 verlinke sie \u00fcber die Fu\u00dfzeile oder das Web-Apps-Men\u00fc.'
+                    : ' Seite neu laden, damit die Kachel erscheint.'), true);
             } else if (a.daten && a.daten.error === 'slug_belegt') {
               sagen('\u2717 Diese Adresse ist schon vergeben \u2013 bitte eine andere w\u00e4hlen.', false);
             } else if (a.daten && a.daten.error === 'bad_slug') {
@@ -2336,5 +2372,191 @@
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
     else bauen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Fusszeilen-Links aus der Datenbank
+ * Die festen Links (Impressum, Datenschutz) bleiben unberuehrt;
+ * zusaetzliche werden hier ergaenzt. Ablage: Seite "system", Block "f0".
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    var eintraege = [];
+
+    function laden() {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var roh = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'f0') roh = it.value || ''; });
+          if (!roh) return [];
+          try { var a = JSON.parse(roh); return Array.isArray(a) ? a.filter(function (e) { return e && e.name && e.url; }) : []; }
+          catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+    function speichern() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: 'system', block: 'f0', type: 'text',
+                               value: JSON.stringify(eintraege), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+    function fuellen() {
+      var fuss = document.querySelector('footer');
+      if (!fuss) return;
+      Array.prototype.slice.call(fuss.querySelectorAll('[data-fv-fuss-dyn]'))
+        .forEach(function (a) { a.parentNode.removeChild(a); });
+      eintraege.forEach(function (e) {
+        var a = document.createElement('a');
+        a.setAttribute('href', e.url);
+        a.setAttribute('data-fv-fuss-dyn', '');
+        if (/^https?:/i.test(e.url)) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); }
+        a.textContent = e.name;
+        fuss.appendChild(a);
+      });
+    }
+    function verwaltung() {
+      if (!pw || !editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-fuss-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-fuss-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\u2699\uFE0F Fu\u00dfzeile verwalten <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Zus\u00e4tzliche Links in der Fu\u00dfzeile, auf allen Seiten. '
+      + 'Impressum und Datenschutz bleiben fest \u2013 ihre Beschriftung \u00e4nderst du durch Anklicken.</p>'
+      + '<div class="fv-prog-felder">'
+      + '  <label>Beschriftung<input type="text" id="fvFName" placeholder="z. B. \u00dcber mich"></label>'
+      + '  <label>Adresse<input type="text" id="fvFUrl" placeholder="/ueber-mich oder https://\u2026"></label>'
+      + '</div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" id="fvFNeu">Link hinzuf\u00fcgen</button>'
+      + '  <span class="fv-prog-melde" id="fvFMelde"></span>'
+      + '</div>'
+      + '<div class="fv-prog-liste" id="fvFListe"></div>';
+      ziel.appendChild(box);
+
+      var nName = box.querySelector('#fvFName'), nUrl = box.querySelector('#fvFUrl');
+      var melde = box.querySelector('#fvFMelde'), listeEl = box.querySelector('#fvFListe');
+      function sagen(t, gut) {
+        melde.textContent = t;
+        melde.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { melde.textContent = ''; }, 5000);
+      }
+      function zeigen() {
+        listeEl.innerHTML = '';
+        if (!eintraege.length) { listeEl.innerHTML = '<p class="fv-prog-leer">Keine zus\u00e4tzlichen Links.</p>'; return; }
+        eintraege.forEach(function (e, i) {
+          var z = document.createElement('div');
+          z.className = 'fv-prog-eintrag';
+          z.innerHTML = '<strong>' + e.name + '</strong><a href="' + e.url + '">' + e.url + '</a>';
+          var weg = document.createElement('button');
+          weg.type = 'button'; weg.className = 'fv-prog-weg'; weg.textContent = 'entfernen';
+          weg.addEventListener('click', function () {
+            if (!window.confirm('Link \u201e' + e.name + '\u201c entfernen?')) return;
+            eintraege.splice(i, 1);
+            speichern().then(function () { zeigen(); fuellen(); sagen('\u2713 Entfernt.', true); });
+          });
+          z.appendChild(weg);
+          listeEl.appendChild(z);
+        });
+      }
+      zeigen();
+      box.querySelector('#fvFNeu').addEventListener('click', function () {
+        var name = (nName.value || '').trim(), url = (nUrl.value || '').trim();
+        if (!name) { sagen('\u2717 Bitte eine Beschriftung eintragen.', false); return; }
+        if (!/^(https?:\/\/|\/)/i.test(url)) { sagen('\u2717 Adresse muss mit https:// oder / beginnen.', false); return; }
+        if (eintraege.length >= 8) { sagen('\u2717 Die Fu\u00dfzeile w\u00e4re zu voll.', false); return; }
+        eintraege.push({ name: name, url: url });
+        speichern().then(function (ok) {
+          if (ok) { nName.value = ''; nUrl.value = ''; zeigen(); fuellen(); sagen('\u2713 Hinzugef\u00fcgt.', true); }
+          else sagen('\u2717 Speichern fehlgeschlagen.', false);
+        });
+      });
+    }
+    function start() { laden().then(function (a) { eintraege = a; fuellen(); verwaltung(); }); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Bilder-Uebersicht: was liegt auf dem Server, was wird nicht mehr genutzt
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    if (pfad !== '/programme') return;
+
+    function kb(n) { return n < 1024 ? n + ' B' : (n < 1024 * 1024 ? Math.round(n / 1024) + ' KB' : (n / 1024 / 1024).toFixed(1) + ' MB'); }
+
+    function holen() {
+      return fetch('/api/bilder', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+
+    function bauen(res) {
+      var ziel = document.querySelector('main');
+      if (!ziel || !res || document.querySelector('.fv-bild-box')) return;
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-bild-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83D\uDDBC\uFE0F Hochgeladene Bilder <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">' + res.anzahl + ' Bilder, zusammen ' + kb(res.gesamt) + '. '
+      + 'Bilder mit dem Vermerk <strong>ungenutzt</strong> werden auf keiner Seite mehr verwendet \u2013 '
+      + 'die kannst du gefahrlos entfernen.</p>'
+      + '<div class="fv-bild-gitter" id="fvBListe"></div>';
+      ziel.appendChild(box);
+
+      var listeEl = box.querySelector('#fvBListe');
+      function zeigen(bilder) {
+        listeEl.innerHTML = '';
+        if (!bilder.length) { listeEl.innerHTML = '<p class="fv-prog-leer">Noch keine Bilder hochgeladen.</p>'; return; }
+        bilder.forEach(function (b) {
+          var k = document.createElement('div');
+          k.className = 'fv-bild' + (b.benutzt ? '' : ' fv-bild--frei');
+          k.innerHTML =
+            '<img src="/api/image/' + b.id + '" alt="" loading="lazy">'
+          + '<span class="fv-bild__info">' + kb(b.groesse) + ' \u00b7 '
+          + (b.benutzt ? '<span class="fv-bild__ja">in Benutzung</span>'
+                       : '<span class="fv-bild__nein">ungenutzt</span>') + '</span>';
+          if (!b.benutzt) {
+            var weg = document.createElement('button');
+            weg.type = 'button'; weg.className = 'fv-bild__weg'; weg.textContent = 'entfernen';
+            weg.addEventListener('click', function () {
+              if (!window.confirm('Dieses Bild endg\u00fcltig entfernen?')) return;
+              fetch('/api/bilder', {
+                method: 'POST', headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ password: pw, aktion: 'entfernen', id: b.id })
+              }).then(function (r) { if (r.ok) k.parentNode.removeChild(k); });
+            });
+            k.appendChild(weg);
+          }
+          listeEl.appendChild(k);
+        });
+      }
+      zeigen(res.bilder || []);
+    }
+
+    function start() { holen().then(bauen); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();

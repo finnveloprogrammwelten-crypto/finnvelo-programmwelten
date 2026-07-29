@@ -37,7 +37,7 @@ const RESERVIERT = [
   "admin", "downloads", "tester", "404", "assets", "planer", "tess", "api",
   "mischwald", "mischwaldrechner", "aufgabenplaner", "archivar", "finanzmanager",
   "medienstudio", "command-control", "haus-und-gartenplaner", "finnvelo", "sitemap",
-  "robots", "favicon"
+  "robots", "favicon", "koppeln", "planer", "well-known"
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
@@ -263,6 +263,45 @@ export class Counter extends DurableObject {
       });
     }
 
+    // --- Bilder: Uebersicht und Entfernen (nur Admin) ------------------
+    if (url.pathname === "/api/bilder" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+
+      if (body.aktion === "entfernen") {
+        const id = String(body.id || "");
+        if (!id) return json({ error: "bad_request" }, 400);
+        this.sql.exec("DELETE FROM images WHERE id = ?", id);
+        return json({ ok: true });
+      }
+
+      // Uebersicht: Groesse und Alter, aber nicht die Bilddaten selbst
+      const rows = this.sql.exec(
+        "SELECT id, mime, LENGTH(data) AS groesse, created FROM images ORDER BY created DESC LIMIT 300"
+      ).toArray();
+      // Welche Bilder werden noch irgendwo verwendet?
+      const benutzt = {};
+      const inhalte = this.sql.exec("SELECT value FROM content").toArray();
+      for (const z of inhalte) {
+        const v = String(z.value || "");
+        let m;
+        const re = /\/api\/image\/([A-Za-z0-9_-]+)/g;
+        while ((m = re.exec(v)) !== null) benutzt[m[1]] = true;
+      }
+      let gesamt = 0;
+      const liste = rows.map((r) => {
+        gesamt += r.groesse || 0;
+        return {
+          id: r.id, mime: r.mime,
+          groesse: r.groesse || 0,
+          erstellt: new Date(r.created).toISOString(),
+          benutzt: !!benutzt[r.id]
+        };
+      });
+      return json({ bilder: liste, anzahl: liste.length, gesamt: gesamt });
+    }
+
     // --- Sicherung: alle Inhalte ausgeben (nur Admin) ------------------
     // Liefert saemtliche gespeicherten Inhalte als eine Datei. Damit laesst
     // sich alles, was ueber den Bearbeiten-Modus eingetragen wurde, sichern.
@@ -372,15 +411,59 @@ export class Counter extends DurableObject {
         if (RESERVIERT.indexOf(slug) !== -1) return json({ error: "slug_belegt" }, 409);
         if (liste.some((p) => p.slug === slug)) return json({ error: "slug_belegt" }, 409);
         if (liste.length >= 40) return json({ error: "zu_viele" }, 400);
+        const art = (body.art === "info") ? "info" : "programm";
         liste.push({
           slug: slug,
+          art: art,
           name: clean(body.name, 80) || slug,
-          kurz: clean(body.kurz, 220) || "Kurzbeschreibung - im Bearbeiten-Modus aenderbar.",
-          stich: clean(body.stich, 80) || "Finnvelo Programm",
+          kurz: clean(body.kurz, 220) || (art === "info"
+            ? "Kurzbeschreibung - im Bearbeiten-Modus aenderbar."
+            : "Kurzbeschreibung - im Bearbeiten-Modus aenderbar."),
+          stich: clean(body.stich, 80) || (art === "info" ? "Finnvelo Programmwelten" : "Finnvelo Programm"),
           bild: ""
         });
       } else if (aktion === "entfernen") {
         liste = liste.filter((p) => p.slug !== slug);
+      } else if (aktion === "umbenennen") {
+        // Adresse und/oder Name aendern. Beim Adresswechsel ziehen alle
+        // eingetragenen Inhalte mit um - sonst waeren sie verloren.
+        const neuSlug = String(body.slugNeu || "").toLowerCase().trim();
+        const eintrag = liste.filter((p) => p.slug === slug)[0];
+        if (!eintrag) return json({ error: "unbekannt" }, 404);
+        if (neuSlug && neuSlug !== slug) {
+          if (!PAGE_RE.test(neuSlug)) return json({ error: "bad_slug" }, 400);
+          if (RESERVIERT.indexOf(neuSlug) !== -1) return json({ error: "slug_belegt" }, 409);
+          if (liste.some((p) => p.slug === neuSlug)) return json({ error: "slug_belegt" }, 409);
+          // Inhalte umhaengen (nur wenn am Ziel nichts liegt)
+          const vorhanden = this.sql.exec(
+            "SELECT COUNT(*) AS n FROM content WHERE page = ?", neuSlug
+          ).toArray()[0].n;
+          if (!vorhanden) {
+            this.sql.exec("UPDATE content SET page = ? WHERE page = ?", neuSlug, slug);
+          }
+          // Update-Adresse mitziehen
+          const vr = this.sql.exec(
+            "SELECT value FROM content WHERE page = 'system' AND block = 'v0'"
+          ).toArray();
+          if (vr.length && vr[0].value) {
+            try {
+              const routen = JSON.parse(vr[0].value) || {};
+              let geaendert = false;
+              for (const pf in routen) {
+                if (routen[pf] === slug) { routen[pf] = neuSlug; geaendert = true; }
+              }
+              if (geaendert) {
+                this.sql.exec(
+                  "UPDATE content SET value = ?, updated = ? WHERE page = 'system' AND block = 'v0'",
+                  JSON.stringify(routen), Date.now()
+                );
+              }
+            } catch (_e) {}
+          }
+          eintrag.slug = neuSlug;
+        }
+        if (body.name) eintrag.name = clean(body.name, 80);
+        if (body.kurz) eintrag.kurz = clean(body.kurz, 220);
       } else {
         return json({ error: "bad_request" }, 400);
       }
@@ -523,6 +606,32 @@ function programmSeite(p) {
   <link rel="icon" type="image/png" href="/assets/images/favicon.png">
   <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "${name}",
+  "url": "https://finnveloprogramme.com/${esc(p.slug)}",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Windows, Android, Browser",
+  "inLanguage": "de-DE",
+  "description": "${kurz}",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+  "author": { "@type": "Person", "name": "Tatorasa" }
+}
+  </script>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    {"@type":"ListItem","position":1,"name":"Start","item":"https://finnveloprogramme.com/"},
+    {"@type":"ListItem","position":2,"name":"Programme","item":"https://finnveloprogramme.com/programme"},
+    {"@type":"ListItem","position":3,"name":"${name}","item":"https://finnveloprogramme.com/${esc(p.slug)}"}
+  ]
+}
+  </script>
 </head>
 <body>
 ${KOPFZEILE}
@@ -592,6 +701,50 @@ ${KOPFZEILE}
           </div>
         </section>
       </div>
+    </article>
+  </main>
+${FUSSZEILE}
+  <script src="/stats.js" defer></script>
+</body>
+</html>`;
+}
+
+function infoSeite(p) {
+  const name = esc(p.name), kurz = esc(p.kurz), stich = esc(p.stich || "Finnvelo Programmwelten");
+  return `<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="${kurz}">
+  <title>${name} &middot; Finnvelo Programmwelten</title>
+  <link rel="canonical" href="https://finnveloprogramme.com/${esc(p.slug)}">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Finnvelo Programmwelten">
+  <meta property="og:locale" content="de_DE">
+  <meta property="og:title" content="${name} &middot; Finnvelo Programmwelten">
+  <meta property="og:description" content="${kurz}">
+  <meta property="og:url" content="https://finnveloprogramme.com/${esc(p.slug)}">
+  <meta property="og:image" content="https://finnveloprogramme.com/assets/images/programmwelten-cover.jpg">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="/assets/images/favicon.png">
+  <link rel="apple-touch-icon" href="/assets/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+${KOPFZEILE}
+  <main class="main-canvas info-page">
+    <article class="info-seite" aria-labelledby="info-title">
+      <p class="section-kicker">${stich}</p>
+      <h1 id="info-title">${name}</h1>
+      <p class="lead">${kurz}</p>
+
+      <section class="program-info-block program-info-block--wide" aria-labelledby="info-1">
+        <h2 id="info-1">Abschnitt</h2>
+        <p>Hier steht der Text. Im Bearbeiten-Modus anklicken und &auml;ndern.
+           Mit den Kn&ouml;pfen darunter lassen sich weitere Felder, Bilder,
+           &Uuml;berschriften und Kn&ouml;pfe erg&auml;nzen.</p>
+      </section>
     </article>
   </main>
 ${FUSSZEILE}
@@ -711,6 +864,84 @@ export default {
       return stub.fetch(request);
     }
 
+    /* =================================================================
+     * Gerätekopplung: alles unter /api/kanal/ ...
+     * Jeder Kanal hat ein eigenes Durable Object. Der Worker sucht anhand
+     * des Codes das richtige heraus und reicht die Anfrage weiter.
+     * Ohne Anmeldung erreichbar - der Zugang haengt an Code und Pruefwert.
+     * ================================================================= */
+    if (url.pathname === "/api/kanal" || url.pathname.startsWith("/api/kanal/")) {
+      if (!env || !env.KANAELE) return json({ fehler: "Der Dienst ist nicht eingerichtet." }, 503);
+
+      const weg = url.pathname.slice("/api/kanal/".length).replace(/\/+$/, "");
+      const CODE_RE = /^FNV-[A-Z0-9]{4}-[A-Z0-9]{2}$/;
+
+      let rumpf = "";
+      let koerper = {};
+      if (request.method === "POST") {
+        try { rumpf = await request.text(); } catch (_e) { rumpf = ""; }
+        try { koerper = rumpf ? JSON.parse(rumpf) : {}; } catch (_e) { koerper = {}; }
+      }
+
+      /* --- Anlegen: freien Code suchen ------------------------------ */
+      if (weg === "neu" && request.method === "POST") {
+        const ZEICHEN = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // ohne I O 0 1
+        const wuerfel = (n) => {
+          const b = new Uint8Array(n); crypto.getRandomValues(b);
+          let o = ""; for (let i = 0; i < n; i++) o += ZEICHEN[b[i] % ZEICHEN.length];
+          return o;
+        };
+        for (let versuch = 0; versuch < 8; versuch++) {
+          const code = "FNV-" + wuerfel(4) + "-" + wuerfel(2);
+          const stub = env.KANAELE.get(env.KANAELE.idFromName(code));
+          const antwort = await stub.fetch(new Request("https://kanal/dv?weg=neu", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(Object.assign({}, koerper, { code: code }))
+          }));
+          if (antwort.status !== 409) return antwort;   // 409 = Code schon belegt
+        }
+        return json({ fehler: "Es ließ sich kein freier Code finden. Bitte noch einmal versuchen." }, 503);
+      }
+
+      /* --- Alle anderen Wege brauchen einen gueltigen Code ----------- */
+      const kanalCode = String(
+        (request.method === "POST" && koerper.code) || url.searchParams.get("code") || ""
+      ).toUpperCase();
+      if (!CODE_RE.test(kanalCode)) {
+        return json({ fehler: "Diesen Kanal gibt es nicht." }, 404);
+      }
+      const stub = env.KANAELE.get(env.KANAELE.idFromName(kanalCode));
+
+      /* --- Die offene Leitung fuer den Chat -------------------------- */
+      if (weg === "draht") {
+        if ((request.headers.get("upgrade") || "").toLowerCase() !== "websocket") {
+          return json({ fehler: "Für diesen Weg wird eine WebSocket-Verbindung erwartet." }, 426);
+        }
+        return stub.fetch(new Request("https://kanal/draht", { headers: request.headers }));
+      }
+
+      /* --- Alles Uebrige an das Kanal-Objekt weiterreichen ----------- */
+      const ziel = new URL("https://kanal/dv");
+      for (const [n, v] of url.searchParams) ziel.searchParams.set(n, v);
+      ziel.searchParams.set("weg", weg);
+      return stub.fetch(new Request(ziel.toString(), {
+        method: request.method,
+        headers: new Headers(request.headers),
+        body: request.method === "POST" ? rumpf : undefined
+      }));
+    }
+
+    // Fingerabdruck-Datei fuer den Android-App-Link: muss als JSON kommen
+    if (url.pathname === "/.well-known/assetlinks.json" && env && env.ASSETS) {
+      const a = await env.ASSETS.fetch(request);
+      if (!a.ok) return a;
+      return new Response(await a.text(), {
+        status: 200,
+        headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=3600" }
+      });
+    }
+
     // Versionsdateien der Android-Apps (feste Adressen, die in den Apps stecken).
     const versionPfad = url.pathname.toLowerCase().replace(/\/+$/, "");
     // Fest eingebaute Update-Adressen (bleiben immer erreichbar)
@@ -770,7 +1001,8 @@ export default {
         const treffer = liste.filter((p) => p && p.slug === moeglicherSlug)[0];
         if (treffer) {
           const kopf = await seitenKopf(env, moeglicherSlug);
-          return new Response(kopfErsetzen(programmSeite(treffer), kopf), {
+          const bauplan = (treffer.art === "info") ? infoSeite(treffer) : programmSeite(treffer);
+          return new Response(kopfErsetzen(bauplan, kopf), {
             status: 200,
             headers: {
               "content-type": "text/html; charset=utf-8",
@@ -781,14 +1013,15 @@ export default {
       }
 
       // b) Kacheln/Zeilen in Startseite und Programmliste einsetzen
-      if (istUebersicht && liste.length && env && env.ASSETS) {
+      if (istUebersicht && liste.some((p) => p && p.art !== "info") && env && env.ASSETS) {
         const antwort = await env.ASSETS.fetch(request);
         const typ = antwort.headers.get("content-type") || "";
         if (antwort.ok && typ.indexOf("text/html") !== -1) {
           let html = await antwort.text();
           if (html.indexOf("<!--FV-PROGRAMME-->") !== -1) {
             const istListe = (pfad === "/programme" || pfad === "/programme.html");
-            const teile = liste.map((p) => istListe ? programmZeile(p) : programmKachel(p)).join("\n");
+            const nurProgramme = liste.filter((p) => p && p.art !== "info");
+            const teile = nurProgramme.map((p) => istListe ? programmZeile(p) : programmKachel(p)).join("\n");
             html = html.replace("<!--FV-PROGRAMME-->", teile);
             const slugU = (pfad === "/" || pfad === "/index.html") ? "start" : "programme";
             html = kopfErsetzen(html, await seitenKopf(env, slugU));
@@ -840,3 +1073,677 @@ export default {
     return new Response("Not found", { status: 404 });
   }
 };
+
+/* =====================================================================
+ * Kanal - ein Durable Object je Kanal
+ * ---------------------------------------------------------------------
+ * Haelt Aufgaben, Listen, Mitglieder und den Chat eines einzelnen Kanals.
+ * Der Server sieht ausschliesslich verschluesselte Zeichenketten: Er
+ * vergibt Nummern, reicht Pakete weiter und entscheidet ueber die
+ * Herausgabe - oeffnen kann er nichts.
+ *
+ * Aufraeumen laeuft ueber den eingebauten Wecker (alarm):
+ *   ein Jahr ohne Zugriff -> Vorwarnung, eine Woche spaeter loeschen.
+ * ===================================================================== */
+
+const JAHR = 365 * 24 * 60 * 60 * 1000;
+const WOCHE = 7 * 24 * 60 * 60 * 1000;
+const SPERRE = 10 * 60 * 1000;
+const MAX_DATEN = 2 * 1024 * 1024;      // 2 MB Aufgabenbestand je Kanal
+const MAX_NACHRICHT = 4 * 1024;         // 4 KB je Chatnachricht
+const MAX_NACHRICHTEN = 2000;           // aeltere fallen hinten heraus
+const NACHHOLEN = 200;                  // beim Verbinden mitgeschickt
+const MAX_FEHLER = 5;                   // dann zehn Minuten Sperre
+const ANFRAGEN_MINUTE = 60;             // HTTP-Anfragen je Kanal und Minute
+const NACHRICHTEN_MINUTE = 20;          // Chatnachrichten je Leitung und Minute
+
+function jsonAntwort(daten, code) {
+  return new Response(JSON.stringify(daten), {
+    status: code || 200,
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "access-control-allow-origin": "*"
+    }
+  });
+}
+
+// Vergleich mit fester Laufzeit - verraet nichts ueber Teiltreffer.
+function gleich(a, b) {
+  const x = String(a == null ? "" : a), y = String(b == null ? "" : b);
+  if (x.length !== y.length) return false;
+  let d = 0;
+  for (let i = 0; i < x.length; i++) d |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return d === 0;
+}
+
+function zufall(n) {
+  const b = new Uint8Array(n);
+  crypto.getRandomValues(b);
+  let s = "";
+  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return btoa(s).replace(/=+$/, "");
+}
+
+export class Kanal extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx = ctx;
+    this.env = env;
+    this.sql = ctx.storage.sql;
+
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS kanal (" +
+      "eins INTEGER PRIMARY KEY CHECK (eins = 1), " +
+      "code TEXT NOT NULL, name TEXT NOT NULL, pruefwert TEXT NOT NULL, " +
+      "salz_p TEXT NOT NULL, paket_p TEXT NOT NULL, " +
+      "salz_r TEXT NOT NULL, paket_r TEXT NOT NULL, " +
+      "daten TEXT, stand INTEGER DEFAULT 0, offen INTEGER DEFAULT 1, " +
+      "gruender TEXT DEFAULT '', naechste_nummer INTEGER DEFAULT 1, " +
+      "angelegt INTEGER NOT NULL, letzter_zugriff INTEGER NOT NULL, warnung_ab INTEGER)"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS mitglieder (" +
+      "kennung TEXT PRIMARY KEY, nummer INTEGER NOT NULL, " +
+      "geraet TEXT NOT NULL DEFAULT '', name TEXT NOT NULL DEFAULT '', " +
+      "rolle TEXT NOT NULL DEFAULT 'schreiben', zuletzt INTEGER NOT NULL)"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS bremse (" +
+      "herkunft TEXT PRIMARY KEY, versuche INTEGER DEFAULT 0, bis INTEGER)"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS nachrichten (" +
+      "stand INTEGER PRIMARY KEY, kennung TEXT NOT NULL, " +
+      "paket TEXT NOT NULL, zeit INTEGER NOT NULL)"
+    );
+    this.sql.exec(
+      "CREATE UNIQUE INDEX IF NOT EXISTS nachrichten_kennung ON nachrichten (kennung)"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS listen (" +
+      "liste TEXT PRIMARY KEY, ersteller TEXT NOT NULL, name TEXT NOT NULL, " +
+      "offen INTEGER DEFAULT 1, daten TEXT, stand INTEGER DEFAULT 0, " +
+      "sicht TEXT NOT NULL DEFAULT 'alle', zugang TEXT NOT NULL DEFAULT 'alle', " +
+      "salz_l TEXT, paket_l TEXT, pruef_l TEXT)"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS freigaben (" +
+      "liste TEXT NOT NULL, kennung TEXT NOT NULL, paket TEXT NOT NULL, " +
+      "PRIMARY KEY (liste, kennung))"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS takt (" +
+      "eins INTEGER PRIMARY KEY CHECK (eins = 1), fenster INTEGER, anzahl INTEGER)"
+    );
+  }
+
+  /* ---------- Hilfen ------------------------------------------------ */
+
+  kanalZeile() {
+    const r = this.sql.exec("SELECT * FROM kanal WHERE eins = 1").toArray();
+    return r.length ? r[0] : null;
+  }
+
+  zugriffMerken() {
+    const jetzt = Date.now();
+    this.sql.exec(
+      "UPDATE kanal SET letzter_zugriff = ?, warnung_ab = NULL WHERE eins = 1", jetzt
+    );
+    // Wecker neu stellen: in einem Jahr nachsehen
+    try { this.ctx.storage.setAlarm(jetzt + JAHR); } catch (_e) {}
+  }
+
+  warnungBlock(k) {
+    if (!k || !k.warnung_ab) return null;
+    const loeschenAm = k.warnung_ab + WOCHE;
+    return {
+      grund: "ein Jahr ohne Nutzung",
+      loeschenAm: new Date(loeschenAm).toISOString(),
+      tageRest: Math.max(0, Math.ceil((loeschenAm - Date.now()) / (24 * 60 * 60 * 1000))),
+      hinweis: "Dieser Kanal wird gelöscht. Jede Nutzung hält ihn am Leben. " +
+               "Sichere die Aufgaben vorher auf dem Gerät."
+    };
+  }
+
+  // 60 Anfragen je Minute und Kanal
+  taktUeberschritten() {
+    const jetzt = Date.now();
+    const fenster = Math.floor(jetzt / 60000);
+    const r = this.sql.exec("SELECT fenster, anzahl FROM takt WHERE eins = 1").toArray();
+    let anzahl = 1;
+    if (r.length && r[0].fenster === fenster) anzahl = (r[0].anzahl || 0) + 1;
+    this.sql.exec(
+      "INSERT INTO takt (eins, fenster, anzahl) VALUES (1, ?, ?) " +
+      "ON CONFLICT(eins) DO UPDATE SET fenster = excluded.fenster, anzahl = excluded.anzahl",
+      fenster, anzahl
+    );
+    if (anzahl > ANFRAGEN_MINUTE) {
+      return new Date((fenster + 1) * 60000).toISOString();
+    }
+    return null;
+  }
+
+  gesperrt(herkunft) {
+    const r = this.sql.exec(
+      "SELECT versuche, bis FROM bremse WHERE herkunft = ?", herkunft
+    ).toArray();
+    if (r.length && r[0].bis && r[0].bis > Date.now()) return new Date(r[0].bis).toISOString();
+    return null;
+  }
+
+  fehlversuch(herkunft) {
+    const jetzt = Date.now();
+    const r = this.sql.exec(
+      "SELECT versuche FROM bremse WHERE herkunft = ?", herkunft
+    ).toArray();
+    const n = (r.length ? r[0].versuche : 0) + 1;
+    this.sql.exec(
+      "INSERT INTO bremse (herkunft, versuche, bis) VALUES (?, ?, ?) " +
+      "ON CONFLICT(herkunft) DO UPDATE SET versuche = excluded.versuche, bis = excluded.bis",
+      herkunft, n, n >= MAX_FEHLER ? jetzt + SPERRE : null
+    );
+  }
+
+  bremseLoesen(herkunft) {
+    this.sql.exec("DELETE FROM bremse WHERE herkunft = ?", herkunft);
+  }
+
+  mitglied(kennung) {
+    if (!kennung) return null;
+    const r = this.sql.exec("SELECT * FROM mitglieder WHERE kennung = ?", kennung).toArray();
+    return r.length ? r[0] : null;
+  }
+
+  // Darf diese Kennung die Liste sehen bzw. oeffnen?
+  darfListe(liste, kennung) {
+    if (!liste) return false;
+    if (liste.offen) return true;
+    const r = this.sql.exec(
+      "SELECT 1 AS ja FROM freigaben WHERE liste = ? AND kennung = ?", liste.liste, kennung
+    ).toArray();
+    return r.length > 0;
+  }
+
+  /* ---------- Wecker: Vorwarnung und Loeschen ------------------------ */
+
+  async alarm() {
+    const k = this.kanalZeile();
+    if (!k) return;
+    const jetzt = Date.now();
+    if (jetzt - k.letzter_zugriff < JAHR) {
+      // zwischenzeitlich benutzt - neuen Wecker stellen
+      this.ctx.storage.setAlarm(k.letzter_zugriff + JAHR);
+      return;
+    }
+    if (!k.warnung_ab) {
+      // Vorwarnung setzen, in einer Woche noch einmal nachsehen
+      this.sql.exec("UPDATE kanal SET warnung_ab = ? WHERE eins = 1", jetzt);
+      this.ctx.storage.setAlarm(jetzt + WOCHE);
+      return;
+    }
+    if (jetzt - k.warnung_ab >= WOCHE) {
+      // Woche abgelaufen - alles loeschen
+      for (const ws of this.ctx.getWebSockets()) {
+        try { ws.close(4410, "Kanal geloescht"); } catch (_e) {}
+      }
+      await this.ctx.storage.deleteAll();
+    }
+  }
+
+  /* ---------- Chat: offene Leitung ---------------------------------- */
+
+  async webSocketMessage(ws, roh) {
+    let m = {};
+    try { m = JSON.parse(String(roh)); } catch (_e) { return; }
+    if (!m || m.art !== "nachricht") return;
+
+    const k = this.kanalZeile();
+    if (!k) { try { ws.close(4404, "Diesen Kanal gibt es nicht"); } catch (_e) {} return; }
+
+    // 20 Nachrichten je Minute und Leitung
+    let zustand = {};
+    try { zustand = ws.deserializeAttachment() || {}; } catch (_e) { zustand = {}; }
+    const fenster = Math.floor(Date.now() / 60000);
+    if (zustand.fenster !== fenster) { zustand.fenster = fenster; zustand.anzahl = 0; }
+    zustand.anzahl = (zustand.anzahl || 0) + 1;
+    try { ws.serializeAttachment(zustand); } catch (_e) {}
+    if (zustand.anzahl > NACHRICHTEN_MINUTE) {
+      try { ws.send(JSON.stringify({ art: "fehler", fehler: "Zu viele Nachrichten in kurzer Zeit. Bitte einen Moment warten." })); } catch (_e) {}
+      return;
+    }
+
+    const kennung = String(m.kennung || "").slice(0, 200);
+    const paket = String(m.paket == null ? "" : m.paket);
+    if (!kennung || !paket) return;
+    if (paket.length > MAX_NACHRICHT) {
+      try { ws.send(JSON.stringify({ art: "fehler", kennung: kennung, fehler: "Die Nachricht ist zu lang." })); } catch (_e) {}
+      return;
+    }
+
+    // Schon bekannt? Dann nur noch einmal quittieren, nicht doppelt ablegen.
+    const da = this.sql.exec("SELECT stand FROM nachrichten WHERE kennung = ?", kennung).toArray();
+    if (da.length) {
+      try { ws.send(JSON.stringify({ art: "quittung", kennung: kennung, stand: da[0].stand })); } catch (_e) {}
+      return;
+    }
+
+    const hoechste = this.sql.exec("SELECT MAX(stand) AS m FROM nachrichten").toArray();
+    const stand = ((hoechste.length && hoechste[0].m) || 0) + 1;
+    this.sql.exec(
+      "INSERT INTO nachrichten (stand, kennung, paket, zeit) VALUES (?, ?, ?, ?)",
+      stand, kennung, paket, Date.now()
+    );
+
+    // aelteste Nachrichten fallen hinten heraus
+    const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
+    if (anzahl > MAX_NACHRICHTEN) {
+      this.sql.exec(
+        "DELETE FROM nachrichten WHERE stand <= (SELECT MIN(stand) + ? FROM nachrichten)",
+        anzahl - MAX_NACHRICHTEN - 1
+      );
+    }
+    this.zugriffMerken();
+
+    // Quittung an den Absender
+    try { ws.send(JSON.stringify({ art: "quittung", kennung: kennung, stand: stand })); } catch (_e) {}
+    // unveraendert an alle anderen Leitungen
+    const weiter = JSON.stringify({ art: "nachricht", paket: paket, stand: stand });
+    for (const andere of this.ctx.getWebSockets()) {
+      if (andere === ws) continue;
+      try { andere.send(weiter); } catch (_e) {}
+    }
+  }
+
+  async webSocketClose(ws, code, grund, sauber) {
+    try { ws.close(code === 1006 ? 1000 : code, grund); } catch (_e) {}
+  }
+
+  async webSocketError(ws) { /* nichts zu tun - die Leitung faellt weg */ }
+
+  /* ---------- HTTP ---------------------------------------------------- */
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    // Die offene Leitung fuer den Chat hat einen eigenen Weg
+    if (url.pathname === "/draht") return this.draht(request);
+    const method = request.method.toUpperCase();
+    const teil = url.searchParams.get("weg") || "";
+    const herkunft = (request.headers.get("cf-connecting-ip") || "unbekannt").slice(0, 64);
+
+    let daten = {};
+    if (method === "POST") { try { daten = await request.json(); } catch (_e) { daten = {}; } }
+    const feld = (name, max) => {
+      const v = (method === "POST" && daten[name] != null) ? daten[name] : url.searchParams.get(name);
+      return String(v == null ? "" : v).slice(0, max || 8192);
+    };
+
+    const unbekannt = () => jsonAntwort({ fehler: "Diesen Kanal gibt es nicht." }, 404);
+    const falsch = () => jsonAntwort({ fehler: "Passwort stimmt nicht." }, 401);
+
+    /* --- Anlegen: nur wenn dieses Objekt noch leer ist --------------- */
+    if (teil === "neu" && method === "POST") {
+      if (this.kanalZeile()) return jsonAntwort({ fehler: "belegt" }, 409);
+      for (const f of ["code", "pruefwert", "salzP", "paketP", "salzR", "paketR"]) {
+        if (!daten[f]) return jsonAntwort({ fehler: "Es fehlen Angaben zum Anlegen des Kanals." }, 400);
+      }
+      const jetzt = Date.now();
+      this.sql.exec(
+        "INSERT INTO kanal (eins, code, name, pruefwert, salz_p, paket_p, salz_r, paket_r, " +
+        "daten, stand, offen, gruender, naechste_nummer, angelegt, letzter_zugriff, warnung_ab) " +
+        "VALUES (1, ?, ?, ?, ?, ?, ?, ?, NULL, 0, 1, '', 1, ?, ?, NULL)",
+        String(daten.code), String(daten.name || "Kanal").slice(0, 60), String(daten.pruefwert),
+        String(daten.salzP), String(daten.paketP), String(daten.salzR), String(daten.paketR),
+        jetzt, jetzt
+      );
+      // Sammelansicht "alle" gibt es einfach - sie wird nicht angelegt.
+      this.sql.exec(
+        "INSERT OR IGNORE INTO listen (liste, ersteller, name, offen, daten, stand) " +
+        "VALUES ('alle', '', '', 1, NULL, 0)"
+      );
+      this.ctx.storage.setAlarm(jetzt + JAHR);
+      return jsonAntwort({ code: String(daten.code) });
+    }
+
+    const k = this.kanalZeile();
+    if (!k) return unbekannt();
+
+    /* --- Bremse je Kanal -------------------------------------------- */
+    const wartenBis = this.taktUeberschritten();
+    if (wartenBis) {
+      return jsonAntwort({ fehler: "Zu viele Anfragen. Bitte kurz warten.", wartenBis: wartenBis }, 429);
+    }
+
+    /* --- Rettungspaket: ohne Pruefwert, dafuer streng begrenzt ------- */
+    if (teil === "rettung" && method === "POST") {
+      const r = this.sql.exec("SELECT versuche, bis FROM bremse WHERE herkunft = 'rettung'").toArray();
+      const jetzt = Date.now();
+      const offen = (r.length && r[0].bis && r[0].bis > jetzt) ? r[0].versuche : 0;
+      if (offen >= 3) {
+        return jsonAntwort({
+          fehler: "Zu viele Wiederherstellungs-Anfragen. Bitte in einer Stunde erneut versuchen.",
+          wartenBis: new Date(jetzt + 60 * 60 * 1000).toISOString()
+        }, 429);
+      }
+      this.sql.exec(
+        "INSERT INTO bremse (herkunft, versuche, bis) VALUES ('rettung', ?, ?) " +
+        "ON CONFLICT(herkunft) DO UPDATE SET versuche = excluded.versuche, bis = excluded.bis",
+        offen + 1, jetzt + 60 * 60 * 1000
+      );
+      return jsonAntwort({ salzR: k.salz_r, paketR: k.paket_r });
+    }
+
+    /* --- Passwort neu setzen ---------------------------------------- */
+    if (teil === "passwortNeu" && method === "POST") {
+      const sperre = this.gesperrt(herkunft);
+      if (sperre) return jsonAntwort({ fehler: "Zu viele Fehlversuche. Bitte zehn Minuten warten.", wartenBis: sperre }, 429);
+      const nachweis = feld("nachweis");
+      if (!gleich(nachweis, k.pruefwert) && !gleich(nachweis, k.paket_r)) {
+        this.fehlversuch(herkunft); return falsch();
+      }
+      for (const f of ["pruefwertNeu", "salzPNeu", "paketPNeu"]) {
+        if (!daten[f]) return jsonAntwort({ fehler: "Es fehlen Angaben für das neue Passwort." }, 400);
+      }
+      this.bremseLoesen(herkunft);
+      this.sql.exec(
+        "UPDATE kanal SET pruefwert = ?, salz_p = ?, paket_p = ? WHERE eins = 1",
+        String(daten.pruefwertNeu), String(daten.salzPNeu), String(daten.paketPNeu)
+      );
+      this.zugriffMerken();
+      return jsonAntwort({ ok: true });
+    }
+
+    /* --- Ab hier ist der Pruefwert noetig ---------------------------- */
+    const sperre = this.gesperrt(herkunft);
+    if (sperre) return jsonAntwort({ fehler: "Zu viele Fehlversuche. Bitte zehn Minuten warten.", wartenBis: sperre }, 429);
+    const pruefwert = feld("pruefwert");
+    if (!gleich(pruefwert, k.pruefwert)) { this.fehlversuch(herkunft); return falsch(); }
+    this.bremseLoesen(herkunft);
+
+    const warnung = this.warnungBlock(k);
+    this.zugriffMerken();
+
+    /* --- Beitreten --------------------------------------------------- */
+    if (teil === "beitreten" && method === "POST") {
+      const geraet = feld("geraet", 60).trim() || "Gerät";
+      let kennung = feld("kennung", 200);
+      let m = kennung ? this.mitglied(kennung) : null;
+      if (!m) {
+        if (!k.offen) {
+          return jsonAntwort({ fehler: "Der Kanal nimmt niemanden mehr auf." }, 403);
+        }
+        kennung = zufall(32);
+        const nummer = k.naechste_nummer || 1;
+        const erster = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n === 0;
+        this.sql.exec(
+          "INSERT INTO mitglieder (kennung, nummer, geraet, name, rolle, zuletzt) VALUES (?, ?, ?, ?, ?, ?)",
+          kennung, nummer, geraet, geraet, erster ? "ersteller" : "schreiben", Date.now()
+        );
+        this.sql.exec("UPDATE kanal SET naechste_nummer = ? WHERE eins = 1", nummer + 1);
+        if (erster) {
+          this.sql.exec("UPDATE kanal SET gruender = ? WHERE eins = 1", kennung);
+          this.sql.exec("UPDATE listen SET ersteller = ? WHERE liste = 'alle'", kennung);
+        }
+        m = this.mitglied(kennung);
+      } else {
+        this.sql.exec("UPDATE mitglieder SET geraet = ?, zuletzt = ? WHERE kennung = ?",
+                      geraet, Date.now(), kennung);
+      }
+      const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
+      return jsonAntwort({
+        name: k.name, salzP: k.salz_p, paketP: k.paket_p,
+        mitglieder: anzahl, kennung: kennung, nummer: m.nummer, rolle: m.rolle,
+        warnung: warnung
+      });
+    }
+
+    /* --- Aufgaben senden --------------------------------------------- */
+    if (teil === "senden" && method === "POST") {
+      const inhalt = String(daten.daten == null ? "" : daten.daten);
+      if (inhalt.length > MAX_DATEN) {
+        return jsonAntwort({ fehler: "Der Aufgabenbestand ist zu groß (höchstens 2 MB)." }, 413);
+      }
+      const stand = Number(daten.stand);
+      if (!Number.isFinite(stand) || stand < 0) {
+        return jsonAntwort({ fehler: "Es fehlt die Standnummer." }, 400);
+      }
+      if (stand < k.stand) return jsonAntwort({ stand: k.stand }, 409);
+      const neu = k.stand + 1;
+      this.sql.exec("UPDATE kanal SET daten = ?, stand = ? WHERE eins = 1", inhalt, neu);
+      return jsonAntwort({ stand: neu, warnung: warnung });
+    }
+
+    /* --- Aufgaben holen ---------------------------------------------- */
+    if (teil === "holen" && method === "GET") {
+      const seit = Number(url.searchParams.get("seit") || 0);
+      if (Number.isFinite(seit) && seit >= k.stand) {
+        return jsonAntwort({ stand: k.stand, warnung: warnung });
+      }
+      return jsonAntwort({ stand: k.stand, daten: k.daten || "", warnung: warnung });
+    }
+
+    /* --- Schliessen / Oeffnen / Behalten / Zustand -------------------- */
+    if ((teil === "schliessen" || teil === "oeffnen") && method === "POST") {
+      this.sql.exec("UPDATE kanal SET offen = ? WHERE eins = 1", teil === "oeffnen" ? 1 : 0);
+      return jsonAntwort({ ok: true, offen: teil === "oeffnen", warnung: warnung });
+    }
+    if (teil === "behalten" && method === "POST") {
+      return jsonAntwort({ ok: true, hinweis: "Kanal bleibt erhalten." });
+    }
+    if (teil === "zustand" && method === "GET") {
+      const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
+      const nachr = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
+      return jsonAntwort({
+        name: k.name, offen: !!k.offen, stand: k.stand, mitglieder: anzahl,
+        nachrichten: nachr, groesse: (k.daten || "").length, warnung: warnung
+      });
+    }
+
+    /* ================================================================
+     * Ab hier: Wege, die zusaetzlich die Geraete-Kennung verlangen
+     * ================================================================ */
+    const kennung = feld("kennung", 200);
+    const ich = this.mitglied(kennung);
+    const brauchtKennung = (teil === "mitglieder" || teil === "mitglieder/rolle" ||
+      teil.indexOf("listen") === 0);
+    if (brauchtKennung && !ich) {
+      return jsonAntwort({ fehler: "Dieses Gerät gehört nicht zum Kanal." }, 403);
+    }
+
+    /* --- Mitglieder ansehen ------------------------------------------ */
+    if (teil === "mitglieder" && method === "GET") {
+      // Nie die Kennung herausgeben - nur Nummer, Anzeigename und Rolle.
+      const alle = this.sql.exec(
+        "SELECT nummer, name, rolle FROM mitglieder ORDER BY nummer"
+      ).toArray();
+      return jsonAntwort({ mitglieder: alle.map((m) => ({
+        nummer: m.nummer, name: m.name, rolle: m.rolle
+      })) });
+    }
+
+    /* --- Rolle setzen: nur der Kanalgruender -------------------------- */
+    if (teil === "mitglieder/rolle" && method === "POST") {
+      if (!gleich(kennung, k.gruender)) {
+        return jsonAntwort({ fehler: "Das darf nur, wer den Kanal angelegt hat." }, 403);
+      }
+      const fuer = Number(daten.fuer);
+      const rolle = String(daten.rolle || "");
+      if (["ersteller", "schreiben", "ansehen"].indexOf(rolle) === -1) {
+        return jsonAntwort({ fehler: "Unbekannte Rolle." }, 400);
+      }
+      const ziel = this.sql.exec("SELECT kennung FROM mitglieder WHERE nummer = ?", fuer).toArray();
+      if (!ziel.length) return jsonAntwort({ fehler: "Dieses Mitglied gibt es nicht." }, 404);
+      if (gleich(ziel[0].kennung, k.gruender)) {
+        return jsonAntwort({ fehler: "Die Rolle des Kanalgründers lässt sich nicht ändern." }, 403);
+      }
+      this.sql.exec("UPDATE mitglieder SET rolle = ? WHERE nummer = ?", rolle, fuer);
+      return jsonAntwort({ ok: true });
+    }
+
+    /* --- Listen anlegen ---------------------------------------------- */
+    if (teil === "listen/neu" && method === "POST") {
+      if (ich.rolle === "ansehen") {
+        return jsonAntwort({ fehler: "Zum Anlegen einer Liste fehlt die Berechtigung." }, 403);
+      }
+      const liste = feld("liste", 120);
+      if (!liste) return jsonAntwort({ fehler: "Es fehlt die Kennung der Liste." }, 400);
+      const da = this.sql.exec("SELECT 1 AS ja FROM listen WHERE liste = ?", liste).toArray();
+      if (da.length) return jsonAntwort({ fehler: "Diese Liste gibt es schon." }, 409);
+      this.sql.exec(
+        "INSERT INTO listen (liste, ersteller, name, offen, daten, stand) VALUES (?, ?, ?, ?, NULL, 0)",
+        liste, kennung, String(daten.name || ""), daten.offen === 0 ? 0 : 1
+      );
+      return jsonAntwort({ ok: true, liste: liste });
+    }
+
+    /* --- Liste freigeben / sperren / Rechte: nur ihr Ersteller -------- */
+    if ((teil === "listen/freigeben" || teil === "listen/sperren" || teil === "listen/rechte")
+        && method === "POST") {
+      const liste = feld("liste", 120);
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      if (!gleich(l.ersteller, kennung)) {
+        return jsonAntwort({ fehler: "Das darf nur, wer die Liste angelegt hat." }, 403);
+      }
+
+      if (teil === "listen/rechte") {
+        const sicht = String(daten.sicht || "alle");
+        const zugang = String(daten.zugang || "alle");
+        if (["alle", "berechtigte"].indexOf(sicht) === -1) {
+          return jsonAntwort({ fehler: "Unbekannte Einstellung für die Sichtbarkeit." }, 400);
+        }
+        if (["alle", "berechtigte", "berechtigte_oder_passwort", "passwort"].indexOf(zugang) === -1) {
+          return jsonAntwort({ fehler: "Unbekannte Einstellung für den Zugang." }, 400);
+        }
+        this.sql.exec(
+          "UPDATE listen SET sicht = ?, zugang = ?, salz_l = ?, paket_l = ?, pruef_l = ?, offen = ? WHERE liste = ?",
+          sicht, zugang,
+          daten.salzL == null ? null : String(daten.salzL),
+          daten.paketL == null ? null : String(daten.paketL),
+          daten.pruefL == null ? null : String(daten.pruefL),
+          (sicht === "alle" && zugang === "alle") ? 1 : 0,
+          liste
+        );
+        return jsonAntwort({ ok: true });
+      }
+
+      // In "fuer" steht die oeffentliche Mitgliedsnummer, nicht die Kennung.
+      const fuer = Number(daten.fuer);
+      const ziel = this.sql.exec("SELECT kennung FROM mitglieder WHERE nummer = ?", fuer).toArray();
+      if (!ziel.length) return jsonAntwort({ fehler: "Dieses Mitglied gibt es nicht." }, 404);
+
+      if (teil === "listen/freigeben") {
+        const paket = String(daten.paket || "");
+        if (!paket) return jsonAntwort({ fehler: "Es fehlt das Schlüsselpaket für die Freigabe." }, 400);
+        this.sql.exec(
+          "INSERT INTO freigaben (liste, kennung, paket) VALUES (?, ?, ?) " +
+          "ON CONFLICT(liste, kennung) DO UPDATE SET paket = excluded.paket",
+          liste, ziel[0].kennung, paket
+        );
+        // Erste Freigabe schliesst die Liste fuer alle anderen
+        this.sql.exec("UPDATE listen SET offen = 0 WHERE liste = ?", liste);
+      } else {
+        this.sql.exec("DELETE FROM freigaben WHERE liste = ? AND kennung = ?", liste, ziel[0].kennung);
+      }
+      return jsonAntwort({ ok: true });
+    }
+
+    /* --- Listen ansehen ---------------------------------------------- */
+    if (teil === "listen" && method === "GET") {
+      const alle = this.sql.exec("SELECT * FROM listen").toArray();
+      const raus = [];
+      for (const l of alle) {
+        const frei = this.sql.exec(
+          "SELECT paket FROM freigaben WHERE liste = ? AND kennung = ?", l.liste, kennung
+        ).toArray();
+        const berechtigt = !!l.offen || frei.length > 0;
+        // Unsichtbare Listen tauchen gar nicht erst auf
+        if (l.sicht === "berechtigte" && !berechtigt) continue;
+        const eintrag = {
+          liste: l.liste, name: l.name, sicht: l.sicht, zugang: l.zugang,
+          stand: l.stand, offen: !!l.offen,
+          meins: gleich(l.ersteller, kennung)
+        };
+        if (berechtigt && frei.length) eintrag.paket = frei[0].paket;
+        if (!berechtigt && (l.zugang === "berechtigte_oder_passwort" || l.zugang === "passwort")) {
+          // Zugang ueber das Listenpasswort moeglich - Salz und Paket mitgeben
+          if (l.salz_l) { eintrag.salzL = l.salz_l; eintrag.paketL = l.paket_l; }
+        }
+        eintrag.gesperrt = !berechtigt && !eintrag.salzL;
+        raus.push(eintrag);
+      }
+      return jsonAntwort({ listen: raus });
+    }
+
+    /* --- Listendaten senden ------------------------------------------ */
+    if (teil === "listen/senden" && method === "POST") {
+      if (ich.rolle === "ansehen") {
+        return jsonAntwort({ fehler: "Zum Ändern fehlt die Berechtigung." }, 403);
+      }
+      const liste = feld("liste", 120);
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      if (liste === "alle") {
+        return jsonAntwort({ fehler: "Die Sammelansicht speichert keine eigenen Daten." }, 400);
+      }
+      if (!this.darfListe(l, kennung)) {
+        return jsonAntwort({ fehler: "Für diese Liste fehlt die Freigabe." }, 403);
+      }
+      const inhalt = String(daten.daten == null ? "" : daten.daten);
+      if (inhalt.length > MAX_DATEN) {
+        return jsonAntwort({ fehler: "Die Liste ist zu groß (höchstens 2 MB)." }, 413);
+      }
+      const stand = Number(daten.stand);
+      if (!Number.isFinite(stand) || stand < 0) {
+        return jsonAntwort({ fehler: "Es fehlt die Standnummer." }, 400);
+      }
+      if (stand < l.stand) return jsonAntwort({ stand: l.stand }, 409);
+      const neu = l.stand + 1;
+      this.sql.exec("UPDATE listen SET daten = ?, stand = ? WHERE liste = ?", inhalt, neu, liste);
+      return jsonAntwort({ stand: neu });
+    }
+
+    /* --- Listendaten holen ------------------------------------------- */
+    if (teil === "listen/holen" && method === "GET") {
+      const liste = feld("liste", 120);
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      // Bedingung noch einmal pruefen - nie allein auf GET /listen verlassen
+      if (!this.darfListe(l, kennung)) {
+        return jsonAntwort({ fehler: "Für diese Liste fehlt die Freigabe." }, 403);
+      }
+      const seit = Number(url.searchParams.get("seit") || 0);
+      if (Number.isFinite(seit) && seit >= l.stand) return jsonAntwort({ stand: l.stand });
+      return jsonAntwort({ stand: l.stand, daten: l.daten || "" });
+    }
+
+    return jsonAntwort({ fehler: "Unbekannter Weg." }, 404);
+  }
+
+  /* ---------- Leitung annehmen --------------------------------------- */
+
+  async draht(request) {
+    const k = this.kanalZeile();
+    const paar = new WebSocketPair();
+    const [zumBesucher, meins] = Object.values(paar);
+    // Ruhezustand erlaubt: das Objekt darf einschlafen, ohne die Leitung zu verlieren
+    this.ctx.acceptWebSocket(meins);
+
+    if (!k) {
+      try { meins.close(4404, "Diesen Kanal gibt es nicht"); } catch (_e) {}
+      return new Response(null, { status: 101, webSocket: zumBesucher });
+    }
+
+    try { meins.serializeAttachment({ fenster: 0, anzahl: 0 }); } catch (_e) {}
+    this.zugriffMerken();
+
+    // Die letzten 200 Nachrichten nachreichen
+    const alt = this.sql.exec(
+      "SELECT stand, paket FROM nachrichten ORDER BY stand DESC LIMIT ?", NACHHOLEN
+    ).toArray().reverse();
+    for (const n of alt) {
+      try { meins.send(JSON.stringify({ art: "nachricht", paket: n.paket, stand: n.stand })); } catch (_e) {}
+    }
+    return new Response(null, { status: 101, webSocket: zumBesucher });
+  }
+}
