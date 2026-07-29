@@ -925,6 +925,29 @@ function isEchterAufruf(request) {
 
 export default {
   async fetch(request, env, ctx) {
+    try {
+      return await this.bearbeiten(request, env, ctx);
+    } catch (fehler) {
+      // Abstuerze ins Fehlerbuch schreiben, damit sie auf /serverstatus
+      // sichtbar sind - ohne Cloudflare-Oberflaeche.
+      try {
+        const u = new URL(request.url);
+        const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+        const melden = g.fetch(new Request("https://zaehler/api/kanalliste", {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            aktion: "fehler", weg: u.pathname, lage: 500,
+            text: String((fehler && fehler.message) || fehler || "Unbekannter Fehler")
+                  + " | " + String((fehler && fehler.stack) || "").split("\n")
+          })
+        }));
+        if (ctx && ctx.waitUntil) ctx.waitUntil(melden); else await melden;
+      } catch (_e) { /* Melden darf nie selbst scheitern */ }
+      return json({ error: "server_error", fehler: "Auf dem Server ist ein Fehler aufgetreten." }, 500);
+    }
+  },
+
+  async bearbeiten(request, env, ctx) {
     const url = new URL(request.url);
     /* =================================================================
      * Gerätekopplung: alles unter /api/kanal/ ...
