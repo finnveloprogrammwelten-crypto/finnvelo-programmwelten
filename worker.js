@@ -308,14 +308,17 @@ export class Counter extends DurableObject {
       try { b = await request.json(); } catch (_e) { b = {}; }
       if (!checkAdmin(b, env)) return json({ error: "unauthorized" }, 401);
 
+      // Jede Abfrage einzeln abgesichert: eine fehlende Tabelle darf die
+      // ganze Uebersicht nicht kippen.
       const zahl = (q) => { try { return this.sql.exec(q).toArray()[0].n || 0; } catch (_e) { return 0; } };
-      const zaehler = this.sql.exec("SELECT key, value FROM counters ORDER BY key").toArray();
-      const fehler = this.sql.exec(
-        "SELECT zeit, weg, lage, text FROM fehler ORDER BY nr DESC LIMIT 40"
-      ).toArray().map((f) => ({
-        zeit: new Date(f.zeit).toISOString(), weg: f.weg, lage: f.lage, text: f.text
-      }));
-      const kanaele = this.sql.exec("SELECT code, angelegt FROM kanalliste ORDER BY angelegt").toArray();
+      const liste = (q) => { try { return this.sql.exec(q).toArray(); } catch (_e) { return []; } };
+
+      const zaehler = liste("SELECT key, value FROM counter_values ORDER BY key");
+      const fehler = liste("SELECT zeit, weg, lage, text FROM fehler ORDER BY nr DESC LIMIT 40")
+        .map((f) => ({
+          zeit: new Date(f.zeit).toISOString(), weg: f.weg, lage: f.lage, text: f.text
+        }));
+      const kanaele = liste("SELECT code, angelegt FROM kanalliste ORDER BY angelegt");
 
       return json({
         inhalte: zahl("SELECT COUNT(*) AS n FROM content"),
