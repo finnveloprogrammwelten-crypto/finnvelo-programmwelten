@@ -37,7 +37,7 @@ const RESERVIERT = [
   "admin", "downloads", "tester", "404", "assets", "planer", "tess", "api",
   "mischwald", "mischwaldrechner", "aufgabenplaner", "archivar", "finanzmanager",
   "medienstudio", "command-control", "haus-und-gartenplaner", "finnvelo", "sitemap",
-  "robots", "favicon", "koppeln", "planer", "well-known"
+  "robots", "favicon", "koppeln", "planer", "well-known", "serverstatus"
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
@@ -108,6 +108,17 @@ export class Counter extends DurableObject {
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS apps (slug TEXT PRIMARY KEY, html TEXT NOT NULL, updated INTEGER NOT NULL)"
     );
+    // Verzeichnis der Kanaele und Fehlerbuch - nur fuer die Aufsicht.
+    // Enthaelt KEINE Inhalte, nur Kennzahlen.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS kanalliste (code TEXT PRIMARY KEY, angelegt INTEGER NOT NULL)"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS fehler (" +
+      "nr INTEGER PRIMARY KEY AUTOINCREMENT, zeit INTEGER NOT NULL, " +
+      "weg TEXT NOT NULL, lage INTEGER NOT NULL, text TEXT NOT NULL)"
+    );
+
     this.recentPosts = new Map();   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
   }
 
@@ -260,6 +271,61 @@ export class Counter extends DurableObject {
       return new Response(b64ToBytes(rows[0].data), {
         status: 200,
         headers: { "content-type": rows[0].mime, "cache-control": "public, max-age=31536000, immutable" }
+      });
+    }
+
+    // --- Kanal eintragen (nur vom Worker aufgerufen) -------------------
+    if (url.pathname === "/api/kanalliste" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      const code = String(b.code || "");
+      if (b.aktion === "merken" && /^FNV-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(code)) {
+        this.sql.exec(
+          "INSERT OR IGNORE INTO kanalliste (code, angelegt) VALUES (?, ?)", code, Date.now()
+        );
+        return json({ ok: true });
+      }
+      if (b.aktion === "fehler") {
+        this.sql.exec(
+          "INSERT INTO fehler (zeit, weg, lage, text) VALUES (?, ?, ?, ?)",
+          Date.now(), String(b.weg || "").slice(0, 120), Number(b.lage) || 0,
+          String(b.text || "").slice(0, 400)
+        );
+        // Fehlerbuch kurz halten
+        this.sql.exec("DELETE FROM fehler WHERE nr <= (SELECT MAX(nr) - 200 FROM fehler)");
+        return json({ ok: true });
+      }
+      if (b.aktion === "liste") {
+        const r = this.sql.exec("SELECT code, angelegt FROM kanalliste ORDER BY angelegt").toArray();
+        return json({ kanaele: r });
+      }
+      return json({ error: "bad_request" }, 400);
+    }
+
+    // --- Aufsicht: Kennzahlen der Webseite (nur Admin) ------------------
+    if (url.pathname === "/api/aufsicht" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      if (!checkAdmin(b, env)) return json({ error: "unauthorized" }, 401);
+
+      const zahl = (q) => { try { return this.sql.exec(q).toArray()[0].n || 0; } catch (_e) { return 0; } };
+      const zaehler = this.sql.exec("SELECT key, value FROM counters ORDER BY key").toArray();
+      const fehler = this.sql.exec(
+        "SELECT zeit, weg, lage, text FROM fehler ORDER BY nr DESC LIMIT 40"
+      ).toArray().map((f) => ({
+        zeit: new Date(f.zeit).toISOString(), weg: f.weg, lage: f.lage, text: f.text
+      }));
+      const kanaele = this.sql.exec("SELECT code, angelegt FROM kanalliste ORDER BY angelegt").toArray();
+
+      return json({
+        inhalte: zahl("SELECT COUNT(*) AS n FROM content"),
+        inhalteBytes: zahl("SELECT COALESCE(SUM(LENGTH(value)),0) AS n FROM content"),
+        bilder: zahl("SELECT COUNT(*) AS n FROM images"),
+        bilderBytes: zahl("SELECT COALESCE(SUM(LENGTH(data)),0) AS n FROM images"),
+        kommentare: zahl("SELECT COUNT(*) AS n FROM comments"),
+        zaehler: zaehler,
+        kanaele: kanaele.map((k) => ({ code: k.code, angelegt: new Date(k.angelegt).toISOString() })),
+        fehler: fehler
       });
     }
 
@@ -899,7 +965,19 @@ export default {
             headers: { "content-type": "application/json" },
             body: JSON.stringify(Object.assign({}, koerper, { code: code }))
           }));
-          if (antwort.status !== 409) return antwort;   // 409 = Code schon belegt
+          if (antwort.status !== 409) {
+            // Fuer die Aufsicht merken (nur der Code, keine Inhalte)
+            if (antwort.ok) {
+              try {
+                const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+                ctx.waitUntil(g.fetch(new Request("https://zaehler/api/kanalliste", {
+                  method: "POST", headers: { "content-type": "application/json" },
+                  body: JSON.stringify({ aktion: "merken", code: code })
+                })));
+              } catch (_e) {}
+            }
+            return antwort;
+          }   // 409 = Code schon belegt
         }
         return json({ fehler: "Es ließ sich kein freier Code finden. Bitte noch einmal versuchen." }, 503);
       }
@@ -925,11 +1003,58 @@ export default {
       const ziel = new URL("https://kanal/dv");
       for (const [n, v] of url.searchParams) ziel.searchParams.set(n, v);
       ziel.searchParams.set("weg", weg);
-      return stub.fetch(new Request(ziel.toString(), {
+      const antwort = await stub.fetch(new Request(ziel.toString(), {
         method: request.method,
         headers: new Headers(request.headers),
         body: request.method === "POST" ? rumpf : undefined
       }));
+      // Nur Fehlerlagen ins Buch - ohne Inhalte, ohne Code des Kanals
+      if (antwort.status >= 400) {
+        try {
+          const kopie = antwort.clone();
+          const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+          ctx.waitUntil(kopie.json().then((d) =>
+            g.fetch(new Request("https://zaehler/api/kanalliste", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ aktion: "fehler", weg: weg, lage: antwort.status,
+                                     text: String((d && d.fehler) || "") })
+            }))
+          ).catch(() => {}));
+        } catch (_e) {}
+      }
+      return antwort;
+    }
+
+    // --- Aufsicht: Kennzahlen einsammeln (nur Admin) ------------------
+    if (url.pathname === "/api/serverstatus" && request.method === "POST") {
+      if (!env || !env.COUNTERS) return json({ error: "storage_not_configured" }, 503);
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+      const grund = await g.fetch(new Request("https://zaehler/api/aufsicht", {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify(b)
+      }));
+      if (!grund.ok) return grund;
+      const daten = await grund.json();
+
+      // Je Kanal die Kennzahlen holen - hoechstens 60, damit es zuegig bleibt
+      const kanaele = [];
+      if (env.KANAELE) {
+        for (const k of (daten.kanaele || []).slice(0, 60)) {
+          try {
+            const stub = env.KANAELE.get(env.KANAELE.idFromName(k.code));
+            const r = await stub.fetch(new Request("https://kanal/aufsicht"));
+            if (r.ok) {
+              const z = await r.json();
+              if (z && z.da) kanaele.push(z);
+            }
+          } catch (_e) { /* einzelner Kanal darf die Uebersicht nicht kippen */ }
+        }
+      }
+      daten.kanaele = kanaele;
+      daten.zeit = new Date().toISOString();
+      return json(daten);
     }
 
     // Fingerabdruck-Datei fuer den Android-App-Link: muss als JSON kommen
@@ -1367,6 +1492,27 @@ export class Kanal extends DurableObject {
     const url = new URL(request.url);
     // Die offene Leitung fuer den Chat hat einen eigenen Weg
     if (url.pathname === "/draht") return this.draht(request);
+    // Kennzahlen fuer die Aufsicht. Erreichbar nur ueber diesen Pfad, den der
+    // Worker ausschliesslich nach Admin-Pruefung setzt - oeffentliche Anfragen
+    // landen immer auf /dv und koennen ihn nicht treffen.
+    if (url.pathname === "/aufsicht") {
+      const k = this.kanalZeile();
+      if (!k) return jsonAntwort({ da: false });
+      const m = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
+      const n = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
+      const l = this.sql.exec("SELECT COUNT(*) AS n FROM listen").toArray()[0].n;
+      const lb = this.sql.exec("SELECT COALESCE(SUM(LENGTH(daten)),0) AS n FROM listen").toArray()[0].n;
+      const nb = this.sql.exec("SELECT COALESCE(SUM(LENGTH(paket)),0) AS n FROM nachrichten").toArray()[0].n;
+      return jsonAntwort({
+        da: true, code: k.code, offen: !!k.offen, stand: k.stand,
+        mitglieder: m, nachrichten: n, listen: l,
+        bytes: (k.daten || "").length + lb + nb,
+        leitungen: this.ctx.getWebSockets().length,
+        angelegt: new Date(k.angelegt).toISOString(),
+        letzterZugriff: new Date(k.letzter_zugriff).toISOString(),
+        warnung: !!k.warnung_ab
+      });
+    }
     const method = request.method.toUpperCase();
     const teil = url.searchParams.get("weg") || "";
     const herkunft = (request.headers.get("cf-connecting-ip") || "unbekannt").slice(0, 64);
