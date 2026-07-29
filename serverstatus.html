@@ -8,7 +8,9 @@
   <link rel="icon" href="/favicon.ico" sizes="any">
   <link rel="stylesheet" href="/styles.css">
   <style>
-    .status-seite { padding: clamp(24px, 3.4vw, 50px) clamp(18px, 4vw, 80px) clamp(40px, 5vw, 70px); }
+    /* Deckende Flaeche: nichts scheint durch, kein Hintergrundbild */
+    body.legal-body::before { display:none !important; }
+    .status-seite { background:#04070d; min-height:100vh; padding: clamp(24px, 3.4vw, 50px) clamp(18px, 4vw, 80px) clamp(40px, 5vw, 70px); }
     .status-kopf { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
     .status-kopf h1 { margin:0; font-size: clamp(24px, 2.8vw, 34px); }
     .status-zeit { font-size:13px; color:var(--muted); }
@@ -53,7 +55,7 @@
     }
   </style>
 </head>
-<body>
+<body class="legal-body">
   <header class="site-header">
     <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
       <img class="brand-logo" src="assets/images/finnvelo-plakette.webp" alt="Finnvelo Plakette">
@@ -217,12 +219,22 @@
           + 'unbekannter Kanal, zu viele Anfragen. Erst Lagen ab 500 deuten auf ein Problem des Servers hin.</p>';
       }
 
-      html += '<p style="margin-top:26px"><button type="button" class="status-knopf" id="neuladen">Neu abrufen</button></p>';
+      html += '<p style="margin-top:26px">'
+        + '<button type="button" class="status-knopf" id="neuladen">Neu abrufen</button>'
+        + '<button type="button" class="status-knopf" id="sperren" '
+        + 'style="margin-left:10px;background:none;border:1px solid var(--line);color:var(--soft)">Sperren</button>'
+        + '</p>';
       ziel.innerHTML = html;
       ziel.hidden = false;
       document.getElementById('anmeldung').hidden = true;
       var nl = document.getElementById('neuladen');
       if (nl) nl.addEventListener('click', abrufen);
+      var sp = document.getElementById('sperren');
+      if (sp) sp.addEventListener('click', function () {
+        pw = '';
+        try { sessionStorage.removeItem('fv_admin_pw'); } catch (e) {}
+        location.reload();
+      });
     }
 
     function abrufen() {
@@ -242,7 +254,8 @@
     }
 
     document.getElementById('rein').addEventListener('click', function () {
-      pw = document.getElementById('pw').value || '';
+      var eingabe = document.getElementById('pw').value || '';
+      if (eingabe) pw = eingabe;
       if (!pw) return;
       try { sessionStorage.setItem('fv_admin_pw', pw); } catch (e) {}
       abrufen();
@@ -250,7 +263,19 @@
     document.getElementById('pw').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') document.getElementById('rein').click();
     });
-    if (pw) abrufen();
+
+    // Bewusst KEIN automatisches Anzeigen. Auch wer schon als Admin angemeldet
+    // ist, muss einmal auf "Entsperren" klicken - so ist auf einen Blick zu
+    // sehen, dass die Seite geschuetzt ist.
+    if (pw) {
+      document.getElementById('pw').value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
+      document.getElementById('rein').textContent = 'Entsperren';
+      var hinweis = document.createElement('p');
+      hinweis.className = 'leer';
+      hinweis.style.marginTop = '10px';
+      hinweis.textContent = 'Aus deiner Admin-Anmeldung übernommen – einmal auf Entsperren klicken.';
+      document.getElementById('anmeldung').appendChild(hinweis);
+    }
   })();
   </script>
 </body>
