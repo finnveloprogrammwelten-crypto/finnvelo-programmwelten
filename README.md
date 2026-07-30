@@ -114,10 +114,28 @@ Besucher sichtbar**.
 
 ### Freischalten
 1. Rufe `deine-adresse.de/admin` auf.
-2. Passwort eingeben und **Freischalten** klicken.
-   (Das Passwort ist in Cloudflare als Secret `ADMIN_PASSWORD` hinterlegt -
-   Dashboard -> Workers & Pages -> Projekt -> Settings -> Variables and Secrets.)
-3. Du landest wieder auf der Startseite. Oben erscheint die **Admin-Leiste**.
+2. **Beim allerersten Mal** steht dort "Zugang einrichten": Passwort (mind. 8
+   Zeichen) und eine selbst gewaehlte **Notfall-PIN** (mind. 6 Zeichen)
+   vergeben. Danach ist dieser Weg dauerhaft zu.
+3. Danach: Passwort eingeben und **Freischalten** klicken.
+4. Du landest in der Zugangsverwaltung - dort lassen sich Passwort und
+   Notfall-PIN jederzeit aendern. Ueber "Weiter zur Webseite" geht es zur
+   Startseite; oben erscheint die **Admin-Leiste**.
+
+**Passwort vergessen?** Auf `/admin` den Knopf "Passwort vergessen" -
+mit der Notfall-PIN laesst sich ein neues setzen. Die PIN bleibt dabei gleich.
+
+**Hinweis zur Ersteinrichtung:** Solange kein Passwort gesetzt ist, koennte
+jeder, der die Adresse kennt, den Zugang belegen. Wer das Fenster gar nicht
+erst aufmachen will, hinterlegt vorher in Cloudflare das Secret
+`ADMIN_PASSWORD` (Dashboard -> Workers & Pages -> Projekt -> Settings ->
+Variables and Secrets). Dann ist die Ersteinrichtung von vornherein gesperrt
+und man meldet sich mit dem Secret an. Ein spaeter in der Verwaltung
+gesetztes eigenes Passwort hat Vorrang vor dem Secret.
+
+Jeder Zugriff auf den Zugang - Einrichten, Aendern, PIN setzen,
+Zuruecksetzen - wird auf `/serverstatus` in der Fehlerliste mit Lage 200
+vermerkt. Dort steht also, wann jemand am Passwort war.
 
 ### Umschalter: "Bearbeiten AN / AUS"  (NEU)
 In der Admin-Leiste gibt es einen Knopf **"Bearbeiten: AN / AUS"**:

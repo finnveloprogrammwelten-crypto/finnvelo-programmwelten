@@ -10,9 +10,18 @@
 //   POST /api/comments/admin   {password}                  -> prueft Admin-Passwort
 //   POST /api/comments/remove  {id, reason, password}      -> Kommentar als "entfernt" markieren
 //
-// Admin-Passwort = Secret ADMIN_PASSWORD (in Cloudflare setzen, NICHT im Code):
+// Admin-Zugang: Beim ersten Aufruf von /admin wird Passwort + Notfall-PIN
+// selbst vergeben (Weg "einrichten"); sie liegen danach in der Tabelle
+// "zugang". Alternativ kann in Cloudflare ein Secret ADMIN_PASSWORD stehen -
+// dann ist die Ersteinrichtung von vornherein gesperrt:
 //   Dashboard -> Workers & Pages -> Projekt -> Settings -> Variables and Secrets
-//   Secret "ADMIN_PASSWORD" anlegen.
+// Ein selbst gesetztes Passwort hat immer Vorrang vor dem Secret.
+//
+//   POST /api/zugang {aktion:"lage"}                        -> Ja/Nein-Auskunft, ohne Passwort
+//   POST /api/zugang {aktion:"einrichten", neu, pin}        -> nur solange nichts gesetzt ist
+//   POST /api/zugang {password, aktion:"aendern", neu, pin?}
+//   POST /api/zugang {password, aktion:"pin", pin}
+//   POST /api/zugang {aktion:"zuruecksetzen", pin, neu}     -> ohne altes Passwort
 
 import { DurableObject } from "cloudflare:workers";
 
@@ -152,6 +161,18 @@ export class Counter extends DurableObject {
     } catch (_e) { return ""; }
   }
 
+  // Eintrag ins Fehlerbuch mit Lage 200 - kein Fehler, sondern eine Spur.
+  // So steht auf /serverstatus schwarz auf weiss, wann jemand am Zugang war.
+  spurLegen(weg, text) {
+    try {
+      this.sql.exec(
+        "INSERT INTO fehler (zeit, weg, lage, text) VALUES (?, ?, ?, ?)",
+        Date.now(), String(weg).slice(0, 120), 200, String(text).slice(0, 400)
+      );
+      this.sql.exec("DELETE FROM fehler WHERE nr <= (SELECT MAX(nr) - 200 FROM fehler)");
+    } catch (_e) { /* eine fehlende Spur darf nie den Zugang blockieren */ }
+  }
+
   async fetch(request) {
     const url = new URL(request.url);
     const method = request.method;
@@ -221,18 +242,15 @@ export class Counter extends DurableObject {
     }
 
     if (url.pathname === "/api/comments/admin" && method === "POST") {
-      if (!env.ADMIN_PASSWORD) return json({ error: "admin_not_configured" }, 503);
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      const ok = typeof body.password === "string" && body.password.length > 0 && body.password === env.ADMIN_PASSWORD;
-      return json({ ok });
+      return json({ ok: checkAdmin(body, env, this.gesetztesPasswort()) });
     }
 
     if (url.pathname === "/api/comments/remove" && method === "POST") {
-      if (!env.ADMIN_PASSWORD) return json({ error: "admin_not_configured" }, 503);
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (typeof body.password !== "string" || body.password !== env.ADMIN_PASSWORD) {
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) {
         return json({ error: "unauthorized" }, 401);
       }
       const id = clean(body.id, 60);
@@ -381,6 +399,57 @@ export class Counter extends DurableObject {
       try { b = await request.json(); } catch (_e) { b = {}; }
       const gesetzt = this.gesetztesPasswort();
       const aktion = String(b.aktion || "");
+      const hatSecret = !!env.ADMIN_PASSWORD;
+      // Solange weder ein eigenes Passwort noch ein Cloudflare-Secret da ist,
+      // ist die Ersteinrichtung offen - sonst kaeme man nie hinein.
+      const einrichtungOffen = !gesetzt && !hatSecret;
+
+      // Auskunft ueber die Lage - ohne Passwort abrufbar.
+      // Gibt nur Ja/Nein heraus, keine Geheimnisse: die Anmeldeseite muss
+      // wissen, ob sie ein Passwort abfragen oder eines vergeben lassen soll.
+      if (aktion === "lage") {
+        return json({
+          eingerichtet: !!gesetzt || hatSecret,
+          eigenes: !!gesetzt,
+          secret: hatSecret,
+          pinDa: (() => {
+            try {
+              const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
+              return !!(r.length && r[0].pin);
+            } catch (_e) { return false; }
+          })(),
+          einrichtungOffen: einrichtungOffen
+        });
+      }
+
+      // Ersteinrichtung: Passwort UND Notfall-PIN in einem Schritt selbst
+      // vergeben. Geht nur, solange noch nichts eingerichtet ist - danach ist
+      // dieser Weg dauerhaft zu und es gilt "aendern".
+      if (aktion === "einrichten") {
+        if (!einrichtungOffen) {
+          return json({ fehler: "Es ist bereits ein Passwort eingerichtet. " +
+                                "Bitte über \"Passwort ändern\" gehen." }, 409);
+        }
+        const neuesPw = String(b.neu || "");
+        const neuePin = String(b.pin || "").trim();
+        if (neuesPw.length < 8) {
+          return json({ fehler: "Das Passwort muss mindestens acht Zeichen haben." }, 400);
+        }
+        if (neuePin.length < 6) {
+          return json({ fehler: "Die Notfall-PIN muss mindestens sechs Zeichen haben." }, 400);
+        }
+        if (textGleich(neuePin, neuesPw)) {
+          return json({ fehler: "Notfall-PIN und Passwort müssen verschieden sein." }, 400);
+        }
+        this.sql.exec(
+          "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
+          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
+          "pin = excluded.pin, geaendert = excluded.geaendert",
+          neuesPw, neuePin, Date.now()
+        );
+        this.spurLegen("/api/zugang einrichten", "Zugang erstmals eingerichtet");
+        return json({ ok: true, hinweis: "Zugang eingerichtet." });
+      }
 
       // Zuruecksetzen mit der Notfall-PIN - ohne das alte Passwort.
       if (aktion === "zuruecksetzen") {
@@ -399,22 +468,57 @@ export class Counter extends DurableObject {
           "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, geaendert = excluded.geaendert",
           neuesPw, pin, Date.now()
         );
+        this.spurLegen("/api/zugang zuruecksetzen", "Passwort per Notfall-PIN zurückgesetzt");
         return json({ ok: true, hinweis: "Passwort zurückgesetzt." });
       }
 
       // Alles Weitere braucht das gueltige Passwort.
       if (!checkAdmin(b, env, gesetzt)) return json({ error: "unauthorized" }, 401);
 
+      // Nur die Notfall-PIN setzen oder wechseln - Passwort bleibt.
+      if (aktion === "pin") {
+        const neuePin = String(b.pin || "").trim();
+        if (neuePin.length < 6) {
+          return json({ fehler: "Die Notfall-PIN muss mindestens sechs Zeichen haben." }, 400);
+        }
+        if (textGleich(neuePin, String(b.password || ""))) {
+          return json({ fehler: "Notfall-PIN und Passwort müssen verschieden sein." }, 400);
+        }
+        // Es kann sein, dass es noch gar keine Zeile gibt (Anmeldung ueber das
+        // Cloudflare-Secret). Dann das geltende Passwort mit uebernehmen,
+        // damit der Zugang nicht ins Leere laeuft.
+        const bisher = gesetzt || String(b.password || "");
+        this.sql.exec(
+          "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
+          "ON CONFLICT(eins) DO UPDATE SET pin = excluded.pin, geaendert = excluded.geaendert",
+          bisher, neuePin, Date.now()
+        );
+        this.spurLegen("/api/zugang pin", "Notfall-PIN gesetzt");
+        return json({ ok: true, hinweis: "Notfall-PIN gespeichert." });
+      }
+
       if (aktion === "aendern") {
         const neuesPw = String(b.neu || "");
         if (neuesPw.length < 8) {
           return json({ fehler: "Das neue Passwort muss mindestens acht Zeichen haben." }, 400);
         }
-        // Beim ersten Wechsel eine Notfall-PIN wuerfeln und einmal zeigen.
         const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
         let pin = (r.length && r[0].pin) ? r[0].pin : "";
-        let neuePin = "";
-        if (!pin || b.pinNeu) {
+        let neuePin = "";          // nur gefuellt, wenn der Server sie wuerfelt
+        const wunschPin = String(b.pin || "").trim();
+
+        if (wunschPin) {
+          // Selbst gewaehlte PIN hat Vorrang.
+          if (wunschPin.length < 6) {
+            return json({ fehler: "Die Notfall-PIN muss mindestens sechs Zeichen haben." }, 400);
+          }
+          if (textGleich(wunschPin, neuesPw)) {
+            return json({ fehler: "Notfall-PIN und Passwort müssen verschieden sein." }, 400);
+          }
+          pin = wunschPin;
+        } else if (!pin || b.pinNeu) {
+          // Keine PIN gewuenscht und noch keine da: eine wuerfeln und
+          // genau einmal zeigen.
           const ZIFFERN = "0123456789";
           const bytes = new Uint8Array(10); crypto.getRandomValues(bytes);
           neuePin = "";
@@ -428,7 +532,8 @@ export class Counter extends DurableObject {
           "pin = excluded.pin, geaendert = excluded.geaendert",
           neuesPw, pin, Date.now()
         );
-        // Die PIN wird genau einmal herausgegeben - danach nie wieder.
+        this.spurLegen("/api/zugang aendern", "Passwort geändert");
+        // Eine gewuerfelte PIN wird genau einmal herausgegeben - danach nie wieder.
         return json({ ok: true, pin: neuePin || undefined,
                       hinweis: neuePin ? "Notfall-PIN notieren - sie wird nur dieses eine Mal gezeigt." : "" });
       }
@@ -714,11 +819,18 @@ export class Counter extends DurableObject {
     }
 
     // --- Inline-Editor: Login-Pruefung (nur Ja/Nein) ---
+    // Frueher stand hier eine Sperre auf das Cloudflare-Secret. Die hat auch
+    // dann ausgesperrt, wenn laengst ein eigenes Passwort gesetzt war -
+    // und ohne Anmeldung liess sich keines setzen. Jetzt entscheidet allein
+    // checkAdmin; ist gar nichts eingerichtet, sagt die Antwort das.
     if (url.pathname === "/api/admin/login" && method === "POST") {
-      if (!env.ADMIN_PASSWORD) return json({ error: "admin_not_configured" }, 503);
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      return json({ ok: checkAdmin(body, env, this.gesetztesPasswort()) });
+      const gesetzt = this.gesetztesPasswort();
+      if (!gesetzt && !env.ADMIN_PASSWORD) {
+        return json({ ok: false, einrichtungOffen: true });
+      }
+      return json({ ok: checkAdmin(body, env, gesetzt) });
     }
 
     return json({ error: "not_found" }, 404);

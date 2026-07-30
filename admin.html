@@ -17,36 +17,268 @@
       background: var(--blue); color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
     .fv-login button:disabled { opacity: .6; cursor: default; }
     .fv-login .msg { margin-top: 12px; font-size: 14px; min-height: 18px; }
+    /* --- ab hier neu: Ersteinrichtung und Zugangsverwaltung --- */
+    .fv-login input + input { margin-top: 9px; }
+    .fv-login .fv-erklaer { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: var(--muted); }
+    .fv-login .fv-neben { width: auto; margin-top: 10px; padding: 8px 0; background: none; color: var(--muted);
+      font-weight: 400; font-size: 13px; text-decoration: underline; }
+    .fv-login .fv-neben:hover { color: var(--text); }
+    .fv-login .fv-abschnitt { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.12); }
+    .fv-login .fv-abschnitt h2 { font-size: 15px; margin: 0 0 10px; }
+    .fv-login .fv-warn { margin: 0 0 16px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height: 1.6;
+      border-left: 3px solid #f0b429; background: rgba(240,180,41,.10); }
+    .fv-login .fv-pin { margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.6;
+      border-left: 3px solid #f0b429; background: rgba(240,180,41,.10); }
+    .fv-login .fv-pin code { font-size: 17px; font-weight: 800; letter-spacing: .08em; color: #f0b429; }
+    .fv-login .gut { color: #4ad991; }
+    .fv-login .schlecht { color: #e6a4a4; }
   </style>
 </head>
 <body class="legal-body">
   <main class="page">
     <div class="fv-login-wrap">
-      <div class="fv-login">
-        <h1>Anmeldung</h1>
-        <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password" autofocus>
-        <button type="button" id="go">Freischalten</button>
+      <div class="fv-login" id="karte">
+        <h1 id="titel">Anmeldung</h1>
+        <div id="rumpf"></div>
         <p class="msg" id="msg"></p>
       </div>
     </div>
   </main>
   <script>
-    (function () {
-      var pw = document.getElementById('pw'), msg = document.getElementById('msg'), go = document.getElementById('go');
-      function submit() {
-        var p = pw.value || ''; if (!p) return;
-        go.disabled = true; msg.style.color = '#95a6bf'; msg.textContent = 'Prüfe…';
-        fetch('/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password: p }) })
+  (function () {
+    var rumpf = document.getElementById('rumpf');
+    var titel = document.getElementById('titel');
+    var msg   = document.getElementById('msg');
+
+    function melden(text, art) {
+      msg.textContent = text || '';
+      msg.className = 'msg' + (art ? ' ' + art : '');
+    }
+    function feld(id) { var e = document.getElementById(id); return e ? (e.value || '') : ''; }
+    function merken(p) { try { sessionStorage.setItem('fv_admin_pw', p); } catch (e) {} }
+    function sicher(t) {
+      return String(t == null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Ruft /api/zugang auf und liefert { ok, d } zurueck.
+    function zugang(daten) {
+      return fetch('/api/zugang', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(daten)
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; })
+          .then(function (d) { return { ok: r.ok, d: d }; });
+      });
+    }
+
+    /* =================================================================
+     * 1. Ersteinrichtung - nur solange gar kein Passwort existiert
+     * ================================================================= */
+    function zeigeEinrichtung() {
+      titel.textContent = 'Zugang einrichten';
+      rumpf.innerHTML =
+        '<p class="fv-warn"><strong>Es ist noch kein Passwort vergeben.</strong> '
+        + 'Bis das erledigt ist, k&ouml;nnte jeder, der diese Seite kennt, den Zugang '
+        + 'belegen. Bitte jetzt gleich einrichten.</p>'
+        + '<input type="password" id="pw1" placeholder="Passwort (mind. 8 Zeichen)" autocomplete="new-password" autofocus>'
+        + '<input type="password" id="pw2" placeholder="Passwort wiederholen" autocomplete="new-password">'
+        + '<p class="fv-erklaer" style="margin:14px 0 8px">Dazu eine <strong>Notfall-PIN</strong>. '
+        + 'Damit l&auml;sst sich das Passwort zur&uuml;cksetzen, falls du es vergisst. '
+        + 'Sie muss anders lauten als das Passwort und geh&ouml;rt nicht auf denselben Zettel.</p>'
+        + '<input type="password" id="pin1" placeholder="Notfall-PIN (mind. 6 Zeichen)" autocomplete="off">'
+        + '<input type="password" id="pin2" placeholder="Notfall-PIN wiederholen" autocomplete="off">'
+        + '<button type="button" id="los">Zugang einrichten</button>';
+
+      document.getElementById('los').addEventListener('click', function () {
+        var p1 = feld('pw1'), p2 = feld('pw2'), n1 = feld('pin1'), n2 = feld('pin2');
+        if (p1.length < 8) return melden('Das Passwort braucht mindestens acht Zeichen.', 'schlecht');
+        if (p1 !== p2)     return melden('Die beiden Passw\u00f6rter sind verschieden.', 'schlecht');
+        if (n1.length < 6) return melden('Die Notfall-PIN braucht mindestens sechs Zeichen.', 'schlecht');
+        if (n1 !== n2)     return melden('Die beiden PINs sind verschieden.', 'schlecht');
+        if (n1 === p1)     return melden('PIN und Passwort m\u00fcssen verschieden sein.', 'schlecht');
+        var knopf = this;
+        knopf.disabled = true;
+        melden('Wird eingerichtet \u2026');
+        zugang({ aktion: 'einrichten', neu: p1, pin: n1 }).then(function (res) {
+          if (!res.ok) {
+            knopf.disabled = false;
+            return melden(res.d.fehler || 'Einrichten fehlgeschlagen.', 'schlecht');
+          }
+          merken(p1);
+          melden('Zugang eingerichtet. Du bist angemeldet.', 'gut');
+          setTimeout(function () { zeigeVerwaltung(p1, true); }, 600);
+        }).catch(function () {
+          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+        });
+      });
+    }
+
+    /* =================================================================
+     * 2. Anmeldung
+     * ================================================================= */
+    function zeigeAnmeldung() {
+      titel.textContent = 'Anmeldung';
+      rumpf.innerHTML =
+        '<input type="password" id="pw" placeholder="Passwort" autocomplete="current-password" autofocus>'
+        + '<button type="button" id="go">Freischalten</button>'
+        + '<button type="button" class="fv-neben" id="vergessen">Passwort vergessen</button>';
+
+      function anmelden() {
+        var p = feld('pw'); if (!p) return;
+        var go = document.getElementById('go');
+        go.disabled = true; melden('Pr\u00fcfe \u2026');
+        fetch('/api/admin/login', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ password: p })
+        })
           .then(function (r) { return r.ok ? r.json() : null; })
           .then(function (res) {
-            if (res && res.ok) { try { sessionStorage.setItem('fv_admin_pw', p); } catch (e) {} location.href = 'index.html'; }
-            else { go.disabled = false; msg.style.color = '#e6a4a4'; msg.textContent = 'Falsches Passwort.'; }
+            if (res && res.ok) {
+              merken(p);
+              melden('Angemeldet.', 'gut');
+              setTimeout(function () { zeigeVerwaltung(p, false); }, 300);
+            } else {
+              go.disabled = false;
+              melden('Falsches Passwort.', 'schlecht');
+            }
           })
-          .catch(function () { go.disabled = false; msg.style.color = '#e6a4a4'; msg.textContent = 'Verbindungsfehler.'; });
+          .catch(function () { go.disabled = false; melden('Verbindungsfehler.', 'schlecht'); });
       }
-      go.addEventListener('click', submit);
-      pw.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
-    })();
+      document.getElementById('go').addEventListener('click', anmelden);
+      document.getElementById('pw').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') anmelden();
+      });
+      document.getElementById('vergessen').addEventListener('click', zeigeVergessen);
+    }
+
+    /* =================================================================
+     * 3. Passwort vergessen - Zuruecksetzen mit der Notfall-PIN
+     * ================================================================= */
+    function zeigeVergessen() {
+      titel.textContent = 'Passwort zur\u00fccksetzen';
+      rumpf.innerHTML =
+        '<p class="fv-erklaer">Mit der Notfall-PIN l&auml;sst sich ein neues Passwort setzen. '
+        + 'Die PIN selbst bleibt dabei unver&auml;ndert.</p>'
+        + '<input type="password" id="rpin" placeholder="Notfall-PIN" autocomplete="off" autofocus>'
+        + '<input type="password" id="rpw1" placeholder="Neues Passwort (mind. 8 Zeichen)" autocomplete="new-password">'
+        + '<input type="password" id="rpw2" placeholder="Neues Passwort wiederholen" autocomplete="new-password">'
+        + '<button type="button" id="rlos">Passwort zur&uuml;cksetzen</button>'
+        + '<button type="button" class="fv-neben" id="zurueck">Zur&uuml;ck zur Anmeldung</button>';
+
+      document.getElementById('zurueck').addEventListener('click', function () {
+        melden(''); zeigeAnmeldung();
+      });
+      document.getElementById('rlos').addEventListener('click', function () {
+        var pin = feld('rpin'), p1 = feld('rpw1'), p2 = feld('rpw2');
+        if (!pin)          return melden('Bitte die Notfall-PIN eingeben.', 'schlecht');
+        if (p1.length < 8) return melden('Das neue Passwort braucht mindestens acht Zeichen.', 'schlecht');
+        if (p1 !== p2)     return melden('Die beiden Passw\u00f6rter sind verschieden.', 'schlecht');
+        var knopf = this; knopf.disabled = true; melden('Wird zur\u00fcckgesetzt \u2026');
+        zugang({ aktion: 'zuruecksetzen', pin: pin.trim(), neu: p1 }).then(function (res) {
+          if (!res.ok) {
+            knopf.disabled = false;
+            return melden(res.d.fehler || 'Zur\u00fccksetzen fehlgeschlagen.', 'schlecht');
+          }
+          merken(p1);
+          melden('Passwort zur\u00fcckgesetzt. Du bist angemeldet.', 'gut');
+          setTimeout(function () { zeigeVerwaltung(p1, false); }, 600);
+        }).catch(function () {
+          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+        });
+      });
+    }
+
+    /* =================================================================
+     * 4. Zugangsverwaltung - Passwort und PIN aendern, weiter zur Seite
+     * ================================================================= */
+    function zeigeVerwaltung(pw, frisch) {
+      titel.textContent = 'Zugang';
+      rumpf.innerHTML =
+        '<p class="fv-erklaer">Du bist angemeldet.'
+        + (frisch ? '' : ' Hier lassen sich Passwort und Notfall-PIN &auml;ndern.') + '</p>'
+        + '<button type="button" id="weiter">Weiter zur Webseite</button>'
+        + '<button type="button" class="fv-neben" id="status">Serverstatus &ouml;ffnen</button>'
+
+        + '<div class="fv-abschnitt">'
+        + '  <h2>Passwort &auml;ndern</h2>'
+        + '  <input type="password" id="npw1" placeholder="Neues Passwort (mind. 8 Zeichen)" autocomplete="new-password">'
+        + '  <input type="password" id="npw2" placeholder="Neues Passwort wiederholen" autocomplete="new-password">'
+        + '  <button type="button" id="npwlos">Passwort &auml;ndern</button>'
+        + '</div>'
+
+        + '<div class="fv-abschnitt">'
+        + '  <h2>Notfall-PIN &auml;ndern</h2>'
+        + '  <p class="fv-erklaer">Nur n&ouml;tig, wenn du sie wechseln willst. '
+        + '    Muss anders lauten als das Passwort.</p>'
+        + '  <input type="password" id="npin1" placeholder="Neue Notfall-PIN (mind. 6 Zeichen)" autocomplete="off">'
+        + '  <input type="password" id="npin2" placeholder="Neue Notfall-PIN wiederholen" autocomplete="off">'
+        + '  <button type="button" id="npinlos">Notfall-PIN speichern</button>'
+        + '</div>'
+        + '<div id="pinzeigen"></div>';
+
+      document.getElementById('weiter').addEventListener('click', function () {
+        location.href = 'index.html';
+      });
+      document.getElementById('status').addEventListener('click', function () {
+        location.href = '/serverstatus';
+      });
+
+      document.getElementById('npwlos').addEventListener('click', function () {
+        var p1 = feld('npw1'), p2 = feld('npw2');
+        if (p1.length < 8) return melden('Das neue Passwort braucht mindestens acht Zeichen.', 'schlecht');
+        if (p1 !== p2)     return melden('Die beiden Passw\u00f6rter sind verschieden.', 'schlecht');
+        var knopf = this; knopf.disabled = true; melden('Wird ge\u00e4ndert \u2026');
+        zugang({ password: pw, aktion: 'aendern', neu: p1 }).then(function (res) {
+          knopf.disabled = false;
+          if (!res.ok) return melden(res.d.fehler || '\u00c4ndern fehlgeschlagen.', 'schlecht');
+          pw = p1; merken(p1);
+          document.getElementById('npw1').value = '';
+          document.getElementById('npw2').value = '';
+          melden('Passwort ge\u00e4ndert.', 'gut');
+          if (res.d.pin) {
+            document.getElementById('pinzeigen').innerHTML =
+              '<p class="fv-pin"><strong>Notfall-PIN:</strong> <code>' + sicher(res.d.pin) + '</code><br>'
+              + 'Der Server hat sie gew\u00fcrfelt, weil noch keine hinterlegt war. '
+              + 'Jetzt aufschreiben \u2013 sie wird nie wieder angezeigt.</p>';
+          }
+        }).catch(function () {
+          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+        });
+      });
+
+      document.getElementById('npinlos').addEventListener('click', function () {
+        var n1 = feld('npin1'), n2 = feld('npin2');
+        if (n1.length < 6) return melden('Die Notfall-PIN braucht mindestens sechs Zeichen.', 'schlecht');
+        if (n1 !== n2)     return melden('Die beiden PINs sind verschieden.', 'schlecht');
+        if (n1 === pw)     return melden('PIN und Passwort m\u00fcssen verschieden sein.', 'schlecht');
+        var knopf = this; knopf.disabled = true; melden('Wird gespeichert \u2026');
+        zugang({ password: pw, aktion: 'pin', pin: n1 }).then(function (res) {
+          knopf.disabled = false;
+          if (!res.ok) return melden(res.d.fehler || 'Speichern fehlgeschlagen.', 'schlecht');
+          document.getElementById('npin1').value = '';
+          document.getElementById('npin2').value = '';
+          document.getElementById('pinzeigen').innerHTML = '';
+          melden('Notfall-PIN gespeichert.', 'gut');
+        }).catch(function () {
+          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+        });
+      });
+    }
+
+    /* =================================================================
+     * Start: erst fragen, wie die Lage ist
+     * ================================================================= */
+    zugang({ aktion: 'lage' }).then(function (res) {
+      var lage = res.d || {};
+      if (lage.einrichtungOffen) zeigeEinrichtung();
+      else zeigeAnmeldung();
+    }).catch(function () {
+      // Server nicht erreichbar: lieber die Anmeldung zeigen als gar nichts.
+      zeigeAnmeldung();
+      melden('Der Server antwortet gerade nicht.', 'schlecht');
+    });
+  })();
   </script>
 </body>
 </html>
