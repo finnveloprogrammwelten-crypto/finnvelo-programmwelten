@@ -74,8 +74,21 @@ async function sha256hex(str) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-function checkAdmin(body, env) {
-  return !!env.ADMIN_PASSWORD && typeof body.password === "string" && body.password === env.ADMIN_PASSWORD;
+// Vergleich mit fester Laufzeit - verraet nichts ueber Teiltreffer.
+function textGleich(a, b) {
+  const x = String(a == null ? "" : a), y = String(b == null ? "" : b);
+  if (x.length !== y.length) return false;
+  let d = 0;
+  for (let i = 0; i < x.length; i++) d |= x.charCodeAt(i) ^ y.charCodeAt(i);
+  return d === 0;
+}
+
+// Passwort aus den Einstellungen (Cloudflare) ODER ein selbst gesetztes,
+// das in der Datenbank liegt. Das gesetzte hat Vorrang.
+function checkAdmin(body, env, gesetzt) {
+  if (typeof body.password !== "string" || !body.password) return false;
+  if (gesetzt) return textGleich(body.password, gesetzt);
+  return !!env.ADMIN_PASSWORD && textGleich(body.password, env.ADMIN_PASSWORD);
 }
 
 function b64ToBytes(b64) {
@@ -119,12 +132,24 @@ export class Counter extends DurableObject {
       "weg TEXT NOT NULL, lage INTEGER NOT NULL, text TEXT NOT NULL)"
     );
 
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS zugang (eins INTEGER PRIMARY KEY CHECK (eins = 1), " +
+      "passwort TEXT, pin TEXT, geaendert INTEGER)"
+    );
+
     this.recentPosts = new Map();   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
   }
 
   readCount(key) {
     const rows = this.sql.exec("SELECT value FROM counter_values WHERE key = ?", key).toArray();
     return rows.length ? Number(rows[0].value) : 0;
+  }
+
+  gesetztesPasswort() {
+    try {
+      const r = this.sql.exec("SELECT passwort FROM zugang WHERE eins = 1").toArray();
+      return (r.length && r[0].passwort) ? r[0].passwort : "";
+    } catch (_e) { return ""; }
   }
 
   async fetch(request) {
@@ -230,7 +255,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/content" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
       const page = String(body.page || "");
       const block = String(body.block || "");
       const type = String(body.type || "");
@@ -251,7 +276,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/image" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
       const dataUrl = String(body.dataUrl || "");
       const comma = dataUrl.indexOf(",");
       const b64 = (comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl).replace(/\s+/g, "");
@@ -295,6 +320,24 @@ export class Counter extends DurableObject {
         this.sql.exec("DELETE FROM fehler WHERE nr <= (SELECT MAX(nr) - 200 FROM fehler)");
         return json({ ok: true });
       }
+      if (b.aktion === "marke" && /^[A-Za-z0-9]{6,40}$/.test(String(b.marke || ""))) {
+        this.sql.exec(
+          "CREATE TABLE IF NOT EXISTS marken (marke TEXT PRIMARY KEY, code TEXT NOT NULL, erstellt INTEGER)"
+        );
+        this.sql.exec(
+          "INSERT OR REPLACE INTO marken (marke, code, erstellt) VALUES (?, ?, ?)",
+          String(b.marke), String(b.code || ""), Date.now()
+        );
+        return json({ ok: true });
+      }
+      if (b.aktion === "markeSuchen") {
+        try {
+          const r = this.sql.exec(
+            "SELECT code FROM marken WHERE marke = ?", String(b.marke || "")
+          ).toArray();
+          return json({ code: r.length ? r[0].code : "" });
+        } catch (_e) { return json({ code: "" }); }
+      }
       if (b.aktion === "liste") {
         const r = this.sql.exec("SELECT code, angelegt FROM kanalliste ORDER BY angelegt").toArray();
         return json({ kanaele: r });
@@ -306,7 +349,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/aufsicht" && method === "POST") {
       let b = {};
       try { b = await request.json(); } catch (_e) { b = {}; }
-      if (!checkAdmin(b, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
 
       // Jede Abfrage einzeln abgesichert: eine fehlende Tabelle darf die
       // ganze Uebersicht nicht kippen.
@@ -332,11 +375,80 @@ export class Counter extends DurableObject {
       });
     }
 
+    // --- Passwort aendern und Notfall-PIN ------------------------------
+    if (url.pathname === "/api/zugang" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      const gesetzt = this.gesetztesPasswort();
+      const aktion = String(b.aktion || "");
+
+      // Zuruecksetzen mit der Notfall-PIN - ohne das alte Passwort.
+      if (aktion === "zuruecksetzen") {
+        const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
+        const pin = (r.length && r[0].pin) ? r[0].pin : "";
+        if (!pin) return json({ fehler: "Es ist keine Notfall-PIN hinterlegt." }, 400);
+        if (!textGleich(String(b.pin || ""), pin)) {
+          return json({ fehler: "Die Notfall-PIN stimmt nicht." }, 401);
+        }
+        const neuesPw = String(b.neu || "");
+        if (neuesPw.length < 8) {
+          return json({ fehler: "Das neue Passwort muss mindestens acht Zeichen haben." }, 400);
+        }
+        this.sql.exec(
+          "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
+          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, geaendert = excluded.geaendert",
+          neuesPw, pin, Date.now()
+        );
+        return json({ ok: true, hinweis: "Passwort zurückgesetzt." });
+      }
+
+      // Alles Weitere braucht das gueltige Passwort.
+      if (!checkAdmin(b, env, gesetzt)) return json({ error: "unauthorized" }, 401);
+
+      if (aktion === "aendern") {
+        const neuesPw = String(b.neu || "");
+        if (neuesPw.length < 8) {
+          return json({ fehler: "Das neue Passwort muss mindestens acht Zeichen haben." }, 400);
+        }
+        // Beim ersten Wechsel eine Notfall-PIN wuerfeln und einmal zeigen.
+        const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
+        let pin = (r.length && r[0].pin) ? r[0].pin : "";
+        let neuePin = "";
+        if (!pin || b.pinNeu) {
+          const ZIFFERN = "0123456789";
+          const bytes = new Uint8Array(10); crypto.getRandomValues(bytes);
+          neuePin = "";
+          for (let i = 0; i < 10; i++) neuePin += ZIFFERN[bytes[i] % 10];
+          neuePin = neuePin.slice(0, 4) + "-" + neuePin.slice(4, 7) + "-" + neuePin.slice(7);
+          pin = neuePin;
+        }
+        this.sql.exec(
+          "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
+          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
+          "pin = excluded.pin, geaendert = excluded.geaendert",
+          neuesPw, pin, Date.now()
+        );
+        // Die PIN wird genau einmal herausgegeben - danach nie wieder.
+        return json({ ok: true, pin: neuePin || undefined,
+                      hinweis: neuePin ? "Notfall-PIN notieren - sie wird nur dieses eine Mal gezeigt." : "" });
+      }
+
+      if (aktion === "zustand") {
+        const r = this.sql.exec("SELECT passwort, pin, geaendert FROM zugang WHERE eins = 1").toArray();
+        return json({
+          eigenes: !!(r.length && r[0].passwort),
+          pinDa: !!(r.length && r[0].pin),
+          geaendert: (r.length && r[0].geaendert) ? new Date(r[0].geaendert).toISOString() : null
+        });
+      }
+      return json({ error: "bad_request" }, 400);
+    }
+
     // --- Bilder: Uebersicht und Entfernen (nur Admin) ------------------
     if (url.pathname === "/api/bilder" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
 
       if (body.aktion === "entfernen") {
         const id = String(body.id || "");
@@ -377,7 +489,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/export" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
       const rows = this.sql.exec(
         "SELECT page, block, type, value, updated FROM content ORDER BY page, block"
       ).toArray();
@@ -400,7 +512,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/import" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
       const daten = body.daten;
       if (!daten || daten.art !== "finnvelo-sicherung" || !Array.isArray(daten.inhalte)) {
         return json({ error: "keine_sicherung" }, 400);
@@ -462,7 +574,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/programme" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
 
       const rows = this.sql.exec(
         "SELECT value FROM content WHERE page = 'system' AND block = 'p0'"
@@ -577,7 +689,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/app" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env)) return json({ error: "unauthorized" }, 401);
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
       const slug = String(body.slug || "");
       const html = String(body.html == null ? "" : body.html);
       if (!APP_RE.test(slug)) return json({ error: "bad_slug" }, 400);
@@ -606,7 +718,7 @@ export class Counter extends DurableObject {
       if (!env.ADMIN_PASSWORD) return json({ error: "admin_not_configured" }, 503);
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      return json({ ok: checkAdmin(body, env) });
+      return json({ ok: checkAdmin(body, env, this.gesetztesPasswort()) });
     }
 
     return json({ error: "not_found" }, 404);
@@ -1002,9 +1114,43 @@ export default {
       }
 
       /* --- Alle anderen Wege brauchen einen gueltigen Code ----------- */
-      const kanalCode = String(
+      // Bekannte Wege - alles andere ist ein Tippfehler und wird als solcher
+      // gemeldet, nicht als fehlender Kanal. Sonst sucht man an der falschen Stelle.
+      const WEGE = [
+        "salz", "beitreten", "rettung", "passwortNeu", "senden", "holen",
+        "schliessen", "oeffnen", "behalten", "zustand", "draht",
+        "mitglieder", "mitglieder/rolle",
+        "listen", "listen/neu", "listen/freigeben", "listen/sperren",
+        "listen/rechte", "listen/senden", "listen/holen", "listen/loeschen",
+        "einladung", "einladung/neu", "einladung/loeschen", "einladungen"
+      ];
+      if (WEGE.indexOf(weg) === -1) {
+        return json({ fehler: "Diese Auskunft gibt es nicht." }, 404);
+      }
+
+      // Einladungen kommen ohne Kanalcode - die Marke fuehrt zum Kanal.
+      let kanalCode = String(
         (request.method === "POST" && koerper.code) || url.searchParams.get("code") || ""
       ).toUpperCase();
+      const marke = String(
+        (request.method === "POST" && koerper.marke) || url.searchParams.get("marke") || ""
+      );
+      if (!CODE_RE.test(kanalCode) && marke && (weg === "einladung" || weg === "beitreten")) {
+        try {
+          const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+          const r = await g.fetch(new Request("https://zaehler/api/kanalliste", {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ aktion: "markeSuchen", marke: marke })
+          }));
+          if (r.ok) {
+            const d = await r.json();
+            if (d && CODE_RE.test(String(d.code || ""))) kanalCode = String(d.code);
+          }
+        } catch (_e) { /* dann greift die Pruefung unten */ }
+      }
+      if (!CODE_RE.test(kanalCode) && marke) {
+        return json({ fehler: "Diese Einladung gibt es nicht." }, 404);
+      }
       if (!CODE_RE.test(kanalCode)) {
         return json({ fehler: "Diesen Kanal gibt es nicht." }, 404);
       }
@@ -1027,6 +1173,21 @@ export default {
         headers: new Headers(request.headers),
         body: request.method === "POST" ? rumpf : undefined
       }));
+
+      // Frisch gepraegte Marke merken, damit sie ohne Kanalcode auffindbar ist
+      if (weg === "einladung/neu" && antwort.ok) {
+        try {
+          const kopie = antwort.clone();
+          const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+          ctx.waitUntil(kopie.json().then((d) => {
+            if (!d || !d.marke) return;
+            return g.fetch(new Request("https://zaehler/api/kanalliste", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ aktion: "marke", marke: d.marke, code: kanalCode })
+            }));
+          }).catch(() => {}));
+        } catch (_e) {}
+      }
       // Nur Fehlerlagen ins Buch - ohne Inhalte, ohne Code des Kanals
       if (antwort.status >= 400) {
         try {
@@ -1211,16 +1372,21 @@ export default {
       // stammen. Klappt das nicht, wird einfach die Originalseite ausgeliefert.
       const typ = antwort.headers.get("content-type") || "";
       if (antwort.ok && typ.indexOf("text/html") !== -1) {
+        // HTML nie zwischenspeichern - sonst zeigt der Browser tagelang alte Seiten.
+        const frisch = new Headers(antwort.headers);
+        frisch.set("cache-control", "no-cache, must-revalidate");
         const slug = (pfad === "/" ? "start" : pfad.replace(/^\//, "").replace(/\.html$/, ""));
         if (PAGE_RE.test(slug)) {
           const kopf = await seitenKopf(env, slug);
           if (kopf) {
             const html = kopfErsetzen(await antwort.text(), kopf);
-            const kopfzeilen = new Headers(antwort.headers);
-            kopfzeilen.delete("content-length");
-            return new Response(html, { status: antwort.status, headers: kopfzeilen });
+            frisch.delete("content-length");
+            return new Response(html, { status: antwort.status, headers: frisch });
           }
         }
+        const roh = await antwort.text();
+        frisch.delete("content-length");
+        return new Response(roh, { status: antwort.status, headers: frisch });
       }
       return antwort;
     }
@@ -1300,8 +1466,12 @@ export class Kanal extends DurableObject {
       "CREATE TABLE IF NOT EXISTS mitglieder (" +
       "kennung TEXT PRIMARY KEY, nummer INTEGER NOT NULL, " +
       "geraet TEXT NOT NULL DEFAULT '', name TEXT NOT NULL DEFAULT '', " +
-      "rolle TEXT NOT NULL DEFAULT 'schreiben', zuletzt INTEGER NOT NULL)"
+      "rolle TEXT NOT NULL DEFAULT 'schreiben', zuletzt INTEGER NOT NULL, " +
+      "oeffentlich TEXT NOT NULL DEFAULT '')"
     );
+    // Nachtraeglich ergaenzte Spalte - bei alten Kanaelen fehlt sie sonst.
+    try { this.sql.exec("ALTER TABLE mitglieder ADD COLUMN oeffentlich TEXT NOT NULL DEFAULT ''"); }
+    catch (_e) { /* gibt es schon */ }
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS bremse (" +
       "herkunft TEXT PRIMARY KEY, versuche INTEGER DEFAULT 0, bis INTEGER)"
@@ -1325,6 +1495,14 @@ export class Kanal extends DurableObject {
       "CREATE TABLE IF NOT EXISTS freigaben (" +
       "liste TEXT NOT NULL, kennung TEXT NOT NULL, paket TEXT NOT NULL, " +
       "PRIMARY KEY (liste, kennung))"
+    );
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS einladungen (" +
+      "marke TEXT PRIMARY KEY, salz_e TEXT NOT NULL, " +
+      "pruef1 TEXT, pruef2 TEXT, pruef3 TEXT, haupt_pruef TEXT NOT NULL, " +
+      "ablauf INTEGER NOT NULL, einmalig INTEGER NOT NULL DEFAULT 1, " +
+      "benutzt INTEGER NOT NULL DEFAULT 0, versuche INTEGER DEFAULT 0, " +
+      "bremse_bis INTEGER, erstellt INTEGER NOT NULL)"
     );
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS takt (" +
@@ -1608,6 +1786,30 @@ export class Kanal extends DurableObject {
       return jsonAntwort({ salzR: k.salz_r, paketR: k.paket_r });
     }
 
+    /* --- Salzauskunft: ohne Nachweis, dafuer streng begrenzt ---------
+       Ein Salz ist kein Geheimnis - ohne Passwort ist es wertlos. Ohne
+       diese Auskunft koennte niemand einem Kanal beitreten: Der Pruefwert
+       entsteht erst aus Passwort UND Salz. */
+    if (teil === "salz" && method === "GET") {
+      const jetzt = Date.now();
+      const r = this.sql.exec("SELECT versuche, bis FROM bremse WHERE herkunft = 'salz'").toArray();
+      const offen = (r.length && r[0].bis && r[0].bis > jetzt) ? r[0].versuche : 0;
+      if (offen >= 10) {
+        return jsonAntwort({
+          fehler: "Zu viele Anfragen zu diesem Kanal. Bitte in einer Stunde erneut versuchen.",
+          wartenBis: new Date(jetzt + 60 * 60 * 1000).toISOString()
+        }, 429);
+      }
+      this.sql.exec(
+        "INSERT INTO bremse (herkunft, versuche, bis) VALUES ('salz', ?, ?) " +
+        "ON CONFLICT(herkunft) DO UPDATE SET versuche = excluded.versuche, bis = excluded.bis",
+        offen + 1, jetzt + 60 * 60 * 1000
+      );
+      if (!k.offen) return jsonAntwort({ fehler: "Der Kanal nimmt niemanden mehr auf." }, 403);
+      // Nur diese drei Felder - niemals paketP, salzR, paketR oder Kennungen.
+      return jsonAntwort({ name: k.name, salzP: k.salz_p, offen: true });
+    }
+
     /* --- Passwort neu setzen ---------------------------------------- */
     if (teil === "passwortNeu" && method === "POST") {
       const sperre = this.gesperrt(herkunft);
@@ -1628,6 +1830,80 @@ export class Kanal extends DurableObject {
       return jsonAntwort({ ok: true });
     }
 
+    /* --- Einladung ansehen: ohne jeden Nachweis, aber ohne Kanalcode -- */
+    if (teil === "einladung" && method === "GET") {
+      const marke = feld("marke", 40);
+      const e = this.sql.exec("SELECT * FROM einladungen WHERE marke = ?", marke).toArray()[0];
+      if (!e) return jsonAntwort({ fehler: "Diese Einladung gibt es nicht." }, 404);
+      if (e.ablauf < Date.now() || (e.einmalig && e.benutzt)) {
+        return jsonAntwort({ fehler: "Diese Einladung ist abgelaufen." }, 410);
+      }
+      // Der Kanalcode wird bewusst NICHT herausgegeben.
+      return jsonAntwort({
+        name: k.name, salzE: e.salz_e,
+        brauchtPasswort: !!(e.pruef1 || e.pruef2 || e.pruef3),
+        offen: !!k.offen
+      });
+    }
+
+    /* --- Beitreten mit Einladung: statt Code und Kanalpasswort -------- */
+    if (teil === "beitreten" && method === "POST" && daten.marke) {
+      const marke = String(daten.marke).slice(0, 40);
+      const e = this.sql.exec("SELECT * FROM einladungen WHERE marke = ?", marke).toArray()[0];
+      if (!e) return jsonAntwort({ fehler: "Diese Einladung gibt es nicht." }, 404);
+      const jetzt = Date.now();
+      if (e.ablauf < jetzt || (e.einmalig && e.benutzt)) {
+        return jsonAntwort({ fehler: "Diese Einladung ist abgelaufen." }, 410);
+      }
+      if (e.bremse_bis && e.bremse_bis > jetzt && e.versuche >= 10) {
+        return jsonAntwort({
+          fehler: "Zu viele Versuche mit dieser Einladung. Bitte in einer Stunde erneut versuchen.",
+          wartenBis: new Date(e.bremse_bis).toISOString()
+        }, 429);
+      }
+      const nachweis = String(daten.pruefE || "");
+      const brauchtPasswort = !!(e.pruef1 || e.pruef2 || e.pruef3);
+      let passt = !brauchtPasswort;
+      // Gegen die bis zu drei Passwoerter und den Hauptschluessel pruefen
+      for (const p of [e.pruef1, e.pruef2, e.pruef3, e.haupt_pruef]) {
+        if (p && gleich(nachweis, p)) { passt = true; break; }
+      }
+      if (!passt) {
+        const neu = (e.versuche || 0) + 1;
+        this.sql.exec("UPDATE einladungen SET versuche = ?, bremse_bis = ? WHERE marke = ?",
+                      neu, jetzt + 60 * 60 * 1000, marke);
+        return jsonAntwort({ fehler: "Passwort stimmt nicht." }, 401);
+      }
+      if (!k.offen) return jsonAntwort({ fehler: "Der Kanal nimmt niemanden mehr auf." }, 403);
+
+      const geraet = String(daten.geraet || "").trim().slice(0, 60) || "Gerät";
+      let kennung = String(daten.kennung || "").slice(0, 200);
+      let m = kennung ? this.mitglied(kennung) : null;
+      if (!m) {
+        kennung = zufall(32);
+        const nummer = k.naechste_nummer || 1;
+        const erster = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n === 0;
+        this.sql.exec(
+          "INSERT INTO mitglieder (kennung, nummer, geraet, name, rolle, zuletzt, oeffentlich) " +
+          "VALUES (?, ?, ?, ?, ?, ?, ?)",
+          kennung, nummer, geraet, geraet, erster ? "ersteller" : "schreiben", jetzt,
+          String(daten.oeffentlich || "").slice(0, 4096)
+        );
+        this.sql.exec("UPDATE kanal SET naechste_nummer = ? WHERE eins = 1", nummer + 1);
+        if (erster) this.sql.exec("UPDATE kanal SET gruender = ? WHERE eins = 1", kennung);
+        m = this.mitglied(kennung);
+      }
+      if (e.einmalig) this.sql.exec("UPDATE einladungen SET benutzt = 1 WHERE marke = ?", marke);
+      this.sql.exec("UPDATE einladungen SET versuche = 0, bremse_bis = NULL WHERE marke = ?", marke);
+      this.zugriffMerken();
+      const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
+      // Kein paketP - den Schluessel hat der Eingeladene aus dem Fragment des Links.
+      return jsonAntwort({
+        code: k.code, name: k.name, kennung: kennung,
+        nummer: m.nummer, rolle: m.rolle, mitglieder: anzahl
+      });
+    }
+
     /* --- Ab hier ist der Pruefwert noetig ---------------------------- */
     const sperre = this.gesperrt(herkunft);
     if (sperre) return jsonAntwort({ fehler: "Zu viele Fehlversuche. Bitte zehn Minuten warten.", wartenBis: sperre }, 429);
@@ -1637,6 +1913,64 @@ export class Kanal extends DurableObject {
 
     const warnung = this.warnungBlock(k);
     this.zugriffMerken();
+
+    /* --- Einladung praegen: nur wer den Kanal kennt ------------------- */
+    if (teil === "einladung/neu" && method === "POST") {
+      // Abgelaufene beim Vorbeikommen wegraeumen - kein eigener Lauf noetig.
+      this.sql.exec("DELETE FROM einladungen WHERE ablauf < ?", Date.now());
+      const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM einladungen").toArray()[0].n;
+      if (anzahl >= 50) {
+        return jsonAntwort({ fehler: "Es sind schon sehr viele Einladungen offen." }, 429);
+      }
+      const pruefE = Array.isArray(daten.pruefE) ? daten.pruefE.slice(0, 3) : [];
+      const salzE = String(daten.salzE || "");
+      if (!salzE) return jsonAntwort({ fehler: "Es fehlt das Salz für die Einladung." }, 400);
+      let minuten = Number(daten.gueltigMinuten);
+      if (!Number.isFinite(minuten) || minuten <= 0) minuten = 60;
+      if (minuten > 10080) minuten = 10080;               // hoechstens sieben Tage
+      const marke = zufall(18).replace(/[^A-Za-z0-9]/g, "").slice(0, 22);
+      // Hauptschluessel: der Server wuerfelt ihn und zeigt ihn genau einmal.
+      const hauptWort = zufall(12).replace(/[^A-Za-z0-9]/g, "").slice(0, 14);
+      const hauptPruef = String(daten.hauptPruef || hauptWort);
+      const ablauf = Date.now() + minuten * 60000;
+      this.sql.exec(
+        "INSERT INTO einladungen (marke, salz_e, pruef1, pruef2, pruef3, haupt_pruef, " +
+        "ablauf, einmalig, benutzt, versuche, bremse_bis, erstellt) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, 0, NULL, ?)",
+        marke, salzE,
+        pruefE[0] ? String(pruefE[0]) : null,
+        pruefE[1] ? String(pruefE[1]) : null,
+        pruefE[2] ? String(pruefE[2]) : null,
+        hauptPruef, ablauf, daten.einmalig === false ? 0 : 1, Date.now()
+      );
+      return jsonAntwort({
+        marke: marke, hauptPruef: hauptPruef, hauptWort: hauptWort,
+        ablauf: new Date(ablauf).toISOString()
+      });
+    }
+
+    /* --- Einladungen auflisten und loeschen --------------------------- */
+    if (teil === "einladungen" && method === "GET") {
+      // Mitglied hier selbst nachschlagen - die gemeinsame Pruefung kommt erst weiter unten.
+      if (!this.mitglied(feld("kennung", 200))) {
+        return jsonAntwort({ fehler: "Dieses Gerät gehört nicht zum Kanal." }, 403);
+      }
+      const alle = this.sql.exec(
+        "SELECT marke, ablauf, einmalig, benutzt, pruef1, pruef2, pruef3 FROM einladungen ORDER BY erstellt DESC"
+      ).toArray();
+      return jsonAntwort({ einladungen: alle.map((e) => ({
+        marke: e.marke, ablauf: new Date(e.ablauf).toISOString(),
+        einmalig: !!e.einmalig, benutzt: !!e.benutzt,
+        anzahlPasswoerter: [e.pruef1, e.pruef2, e.pruef3].filter(Boolean).length
+      })) });
+    }
+    if (teil === "einladung/loeschen" && method === "POST") {
+      if (!this.mitglied(feld("kennung", 200))) {
+        return jsonAntwort({ fehler: "Dieses Gerät gehört nicht zum Kanal." }, 403);
+      }
+      this.sql.exec("DELETE FROM einladungen WHERE marke = ?", String(daten.marke || ""));
+      return jsonAntwort({ ok: true });
+    }
 
     /* --- Beitreten --------------------------------------------------- */
     if (teil === "beitreten" && method === "POST") {
@@ -1651,8 +1985,10 @@ export class Kanal extends DurableObject {
         const nummer = k.naechste_nummer || 1;
         const erster = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n === 0;
         this.sql.exec(
-          "INSERT INTO mitglieder (kennung, nummer, geraet, name, rolle, zuletzt) VALUES (?, ?, ?, ?, ?, ?)",
-          kennung, nummer, geraet, geraet, erster ? "ersteller" : "schreiben", Date.now()
+          "INSERT INTO mitglieder (kennung, nummer, geraet, name, rolle, zuletzt, oeffentlich) " +
+          "VALUES (?, ?, ?, ?, ?, ?, ?)",
+          kennung, nummer, geraet, geraet, erster ? "ersteller" : "schreiben", Date.now(),
+          String(daten.oeffentlich || "").slice(0, 4096)
         );
         this.sql.exec("UPDATE kanal SET naechste_nummer = ? WHERE eins = 1", nummer + 1);
         if (erster) {
@@ -1663,6 +1999,13 @@ export class Kanal extends DurableObject {
       } else {
         this.sql.exec("UPDATE mitglieder SET geraet = ?, zuletzt = ? WHERE kennung = ?",
                       geraet, Date.now(), kennung);
+        // Neuer oeffentlicher Schluessel ueberschreibt den alten. Bestehende
+        // Freigaben werden dadurch fuer dieses Geraet unlesbar - der Ersteller
+        // muss dann neu freigeben.
+        if (daten.oeffentlich) {
+          this.sql.exec("UPDATE mitglieder SET oeffentlich = ? WHERE kennung = ?",
+                        String(daten.oeffentlich).slice(0, 4096), kennung);
+        }
       }
       const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
       return jsonAntwort({
@@ -1729,10 +2072,11 @@ export class Kanal extends DurableObject {
     if (teil === "mitglieder" && method === "GET") {
       // Nie die Kennung herausgeben - nur Nummer, Anzeigename und Rolle.
       const alle = this.sql.exec(
-        "SELECT nummer, name, rolle FROM mitglieder ORDER BY nummer"
+        "SELECT nummer, name, rolle, oeffentlich FROM mitglieder ORDER BY nummer"
       ).toArray();
       return jsonAntwort({ mitglieder: alle.map((m) => ({
-        nummer: m.nummer, name: m.name, rolle: m.rolle
+        nummer: m.nummer, name: m.name, rolle: m.rolle,
+        oeffentlich: m.oeffentlich || ""
       })) });
     }
 
@@ -1789,6 +2133,11 @@ export class Kanal extends DurableObject {
         }
         if (["alle", "berechtigte", "berechtigte_oder_passwort", "passwort"].indexOf(zugang) === -1) {
           return jsonAntwort({ fehler: "Unbekannte Einstellung für den Zugang." }, 400);
+        }
+        // Name mitaendern, falls dabei - er ist verschluesselt, der Server prueft ihn nicht.
+        if (typeof daten.name === "string" && daten.name !== "") {
+          this.sql.exec("UPDATE listen SET name = ? WHERE liste = ?",
+                        String(daten.name).slice(0, 2048), liste);
         }
         this.sql.exec(
           "UPDATE listen SET sicht = ?, zugang = ?, salz_l = ?, paket_l = ?, pruef_l = ?, offen = ? WHERE liste = ?",
@@ -1850,6 +2199,22 @@ export class Kanal extends DurableObject {
       return jsonAntwort({ listen: raus });
     }
 
+    /* --- Liste loeschen: nur ihr Ersteller ---------------------------- */
+    if (teil === "listen/loeschen" && method === "POST") {
+      const liste = feld("liste", 120);
+      if (liste === "alle") {
+        return jsonAntwort({ fehler: "Die Sammelansicht lässt sich nicht löschen." }, 400);
+      }
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      if (!gleich(l.ersteller, kennung)) {
+        return jsonAntwort({ fehler: "Das darf nur, wer die Liste angelegt hat." }, 403);
+      }
+      this.sql.exec("DELETE FROM freigaben WHERE liste = ?", liste);
+      this.sql.exec("DELETE FROM listen WHERE liste = ?", liste);
+      return jsonAntwort({ ok: true });
+    }
+
     /* --- Listendaten senden ------------------------------------------ */
     if (teil === "listen/senden" && method === "POST") {
       if (ich.rolle === "ansehen") {
@@ -1892,7 +2257,7 @@ export class Kanal extends DurableObject {
       return jsonAntwort({ stand: l.stand, daten: l.daten || "" });
     }
 
-    return jsonAntwort({ fehler: "Unbekannter Weg." }, 404);
+    return jsonAntwort({ fehler: "Diese Auskunft gibt es nicht." }, 404);
   }
 
   /* ---------- Leitung annehmen --------------------------------------- */

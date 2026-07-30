@@ -19,39 +19,45 @@
       width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--line);
       background:rgba(0,0,0,.34); color:var(--text); font:400 15px/1.3 inherit;
     }
-    .kachelreihe { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin:22px 0 30px; }
-    .kachel { padding:16px 18px; border-radius:14px; background:rgba(0,0,0,.3); border:1px solid var(--line); }
-    .kachel__wert { font:800 clamp(24px,2.4vw,30px)/1.1 inherit; color:#eaf1ff; }
-    .kachel__name { margin-top:6px; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
-    .kachel__zusatz { margin-top:4px; font-size:12px; color:var(--muted); opacity:.8; }
-    .kachel--warn { border-color:rgba(240,180,41,.6); }
-    .kachel--warn .kachel__wert { color:#f0b429; }
-    .kachel--gut { border-color:rgba(74,217,145,.5); }
-    .kachel--gut .kachel__wert { color:#4ad991; }
-    h2.abschnitt { margin:30px 0 12px; font-size:18px; color:var(--blue-light); }
-    table.status { width:100%; border-collapse:collapse; font-size:13.5px; }
-    table.status th, table.status td { padding:9px 10px; text-align:left; border-bottom:1px solid var(--line); }
-    table.status th { font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:800; }
-    table.status td.zahl { text-align:right; font-variant-numeric:tabular-nums; }
-    .leer { color:var(--muted); font-size:14px; }
-    .lage { display:inline-block; min-width:38px; padding:2px 7px; border-radius:6px; font-weight:800; font-size:12px; text-align:center; }
-    .lage--4 { background:rgba(240,180,41,.16); color:#f0b429; }
-    .lage--5 { background:rgba(200,60,80,.18); color:#ff8095; }
-    .balken { height:7px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; margin-top:8px; }
-    .balken i { display:block; height:100%; background:#4ad991; }
-    .balken i.voll { background:#f0b429; }
+    .fvs-reihe { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin:22px 0 30px; }
+    .fvs-kachel { padding:16px 18px; border-radius:14px; background:rgba(0,0,0,.3); border:1px solid var(--line); }
+    .fvs-kachel__wert { font:800 clamp(24px,2.4vw,30px)/1.1 inherit; color:#eaf1ff; }
+    .fvs-kachel__name { margin-top:6px; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+    .fvs-kachel__zusatz { margin-top:4px; font-size:12px; color:var(--muted); opacity:.8; }
+    .fvs-kachel--warn { border-color:rgba(240,180,41,.6); }
+    .fvs-kachel--warn .fvs-kachel__wert { color:#f0b429; }
+    .fvs-kachel--gut { border-color:rgba(74,217,145,.5); }
+    .fvs-kachel--gut .fvs-kachel__wert { color:#4ad991; }
+    h2.fvs-abschnitt { margin:30px 0 12px; font-size:18px; color:var(--blue-light); }
+    table.fvs-tabelle { width:100%; border-collapse:collapse; font-size:13.5px; }
+    table.fvs-tabelle th, table.fvs-tabelle td { padding:9px 10px; text-align:left; border-bottom:1px solid var(--line); }
+    table.fvs-tabelle th { font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+    table.fvs-tabelle td.zahl { text-align:right; font-variant-numeric:tabular-nums; }
+    .fvs-leer { color:var(--muted); font-size:14px; }
+    .fvs-lage { display:inline-block; min-width:38px; padding:2px 7px; border-radius:6px; font-weight:800; font-size:12px; text-align:center; }
+    .fvs-lage--4 { background:rgba(240,180,41,.16); color:#f0b429; }
+    .fvs-lage--5 { background:rgba(200,60,80,.18); color:#ff8095; }
+    .fvs-balken { height:7px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; margin-top:8px; }
+    .fvs-balken i { display:block; height:100%; background:#4ad991; }
+    .fvs-balken i.voll { background:#f0b429; }
     .status-knopf {
       background:var(--blue); color:#fff; border:0; border-radius:9px;
       padding:10px 20px; font:700 14px/1.2 inherit; cursor:pointer;
     }
     .status-knopf:hover { background:#4a90ff; }
-    .melde { margin-left:12px; font-size:13px; font-weight:700; }
-    .melde.schlecht { color:var(--red); }
+    .fvs-melde { margin-left:12px; font-size:13px; font-weight:700; }
+    .fvs-melde.schlecht { color:var(--red); }
+    .fvs-zugang { max-width:460px; margin-top:14px; }
+    .fvs-zugang input { width:100%; margin-bottom:10px; padding:11px 13px; border-radius:10px;
+      border:1px solid var(--line); background:rgba(0,0,0,.34); color:var(--text); font:400 15px/1.3 inherit; }
+    .fvs-pin { margin-top:14px; padding:14px 16px; border-radius:10px;
+      border-left:3px solid #f0b429; background:rgba(240,180,41,.10); font-size:14px; line-height:1.6; }
+    .fvs-pin code { font-size:17px; font-weight:800; letter-spacing:.08em; color:#f0b429; }
     @media (max-width:700px){
       .status-seite{ padding-left:14px; padding-right:14px; }
       /* Breite Tabellen lassen sich seitlich schieben, statt ueber den Rand zu laufen */
-      table.status{ display:block; overflow-x:auto; white-space:nowrap; font-size:12.5px; }
-      table.status td .balken{ min-width:60px; }
+      table.fvs-tabelle{ display:block; overflow-x:auto; white-space:nowrap; font-size:12.5px; }
+      table.fvs-tabelle td .fvs-balken{ min-width:60px; }
     }
   </style>
 </head>
@@ -83,7 +89,7 @@
       <h1>Serverstatus</h1>
       <span class="status-zeit" id="zeit"></span>
     </div>
-    <p class="leer">Kennzahlen zu Auslastung und Fehlern. <strong>Es werden keine Inhalte angezeigt</strong> &ndash;
+    <p class="fvs-leer">Kennzahlen zu Auslastung und Fehlern. <strong>Es werden keine Inhalte angezeigt</strong> &ndash;
       weder Aufgaben noch Nachrichten: Die liegen verschl&uuml;sselt auf dem Server und lassen sich gar nicht &ouml;ffnen.</p>
 
     <div class="status-anmeldung" id="anmeldung">
@@ -91,7 +97,9 @@
       <input type="password" id="pw" autocomplete="current-password" placeholder="Passwort">
       <p style="margin-top:12px">
         <button type="button" class="status-knopf" id="rein">Anzeigen</button>
-        <span class="melde" id="melde"></span>
+        <button type="button" class="status-knopf" id="vergessen"
+          style="margin-left:10px;background:none;border:1px solid var(--line);color:var(--soft)">Passwort vergessen</button>
+        <span class="fvs-melde" id="melde"></span>
       </p>
     </div>
 
@@ -125,10 +133,10 @@
     }
 
     function kachel(wert, name, zusatz, art) {
-      return '<div class="kachel' + (art ? ' kachel--' + art : '') + '">'
-        + '<div class="kachel__wert">' + sicher(wert) + '</div>'
-        + '<div class="kachel__name">' + sicher(name) + '</div>'
-        + (zusatz ? '<div class="kachel__zusatz">' + sicher(zusatz) + '</div>' : '')
+      return '<div class="kachel' + (art ? ' fvs-kachel--' + art : '') + '">'
+        + '<div class="fvs-kachel__wert">' + sicher(wert) + '</div>'
+        + '<div class="fvs-kachel__name">' + sicher(name) + '</div>'
+        + (zusatz ? '<div class="fvs-kachel__zusatz">' + sicher(zusatz) + '</div>' : '')
         + '</div>';
     }
 
@@ -147,10 +155,10 @@
       });
 
       var fehler = d.fehler || [];
-      var schwer = fehler.filter(function (f) { return f.lage >= 500; }).length;
+      var schwer = fehler.filter(function (f) { return f.fvs-lage >= 500; }).length;
       var gesamtBytes = (d.inhalteBytes || 0) + (d.bilderBytes || 0) + kanalBytes;
 
-      var html = '<div class="kachelreihe">'
+      var html = '<div class="fvs-reihe">'
         + kachel(kanaele.length, 'Kanäle', gewarnt ? (gewarnt + ' mit Löschwarnung') : 'alle aktiv', gewarnt ? 'warn' : '')
         + kachel(leitungen, 'offene Chatleitungen', 'gerade verbunden', leitungen ? 'gut' : '')
         + kachel(mitglieder, 'Geräte in Kanälen', '')
@@ -160,7 +168,7 @@
         + '</div>';
 
       // --- Webseite ---
-      html += '<h2 class="abschnitt">Webseite</h2><table class="status"><tbody>'
+      html += '<h2 class="fvs-abschnitt">Webseite</h2><table class="fvs-tabelle"><tbody>'
         + '<tr><th>Eingetragene Inhalte</th><td class="zahl">' + (d.inhalte || 0) + '</td><td class="zahl">' + kb(d.inhalteBytes) + '</td></tr>'
         + '<tr><th>Hochgeladene Bilder</th><td class="zahl">' + (d.bilder || 0) + '</td><td class="zahl">' + kb(d.bilderBytes) + '</td></tr>'
         + '<tr><th>Kommentare</th><td class="zahl">' + (d.kommentare || 0) + '</td><td></td></tr>'
@@ -168,7 +176,7 @@
 
       // --- Zähler ---
       if ((d.zaehler || []).length) {
-        html += '<h2 class="abschnitt">Zähler</h2><table class="status"><thead><tr><th>Zähler</th><th style="text-align:right">Stand</th></tr></thead><tbody>';
+        html += '<h2 class="fvs-abschnitt">Zähler</h2><table class="fvs-tabelle"><thead><tr><th>Zähler</th><th style="text-align:right">Stand</th></tr></thead><tbody>';
         d.zaehler.forEach(function (z) {
           html += '<tr><td>' + sicher(z.key) + '</td><td class="zahl">' + (z.value || 0) + '</td></tr>';
         });
@@ -176,11 +184,11 @@
       }
 
       // --- Kanäle ---
-      html += '<h2 class="abschnitt">Kanäle</h2>';
+      html += '<h2 class="fvs-abschnitt">Kanäle</h2>';
       if (!kanaele.length) {
-        html += '<p class="leer">Noch keine Kanäle angelegt.</p>';
+        html += '<p class="fvs-leer">Noch keine Kanäle angelegt.</p>';
       } else {
-        html += '<table class="status"><thead><tr><th>Code</th><th>Zustand</th>'
+        html += '<table class="fvs-tabelle"><thead><tr><th>Code</th><th>Zustand</th>'
           + '<th style="text-align:right">Geräte</th><th style="text-align:right">Leitungen</th>'
           + '<th style="text-align:right">Listen</th><th style="text-align:right">Nachrichten</th>'
           + '<th style="text-align:right">Belegt</th><th>Letzter Zugriff</th></tr></thead><tbody>';
@@ -188,36 +196,48 @@
           var anteil = Math.min(100, Math.round((k.bytes || 0) / (2 * 1024 * 1024) * 100));
           html += '<tr>'
             + '<td><code>' + sicher(k.code) + '</code></td>'
-            + '<td>' + (k.warnung ? '<span class="lage lage--4">Löschwarnung</span>'
+            + '<td>' + (k.warnung ? '<span class="fvs-lage lage--4">Löschwarnung</span>'
                                   : (k.offen ? 'offen' : 'geschlossen')) + '</td>'
             + '<td class="zahl">' + (k.mitglieder || 0) + '</td>'
             + '<td class="zahl">' + (k.leitungen || 0) + '</td>'
             + '<td class="zahl">' + (k.listen || 0) + '</td>'
             + '<td class="zahl">' + (k.nachrichten || 0) + '</td>'
             + '<td class="zahl">' + kb(k.bytes)
-            + '<div class="balken"><i class="' + (anteil > 80 ? 'voll' : '') + '" style="width:' + anteil + '%"></i></div></td>'
-            + '<td>' + datum(k.letzterZugriff) + '<br><span class="kachel__zusatz">vor ' + tageHer(k.letzterZugriff) + ' Tagen</span></td>'
+            + '<div class="fvs-balken"><i class="' + (anteil > 80 ? 'voll' : '') + '" style="width:' + anteil + '%"></i></div></td>'
+            + '<td>' + datum(k.letzterZugriff) + '<br><span class="fvs-kachel__zusatz">vor ' + tageHer(k.letzterZugriff) + ' Tagen</span></td>'
             + '</tr>';
         });
         html += '</tbody></table>';
       }
 
       // --- Fehler ---
-      html += '<h2 class="abschnitt">Letzte Fehlermeldungen</h2>';
+      html += '<h2 class="fvs-abschnitt">Letzte Fehlermeldungen</h2>';
       if (!fehler.length) {
-        html += '<p class="leer">Keine Fehler aufgezeichnet. Das ist der Normalzustand.</p>';
+        html += '<p class="fvs-leer">Keine Fehler aufgezeichnet. Das ist der Normalzustand.</p>';
       } else {
-        html += '<table class="status"><thead><tr><th>Zeit</th><th>Lage</th><th>Weg</th><th>Meldung</th></tr></thead><tbody>';
+        html += '<table class="fvs-tabelle"><thead><tr><th>Zeit</th><th>Lage</th><th>Weg</th><th>Meldung</th></tr></thead><tbody>';
         fehler.forEach(function (f) {
           html += '<tr><td>' + datum(f.zeit) + '</td>'
-            + '<td><span class="lage lage--' + (f.lage >= 500 ? '5' : '4') + '">' + f.lage + '</span></td>'
+            + '<td><span class="fvs-lage lage--' + (f.fvs-lage >= 500 ? '5' : '4') + '">' + f.fvs-lage + '</span></td>'
             + '<td><code>' + sicher(f.weg) + '</code></td>'
             + '<td>' + sicher(f.text) + '</td></tr>';
         });
         html += '</tbody></table>';
-        html += '<p class="leer" style="margin-top:10px">Lagen ab 400 sind meist harmlos: falsches Passwort, '
+        html += '<p class="fvs-leer" style="margin-top:10px">Lagen ab 400 sind meist harmlos: falsches Passwort, '
           + 'unbekannter Kanal, zu viele Anfragen. Erst Lagen ab 500 deuten auf ein Problem des Servers hin.</p>';
       }
+
+      html += '<h2 class="fvs-abschnitt">Zugang</h2>'
+        + '<div class="fvs-zugang">'
+        + '  <p class="fvs-leer">Passwort für Admin-Modus und diese Seite ändern. '
+        + '    Beim ersten Wechsel bekommst du eine <strong>Notfall-PIN</strong> – damit lässt sich '
+        + '    das Passwort zurücksetzen, falls du es vergisst. Sie wird nur ein einziges Mal gezeigt.</p>'
+        + '  <input type="password" id="pwNeu" placeholder="Neues Passwort (mind. 8 Zeichen)">'
+        + '  <input type="password" id="pwNeu2" placeholder="Neues Passwort wiederholen">'
+        + '  <p><button type="button" class="status-knopf" id="pwSpeichern">Passwort ändern</button>'
+        + '  <span class="fvs-melde" id="pwMelde"></span></p>'
+        + '  <div id="pinZeigen"></div>'
+        + '</div>';
 
       html += '<p style="margin-top:26px">'
         + '<button type="button" class="status-knopf" id="neuladen">Neu abrufen</button>'
@@ -229,6 +249,31 @@
       document.getElementById('anmeldung').hidden = true;
       var nl = document.getElementById('neuladen');
       if (nl) nl.addEventListener('click', abrufen);
+      var pwsp = document.getElementById('pwSpeichern');
+      if (pwsp) pwsp.addEventListener('click', function () {
+        var m = document.getElementById('pwMelde');
+        var a = document.getElementById('pwNeu').value || '';
+        var bb = document.getElementById('pwNeu2').value || '';
+        if (a.length < 8) { m.textContent = '\u2717 Mindestens acht Zeichen.'; m.className = 'fvs-melde schlecht'; return; }
+        if (a !== bb) { m.textContent = '\u2717 Die beiden Eingaben sind verschieden.'; m.className = 'fvs-melde schlecht'; return; }
+        fetch('/api/zugang', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ password: pw, aktion: 'aendern', neu: a }) })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            if (!res.ok) { m.textContent = '\u2717 ' + (res.d.fehler || 'Ändern fehlgeschlagen.'); m.className = 'fvs-melde schlecht'; return; }
+            pw = a;
+            try { sessionStorage.setItem('fv_admin_pw', a); } catch (e) {}
+            m.textContent = '\u2713 Passwort geändert.'; m.className = 'fvs-melde gut';
+            document.getElementById('pwNeu').value = '';
+            document.getElementById('pwNeu2').value = '';
+            if (res.d.pin) {
+              document.getElementById('pinZeigen').innerHTML =
+                '<p class="fvs-pin"><strong>Notfall-PIN:</strong> <code>' + sicher(res.d.pin) + '</code><br>'
+                + 'Jetzt aufschreiben \u2013 sie wird nie wieder angezeigt.</p>';
+            }
+          }).catch(function () { m.textContent = '\u2717 Ändern fehlgeschlagen.'; m.className = 'fvs-melde schlecht'; });
+      });
+
       var sp = document.getElementById('sperren');
       if (sp) sp.addEventListener('click', function () {
         pw = '';
@@ -238,8 +283,8 @@
     }
 
     function abrufen() {
-      var melde = document.getElementById('melde');
-      if (melde) { melde.textContent = 'Wird abgerufen …'; melde.className = 'melde'; }
+      var melde = document.getElementById('fvs-melde');
+      if (melde) { melde.textContent = 'Wird abgerufen …'; melde.className = 'fvs-melde'; }
       fetch('/api/serverstatus', {
         method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ password: pw })
@@ -248,8 +293,8 @@
         if (!r.ok) throw new Error('Der Server antwortet nicht wie erwartet (' + r.status + ').');
         return r.json();
       }).then(zeichnen).catch(function (e) {
-        var m = document.getElementById('melde');
-        if (m) { m.textContent = '✗ ' + e.message; m.className = 'melde schlecht'; }
+        var m = document.getElementById('fvs-melde');
+        if (m) { m.textContent = '✗ ' + e.message; m.className = 'fvs-melde schlecht'; }
       });
     }
 
@@ -260,6 +305,24 @@
       try { sessionStorage.setItem('fv_admin_pw', pw); } catch (e) {}
       abrufen();
     });
+    document.getElementById('vergessen').addEventListener('click', function () {
+      var m = document.getElementById('melde');
+      var pin = window.prompt('Notfall-PIN eingeben (Form: 1234-567-890):', '');
+      if (!pin) return;
+      var neuPw = window.prompt('Neues Passwort (mindestens acht Zeichen):', '');
+      if (!neuPw) return;
+      fetch('/api/zugang', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ aktion: 'zuruecksetzen', pin: pin.trim(), neu: neuPw }) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { m.textContent = '\u2717 ' + (res.d.fehler || 'Zurücksetzen fehlgeschlagen.'); m.className = 'fvs-melde schlecht'; return; }
+          pw = neuPw;
+          try { sessionStorage.setItem('fv_admin_pw', neuPw); } catch (e) {}
+          m.textContent = '\u2713 Passwort zurückgesetzt.'; m.className = 'fvs-melde gut';
+          abrufen();
+        }).catch(function () { m.textContent = '\u2717 Zurücksetzen fehlgeschlagen.'; m.className = 'fvs-melde schlecht'; });
+    });
+
     document.getElementById('pw').addEventListener('keydown', function (e) {
       if (e.key === 'Enter') document.getElementById('rein').click();
     });
@@ -271,7 +334,7 @@
       document.getElementById('pw').value = '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022';
       document.getElementById('rein').textContent = 'Entsperren';
       var hinweis = document.createElement('p');
-      hinweis.className = 'leer';
+      hinweis.className = 'fvs-leer';
       hinweis.style.marginTop = '10px';
       hinweis.textContent = 'Aus deiner Admin-Anmeldung übernommen – einmal auf Entsperren klicken.';
       document.getElementById('anmeldung').appendChild(hinweis);

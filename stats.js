@@ -1524,9 +1524,9 @@
         ],
         fest: { schluessel: 'FINNVELO-AUFGABENPLANER' },
         vorgabe: {
-          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 88, versionName: '7.18',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-7.18.apk',
-          hinweise: 'Neu: Zahnrad neben der Listenauswahl, Listenverzeichnis und Passwortschutz je Liste.'
+          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 101, versionName: '7.31',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-7.31.apk',
+          hinweise: 'Die Masken fuer Anlegen, Beitreten und Koppeln behalten ihre Eingaben. Kanal verlassen statt loeschen.'
         }
       }
     ];
