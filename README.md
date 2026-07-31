@@ -202,9 +202,16 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
   "Jetzt oeffnen" usw.) laesst sich beides getrennt aendern:
   - **Beschriftung:** direkt auf den Knopftext klicken und tippen
     (z.B. "Aufgabenplaner herunterladen (17 MB)" -> "Version 3.2 laden").
-  - **Ziel:** daneben erscheint ein Knopf **"🔗 Ziel"**. Anklicken und
-    die vollstaendige Adresse einfuegen (`https://...`) oder einen Pfad
-    dieser Seite (`/programme`).
+  - **Ziel:** daneben steht ein Knopf **"🔗 Ziel"**. Anklicken - darunter
+    klappt eine **Zeile mit Eingabefeld** auf, in die sich der Pfad bequem
+    hineinkopieren laesst (genau wie in der App-Aktualisierung weiter unten).
+    Das bisherige Ziel steht schon drin und ist markiert, du kannst also
+    direkt ueberschreiben.
+    - Vollstaendige Adresse (`https://...`) **oder** ein Pfad dieser Seite,
+      der mit `/` beginnt - z.B. `/FinnVelo/Aufgabenplaner/app.apk`.
+    - **Enter** speichert, **Esc** schliesst. Passt etwas nicht, steht der
+      Hinweis in der Zeile selbst - kein Popup-Fenster mehr.
+    - Leeres Feld speichern entfernt das Ziel.
 - **Neue Knoepfe anlegen (NEU):** In jedem Abschnitt gibt es neben
   "+ Textfeld" und "+ Bildfeld" jetzt auch **"+ Knopf"**. Damit legst du
   beliebig viele weitere Download- oder Weiter-Knoepfe an - Beschriftung und

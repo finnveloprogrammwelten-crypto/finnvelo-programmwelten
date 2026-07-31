@@ -1846,6 +1846,74 @@ body.fv-admin-on .site-header { top: 44px; }
   white-space: nowrap;
 }
 .fv-ziel-btn:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+.fv-ziel-btn.an { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+
+/* Ziel-Zeile unter dem Knopf: Pfad hineinkopieren statt Popup-Dialog.
+   Masse und Farben stammen unveraendert aus .fv-update-box (App-Aktualisierung),
+   damit beide Bereiche gleich aussehen. */
+.fv-zielzeile {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px 16px 12px;
+  background: rgba(120, 170, 255, 0.06);
+  border: 2px dashed rgba(120, 170, 255, 0.45);
+  border-radius: 14px;
+  text-align: left;
+}
+.fv-zielzeile__feld {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+  text-transform: uppercase;
+}
+.fv-zielzeile__feld input {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-zielzeile__feld input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-zielzeile__leiste { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.fv-zielzeile__speichern {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 18px;
+  font: 700 14px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-zielzeile__speichern:hover { background: #4a90ff; }
+.fv-zielzeile__zu {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--soft);
+  border-radius: 9px;
+  padding: 8px 13px;
+  font: 400 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-zielzeile__zu:hover { color: var(--text); border-color: var(--blue); }
+.fv-zielzeile__melde { font-size: 13px; font-weight: 700; }
+.fv-zielzeile__melde.gut { color: #4ad991; }
+.fv-zielzeile__melde.schlecht { color: var(--red); }
+.fv-zielzeile__hilfe {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
 
 /* Selbst angelegte Knopf-Felder */
 .fv-extra__knopf { display: inline-block; }

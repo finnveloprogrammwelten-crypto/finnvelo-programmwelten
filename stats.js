@@ -729,24 +729,103 @@
 
     /* ---- Download-/Aktions-Links (Ziel-URL) --------------------------- */
     /* Knoepfe: Beschriftung direkt bearbeiten, Ziel ueber das Ketten-Symbol.
-       So laesst sich beides getrennt aendern, ohne sich in die Quere zu kommen. */
-    function zielAendern(el, key, fertig) {
-      var cur = el.getAttribute('href') || '';
-      var u = window.prompt('Wohin soll der Knopf f\u00fchren?\n\n'
-        + 'Vollst\u00e4ndige Adresse (https://\u2026) oder ein Pfad auf dieser Seite (/programme):', cur);
-      if (u === null) return;
-      u = String(u).trim();
-      if (u && !/^(https?:\/\/|\/)/i.test(u)) {
-        window.alert('Bitte eine vollst\u00e4ndige Adresse mit https:// eingeben \u2013 '
-          + 'oder einen Pfad dieser Seite, der mit / beginnt.');
+       So laesst sich beides getrennt aendern, ohne sich in die Quere zu kommen.
+       Das Ziel wird in einer aufklappenden Zeile gepflegt - kein Popup-Dialog,
+       damit sich ein Pfad bequem hineinkopieren laesst (wie in der
+       App-Aktualisierung). */
+    function zielPruefen(u) {
+      if (!u) return '';
+      if (!/^(https?:\/\/|\/)/i.test(u)) {
+        return 'Bitte eine vollst\u00e4ndige Adresse mit https:// \u2013 oder einen Pfad '
+             + 'dieser Seite, der mit / beginnt.';
+      }
+      return '';
+    }
+
+    // Baut die Zeile unter dem Knopf und schaltet sie auf/zu.
+    // el      = der Knopf, dessen Ziel gepflegt wird
+    // key     = Blockschluessel zum Speichern (oder null bei eigenen Feldern)
+    // fertig  = eigener Speicherweg (eigene Knopf-Felder)
+    // zb      = der Ketten-Knopf, damit er seinen Zustand zeigen kann
+    function zielAendern(el, key, fertig, zb) {
+      var vorhanden = el.parentNode && el.parentNode.querySelector('.fv-zielzeile[data-fuer="' + zielId(el) + '"]');
+      if (vorhanden) {                       // schon offen -> zuklappen
+        vorhanden.parentNode.removeChild(vorhanden);
+        if (zb) zb.classList.remove('an');
         return;
       }
-      el.classList.add('fv-saving');
-      if (typeof fertig === 'function') { fertig(u, el); return; }
-      save(key, 'link', u).then(function (ok) {
-        if (ok && u) el.setAttribute('href', u);
-        flash(el, ok);
+
+      var zeile = document.createElement('div');
+      zeile.className = 'fv-zielzeile';
+      zeile.setAttribute('data-fuer', zielId(el));
+      zeile.innerHTML =
+        '<label class="fv-zielzeile__feld">Ziel des Knopfes'
+      + '  <input type="text" spellcheck="false" autocomplete="off"'
+      + '    placeholder="/FinnVelo/Aufgabenplaner/app.apk oder https://\u2026">'
+      + '</label>'
+      + '<div class="fv-zielzeile__leiste">'
+      + '  <button type="button" class="fv-zielzeile__speichern">Ziel speichern</button>'
+      + '  <button type="button" class="fv-zielzeile__zu">Schlie\u00dfen</button>'
+      + '  <span class="fv-zielzeile__melde"></span>'
+      + '</div>'
+      + '<p class="fv-zielzeile__hilfe">Vollst\u00e4ndige Adresse (https://\u2026) oder ein Pfad '
+      + 'auf dieser Seite, der mit / beginnt. Leer lassen entfernt das Ziel.</p>';
+
+      var feld  = zeile.querySelector('input');
+      var melde = zeile.querySelector('.fv-zielzeile__melde');
+      feld.value = el.getAttribute('href') || '';
+
+      function sagen(text, art) {
+        melde.textContent = text || '';
+        melde.className = 'fv-zielzeile__melde' + (art ? ' ' + art : '');
+      }
+      function zuklappen() {
+        if (zeile.parentNode) zeile.parentNode.removeChild(zeile);
+        if (zb) zb.classList.remove('an');
+      }
+      function speichern() {
+        var u = String(feld.value || '').trim();
+        var meckern = zielPruefen(u);
+        if (meckern) { sagen('\u2717 ' + meckern, 'schlecht'); feld.focus(); return; }
+        sagen('Wird gespeichert \u2026');
+        el.classList.add('fv-saving');
+        if (typeof fertig === 'function') { fertig(u, el); zuklappen(); return; }
+        save(key, 'link', u).then(function (ok) {
+          if (ok && u) el.setAttribute('href', u);
+          flash(el, ok);
+          if (ok) {
+            sagen('\u2713 Gespeichert.', 'gut');
+            setTimeout(zuklappen, 900);
+          } else {
+            sagen('\u2717 Speichern fehlgeschlagen.', 'schlecht');
+          }
+        });
+      }
+
+      zeile.querySelector('.fv-zielzeile__speichern').addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation(); speichern();
       });
+      zeile.querySelector('.fv-zielzeile__zu').addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation(); zuklappen();
+      });
+      feld.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); speichern(); }
+        if (e.key === 'Escape') { e.preventDefault(); zuklappen(); }
+      });
+      // Klicks in der Zeile duerfen nicht als "Knopf bearbeiten" durchschlagen
+      zeile.addEventListener('click', function (e) { e.stopPropagation(); });
+
+      // Hinter den Ketten-Knopf haengen, sonst hinter den Knopf selbst.
+      var nach = (zb && zb.parentNode === el.parentNode) ? zb : el;
+      el.parentNode.insertBefore(zeile, nach.nextSibling);
+      if (zb) zb.classList.add('an');
+      feld.focus();
+      feld.select();
+    }
+
+    // Eindeutiger Bezug zwischen Knopf und seiner Zeile.
+    function zielId(el) {
+      return el.getAttribute('data-fvk') || el.getAttribute('data-fvx') || 'x';
     }
 
     function enableLinks(els) {
@@ -780,7 +859,7 @@
         zb.setAttribute('title', 'Wohin der Knopf f\u00fchrt');
         zb.addEventListener('click', function (e) {
           e.preventDefault(); e.stopPropagation();
-          zielAendern(el, el.getAttribute('data-fvk'));
+          zielAendern(el, el.getAttribute('data-fvk'), null, zb);
         });
         el.parentNode.insertBefore(zb, el.nextSibling);
       });
@@ -1214,7 +1293,7 @@
                   zielAendern(knopf, null, function (u) {
                     customBlocks[nr].url = u;
                     saveCustom().then(function (ok) { flash(knopf, ok); renderCustom(); });
-                  });
+                  }, zb);
                 });
               })(a, idx);
               wrap.appendChild(zb);
