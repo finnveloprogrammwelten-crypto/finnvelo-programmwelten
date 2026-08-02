@@ -18,7 +18,13 @@
     .fv-login button:disabled { opacity: .6; cursor: default; }
     .fv-login .msg { margin-top: 12px; font-size: 14px; min-height: 18px; }
     /* --- ab hier neu: Ersteinrichtung und Zugangsverwaltung --- */
-    .fv-login input + input { margin-top: 9px; }
+    /* Abstand zwischen aufeinanderfolgenden Feldern. Die Passwortfelder
+       stecken in einer .fv-pw-huelle (Sichtbarkeitsauge), deshalb muessen
+       alle vier Nachbarschaften genannt werden - sonst kleben sie aneinander. */
+    .fv-login input + input,
+    .fv-login .fv-pw-huelle + .fv-pw-huelle,
+    .fv-login input + .fv-pw-huelle,
+    .fv-login .fv-pw-huelle + input { margin-top: 9px; }
     .fv-login .fv-erklaer { margin: 0 0 16px; font-size: 13px; line-height: 1.6; color: var(--muted); }
     .fv-login .fv-neben { width: auto; margin-top: 10px; padding: 8px 0; background: none; color: var(--muted);
       font-weight: 400; font-size: 13px; text-decoration: underline; }
@@ -35,6 +41,7 @@
   </style>
 </head>
 <body class="legal-body">
+  <script src="passwortauge.js" defer></script>
   <main class="page">
     <div class="fv-login-wrap">
       <div class="fv-login" id="karte">

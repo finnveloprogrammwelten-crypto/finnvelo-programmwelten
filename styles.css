@@ -1915,6 +1915,54 @@ body.fv-admin-on .site-header { top: 44px; }
   color: var(--muted);
 }
 
+/* Sichtbarkeitsauge an Passwortfeldern (siehe passwortauge.js).
+   Die Huelle gibt sich als reines Block-Element, damit sie an der Stelle
+   des Feldes keine Layouts verschiebt.
+
+   Zur Spezifitaet: Die Seiten bringen eigene Regeln wie ".fv-login button"
+   oder ".status-anmeldung input" mit - die haben Klasse+Element und wuerden
+   eine einfache Klasse hier schlagen. Deshalb wird durchgehend
+   ".fv-pw-huelle > .fv-pw-..." geschrieben (zwei Klassen). Damit gewinnt
+   diese Datei, ohne dass irgendwo !important noetig waere. */
+.fv-pw-huelle {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+.fv-pw-huelle > .fv-pw-feld {
+  width: 100%;
+  /* Platz fuer den Knopf, damit langer Text nicht darunter verschwindet */
+  padding-right: 46px;
+}
+.fv-pw-huelle > .fv-pw-auge {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  bottom: auto;
+  left: auto;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--soft);
+  font: 400 16px/1 inherit;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.fv-pw-huelle > .fv-pw-auge > svg { display: block; pointer-events: none; }
+.fv-pw-huelle > .fv-pw-auge:hover { opacity: 1; background: rgba(120, 170, 255, 0.14); }
+/* Offenes Auge: deutlich sichtbar, damit klar ist, dass gerade jemand mitlesen kann */
+.fv-pw-huelle > .fv-pw-auge.an { opacity: 1; color: var(--blue-light); }
+.fv-pw-huelle > .fv-pw-auge:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
 /* Selbst angelegte Knopf-Felder */
 .fv-extra__knopf { display: inline-block; }
 .fv-extra--knopf .fv-extra__leiste { top: -10px; }

@@ -68,6 +68,13 @@ Bearbeiten-Modus), `worker.js` (Server). Zwei Durable Objects:
    `getElementById('melde')` wurde `'fvs-melde'` — eine ID, die es nicht gab.
    Die Statusseite blieb dadurch stumm. Immer nur innerhalb von
    Klassen-Zeichenketten ersetzen und danach im Browser messen.
+8. **Gemeinsames CSS gegen seiteneigene Regeln:** `admin.html` und
+   `serverstatus.html` bringen eigene `<style>`-Blöcke mit Selektoren wie
+   `.fv-login button` mit (Klasse + Element). Eine einfache Klasse in
+   `styles.css` verliert dagegen — und der `<style>`-Block steht auch noch
+   später im Dokument. Deshalb im gemeinsamen CSS **zwei Klassen** schreiben
+   (`.fv-pw-huelle > .fv-pw-auge`). Kein `!important` nötig. Sichtbar wurde
+   das daran, dass der Augen-Knopf 306 px breit war statt 34.
 
 ---
 

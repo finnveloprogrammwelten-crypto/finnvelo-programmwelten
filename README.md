@@ -125,6 +125,14 @@ Besucher sichtbar**.
 **Passwort vergessen?** Auf `/admin` den Knopf "Passwort vergessen" -
 mit der Notfall-PIN laesst sich ein neues setzen. Die PIN bleibt dabei gleich.
 
+**Sichtbarkeitsauge:** In jedem Passwort- und PIN-Feld sitzt rechts ein
+kleines Auge. Anklicken zeigt das Eingetippte im Klartext, nochmal anklicken
+verbirgt es wieder - praktisch, um sich bei einem langen Passwort nicht zu
+vertippen. Voreingestellt ist immer *verborgen*; jedes Feld wird einzeln
+umgeschaltet. Ist ein Feld offen, faerbt sich das Auge hellblau - daran ist
+zu erkennen, dass gerade jemand mitlesen koennte. Zustaendig ist die Datei
+`passwortauge.js`, eingebunden auf `/admin` und `/serverstatus`.
+
 **Hinweis zur Ersteinrichtung:** Solange kein Passwort gesetzt ist, koennte
 jeder, der die Adresse kennt, den Zugang belegen. Wer das Fenster gar nicht
 erst aufmachen will, hinterlegt vorher in Cloudflare das Secret
