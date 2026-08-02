@@ -727,12 +727,17 @@
       h.parentNode.insertBefore(bar, h.nextSibling);
     }
 
-    /* ---- Download-/Aktions-Links (Ziel-URL) --------------------------- */
-    /* Knoepfe: Beschriftung direkt bearbeiten, Ziel ueber das Ketten-Symbol.
-       So laesst sich beides getrennt aendern, ohne sich in die Quere zu kommen.
-       Das Ziel wird in einer aufklappenden Zeile gepflegt - kein Popup-Dialog,
-       damit sich ein Pfad bequem hineinkopieren laesst (wie in der
-       App-Aktualisierung). */
+    /* ---- Download-/Aktions-Links (Ziel-URL) ---------------------------
+     * Knoepfe: Beschriftung direkt im Knopf bearbeiten, das Ziel in einer
+     * Zeile darunter. Die Zeile steht im Bearbeiten-Modus DAUERHAFT offen -
+     * kein Ketten-Knopf, kein Aufklappen, kein Popup. Ein Pfad laesst sich
+     * so direkt hineinkopieren.
+     *
+     * Wird ein Ziel gespeichert, meldet die Zeile das per Ereignis
+     * "fv:ziel-gesetzt" an das Dokument. Die App-Aktualisierung weiter unten
+     * hoert mit und traegt Adresse und Versionsnummer gleich bei sich ein.
+     * Beide Bereiche bleiben dadurch unabhaengig voneinander.
+     * ------------------------------------------------------------------- */
     function zielPruefen(u) {
       if (!u) return '';
       if (!/^(https?:\/\/|\/)/i.test(u)) {
@@ -742,30 +747,37 @@
       return '';
     }
 
-    // Baut die Zeile unter dem Knopf und schaltet sie auf/zu.
-    // el      = der Knopf, dessen Ziel gepflegt wird
-    // key     = Blockschluessel zum Speichern (oder null bei eigenen Feldern)
-    // fertig  = eigener Speicherweg (eigene Knopf-Felder)
-    // zb      = der Ketten-Knopf, damit er seinen Zustand zeigen kann
-    function zielAendern(el, key, fertig, zb) {
-      var vorhanden = el.parentNode && el.parentNode.querySelector('.fv-zielzeile[data-fuer="' + zielId(el) + '"]');
-      if (vorhanden) {                       // schon offen -> zuklappen
-        vorhanden.parentNode.removeChild(vorhanden);
-        if (zb) zb.classList.remove('an');
-        return;
-      }
+    // Eindeutiger Bezug zwischen Knopf und seiner Zeile.
+    function zielId(el) {
+      return el.getAttribute('data-fvk') || el.getAttribute('data-fvx') || 'x';
+    }
+
+    // Sagt Bescheid, dass ein Ziel gesetzt wurde. Wer will, hoert zu.
+    function zielMelden(url) {
+      try {
+        document.dispatchEvent(new CustomEvent('fv:ziel-gesetzt', { detail: { url: url } }));
+      } catch (_e) { /* aeltere Browser: dann eben ohne Automatik */ }
+    }
+
+    /* Baut die Ziel-Zeile unter einen Knopf.
+     * el     = der Knopf, dessen Ziel gepflegt wird
+     * key    = Blockschluessel zum Speichern (oder null bei eigenen Feldern)
+     * fertig = eigener Speicherweg (selbst angelegte Knopf-Felder) */
+    function zielZeileBauen(el, key, fertig) {
+      if (!el || !el.parentNode) return null;
+      var id = zielId(el);
+      if (el.parentNode.querySelector('.fv-zielzeile[data-fuer="' + id + '"]')) return null;
 
       var zeile = document.createElement('div');
       zeile.className = 'fv-zielzeile';
-      zeile.setAttribute('data-fuer', zielId(el));
+      zeile.setAttribute('data-fuer', id);
       zeile.innerHTML =
         '<label class="fv-zielzeile__feld">Ziel des Knopfes'
       + '  <input type="text" spellcheck="false" autocomplete="off"'
-      + '    placeholder="/FinnVelo/Aufgabenplaner/app.apk oder https://\u2026">'
+      + '    placeholder="/FinnVelo/Aufgabenplaner/App-7.41.apk oder https://\u2026">'
       + '</label>'
       + '<div class="fv-zielzeile__leiste">'
       + '  <button type="button" class="fv-zielzeile__speichern">Ziel speichern</button>'
-      + '  <button type="button" class="fv-zielzeile__zu">Schlie\u00dfen</button>'
       + '  <span class="fv-zielzeile__melde"></span>'
       + '</div>'
       + '<p class="fv-zielzeile__hilfe">Vollst\u00e4ndige Adresse (https://\u2026) oder ein Pfad '
@@ -779,23 +791,26 @@
         melde.textContent = text || '';
         melde.className = 'fv-zielzeile__melde' + (art ? ' ' + art : '');
       }
-      function zuklappen() {
-        if (zeile.parentNode) zeile.parentNode.removeChild(zeile);
-        if (zb) zb.classList.remove('an');
-      }
       function speichern() {
         var u = String(feld.value || '').trim();
         var meckern = zielPruefen(u);
         if (meckern) { sagen('\u2717 ' + meckern, 'schlecht'); feld.focus(); return; }
         sagen('Wird gespeichert \u2026');
         el.classList.add('fv-saving');
-        if (typeof fertig === 'function') { fertig(u, el); zuklappen(); return; }
+        if (typeof fertig === 'function') {
+          fertig(u, el);
+          sagen('\u2713 Gespeichert.', 'gut');
+          zielMelden(u);
+          setTimeout(function () { sagen(''); }, 3000);
+          return;
+        }
         save(key, 'link', u).then(function (ok) {
           if (ok && u) el.setAttribute('href', u);
           flash(el, ok);
           if (ok) {
             sagen('\u2713 Gespeichert.', 'gut');
-            setTimeout(zuklappen, 900);
+            zielMelden(u);
+            setTimeout(function () { sagen(''); }, 3000);
           } else {
             sagen('\u2717 Speichern fehlgeschlagen.', 'schlecht');
           }
@@ -805,33 +820,20 @@
       zeile.querySelector('.fv-zielzeile__speichern').addEventListener('click', function (e) {
         e.preventDefault(); e.stopPropagation(); speichern();
       });
-      zeile.querySelector('.fv-zielzeile__zu').addEventListener('click', function (e) {
-        e.preventDefault(); e.stopPropagation(); zuklappen();
-      });
       feld.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); speichern(); }
-        if (e.key === 'Escape') { e.preventDefault(); zuklappen(); }
       });
       // Klicks in der Zeile duerfen nicht als "Knopf bearbeiten" durchschlagen
       zeile.addEventListener('click', function (e) { e.stopPropagation(); });
 
-      // Hinter den Ketten-Knopf haengen, sonst hinter den Knopf selbst.
-      var nach = (zb && zb.parentNode === el.parentNode) ? zb : el;
-      el.parentNode.insertBefore(zeile, nach.nextSibling);
-      if (zb) zb.classList.add('an');
-      feld.focus();
-      feld.select();
-    }
-
-    // Eindeutiger Bezug zwischen Knopf und seiner Zeile.
-    function zielId(el) {
-      return el.getAttribute('data-fvk') || el.getAttribute('data-fvx') || 'x';
+      el.parentNode.insertBefore(zeile, el.nextSibling);
+      return zeile;
     }
 
     function enableLinks(els) {
       els.forEach(function (el) {
         el.classList.add('fv-editable-link');
-        el.setAttribute('title', 'Beschriftung anklicken zum \u00c4ndern \u2013 Kettensymbol f\u00fcr das Ziel');
+        el.setAttribute('title', 'Beschriftung anklicken zum \u00c4ndern \u2013 Ziel in der Zeile darunter');
 
         // a) Beschriftung bearbeiten
         el.setAttribute('contenteditable', 'true');
@@ -849,19 +851,8 @@
           });
         })(el);
 
-        // b) Ziel aendern
-        if (!el.parentNode || el.parentNode.querySelector('.fv-ziel-btn[data-fuer="' + el.getAttribute('data-fvk') + '"]')) return;
-        var zb = document.createElement('button');
-        zb.type = 'button';
-        zb.className = 'fv-ziel-btn';
-        zb.setAttribute('data-fuer', el.getAttribute('data-fvk'));
-        zb.innerHTML = '\uD83D\uDD17 Ziel';
-        zb.setAttribute('title', 'Wohin der Knopf f\u00fchrt');
-        zb.addEventListener('click', function (e) {
-          e.preventDefault(); e.stopPropagation();
-          zielAendern(el, el.getAttribute('data-fvk'), null, zb);
-        });
-        el.parentNode.insertBefore(zb, el.nextSibling);
+        // b) Ziel: Zeile steht dauerhaft darunter
+        zielZeileBauen(el, el.getAttribute('data-fvk'), null);
       });
     }
 
@@ -1282,21 +1273,15 @@
                 });
               })(a, idx);
 
-              var zb = document.createElement('button');
-              zb.type = 'button';
-              zb.className = 'fv-ziel-btn';
-              zb.innerHTML = '\uD83D\uDD17 Ziel';
-              zb.setAttribute('title', 'Wohin der Knopf f\u00fchrt');
+              // Ziel-Zeile steht auch hier dauerhaft unter dem Knopf.
+              // renderCustom() zeichnet den Bereich neu und wuerde die Zeile
+              // dabei verlieren - deshalb erst nach dem Neuzeichnen melden.
               (function (knopf, nr) {
-                zb.addEventListener('click', function (e) {
-                  e.preventDefault(); e.stopPropagation();
-                  zielAendern(knopf, null, function (u) {
-                    customBlocks[nr].url = u;
-                    saveCustom().then(function (ok) { flash(knopf, ok); renderCustom(); });
-                  }, zb);
+                zielZeileBauen(knopf, null, function (u) {
+                  customBlocks[nr].url = u;
+                  saveCustom().then(function (ok) { flash(knopf, ok); renderCustom(); });
                 });
               })(a, idx);
-              wrap.appendChild(zb);
             }
           } else {
             var p = document.createElement('div');
@@ -1461,7 +1446,9 @@
       var hint = EDITING
         ? '<span class="fv-admin-hint">Texte anklicken \u00b7 Bilder klicken/ziehen \u00b7 Kacheln am Griff ziehen</span>'
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
-      var right = '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
+      var right = '<span class="fv-admin-fehler" hidden></span>'
+                + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
       bar.innerHTML = '<div class="fv-admin-left">' + left + '</div>'
                     + '<div class="fv-admin-mid">' + toggle + hint + '</div>'
                     + '<div class="fv-admin-right">' + right + '</div>';
@@ -1479,6 +1466,137 @@
         try { sessionStorage.removeItem(PW_KEY); sessionStorage.removeItem(EDIT_KEY); } catch (e) {}
         location.reload();
       });
+      bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
+      fehlerHinweisHolen(bar);
+    }
+
+    /* ---- Hinweis auf neue Fehler --------------------------------------
+     * Holt nur eine Zahl, nicht den ganzen Serverstatus. Der Zeitpunkt des
+     * letzten Hinsehens liegt im Browser - so zeigt der Hinweis wirklich
+     * nur, was seitdem dazugekommen ist. */
+    var GESEHEN_KEY = 'fv_fehler_gesehen';
+
+    function fehlerHinweisHolen(bar) {
+      var seit = 0;
+      try { seit = Number(localStorage.getItem(GESEHEN_KEY) || 0) || 0; } catch (e) { seit = 0; }
+      fetch(API + '/fehler/anzahl', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw(), seit: seit })
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.anzahl) return;
+          var feld = bar.querySelector('.fv-admin-fehler');
+          if (!feld) return;
+          feld.hidden = false;
+          feld.innerHTML = '<button type="button" class="fv-admin-btn fv-admin-btn--warn">'
+            + '\u26A0 ' + d.anzahl + (d.anzahl === 1 ? ' neuer Fehler' : ' neue Fehler') + '</button>';
+          feld.querySelector('button').addEventListener('click', function () {
+            // Ab jetzt gelten die bisherigen als gesehen.
+            try { localStorage.setItem(GESEHEN_KEY, String(Date.now())); } catch (e) {}
+            window.open('/serverstatus', '_blank', 'noopener');
+            feld.hidden = true;
+          });
+        })
+        .catch(function () { /* der Hinweis ist Beiwerk - nie stoeren */ });
+    }
+
+    /* ---- Verlauf: frühere Fassungen ansehen und zurückholen ------------ */
+    function verlaufZeigen() {
+      var alt = document.querySelector('.fv-verlauf-huelle');
+      if (alt) { alt.parentNode.removeChild(alt); return; }
+
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-verlauf-huelle';
+      huelle.innerHTML =
+        '<div class="fv-verlauf" role="dialog" aria-label="Fr\u00fchere Fassungen">'
+      + '  <div class="fv-verlauf__kopf">'
+      + '    <h2>Fr\u00fchere Fassungen \u2013 Seite "' + (SLUG === 'start' ? 'Startseite' : SLUG) + '"</h2>'
+      + '    <button type="button" class="fv-verlauf__zu" aria-label="Schlie\u00dfen">\u2715</button>'
+      + '  </div>'
+      + '  <p class="fv-verlauf__hilfe">Vor jeder \u00c4nderung wird der bisherige Stand aufgehoben \u2013 '
+      + '    die letzten zehn je Feld. Ein Klick auf <strong>Zur\u00fcckholen</strong> setzt ihn wieder ein. '
+      + '    Der aktuelle Stand wandert dabei selbst in den Verlauf, es geht also nichts verloren.</p>'
+      + '  <div class="fv-verlauf__liste">Wird geladen \u2026</div>'
+      + '</div>';
+      document.body.appendChild(huelle);
+
+      function schliessen() {
+        if (huelle.parentNode) huelle.parentNode.removeChild(huelle);
+      }
+      huelle.querySelector('.fv-verlauf__zu').addEventListener('click', schliessen);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) schliessen(); });
+      document.addEventListener('keydown', function esc(e) {
+        if (e.key === 'Escape') { schliessen(); document.removeEventListener('keydown', esc); }
+      });
+
+      var liste = huelle.querySelector('.fv-verlauf__liste');
+
+      function zeit(iso) {
+        try {
+          var d = new Date(iso);
+          return d.toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric',
+                                             hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return iso; }
+      }
+      function sicher(t) {
+        return String(t == null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                                         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
+      fetch(API + '/verlauf', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw(), seite: SLUG })
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.eintraege) { liste.textContent = 'Konnte nicht geladen werden.'; return; }
+          if (!d.eintraege.length) {
+            liste.innerHTML = '<p class="fv-verlauf__leer">Noch nichts aufgehoben \u2013 '
+              + 'auf dieser Seite wurde noch nichts ge\u00e4ndert.</p>';
+            return;
+          }
+          var html = '';
+          d.eintraege.forEach(function (e) {
+            var probe = sicher(e.probe).replace(/\s+/g, ' ').trim();
+            if (!probe) probe = '(leer)';
+            if (e.laenge > e.probe.length) probe += ' \u2026';
+            html += '<div class="fv-verlauf__zeile" data-nr="' + e.nr + '">'
+                 +  '  <div class="fv-verlauf__wann">' + zeit(e.zeit)
+                 +  '    <span class="fv-verlauf__block">' + sicher(e.block) + '</span></div>'
+                 +  '  <div class="fv-verlauf__probe">' + probe + '</div>'
+                 +  '  <button type="button" class="fv-verlauf__holen">Zur\u00fcckholen</button>'
+                 +  '</div>';
+          });
+          liste.innerHTML = html;
+
+          Array.prototype.forEach.call(liste.querySelectorAll('.fv-verlauf__holen'), function (k) {
+            k.addEventListener('click', function () {
+              var zeile = k.closest('.fv-verlauf__zeile');
+              var nr = zeile.getAttribute('data-nr');
+              k.disabled = true; k.textContent = 'Wird geholt \u2026';
+              fetch(API + '/verlauf/eintrag', {
+                method: 'POST', headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ password: adminPw(), nr: Number(nr) })
+              })
+                .then(function (r) { return r.ok ? r.json() : null; })
+                .then(function (st) {
+                  if (!st || !st.ok) throw new Error('weg');
+                  return save(st.block, st.art, st.wert, st.seite);
+                })
+                .then(function (ok) {
+                  if (!ok) throw new Error('speichern');
+                  k.textContent = '\u2713 Zur\u00fcckgeholt';
+                  zeile.classList.add('fv-verlauf__zeile--fertig');
+                  setTimeout(function () { location.reload(); }, 900);
+                })
+                .catch(function () {
+                  k.disabled = false; k.textContent = 'Ging nicht \u2013 nochmal?';
+                });
+            });
+          });
+        })
+        .catch(function () { liste.textContent = 'Konnte nicht geladen werden.'; });
     }
 
     /* ---- Ablauf -------------------------------------------------------- */
@@ -1651,6 +1769,26 @@
       }
     };
 
+    /* Liest die Versionsnummer aus dem Dateinamen einer Adresse.
+     *   ".../FINNVELO-Aufgabenplaner-7.41.apk"  ->  "7.41"
+     *   ".../App_v2.3.1.apk"                    ->  "2.3.1"
+     *   ".../Mischwald.apk"                     ->  ""   (keine drin)
+     *
+     * Bewusst streng: verlangt wird eine durch Punkt getrennte Zahlenfolge,
+     * die direkt vor ".apk" steht und durch -, _ oder Leerzeichen vom Namen
+     * getrennt ist. Ein "v" davor ist erlaubt. Lieber nichts erkennen, als
+     * eine falsche Nummer eintragen - eine falsche Version waere schlimmer
+     * als gar keine, weil die App dann ein Update meldet, das keines ist. */
+    function versionAusName(adresse) {
+      if (!adresse) return '';
+      var s = String(adresse);
+      // Anker und Abfragezusatz abschneiden (".../App-7.41.apk?raw=true")
+      s = s.split('#')[0].split('?')[0];
+      var name = s.substring(s.lastIndexOf('/') + 1);
+      var treffer = /[-_ ]v?(\d+(?:\.\d+)+)\.apk$/i.exec(name);
+      return treffer ? treffer[1] : '';
+    }
+
     var einstellung = { aktiv: false, pfad: '/' + slug + '/version.json', bauplan: 'mischwald', merkmal: '' };
 
     if (!cfg) {
@@ -1799,6 +1937,101 @@
 
       var roh = box.querySelector('[data-a="roh"]');
       var melde = box.querySelector('[data-a="melde"]');
+
+      /* ---- Automatik: Ziel des Download-Knopfes uebernehmen -------------
+       * Setzt der Admin oben das Ziel des Download-Knopfes, wandert die
+       * Adresse hier ins Feld - und die Versionsnummer wird aus dem
+       * Dateinamen gelesen (z. B. "...-7.41.apk" -> "7.41").
+       * Der Versions-Code bleibt unangetastet: er steht im Manifest der App
+       * und laesst sich aus dem Namen nicht ableiten. Er wird nur auffaellig
+       * markiert, damit er nicht vergessen wird.
+       * Gespeichert wird NICHT von selbst - erst "Speichern" schreibt die
+       * version.json. So bleibt die letzte Entscheidung beim Menschen.
+       * ------------------------------------------------------------------ */
+      function urlFeldName() {
+        for (var i = 0; i < cfg.felder.length; i++) {
+          if (cfg.felder[i].typ === 'url') return cfg.felder[i].key;
+        }
+        return null;
+      }
+
+      /* Der Versions-Code steht im Manifest der App und laesst sich aus dem
+       * Dateinamen nicht ableiten (7.31 gehoert zu Code 101, 1.8 zu Code 9 -
+       * kein Zusammenhang). Deshalb wird er nie von selbst gesetzt. Angeboten
+       * wird nur das Hochzaehlen um eins: das ist der uebliche Fall und bleibt
+       * ein bewusster Klick. */
+      function codePlusAnbieten(cFeld) {
+        var label = cFeld.parentNode;
+        if (!label || label.querySelector('.fv-code-plus')) return;
+        var jetzt = parseInt(cFeld.value, 10);
+        if (!isFinite(jetzt)) return;
+        var knopf = document.createElement('button');
+        knopf.type = 'button';
+        knopf.className = 'fv-code-plus';
+        knopf.textContent = 'auf ' + (jetzt + 1) + ' setzen';
+        knopf.title = 'Zaehlt den Versions-Code um eins hoch \u2013 pruefe, ob das zur App passt';
+        knopf.addEventListener('click', function (e) {
+          e.preventDefault();
+          var n = parseInt(cFeld.value, 10);
+          if (!isFinite(n)) return;
+          cFeld.value = String(n + 1);
+          cFeld.classList.remove('fv-pruefen');
+          cFeld.classList.add('fv-uebernommen');
+          if (knopf.parentNode) knopf.parentNode.removeChild(knopf);
+        });
+        label.appendChild(knopf);
+      }
+
+      function uebernehmen(url) {
+        if (!url) return;
+        var urlKey = urlFeldName();
+        var geaendert = [];
+
+        if (urlKey) {
+          var uFeld = box.querySelector('[data-key="' + urlKey + '"]');
+          if (uFeld && uFeld.value !== url) {
+            uFeld.value = url;
+            uFeld.classList.add('fv-uebernommen');
+            geaendert.push('Adresse');
+          }
+        }
+
+        var ver = versionAusName(url);
+        if (ver) {
+          var vFeld = box.querySelector('[data-key="versionName"]');
+          if (vFeld && vFeld.value !== ver) {
+            vFeld.value = ver;
+            vFeld.classList.add('fv-uebernommen');
+            geaendert.push('Version ' + ver);
+          }
+        }
+
+        if (!geaendert.length) return;
+
+        // Versions-Code auffaellig machen - der muss von Hand hoch.
+        var cFeld = box.querySelector('[data-key="versionCode"]');
+        if (cFeld) {
+          cFeld.classList.add('fv-pruefen');
+          codePlusAnbieten(cFeld);
+        }
+
+        melde.textContent = '\u2713 \u00dcbernommen: ' + geaendert.join(', ')
+                          + (ver ? '' : ' \u2013 Version nicht im Dateinamen gefunden')
+                          + '. Versions-Code pr\u00fcfen, dann Speichern.';
+        melde.className = 'fv-update-melde gut';
+      }
+
+      document.addEventListener('fv:ziel-gesetzt', function (e) {
+        try { uebernehmen(e && e.detail ? e.detail.url : ''); } catch (_x) { /* nie stoeren */ }
+      });
+
+      // Beim Tippen die Markierung wieder wegnehmen
+      box.addEventListener('input', function (e) {
+        if (e.target && e.target.classList) {
+          e.target.classList.remove('fv-uebernommen');
+          e.target.classList.remove('fv-pruefen');
+        }
+      });
 
       if (!festeApp) {
         var schalter = box.querySelector('[data-a="schalter"]');

@@ -210,16 +210,52 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
   "Jetzt oeffnen" usw.) laesst sich beides getrennt aendern:
   - **Beschriftung:** direkt auf den Knopftext klicken und tippen
     (z.B. "Aufgabenplaner herunterladen (17 MB)" -> "Version 3.2 laden").
-  - **Ziel:** daneben steht ein Knopf **"🔗 Ziel"**. Anklicken - darunter
-    klappt eine **Zeile mit Eingabefeld** auf, in die sich der Pfad bequem
-    hineinkopieren laesst (genau wie in der App-Aktualisierung weiter unten).
-    Das bisherige Ziel steht schon drin und ist markiert, du kannst also
-    direkt ueberschreiben.
+  - **Ziel:** direkt unter dem Knopf steht im Bearbeiten-Modus **dauerhaft**
+    eine Zeile "Ziel des Knopfes" mit Eingabefeld. Kein Aufklappen, kein
+    Popup - Pfad hineinkopieren, **Ziel speichern** (oder Enter), fertig.
     - Vollstaendige Adresse (`https://...`) **oder** ein Pfad dieser Seite,
-      der mit `/` beginnt - z.B. `/FinnVelo/Aufgabenplaner/app.apk`.
-    - **Enter** speichert, **Esc** schliesst. Passt etwas nicht, steht der
-      Hinweis in der Zeile selbst - kein Popup-Fenster mehr.
+      der mit `/` beginnt - z.B. `/FinnVelo/Aufgabenplaner/App-7.41.apk`.
+    - Passt etwas nicht, steht der Hinweis in der Zeile selbst.
     - Leeres Feld speichern entfernt das Ziel.
+  - **Automatik zur App-Aktualisierung (NEU):** Gibt es auf derselben Seite
+    den Bereich "App-Aktualisierung", uebernimmt der beim Speichern des
+    Ziels von selbst:
+    - die **Download-Adresse** (gruen markiert),
+    - die **Versionsnummer**, aus dem Dateinamen gelesen: aus
+      `FINNVELO-Aufgabenplaner-7.41.apk` wird `7.41` (gruen markiert).
+    - Der **Versions-Code** wird *nicht* angefasst - er steht im Manifest
+      der App und laesst sich aus dem Namen nicht ableiten. Das Feld wird
+      **gelb** markiert, und daneben erscheint ein Knopf **"auf N+1 setzen"**.
+      Ein Klick zaehlt hoch; ob das zur gebauten APK passt, entscheidest du.
+    - Steht keine Versionsnummer im Dateinamen (z.B. `Mischwald.apk`),
+      bleibt das Versionsfeld unveraendert und die Meldung sagt es.
+    - Geschrieben wird die `version.json` erst mit **Speichern** in der
+      App-Aktualisierung. Die Automatik fuellt nur die Felder aus.
+
+### Verlauf: eine Aenderung zuruecknehmen
+In der Admin-Leiste steht der Knopf **"↺ Verlauf"**. Er zeigt die frueheren
+Faessungen dieser Seite - die letzten **zehn je Feld**, neueste zuerst, mit
+Zeitpunkt und Leseprobe.
+
+- **Zurueckholen** setzt einen alten Stand wieder ein.
+- Der bis dahin aktuelle Stand wandert dabei selbst in den Verlauf - es geht
+  also nichts verloren, und ein Zurueckholen laesst sich zurueckholen.
+- Aufgehoben wird nur, wenn sich wirklich etwas aendert. Ein Feld anklicken
+  und unveraendert verlassen legt keinen Stand ab.
+- Sehr grosse Werte (ueber 20.000 Zeichen, z.B. eingebettete Bilder) werden
+  uebersprungen, damit die Datenbank nicht zulaeuft.
+
+### Hinweis auf neue Fehler
+Gibt es neue Eintraege im Fehlerbuch, erscheint in der Admin-Leiste ein
+gelber Knopf **"⚠ N neue Fehler"**. Ein Klick oeffnet `/serverstatus` und
+merkt sich den Zeitpunkt - beim naechsten Mal zaehlt nur, was seitdem
+dazugekommen ist. Spuren vom Zugang (Lage 200) zaehlen nicht als Fehler.
+
+### Bedienung mit dem Finger
+Auf Tablet und Handy sind die Ziehgriffe und Bedienknoepfe im
+Bearbeiten-Modus **groesser** (44 px statt 30 px), und bearbeitbare Texte
+haben eine groessere Trefferflaeche. Am Rechner mit Maus bleibt alles
+kompakt wie bisher - gesteuert ueber `@media (pointer: coarse)`.
 - **Neue Knoepfe anlegen (NEU):** In jedem Abschnitt gibt es neben
   "+ Textfeld" und "+ Bildfeld" jetzt auch **"+ Knopf"**. Damit legst du
   beliebig viele weitere Download- oder Weiter-Knoepfe an - Beschriftung und

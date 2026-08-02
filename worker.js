@@ -146,6 +146,18 @@ export class Counter extends DurableObject {
       "passwort TEXT, pin TEXT, geaendert INTEGER)"
     );
 
+    // Aeltere Faessungen bearbeiteter Bloecke. Vor jedem Ueberschreiben wandert
+    // der bisherige Wert hierher - so laesst sich ein Vertipper zuruecknehmen.
+    // Pro Block werden nur die letzten VERLAUF_TIEFE Staende behalten.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS verlauf (" +
+      "nr INTEGER PRIMARY KEY AUTOINCREMENT, seite TEXT NOT NULL, block TEXT NOT NULL, " +
+      "art TEXT NOT NULL, wert TEXT NOT NULL, zeit INTEGER NOT NULL)"
+    );
+    this.sql.exec(
+      "CREATE INDEX IF NOT EXISTS verlauf_seite ON verlauf (seite, block, nr)"
+    );
+
     this.recentPosts = new Map();   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
   }
 
@@ -282,6 +294,30 @@ export class Counter extends DurableObject {
         return json({ error: "bad_request" }, 400);
       }
       const value = String(body.value == null ? "" : body.value).slice(0, MAX_CONTENT);
+
+      // Bisherigen Stand aufheben, bevor er ueberschrieben wird.
+      // Nur wenn sich wirklich etwas aendert - sonst fuellt jedes Anklicken
+      // eines Feldes den Verlauf mit lauter gleichen Eintraegen.
+      const VERLAUF_TIEFE = 10;
+      const VERLAUF_MAX = 20000;     // sehr grosse Werte (Bilder als Datenurl) auslassen
+      try {
+        const alt = this.sql.exec(
+          "SELECT type, value FROM content WHERE page = ? AND block = ?", page, block
+        ).toArray();
+        if (alt.length && alt[0].value !== value && alt[0].value.length <= VERLAUF_MAX) {
+          this.sql.exec(
+            "INSERT INTO verlauf (seite, block, art, wert, zeit) VALUES (?, ?, ?, ?, ?)",
+            page, block, alt[0].type, alt[0].value, Date.now()
+          );
+          // Auf die letzten Staende eindampfen
+          this.sql.exec(
+            "DELETE FROM verlauf WHERE seite = ? AND block = ? AND nr NOT IN " +
+            "(SELECT nr FROM verlauf WHERE seite = ? AND block = ? ORDER BY nr DESC LIMIT ?)",
+            page, block, page, block, VERLAUF_TIEFE
+          );
+        }
+      } catch (_e) { /* ein fehlender Verlauf darf das Speichern nie verhindern */ }
+
       this.sql.exec(
         "INSERT INTO content (page, block, type, value, updated) VALUES (?, ?, ?, ?, ?) " +
         "ON CONFLICT(page, block) DO UPDATE SET type = excluded.type, value = excluded.value, updated = excluded.updated",
@@ -391,6 +427,72 @@ export class Counter extends DurableObject {
         kanaele: kanaele.map((k) => ({ code: k.code, angelegt: new Date(k.angelegt).toISOString() })),
         fehler: fehler
       });
+    }
+
+    // --- Verlauf einer Seite abrufen ------------------------------------
+    // Liefert die aufgehobenen Staende, neueste zuerst. Zum Wiederherstellen
+    // schickt der Client den alten Wert einfach wieder an /api/content -
+    // dafuer braucht es keinen eigenen Schreibweg.
+    if (url.pathname === "/api/verlauf" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      const seite = String(b.seite || "");
+      if (!PAGE_RE.test(seite)) return json({ fehler: "bad_request" }, 400);
+      let zeilen = [];
+      try {
+        zeilen = this.sql.exec(
+          "SELECT nr, block, art, wert, zeit FROM verlauf WHERE seite = ? ORDER BY nr DESC LIMIT 60",
+          seite
+        ).toArray();
+      } catch (_e) { zeilen = []; }
+      return json({
+        ok: true,
+        eintraege: zeilen.map((z) => ({
+          nr: z.nr, block: z.block, art: z.art, zeit: new Date(z.zeit).toISOString(),
+          // Nur eine Leseprobe herausgeben - der ganze Wert waere unnoetig gross.
+          probe: String(z.wert).slice(0, 160),
+          laenge: String(z.wert).length
+        }))
+      });
+    }
+
+    // Einen einzelnen Stand im Volltext holen (zum Wiederherstellen)
+    if (url.pathname === "/api/verlauf/eintrag" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      const nr = Number(b.nr || 0);
+      if (!nr) return json({ fehler: "bad_request" }, 400);
+      let r = [];
+      try {
+        r = this.sql.exec("SELECT seite, block, art, wert FROM verlauf WHERE nr = ?", nr).toArray();
+      } catch (_e) { r = []; }
+      if (!r.length) return json({ fehler: "Diesen Stand gibt es nicht mehr." }, 404);
+      return json({ ok: true, seite: r[0].seite, block: r[0].block, art: r[0].art, wert: r[0].wert });
+    }
+
+    // --- Kurze Fehlerauskunft fuer die Admin-Leiste ----------------------
+    // Absichtlich schlank: /api/serverstatus rechnet die ganze Datenbank durch,
+    // das waere fuer einen Hinweis in der Leiste zu teuer.
+    if (url.pathname === "/api/fehler/anzahl" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      const seit = Number(b.seit || 0);
+      let anzahl = 0, letzter = null;
+      try {
+        // Lage 200 sind Spuren (z. B. Zugang), keine Fehler - nicht mitzaehlen.
+        const r = this.sql.exec(
+          "SELECT COUNT(*) AS n, MAX(zeit) AS letzte FROM fehler WHERE lage >= 400 AND zeit > ?",
+          seit
+        ).toArray();
+        if (r.length) {
+          anzahl = Number(r[0].n || 0);
+          letzter = r[0].letzte ? new Date(Number(r[0].letzte)).toISOString() : null;
+        }
+      } catch (_e) { /* still bleiben */ }
+      return json({ ok: true, anzahl: anzahl, letzter: letzter });
     }
 
     // --- Passwort aendern und Notfall-PIN ------------------------------

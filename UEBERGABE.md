@@ -78,6 +78,63 @@ Bearbeiten-Modus), `worker.js` (Server). Zwei Durable Objects:
 
 ---
 
+## 3b. Brücke zwischen Ziel-Zeile und App-Aktualisierung
+
+Beide Bereiche liegen in **getrennten IIFEs** in `stats.js` und wissen
+nichts voneinander. Verbunden sind sie über ein Ereignis:
+
+```
+Ziel gespeichert  ->  document.dispatchEvent('fv:ziel-gesetzt', {url})
+                  ->  App-Aktualisierung hört zu und füllt ihre Felder
+```
+
+* Der Feldname für die Adresse ist **je App verschieden** (`apk` beim
+  Aufgabenplaner, `download` beim Mischwaldrechner). Deshalb wird er über
+  `typ === 'url'` aus `cfg.felder` gesucht, nicht fest verdrahtet.
+* `versionAusName()` liest die Version aus dem Dateinamen. Bewusst streng:
+  verlangt wird `[-_ ]v?ZAHL.ZAHL(.ZAHL…).apk` am Ende. `Mischwald.apk`
+  ergibt nichts, `2026-01-30-App.apk` auch nicht — eine falsch geratene
+  Version wäre schlimmer als gar keine, weil die App dann ein Update
+  meldet, das keines ist.
+* Der **Versions-Code wird nie automatisch gesetzt.** Er steht im Manifest
+  der App (`versionName 7.31` ↔ `versionCode 101` — kein ableitbarer
+  Zusammenhang). Das Feld wird nur gelb markiert.
+* Die Automatik **speichert nicht**. Sie füllt nur aus; die `version.json`
+  schreibt erst der Speichern-Knopf.
+
+---
+
+## 3c. Verlauf und Fehlerhinweis
+
+**Verlauf** — Tabelle `verlauf`. Bei jedem `/api/content`-POST wandert der
+*bisherige* Wert dorthin, bevor überschrieben wird. Wichtige Punkte:
+
+* Nur bei echter Änderung (`alt.value !== value`) — sonst füllt jedes
+  Anklicken eines Feldes den Verlauf mit Dubletten.
+* Höchstens **10 Stände je (Seite, Block)**, ältere werden gelöscht.
+* Werte über 20.000 Zeichen werden übersprungen (eingebettete Bilder).
+* Der ganze Block steht in `try/catch`: ein fehlender Verlauf darf das
+  Speichern nie verhindern.
+* Zurückgeholt wird über den **normalen** `/api/content`-Weg — es gibt
+  bewusst keinen eigenen Schreibweg. Deshalb landet der überschriebene
+  Stand automatisch selbst im Verlauf.
+* `/api/verlauf` gibt nur eine 160-Zeichen-Leseprobe heraus;
+  `/api/verlauf/eintrag` liefert den Volltext einzeln.
+
+**Fehlerhinweis** — `/api/fehler/anzahl` ist absichtlich schlank gehalten
+(nur `COUNT` und `MAX(zeit)`); `/api/serverstatus` rechnet die ganze
+Datenbank durch und wäre für einen Hinweis in der Leiste zu teuer. Gezählt
+wird nur `lage >= 400` — Lage 200 sind Zugangs-Spuren, keine Fehler. Der
+Zeitpunkt des letzten Hinsehens liegt im `localStorage` des Browsers.
+
+**Beide Routen stehen vor dem catch-all `/api/`** (siehe Regel 6).
+
+**Bereits vorhanden, nicht doppelt bauen:** Hochgeladene Bilder werden schon
+seit jeher im Browser verkleinert (`downscale()` in `stats.js`, max. 1600 px,
+JPEG-Qualität 0,85). Alle drei Upload-Wege gehen dort durch.
+
+---
+
 ## 3a. Zugang: Passwort und Notfall-PIN
 
 Verwaltet wird alles unter **`/admin`** — bewusst dort und nicht auf
