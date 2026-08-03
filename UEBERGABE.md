@@ -201,7 +201,8 @@ Alle Wege unter `/api/kanal/`:
 `mitglieder`, `mitglieder/rolle`, `listen`, `listen/neu`,
 `listen/freigeben`, `listen/sperren`, `listen/rechte`, `listen/senden`,
 `listen/holen`, `listen/loeschen`, `einladung`, `einladung/neu`,
-`einladung/loeschen`, `einladungen`.
+`einladung/loeschen`, `einladungen`, `anhang/neu`, `anhang`,
+`anhang/liste`.
 
 Dazu: `/koppeln?k=CODE` (Einladungsseite), `/serverstatus`
 (Überwachung), `/.well-known/assetlinks.json` (mit Fingerabdruck).
@@ -219,6 +220,52 @@ Dazu: `/koppeln?k=CODE` (Einladungsseite), `/serverstatus`
 * **Aufräumen läuft über den Wecker des Kanal-Objekts:** ein Jahr ohne
   Zugriff → Vorwarnung im Feld `warnung`, eine Woche später Löschen.
   Jede Nutzung hebt sie auf, `/behalten` ist der ausdrückliche Weg.
+
+---
+
+## 4a. Anhänge (Bilder an Aufgaben) — Stand App 7.73
+
+Gebaut nach `AUFTRAG-Anhaenge.md`. Drei Wege, drei Tabellen.
+
+**Warum getrennt vom Listenpaket:** ein Listenpaket geht bei *jeder*
+Änderung vollständig neu über die Leitung. Läge ein Foto darin, ginge es
+bei jedem Häkchen mit.
+
+| Tabelle | Inhalt |
+|---|---|
+| `anhaenge` | Kennung, Liste, Ersteller, Daten, Größe, Ladezeitpunkt |
+| `anhang_geholt` | wer hat welchen Anhang abgeholt |
+| `anhang_weg` | bereits aufgeräumt — **nur die Kennung**, keine Daten |
+
+**Fristen** (Konstanten oben in `worker.js`): `ANHANG_AKTIV` 7 Tage,
+`ANHANG_NOTFRIST` 14 Tage, `GERAET_VERWAIST` 30 Tage, `MAX_ANHANG` 2 MB,
+`MAX_ANHANG_KANAL` 50 MB, `ANHANG_MERK` 90 Tage.
+
+**Punkte, die niemand „vereinfachen" sollte:**
+
+* Die Freigabe wird über **dieselbe** `darfListe()` geprüft wie bei
+  `listen/holen` — nicht nachgebaut. Zwei getrennte Prüfungen gehen
+  auseinander, und dann liegt das Bild offen, während die Aufgabe
+  geschützt ist.
+* **Der Server rührt die Daten nicht an.** Kein Umwandeln, kein
+  Verkleinern, keine Vorschaubilder — alles kommt fertig verschlüsselt an.
+* Die 7-Tage-Frist wird **je Anhang ab dessen Hochladen** gerechnet, nicht
+  global. Sonst würde ein Handy in der Schublade dafür sorgen, dass nie
+  etwas gelöscht wird.
+* Ein aufgeräumter Anhang gibt **410**, kein 404 — die App lässt ihn
+  daraufhin vom Ersteller neu hochladen. Auch bei 410 wird die Freigabe
+  geprüft: sonst verriete schon die Wahl zwischen 410 und 404, ob es den
+  Anhang je gab.
+* `409` beim Hochladen ist **kein Fehlerfall** — die App wertet ihn als
+  Erfolg. Die vorhandenen Daten bleiben unangetastet.
+* Beim Entfernen verwaister Geräte wird **kein Listeninhalt gelöscht.**
+  Das Gerät geht, die Aufgaben bleiben. Der Gründer fliegt nie raus.
+* Das Aufräumen läuft **im Anfrageweg, gedrosselt** (`AUFRAEUM_TAKT`,
+  10 Minuten). Der Wecker des Kanals taugt nicht dafür — der schaut nur
+  einmal im Jahr nach.
+* `zuletzt` wird bei jedem Weg mit Kennung gestempelt. **Ohne diesen
+  Stempel gälte nie ein Gerät als aktiv**, und es würde nie etwas
+  aufgeräumt.
 
 ---
 

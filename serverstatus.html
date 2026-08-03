@@ -200,6 +200,7 @@
         html += '<table class="fvs-tabelle"><thead><tr><th>Code</th><th>Zustand</th>'
           + '<th style="text-align:right">Geräte</th><th style="text-align:right">Leitungen</th>'
           + '<th style="text-align:right">Listen</th><th style="text-align:right">Nachrichten</th>'
+          + '<th style="text-align:right">Anhänge</th>'
           + '<th style="text-align:right">Belegt</th><th>Letzter Zugriff</th></tr></thead><tbody>';
         kanaele.forEach(function (k) {
           var anteil = Math.min(100, Math.round((k.bytes || 0) / (2 * 1024 * 1024) * 100));
@@ -211,6 +212,9 @@
             + '<td class="zahl">' + (k.leitungen || 0) + '</td>'
             + '<td class="zahl">' + (k.listen || 0) + '</td>'
             + '<td class="zahl">' + (k.nachrichten || 0) + '</td>'
+            + '<td class="zahl">' + (k.anhaenge || 0)
+            + (k.anhaengeBytes ? '<div class="fvs-kachel__zusatz">' + kb(k.anhaengeBytes) + '</div>' : '')
+            + '</td>'
             + '<td class="zahl">' + kb(k.bytes)
             + '<div class="fvs-balken"><i class="' + (anteil > 80 ? 'voll' : '') + '" style="width:' + anteil + '%"></i></div></td>'
             + '<td>' + datum(k.letzterZugriff) + '<br><span class="fvs-kachel__zusatz">vor ' + tageHer(k.letzterZugriff) + ' Tagen</span></td>'

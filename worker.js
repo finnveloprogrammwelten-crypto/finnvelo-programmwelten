@@ -1624,6 +1624,15 @@ const JAHR = 365 * 24 * 60 * 60 * 1000;
 const WOCHE = 7 * 24 * 60 * 60 * 1000;
 const SPERRE = 10 * 60 * 1000;
 const MAX_DATEN = 2 * 1024 * 1024;      // 2 MB Aufgabenbestand je Kanal
+
+/* --- Anhaenge: Grenzen und Fristen (Auftrag "Anhaenge", Abschnitt 5/6) --- */
+const MAX_ANHANG = 2 * 1024 * 1024;     // 2 MB je Anhang, nach dem Verschluesseln
+const MAX_ANHANG_KANAL = 50 * 1024 * 1024;  // 50 MB Anhaenge je Kanal
+const ANHANG_AKTIV = 7 * 24 * 60 * 60 * 1000;      // Geraet zaehlt mit: Meldung binnen 7 Tagen
+const ANHANG_NOTFRIST = 14 * 24 * 60 * 60 * 1000;  // spaetestens nach 14 Tagen weg
+const ANHANG_MERK = 90 * 24 * 60 * 60 * 1000;      // so lange gibt es 410 statt 404
+const AUFRAEUM_TAKT = 10 * 60 * 1000;              // hoechstens alle 10 Minuten aufraeumen
+const GERAET_VERWAIST = 30 * 24 * 60 * 60 * 1000;  // ein Monat ohne Abgleich
 const MAX_NACHRICHT = 4 * 1024;         // 4 KB je Chatnachricht
 const MAX_NACHRICHTEN = 2000;           // aeltere fallen hinten heraus
 const NACHHOLEN = 200;                  // beim Verbinden mitgeschickt
@@ -1722,6 +1731,35 @@ export class Kanal extends DurableObject {
       "CREATE TABLE IF NOT EXISTS takt (" +
       "eins INTEGER PRIMARY KEY CHECK (eins = 1), fenster INTEGER, anzahl INTEGER)"
     );
+
+    /* --- Anhaenge (Bilder an Aufgaben) --------------------------------
+     * Getrennt vom Listenpaket: ein Listenpaket geht bei JEDER Aenderung
+     * vollstaendig neu ueber die Leitung - laege ein Foto darin, ginge es
+     * bei jedem Haekchen mit.
+     * Die Daten kommen fertig verschluesselt an. Der Server speichert und
+     * liefert aus, mehr nicht: kein Umwandeln, kein Verkleinern, keine
+     * Vorschaubilder. Jeder Eingriff macht sie unlesbar. */
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS anhaenge (" +
+      "anhang TEXT PRIMARY KEY, liste TEXT NOT NULL, ersteller TEXT NOT NULL, " +
+      "daten TEXT NOT NULL, groesse INTEGER NOT NULL, geladen INTEGER NOT NULL)"
+    );
+    this.sql.exec(
+      "CREATE INDEX IF NOT EXISTS anhaenge_liste ON anhaenge (liste)"
+    );
+    // Wer hat welchen Anhang schon geholt? Ein Eintrag je erfolgreichem GET.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS anhang_geholt (" +
+      "anhang TEXT NOT NULL, kennung TEXT NOT NULL, zeit INTEGER NOT NULL, " +
+      "PRIMARY KEY (anhang, kennung))"
+    );
+    // Bereits aufgeraeumte Anhaenge. Nur die Kennung, keine Daten - damit
+    // eine spaetere Anfrage 410 (war da, ist weg) statt 404 bekommt. Die App
+    // laesst den Anhang daraufhin vom Ersteller neu hochladen.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS anhang_weg (" +
+      "anhang TEXT PRIMARY KEY, liste TEXT NOT NULL, zeit INTEGER NOT NULL)"
+    );
   }
 
   /* ---------- Hilfen ------------------------------------------------ */
@@ -1809,6 +1847,103 @@ export class Kanal extends DurableObject {
       "SELECT 1 AS ja FROM freigaben WHERE liste = ? AND kennung = ?", liste.liste, kennung
     ).toArray();
     return r.length > 0;
+  }
+
+  /* ---------- Anhaenge: Aufraeumen ------------------------------------
+   * Der Server ist Durchgangsstation, kein Archiv. Die Wahrheit liegt auf
+   * den Geraeten; der Server bringt sie nur von einem zum anderen.
+   * Weil das hochladende Geraet seinen Anhang dauerhaft behaelt, darf hier
+   * grosszuegig geloescht werden - fehlt spaeter etwas, laedt der Ersteller
+   * es erneut hoch (siehe 410 in anhangHolen).
+   * -------------------------------------------------------------------- */
+
+  // Geraete, auf die ein Anhang wartet: die zum Zeitpunkt des Hochladens
+  // aktiven. Bewusst JE ANHANG ab dessen Hochladen gerechnet, nicht global -
+  // ein Anhang von heute wartet auf die zuletzt aktiven Geraete, einer von
+  // naechster Woche auf die dann aktiven.
+  mitzaehlende(geladen, ersteller) {
+    const grenze = geladen - ANHANG_AKTIV;
+    return this.sql.exec(
+      "SELECT kennung FROM mitglieder WHERE zuletzt >= ? AND kennung <> ?", grenze, ersteller
+    ).toArray().map((m) => m.kennung);
+  }
+
+  // Kann dieser Anhang weg? Entweder haben ihn alle mitzaehlenden Geraete
+  // geholt - oder die Notfrist ist abgelaufen.
+  anhangFertig(a, jetzt) {
+    if (jetzt - a.geladen >= ANHANG_NOTFRIST) return true;   // Notausgang
+    const warten = this.mitzaehlende(a.geladen, a.ersteller);
+    if (!warten.length) return false;   // niemand sonst aktiv: liegen lassen
+    const geholt = this.sql.exec(
+      "SELECT kennung FROM anhang_geholt WHERE anhang = ?", a.anhang
+    ).toArray().map((g) => g.kennung);
+    return warten.every((k) => geholt.indexOf(k) !== -1);
+  }
+
+  anhangLoeschen(a) {
+    this.sql.exec(
+      "INSERT INTO anhang_weg (anhang, liste, zeit) VALUES (?, ?, ?) " +
+      "ON CONFLICT(anhang) DO NOTHING",
+      a.anhang, a.liste, Date.now()
+    );
+    this.sql.exec("DELETE FROM anhaenge WHERE anhang = ?", a.anhang);
+    this.sql.exec("DELETE FROM anhang_geholt WHERE anhang = ?", a.anhang);
+  }
+
+  // Wird bei jedem Anhang-Zugriff mitgelaufen. Bewusst gedrosselt: laeuft im
+  // Anfrageweg und darf nicht bei jedem Aufruf die ganze Tabelle durchgehen.
+  // Der Wecker des Kanals taugt dafuer nicht - der schaut nur einmal im Jahr
+  // nach, weil er fuer das Loeschen ungenutzter Kanaele da ist.
+  anhaengeAufraeumen(sofort) {
+    const jetzt = Date.now();
+    if (!sofort && this.letztesAufraeumen && jetzt - this.letztesAufraeumen < AUFRAEUM_TAKT) {
+      return;
+    }
+    this.letztesAufraeumen = jetzt;
+
+    // Zuerst die verwaisten Geraete: sonst halten sie Anhaenge auf, obwohl
+    // sie ohnehin nicht mehr dazugehoeren.
+    try { this.verwaisteGeraete(jetzt); } catch (_e) {}
+
+    let alle = [];
+    try {
+      alle = this.sql.exec(
+        "SELECT anhang, liste, ersteller, groesse, geladen FROM anhaenge"
+      ).toArray();
+    } catch (_e) { return; }
+    for (const a of alle) {
+      try { if (this.anhangFertig(a, jetzt)) this.anhangLoeschen(a); }
+      catch (_e) { /* ein Anhang darf den Rest nicht aufhalten */ }
+    }
+    // Merkzettel der geloeschten nicht endlos wachsen lassen. Nach dieser
+    // Frist gibt es 404 statt 410 - dann ist die Aufgabe ohnehin lange weg.
+    try {
+      this.sql.exec("DELETE FROM anhang_weg WHERE zeit < ?", jetzt - ANHANG_MERK);
+    } catch (_e) {}
+  }
+
+  // Geraete, die sich einen Monat nicht gemeldet haben, verlassen den Kanal.
+  // WICHTIG: nur das Geraet geht - Listen, Aufgaben und Anhaenge bleiben.
+  // Es kann jederzeit mit Code und Passwort neu beitreten.
+  verwaisteGeraete(jetzt) {
+    const grenze = jetzt - GERAET_VERWAIST;
+    let raus = [];
+    try {
+      const k = this.kanalZeile();
+      raus = this.sql.exec(
+        "SELECT kennung FROM mitglieder WHERE zuletzt < ? AND kennung <> ?",
+        grenze, k ? (k.gruender || "") : ""
+      ).toArray();
+    } catch (_e) { return 0; }
+    for (const m of raus) {
+      try {
+        // Nur die Zugehoerigkeit loesen. KEIN Listeninhalt anfassen.
+        this.sql.exec("DELETE FROM mitglieder WHERE kennung = ?", m.kennung);
+        this.sql.exec("DELETE FROM freigaben WHERE kennung = ?", m.kennung);
+        this.sql.exec("DELETE FROM anhang_geholt WHERE kennung = ?", m.kennung);
+      } catch (_e) {}
+    }
+    return raus.length;
   }
 
   /* ---------- Wecker: Vorwarnung und Loeschen ------------------------ */
@@ -1924,10 +2059,19 @@ export class Kanal extends DurableObject {
       const l = this.sql.exec("SELECT COUNT(*) AS n FROM listen").toArray()[0].n;
       const lb = this.sql.exec("SELECT COALESCE(SUM(LENGTH(daten)),0) AS n FROM listen").toArray()[0].n;
       const nb = this.sql.exec("SELECT COALESCE(SUM(LENGTH(paket)),0) AS n FROM nachrichten").toArray()[0].n;
+      // Anhaenge mitzaehlen - sonst zeigt der Serverstatus zu wenig Platzbedarf.
+      let ah = 0, ahb = 0;
+      try {
+        const z = this.sql.exec(
+          "SELECT COUNT(*) AS n, COALESCE(SUM(groesse),0) AS b FROM anhaenge"
+        ).toArray()[0];
+        ah = z.n; ahb = z.b;
+      } catch (_e) { /* alte Kanaele ohne Tabelle */ }
       return jsonAntwort({
         da: true, code: k.code, offen: !!k.offen, stand: k.stand,
         mitglieder: m, nachrichten: n, listen: l,
-        bytes: (k.daten || "").length + lb + nb,
+        anhaenge: ah, anhaengeBytes: ahb,
+        bytes: (k.daten || "").length + lb + nb + ahb,
         leitungen: this.ctx.getWebSockets().length,
         angelegt: new Date(k.angelegt).toISOString(),
         letzterZugriff: new Date(k.letzter_zugriff).toISOString(),
@@ -2277,9 +2421,18 @@ export class Kanal extends DurableObject {
     const kennung = feld("kennung", 200);
     const ich = this.mitglied(kennung);
     const brauchtKennung = (teil === "mitglieder" || teil === "mitglieder/rolle" ||
-      teil.indexOf("listen") === 0);
+      teil.indexOf("listen") === 0 || teil.indexOf("anhang") === 0);
     if (brauchtKennung && !ich) {
       return jsonAntwort({ fehler: "Dieses Gerät gehört nicht zum Kanal." }, 403);
+    }
+
+    /* Meldung des Geraets festhalten. Daran haengt, wer beim Aufraeumen der
+     * Anhaenge mitzaehlt (7 Tage) und wer nach einem Monat aus dem Kanal
+     * faellt. Ohne diesen Stempel wuerde nie jemand als aktiv gelten. */
+    if (ich) {
+      try {
+        this.sql.exec("UPDATE mitglieder SET zuletzt = ? WHERE kennung = ?", Date.now(), kennung);
+      } catch (_e) { /* ein fehlender Stempel darf den Weg nicht blockieren */ }
     }
 
     /* --- Mitglieder ansehen ------------------------------------------ */
@@ -2469,6 +2622,134 @@ export class Kanal extends DurableObject {
       const seit = Number(url.searchParams.get("seit") || 0);
       if (Number.isFinite(seit) && seit >= l.stand) return jsonAntwort({ stand: l.stand });
       return jsonAntwort({ stand: l.stand, daten: l.daten || "" });
+    }
+
+    /* --- Anhang hochladen -------------------------------------------- */
+    if (teil === "anhang/neu" && method === "POST") {
+      if (ich.rolle === "ansehen") {
+        return jsonAntwort({ fehler: "Zum Ändern fehlt die Berechtigung." }, 403);
+      }
+      const liste = feld("liste", 120);
+      const anhang = feld("anhang", 200);
+      if (!anhang) return jsonAntwort({ fehler: "Es fehlt die Kennung des Anhangs." }, 400);
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      // Dieselbe Pruefung wie bei listen/holen - bewusst dieselbe Methode,
+      // nicht nachgebaut. Zwei getrennte Pruefungen gehen auseinander.
+      if (!this.darfListe(l, kennung)) {
+        return jsonAntwort({ fehler: "Für diese Liste fehlt die Freigabe." }, 403);
+      }
+
+      // Gibt es die Kennung schon? Kein Fehlerfall - die App wertet das als
+      // Erfolg und schickt nicht noch einmal.
+      const da = this.sql.exec(
+        "SELECT anhang, groesse FROM anhaenge WHERE anhang = ?", anhang
+      ).toArray();
+      if (da.length) return jsonAntwort({ anhang: anhang, groesse: da[0].groesse }, 409);
+
+      const inhalt = String(daten.daten == null ? "" : daten.daten);
+      if (!inhalt) return jsonAntwort({ fehler: "Der Anhang ist leer." }, 400);
+      if (inhalt.length > MAX_ANHANG) {
+        return jsonAntwort({
+          fehler: "Der Anhang ist zu groß (höchstens 2 MB). Bitte ein kleineres Bild wählen."
+        }, 413);
+      }
+
+      // Vor der Platzpruefung aufraeumen - sonst blockiert Altbestand,
+      // der ohnehin faellig ist. Hier ohne Drosselung: es geht um die Frage,
+      // ob dieser Upload Platz hat.
+      this.anhaengeAufraeumen(true);
+      const belegt = this.sql.exec(
+        "SELECT COALESCE(SUM(groesse), 0) AS n FROM anhaenge"
+      ).toArray()[0].n;
+      if (belegt + inhalt.length > MAX_ANHANG_KANAL) {
+        return jsonAntwort({
+          fehler: "Der Kanal hat keinen Platz mehr für Anhänge (50 MB). " +
+                  "Sobald alle Geräte die vorhandenen Bilder geholt haben, wird wieder Platz frei."
+        }, 413);
+      }
+
+      this.sql.exec(
+        "INSERT INTO anhaenge (anhang, liste, ersteller, daten, groesse, geladen) " +
+        "VALUES (?, ?, ?, ?, ?, ?)",
+        anhang, liste, kennung, inhalt, inhalt.length, Date.now()
+      );
+      // Wird der Anhang neu hochgeladen, gilt er nicht mehr als aufgeraeumt.
+      this.sql.exec("DELETE FROM anhang_weg WHERE anhang = ?", anhang);
+      return jsonAntwort({ anhang: anhang, groesse: inhalt.length });
+    }
+
+    /* --- Anhang holen -------------------------------------------------- */
+    if (teil === "anhang" && method === "GET") {
+      const anhang = feld("anhang", 200);
+      if (!anhang) return jsonAntwort({ fehler: "Es fehlt die Kennung des Anhangs." }, 400);
+      const a = this.sql.exec(
+        "SELECT * FROM anhaenge WHERE anhang = ?", anhang
+      ).toArray()[0];
+
+      if (!a) {
+        // War er schon einmal da? Dann 410 statt 404 - die App laesst ihn
+        // daraufhin beim Ersteller neu anfordern.
+        const weg = this.sql.exec(
+          "SELECT liste FROM anhang_weg WHERE anhang = ?", anhang
+        ).toArray()[0];
+        if (weg) {
+          // Auch hier die Freigabe pruefen: sonst verraet schon die Wahl
+          // zwischen 410 und 404, ob es den Anhang je gab.
+          const lw = this.sql.exec("SELECT * FROM listen WHERE liste = ?", weg.liste).toArray()[0];
+          if (lw && !this.darfListe(lw, kennung)) {
+            return jsonAntwort({ fehler: "Für diese Liste fehlt die Freigabe." }, 403);
+          }
+          return jsonAntwort({
+            fehler: "Dieser Anhang wurde aufgeräumt. Er wird beim nächsten Abgleich neu geholt."
+          }, 410);
+        }
+        return jsonAntwort({ fehler: "Diesen Anhang gibt es nicht." }, 404);
+      }
+
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", a.liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      if (!this.darfListe(l, kennung)) {
+        return jsonAntwort({ fehler: "Für diese Liste fehlt die Freigabe." }, 403);
+      }
+
+      const antwort = jsonAntwort({ anhang: a.anhang, daten: a.daten });
+
+      // Abholung vermerken, dann nachsehen, ob der Anhang damit erledigt ist.
+      // Reihenfolge wichtig: die Antwort steht schon, das Loeschen kann ihr
+      // nichts mehr anhaben.
+      this.sql.exec(
+        "INSERT INTO anhang_geholt (anhang, kennung, zeit) VALUES (?, ?, ?) " +
+        "ON CONFLICT(anhang, kennung) DO UPDATE SET zeit = excluded.zeit",
+        anhang, kennung, Date.now()
+      );
+      try {
+        const frisch = this.sql.exec(
+          "SELECT anhang, liste, ersteller, groesse, geladen FROM anhaenge WHERE anhang = ?", anhang
+        ).toArray()[0];
+        if (frisch && this.anhangFertig(frisch, Date.now())) this.anhangLoeschen(frisch);
+      } catch (_e) {}
+      return antwort;
+    }
+
+    /* --- Anhänge einer Liste auflisten --------------------------------- */
+    if (teil === "anhang/liste" && method === "GET") {
+      const liste = feld("liste", 120);
+      const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0];
+      if (!l) return jsonAntwort({ fehler: "Diese Liste gibt es nicht." }, 404);
+      if (!this.darfListe(l, kennung)) {
+        return jsonAntwort({ fehler: "Für diese Liste fehlt die Freigabe." }, 403);
+      }
+      const alle = this.sql.exec(
+        "SELECT anhang, groesse, geladen FROM anhaenge WHERE liste = ? ORDER BY geladen", liste
+      ).toArray();
+      return jsonAntwort({
+        liste: liste,
+        anhaenge: alle.map((a) => ({
+          anhang: a.anhang, groesse: a.groesse,
+          geladen: new Date(a.geladen).toISOString()
+        }))
+      });
     }
 
     return jsonAntwort({ fehler: "Diese Auskunft gibt es nicht." }, 404);
