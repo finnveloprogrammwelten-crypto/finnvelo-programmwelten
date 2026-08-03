@@ -1375,7 +1375,12 @@ export default {
         if ((request.headers.get("upgrade") || "").toLowerCase() !== "websocket") {
           return json({ fehler: "Für diesen Weg wird eine WebSocket-Verbindung erwartet." }, 426);
         }
-        return stub.fetch(new Request("https://kanal/draht", { headers: request.headers }));
+        // Die Angaben aus der Adresse mitnehmen (raum, kennung, pruefwert,
+        // seit). Frueher gingen sie hier verloren - dadurch konnte das
+        // Kanal-Objekt weder Raum noch Freigabe erkennen.
+        const drahtZiel = new URL("https://kanal/draht");
+        for (const [n, v] of url.searchParams) drahtZiel.searchParams.set(n, v);
+        return stub.fetch(new Request(drahtZiel.toString(), { headers: request.headers }));
       }
 
       /* --- Alles Uebrige an das Kanal-Objekt weiterreichen ----------- */
@@ -1704,6 +1709,12 @@ export class Kanal extends DurableObject {
       "stand INTEGER PRIMARY KEY, kennung TEXT NOT NULL, " +
       "paket TEXT NOT NULL, zeit INTEGER NOT NULL)"
     );
+    // Chatraeume: "allgemein" fuer alle, sonst die Listen-Kennung.
+    // Nachtraeglich ergaenzt - bei bestehenden Kanaelen fehlt die Spalte sonst.
+    try { this.sql.exec("ALTER TABLE nachrichten ADD COLUMN raum TEXT NOT NULL DEFAULT 'allgemein'"); }
+    catch (_e) { /* gibt es schon */ }
+    try { this.sql.exec("CREATE INDEX IF NOT EXISTS nachrichten_raum ON nachrichten (raum, stand)"); }
+    catch (_e) {}
     this.sql.exec(
       "CREATE UNIQUE INDEX IF NOT EXISTS nachrichten_kennung ON nachrichten (kennung)"
     );
@@ -1719,6 +1730,11 @@ export class Kanal extends DurableObject {
       "liste TEXT NOT NULL, kennung TEXT NOT NULL, paket TEXT NOT NULL, " +
       "PRIMARY KEY (liste, kennung))"
     );
+    // Ab wann gilt die Freigabe? Wer neu dazukommt, liest im Chat nur ab
+    // diesem Zeitpunkt - nicht rueckwirkend den ganzen Verlauf.
+    // 0 bei Altbestand: dann gilt sie wie bisher von Anfang an.
+    try { this.sql.exec("ALTER TABLE freigaben ADD COLUMN seit INTEGER NOT NULL DEFAULT 0"); }
+    catch (_e) { /* gibt es schon */ }
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS einladungen (" +
       "marke TEXT PRIMARY KEY, salz_e TEXT NOT NULL, " +
@@ -1843,6 +1859,13 @@ export class Kanal extends DurableObject {
   darfListe(liste, kennung) {
     if (!liste) return false;
     if (liste.offen) return true;
+    // Der Ersteller kommt immer an seine eigene Liste. Ohne diese Zeile
+    // sperrt er sich selbst aus, sobald er sie an jemanden freigibt:
+    // die erste Freigabe setzt offen = 0, und in "freigaben" steht nur der
+    // Beschenkte. Er duerfte die Liste dann noch loeschen und ihre Rechte
+    // aendern (beides prueft "listen.ersteller"), aber weder lesen noch
+    // schreiben. Den Listenschluessel hat er ohnehin - er hat ihn erzeugt.
+    if (kennung && gleich(liste.ersteller, kennung)) return true;
     const r = this.sql.exec(
       "SELECT 1 AS ja FROM freigaben WHERE liste = ? AND kennung = ?", liste.liste, kennung
     ).toArray();
@@ -2011,10 +2034,21 @@ export class Kanal extends DurableObject {
 
     const hoechste = this.sql.exec("SELECT MAX(stand) AS m FROM nachrichten").toArray();
     const stand = ((hoechste.length && hoechste[0].m) || 0) + 1;
-    this.sql.exec(
-      "INSERT INTO nachrichten (stand, kennung, paket, zeit) VALUES (?, ?, ?, ?)",
-      stand, kennung, paket, Date.now()
-    );
+    // Raum der sendenden Leitung. Aeltere Fassungen ohne Raum landen in
+    // "allgemein" - genau dort, wo sie frueher auch gelandet sind.
+    const raum = String(zustand.raum || "allgemein");
+    try {
+      this.sql.exec(
+        "INSERT INTO nachrichten (stand, kennung, paket, zeit, raum) VALUES (?, ?, ?, ?, ?)",
+        stand, kennung, paket, Date.now(), raum
+      );
+    } catch (_e) {
+      // Kanal von vor der Raum-Spalte
+      this.sql.exec(
+        "INSERT INTO nachrichten (stand, kennung, paket, zeit) VALUES (?, ?, ?, ?)",
+        stand, kennung, paket, Date.now()
+      );
+    }
 
     // aelteste Nachrichten fallen hinten heraus
     const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
@@ -2028,11 +2062,38 @@ export class Kanal extends DurableObject {
 
     // Quittung an den Absender
     try { ws.send(JSON.stringify({ art: "quittung", kennung: kennung, stand: stand })); } catch (_e) {}
-    // unveraendert an alle anderen Leitungen
-    const weiter = JSON.stringify({ art: "nachricht", paket: paket, stand: stand });
+    // Unveraendert an die anderen Leitungen - aber nur an die im SELBEN Raum.
+    // Der Riegel sitzt hier beim Ausliefern: alle im Kanal haben denselben
+    // Schluessel, Verschluesselung hilft also nicht.
+    const weiter = JSON.stringify({ art: "nachricht", paket: paket, stand: stand, raum: raum });
     for (const andere of this.ctx.getWebSockets()) {
       if (andere === ws) continue;
+      let zu = {};
+      try { zu = andere.deserializeAttachment() || {}; } catch (_e) { zu = {}; }
+      if (String(zu.raum || "allgemein") !== raum) continue;
       try { andere.send(weiter); } catch (_e) {}
+    }
+  }
+
+  /* Kurze Meldung an alle anderen: an dieser Liste hat sich etwas getan.
+   * Kein Inhalt - nur der Anstoss, selbst zu holen. Wer nicht freigegeben
+   * ist, bekommt nichts: sonst verriete schon die Meldung, dass es die
+   * Liste gibt. */
+  listenMeldung(liste, stand, ausser) {
+    let l = null;
+    try { l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0]; }
+    catch (_e) { return; }
+    if (!l) return;
+    const nachricht = JSON.stringify({ art: "listen", liste: liste, stand: stand });
+    for (const ws of this.ctx.getWebSockets()) {
+      let zu = {};
+      try { zu = ws.deserializeAttachment() || {}; } catch (_e) { zu = {}; }
+      const wer = String(zu.kennung || "");
+      // Nicht an den Absender - der weiss es schon.
+      if (wer && ausser && gleich(wer, ausser)) continue;
+      // Dieselbe Freigabepruefung wie ueberall.
+      if (!this.darfListe(l, wer)) continue;
+      try { ws.send(nachricht); } catch (_e) {}
     }
   }
 
@@ -2527,9 +2588,9 @@ export class Kanal extends DurableObject {
         const paket = String(daten.paket || "");
         if (!paket) return jsonAntwort({ fehler: "Es fehlt das Schlüsselpaket für die Freigabe." }, 400);
         this.sql.exec(
-          "INSERT INTO freigaben (liste, kennung, paket) VALUES (?, ?, ?) " +
+          "INSERT INTO freigaben (liste, kennung, paket, seit) VALUES (?, ?, ?, ?) " +
           "ON CONFLICT(liste, kennung) DO UPDATE SET paket = excluded.paket",
-          liste, ziel[0].kennung, paket
+          liste, ziel[0].kennung, paket, Date.now()
         );
         // Erste Freigabe schliesst die Liste fuer alle anderen
         this.sql.exec("UPDATE listen SET offen = 0 WHERE liste = ?", liste);
@@ -2578,7 +2639,24 @@ export class Kanal extends DurableObject {
         return jsonAntwort({ fehler: "Das darf nur, wer die Liste angelegt hat." }, 403);
       }
       this.sql.exec("DELETE FROM freigaben WHERE liste = ?", liste);
+      // Anhaenge gehen mit. Sonst blieben Bilder liegen, deren Liste es nicht
+      // mehr gibt: das Aufraeumen wuerde sie nie anfassen, und sie belegten
+      // dauerhaft Platz im Kanal.
+      try {
+        const raus = this.sql.exec("SELECT anhang FROM anhaenge WHERE liste = ?", liste).toArray();
+        for (const a of raus) {
+          this.sql.exec("DELETE FROM anhang_geholt WHERE anhang = ?", a.anhang);
+        }
+        this.sql.exec("DELETE FROM anhaenge WHERE liste = ?", liste);
+        // Auch die Merkzettel: die Liste ist weg, ein 410 ergaebe keinen Sinn
+        // mehr - die App soll den Anhang nicht neu hochladen.
+        this.sql.exec("DELETE FROM anhang_weg WHERE liste = ?", liste);
+      } catch (_e) { /* Kanal von vor den Anhaengen */ }
       this.sql.exec("DELETE FROM listen WHERE liste = ?", liste);
+      // Nachrichten des Listen-Chatraums gehen ebenfalls mit - der Raum
+      // existiert ohne seine Liste nicht mehr.
+      try { this.sql.exec("DELETE FROM nachrichten WHERE raum = ?", liste); }
+      catch (_e) { /* Kanal von vor den Raeumen */ }
       return jsonAntwort({ ok: true });
     }
 
@@ -2607,6 +2685,8 @@ export class Kanal extends DurableObject {
       if (stand < l.stand) return jsonAntwort({ stand: l.stand }, 409);
       const neu = l.stand + 1;
       this.sql.exec("UPDATE listen SET daten = ?, stand = ? WHERE liste = ?", inhalt, neu, liste);
+      // Die anderen Geraete sofort anstossen, statt sie warten zu lassen.
+      try { this.listenMeldung(liste, neu, kennung); } catch (_e) { /* nie den Upload kippen */ }
       return jsonAntwort({ stand: neu });
     }
 
@@ -2757,7 +2837,36 @@ export class Kanal extends DurableObject {
 
   /* ---------- Leitung annehmen --------------------------------------- */
 
+  /* ---------- Chatraeume ---------------------------------------------
+   * "allgemein" erreicht jedes Mitglied. Jeder weitere Raum traegt die
+   * Kennung einer Liste und erbt deren Freigabe - dieselbe Pruefung wie bei
+   * listen/holen, ueber dieselbe Methode. Keine zweite Rechteverwaltung.
+   * "ohne" und "stamm" bekommen keinen Raum.
+   * -------------------------------------------------------------------- */
+  raumErlaubt(raum, kennung) {
+    if (!raum || raum === "allgemein") return { ok: true, seit: 0 };
+    if (raum === "ohne" || raum === "stamm") {
+      return { ok: false, grund: "Für diese Ansicht gibt es keinen Chat." };
+    }
+    const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", raum).toArray()[0];
+    if (!l) return { ok: false, grund: "Diesen Chatraum gibt es nicht." };
+    if (!this.darfListe(l, kennung)) {
+      return { ok: false, grund: "Für diese Liste fehlt die Freigabe." };
+    }
+    // Ab wann darf mitgelesen werden? Wer neu freigegeben wird, bekommt
+    // nur Neueres - nicht rueckwirkend den ganzen Verlauf.
+    let seit = 0;
+    if (!l.offen) {
+      const f = this.sql.exec(
+        "SELECT seit FROM freigaben WHERE liste = ? AND kennung = ?", raum, kennung
+      ).toArray();
+      if (f.length) seit = Number(f[0].seit) || 0;
+    }
+    return { ok: true, seit: seit };
+  }
+
   async draht(request) {
+    const url = new URL(request.url);
     const k = this.kanalZeile();
     const paar = new WebSocketPair();
     const [zumBesucher, meins] = Object.values(paar);
@@ -2769,15 +2878,71 @@ export class Kanal extends DurableObject {
       return new Response(null, { status: 101, webSocket: zumBesucher });
     }
 
-    try { meins.serializeAttachment({ fenster: 0, anzahl: 0 }); } catch (_e) {}
-    this.zugriffMerken();
+    const raum = String(url.searchParams.get("raum") || "allgemein").slice(0, 120);
+    const kennung = String(url.searchParams.get("kennung") || "").slice(0, 200);
+    const pruefwert = String(url.searchParams.get("pruefwert") || "");
+    const seitWunsch = Number(url.searchParams.get("seit") || 0) || 0;
 
-    // Die letzten 200 Nachrichten nachreichen
-    const alt = this.sql.exec(
-      "SELECT stand, paket FROM nachrichten ORDER BY stand DESC LIMIT ?", NACHHOLEN
-    ).toArray().reverse();
+    /* Aeltere App-Fassungen verbinden sich ohne diese Angaben und erwarten
+     * den bisherigen Ablauf. Deshalb: fuer "allgemein" bleibt alles wie
+     * gehabt, sobald aber ein Listenraum gewuenscht wird, sind Kennung und
+     * Pruefwert Pflicht. Alte Fassungen fragen solche Raeume nie an. */
+    const listenRaum = raum && raum !== "allgemein";
+
+    if (listenRaum) {
+      if (!gleich(pruefwert, k.pruefwert)) {
+        try { meins.close(4401, "Passwort stimmt nicht"); } catch (_e) {}
+        return new Response(null, { status: 101, webSocket: zumBesucher });
+      }
+      if (!this.mitglied(kennung)) {
+        try { meins.close(4403, "Dieses Gerät gehört nicht zum Kanal"); } catch (_e) {}
+        return new Response(null, { status: 101, webSocket: zumBesucher });
+      }
+    }
+
+    // Ohne Freigabe ausdruecklich ablehnen - nicht stillschweigend einen
+    // leeren Raum liefern. Sonst sucht spaeter jemand einen Fehler, den es
+    // nicht gibt.
+    const erlaubt = this.raumErlaubt(raum, kennung);
+    if (!erlaubt.ok) {
+      try {
+        meins.send(JSON.stringify({ art: "fehler", raum: raum, fehler: erlaubt.grund }));
+      } catch (_e) {}
+      try { meins.close(4403, erlaubt.grund); } catch (_e) {}
+      return new Response(null, { status: 101, webSocket: zumBesucher });
+    }
+
+    // Raum und Kennung an der Leitung merken - beim Verteilen wird beides
+    // gebraucht, und die Leitung ueberlebt den Ruhezustand des Objekts.
+    try { meins.serializeAttachment({ fenster: 0, anzahl: 0, raum: raum, kennung: kennung }); }
+    catch (_e) {}
+    this.zugriffMerken();
+    if (kennung && this.mitglied(kennung)) {
+      try { this.sql.exec("UPDATE mitglieder SET zuletzt = ? WHERE kennung = ?", Date.now(), kennung); }
+      catch (_e) {}
+    }
+
+    // Nachholen: ab dem spaeteren von Freigabezeitpunkt und Wunsch,
+    // hoechstens NACHHOLEN Stueck.
+    const ab = Math.max(erlaubt.seit || 0, seitWunsch);
+    let alt = [];
+    try {
+      alt = this.sql.exec(
+        "SELECT stand, paket, zeit FROM nachrichten WHERE raum = ? AND zeit > ? " +
+        "ORDER BY stand DESC LIMIT ?", raum, ab, NACHHOLEN
+      ).toArray().reverse();
+    } catch (_e) {
+      // Kanal von vor der Raum-Spalte: dann wie frueher, ohne Raumfilter.
+      alt = this.sql.exec(
+        "SELECT stand, paket, zeit FROM nachrichten ORDER BY stand DESC LIMIT ?", NACHHOLEN
+      ).toArray().reverse();
+    }
     for (const n of alt) {
-      try { meins.send(JSON.stringify({ art: "nachricht", paket: n.paket, stand: n.stand })); } catch (_e) {}
+      try {
+        meins.send(JSON.stringify({
+          art: "nachricht", paket: n.paket, stand: n.stand, raum: raum
+        }));
+      } catch (_e) {}
     }
     return new Response(null, { status: 101, webSocket: zumBesucher });
   }

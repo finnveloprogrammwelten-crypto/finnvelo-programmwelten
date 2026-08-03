@@ -269,6 +269,94 @@ bei jedem Häkchen mit.
 
 ---
 
+## 4b. Chatfreigaben und Sofortmeldung — Stand App 7.73
+
+Gebaut nach `AUFTRAG-Chatfreigaben.md` samt Nachtrag.
+
+### Räume
+
+| Raum | Wer liest mit |
+|---|---|
+| `allgemein` | jedes Mitglied |
+| Listen-Kennung | wer für diese Liste freigegeben ist |
+
+`ohne` und `stamm` bekommen keinen Raum. Die Prüfung läuft über
+`raumErlaubt()`, das intern `darfListe()` benutzt — **dieselbe** Methode
+wie `listen/holen`. Keine zweite Rechteverwaltung.
+
+`nachrichten` hat eine Spalte `raum` (Vorgabe `allgemein`),
+`freigaben` eine Spalte `seit`. Beide per `ALTER TABLE` nachgezogen.
+
+### Wichtige Punkte
+
+* **Der Worker reichte die Adressparameter am Draht bisher nicht durch.**
+  `stub.fetch(new Request("https://kanal/draht", …))` verwarf sie. Ohne
+  diese Zeile kann das Kanal-Objekt weder Raum noch Freigabe erkennen.
+* **Verschlüsselung hilft hier nicht** — alle im Kanal haben denselben
+  Schlüssel. Der Riegel sitzt beim Ausliefern: `webSocketMessage` schickt
+  nur an Leitungen mit demselben `raum` im Attachment.
+* **Ohne Freigabe wird ausdrücklich abgelehnt** (Close-Code 4403 plus
+  Nachricht mit Grund), nicht stillschweigend ein leerer Raum geliefert.
+* **Rückwirkend gilt nicht:** beim Nachholen zählt
+  `max(freigabe.seit, seit)`. Eine erneuerte Freigabe überschreibt `seit`
+  nicht (`DO UPDATE SET paket = …`, ohne `seit`) — wer schon dabei war,
+  verliert seinen Verlauf nicht, nur weil das Schlüsselpaket erneuert wird.
+* **Ältere App-Fassungen:** wer ohne `raum` verbindet, landet in
+  `allgemein` und erlebt den bisherigen Ablauf. Kennung und Prüfwert sind
+  nur für Listenräume Pflicht — solche Räume fragen alte Fassungen nie an.
+  Damit ändert sich kein bestehender Weg.
+
+### Sofortmeldung (Nachtrag)
+
+`listen/senden` schickt über die stehende Leitung
+`{art:"listen", liste, stand}` — kein Inhalt, nur der Anstoß.
+
+* **Nicht an den Absender** (Kennung aus dem Attachment).
+* **Nur an Freigegebene** — sonst verriete schon die Meldung, dass es die
+  Liste gibt.
+* In `try/catch`: eine misslungene Meldung darf den Upload nie kippen.
+
+---
+
+## 4c. Zwei Befunde vom 03.08.2026
+
+### Der Ersteller sperrte sich aus seiner eigenen Liste aus
+
+Gefunden beim Prüfen von `AUFTRAG-Liste-umbenennen.md`. Ablauf:
+
+1. A legt die Liste „Arbeit" an → `offen = 1`
+2. A gibt sie dem Monteur frei → **erste Freigabe setzt `offen = 0`**
+3. In `freigaben` steht nur der Monteur — A nicht
+4. `darfListe(l, A)` → **false**
+
+Ergebnis: A konnte seine eigene Liste weder lesen noch beschreiben
+(403), sie aber weiterhin **löschen** und ihre Rechte ändern — beides
+prüft `listen.ersteller`. Diese Inkonsistenz war der Beweis, dass es
+sich um ein Versehen handelte und nicht um Absicht.
+
+**Behoben** in `darfListe()`: der Ersteller kommt immer durch. Den
+Listenschlüssel hat er ohnehin, er hat ihn erzeugt.
+
+Wirkt auf alles, was `darfListe` benutzt: Aufgaben, Anhänge, Chaträume.
+Nach der Änderung liefen alle Prüfungen weiterhin durch.
+
+### `listen/loeschen` ließ Anhänge und Chat zurück
+
+Gelöscht wurden nur `listen` und `freigaben`. Anhänge der Liste blieben
+liegen — und das Aufräumen hätte sie **nie** angefasst, weil es über die
+Anhänge selbst läuft, nicht über die Liste. Sie hätten dauerhaft Platz
+belegt.
+
+Jetzt gehen mit: `anhaenge`, `anhang_geholt`, `anhang_weg` (ein 410
+ergäbe ohne Liste keinen Sinn) und die `nachrichten` des Listen-Raums.
+
+**Merke für Tests:** Der erste Prüfdurchlauf meldete „Anhänge sind mit
+weg" — grün, obwohl nichts gelöscht wurde. Der Anhang war nie angelegt
+worden, weil `anhang/neu` am Ersteller-Fehler oben mit 403 scheiterte.
+Ein Test, der das Vorhandensein nicht zuerst nachweist, prüft nichts.
+
+---
+
 ## 6. Was noch offen ist
 
 **`/planer` — die Weboberfläche für den Rechner.** Laut Spezifikation
