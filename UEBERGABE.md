@@ -382,6 +382,31 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+### Nachtrag 05.08.2026: das Menü selbst verwalten
+
+Der Upload an den Programmseiten war nur die halbe Antwort — gesucht
+wurden die Web-Apps dort, wo sie stehen: **im Menü**. Dort ließ sich
+bisher nur der *Text* ändern (`enableNav` → `editableText`), nicht das
+Ziel, und neue anlegen ging gar nicht.
+
+Jetzt steht die Liste als JSON im Block **`w0`** auf der Seite
+`global`, und das Menü wird daraus gezeichnet — auch für Besucher
+(in `applyOverrides`, nicht nur im Bearbeiten-Modus).
+
+* Ist `w0` leer, bleibt das HTML stehen. Der Ausgangsbestand wird beim
+  ersten Öffnen des Fensters aus dem DOM gelesen — **nach**
+  `applyOverrides`, damit bereits umbenannte Namen erhalten bleiben.
+* Verwaltet wird in einem eigenen Fenster (Knopf in der Admin-Leiste).
+  Direkt im Dropdown ginge nicht: es klappt bei jeder Mausbewegung zu
+  und ist zu schmal für Eingabefelder.
+
+**Stolperstein, der Zeit gekostet hat:** `BLOCK_RE` im Worker lautet
+`/^[a-z][0-9]{1,4}$/` — **ein** Buchstabe, dann Ziffern. Der zuerst
+gewählte Schlüssel `wa0` wurde stillschweigend mit 400 abgewiesen; das
+Fenster meldete nur „Speichern fehlgeschlagen". Neue Blöcke also immer
+einbuchstabig benennen. Vergeben sind: `t i d s n b o g0 h0 q0 v0 x0`
+und jetzt `w0`.
+
 **Merke für Tests:** Der Prüfstand (`t/server.mjs`) setzte auf alle
 `/api/`-Antworten pauschal `content-type: application/json`. Eine
 hochgeladene Web-App kam dadurch als JSON beim Browser an — der Test

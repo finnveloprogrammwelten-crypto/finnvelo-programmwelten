@@ -245,6 +245,21 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
     - Geschrieben wird die `version.json` erst mit **Speichern** in der
       App-Aktualisierung. Die Automatik fuellt nur die Felder aus.
 
+### Web-Apps im Menue verwalten
+In der Admin-Leiste steht der Knopf **"🌐 Web-Apps"**. Er oeffnet ein
+Fenster mit den Eintraegen, die oben im Menue unter *Web-Apps* stehen.
+
+- **Name** und **Ziel** je Eintrag aendern.
+- **+ Eintrag hinzufuegen** legt einen neuen an, **✕** entfernt ihn,
+  **↑ ↓** verschieben ihn.
+- **🌐 Web-App hochladen** legt eine in sich geschlossene `.html`-Datei
+  auf dem Server ab und traegt die Adresse gleich ins Ziel ein.
+- Erst **Alles speichern** schreibt die Aenderungen fest.
+- Die Liste gilt fuer **alle Seiten** - einmal gepflegt, ueberall gleich.
+  Gespeichert wird sie als Block `w0` auf der Seite `global`.
+- Ein Ziel muss mit `https://` oder mit `/` beginnen, sonst weist das
+  Fenster es ab. Eintraege ohne Namen oder Ziel fallen beim Speichern weg.
+
 ### Verlauf: eine Aenderung zuruecknehmen
 In der Admin-Leiste steht der Knopf **"↺ Verlauf"**. Er zeigt die frueheren
 Faessungen dieser Seite - die letzten **zehn je Feld**, neueste zuerst, mit

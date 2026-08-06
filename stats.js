@@ -550,6 +550,10 @@
         parseCustom(map['x0']); renderCustom();
         parseHidden(map['h0']); applyHidden(k); hideButton(k);
         applySectionOrder(map);
+        // Web-Apps im Menue: global gespeichert, damit sie auf JEDER Seite
+        // gleich aussehen. Muss auch fuer Besucher laufen, nicht nur im
+        // Bearbeiten-Modus - sonst sehen sie noch die alten Eintraege.
+        parseWebApps(gmap['w0']); renderWebApps();
       }).catch(function () {});
     }
 
@@ -1473,6 +1477,7 @@
         ? '<span class="fv-admin-hint">Texte anklicken \u00b7 Bilder klicken/ziehen \u00b7 Kacheln am Griff ziehen</span>'
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
+                + '<button type="button" class="fv-admin-btn fv-admin-webapps">\uD83C\uDF10 Web-Apps</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
       bar.innerHTML = '<div class="fv-admin-left">' + left + '</div>'
@@ -1493,6 +1498,7 @@
         location.reload();
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
+      bar.querySelector('.fv-admin-webapps').addEventListener('click', webAppsVerwalten);
       fehlerHinweisHolen(bar);
     }
 
@@ -1525,6 +1531,272 @@
           });
         })
         .catch(function () { /* der Hinweis ist Beiwerk - nie stoeren */ });
+    }
+
+    /* ================================================================
+     * Web-Apps im Menue "Web-Apps"
+     * ----------------------------------------------------------------
+     * Die Eintraege standen bisher fest im HTML jeder Seite. Aendern
+     * liess sich nur ihr Text - nicht das Ziel, und neue anlegen ging
+     * gar nicht.
+     *
+     * Jetzt stehen sie als Liste im Block "w0" auf der GLOBAL-Seite
+     * (Blocknamen duerfen nur EIN Buchstabe plus Ziffern sein - BLOCK_RE
+     * im Worker; "wa0" wurde stillschweigend abgewiesen):
+     * einmal gepflegt, ueberall gleich. Das Menue wird daraus neu
+     * gezeichnet, auch fuer Besucher.
+     *
+     * Der Ausgangsbestand kommt beim ersten Mal aus dem HTML - so bleibt
+     * alles stehen, was schon da ist, samt bereits umbenannter Namen
+     * (applyOverrides laeuft vorher).
+     * ================================================================ */
+    var webApps = null;          // null = noch nichts gespeichert
+
+    function parseWebApps(item) {
+      webApps = null;
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var arr = JSON.parse(item.value);
+          if (Array.isArray(arr)) {
+            webApps = arr.filter(function (e) {
+              return e && typeof e.name === 'string' && typeof e.url === 'string';
+            }).slice(0, 12);
+          }
+        } catch (e) { webApps = null; }
+      }
+    }
+
+    function webAppMenue() {
+      return document.querySelector('.nav-apps__menu');
+    }
+
+    // Was steht gerade im Menue? Dient als Ausgangsbestand.
+    function webAppsAusHtml() {
+      var menue = webAppMenue();
+      if (!menue) return [];
+      return Array.prototype.slice.call(menue.querySelectorAll('a')).map(function (a) {
+        return { name: (a.textContent || '').trim(), url: a.getAttribute('href') || '' };
+      });
+    }
+
+    function renderWebApps() {
+      var menue = webAppMenue();
+      if (!menue) return;
+      if (!webApps) return;              // nichts gespeichert -> HTML bleibt stehen
+      var html = '';
+      webApps.forEach(function (e) {
+        if (!e.name || !e.url) return;
+        var extern = /^https?:\/\//i.test(e.url);
+        html += '<a href="' + sicherAttr(e.url) + '"'
+             +  (extern || e.url.charAt(0) === '/' ? ' target="_blank" rel="noopener"' : '')
+             +  ' data-fv-nav-extra>' + sicherText(e.name) + '</a>';
+      });
+      menue.innerHTML = html;
+      // Der Hauptknopf zeigt auf den ersten Eintrag - so wie zuvor auch.
+      var haupt = document.querySelector('.nav-apps__btn');
+      if (haupt && webApps.length && webApps[0].url) {
+        haupt.setAttribute('href', webApps[0].url);
+      }
+    }
+
+    function sicherText(t) {
+      return String(t == null ? '' : t)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function sicherAttr(t) {
+      return sicherText(t).replace(/"/g, '&quot;');
+    }
+
+    function saveWebApps() {
+      return save('w0', 'text', JSON.stringify(webApps || []), GLOBAL);
+    }
+
+    /* ---- Verwaltungsfenster ------------------------------------------
+     * Eigenes Fenster statt Bearbeiten im Menue selbst: das Dropdown
+     * klappt bei jeder Mausbewegung zu und ist zu schmal fuer Felder.  */
+    function webAppsVerwalten() {
+      var alt = document.querySelector('.fv-wa-huelle');
+      if (alt) { alt.parentNode.removeChild(alt); return; }
+
+      if (!webApps) webApps = webAppsAusHtml();
+
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-verlauf-huelle fv-wa-huelle';
+      huelle.innerHTML =
+        '<div class="fv-verlauf fv-wa" role="dialog" aria-label="Web-Apps im Men\u00fc">'
+      + '  <div class="fv-verlauf__kopf">'
+      + '    <h2>Web-Apps im Men\u00fc</h2>'
+      + '    <button type="button" class="fv-verlauf__zu" aria-label="Schlie\u00dfen">\u2715</button>'
+      + '  </div>'
+      + '  <p class="fv-verlauf__hilfe">Diese Eintr\u00e4ge stehen auf <strong>allen</strong> Seiten '
+      + '    oben im Men\u00fc unter \u201eWeb-Apps\u201c. Name und Ziel lassen sich \u00e4ndern, '
+      + '    Eintr\u00e4ge hinzuf\u00fcgen, verschieben und entfernen. Mit '
+      + '    <strong>Web-App hochladen</strong> legst du eine in sich geschlossene '
+      + '    .html-Datei auf dem Server ab \u2013 das Ziel wird dann gleich mitgesetzt.</p>'
+      + '  <div class="fv-wa-liste"></div>'
+      + '  <div class="fv-wa-fuss">'
+      + '    <button type="button" class="fv-wa-neu">+ Eintrag hinzuf\u00fcgen</button>'
+      + '    <button type="button" class="fv-wa-speichern">Alles speichern</button>'
+      + '    <span class="fv-zielzeile__melde" id="fvWaMelde"></span>'
+      + '  </div>'
+      + '</div>';
+      document.body.appendChild(huelle);
+
+      var liste = huelle.querySelector('.fv-wa-liste');
+      var melde = huelle.querySelector('#fvWaMelde');
+
+      function sagen(text, art) {
+        melde.textContent = text || '';
+        melde.className = 'fv-zielzeile__melde' + (art ? ' ' + art : '');
+      }
+      function schliessen() {
+        if (huelle.parentNode) huelle.parentNode.removeChild(huelle);
+      }
+      huelle.querySelector('.fv-verlauf__zu').addEventListener('click', schliessen);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) schliessen(); });
+
+      function zeichnen() {
+        if (!webApps.length) {
+          liste.innerHTML = '<p class="fv-verlauf__leer">Noch kein Eintrag. '
+            + 'Mit \u201e+ Eintrag hinzuf\u00fcgen\u201c anfangen.</p>';
+          return;
+        }
+        var html = '';
+        webApps.forEach(function (e, i) {
+          html += '<div class="fv-wa-zeile" data-nr="' + i + '">'
+               +  '  <div class="fv-wa-felder">'
+               +  '    <label>Name im Men\u00fc'
+               +  '      <input type="text" class="fv-wa-name" value="' + sicherAttr(e.name) + '"></label>'
+               +  '    <label>Ziel'
+               +  '      <input type="text" class="fv-wa-url" spellcheck="false" '
+               +  '        value="' + sicherAttr(e.url) + '" '
+               +  '        placeholder="/mischwald oder https://\u2026"></label>'
+               +  '  </div>'
+               +  '  <div class="fv-wa-knoepfe">'
+               +  '    <button type="button" class="fv-wa-app">\uD83C\uDF10 Web-App hochladen</button>'
+               +  '    <button type="button" class="fv-wa-hoch" title="Nach oben" '
+               +  (i === 0 ? 'disabled' : '') + '>\u2191</button>'
+               +  '    <button type="button" class="fv-wa-runter" title="Nach unten" '
+               +  (i === webApps.length - 1 ? 'disabled' : '') + '>\u2193</button>'
+               +  '    <button type="button" class="fv-wa-weg" title="Entfernen">\u2715</button>'
+               +  '  </div>'
+               +  '</div>';
+        });
+        liste.innerHTML = html;
+        anbinden();
+      }
+
+      // Was in den Feldern steht, in die Liste uebernehmen
+      function einsammeln() {
+        Array.prototype.forEach.call(liste.querySelectorAll('.fv-wa-zeile'), function (z) {
+          var i = Number(z.getAttribute('data-nr'));
+          if (!webApps[i]) return;
+          webApps[i].name = z.querySelector('.fv-wa-name').value.trim();
+          webApps[i].url = z.querySelector('.fv-wa-url').value.trim();
+        });
+      }
+
+      function anbinden() {
+        Array.prototype.forEach.call(liste.querySelectorAll('.fv-wa-zeile'), function (z) {
+          var i = Number(z.getAttribute('data-nr'));
+          z.querySelector('.fv-wa-weg').addEventListener('click', function () {
+            einsammeln();
+            webApps.splice(i, 1);
+            zeichnen();
+            sagen('Entfernt \u2013 noch nicht gespeichert.', '');
+          });
+          z.querySelector('.fv-wa-hoch').addEventListener('click', function () {
+            einsammeln();
+            if (i > 0) {
+              var t = webApps[i - 1]; webApps[i - 1] = webApps[i]; webApps[i] = t;
+            }
+            zeichnen();
+          });
+          z.querySelector('.fv-wa-runter').addEventListener('click', function () {
+            einsammeln();
+            if (i < webApps.length - 1) {
+              var t = webApps[i + 1]; webApps[i + 1] = webApps[i]; webApps[i] = t;
+            }
+            zeichnen();
+          });
+          z.querySelector('.fv-wa-app').addEventListener('click', function () {
+            var knopf = this;
+            var waehler = document.createElement('input');
+            waehler.type = 'file';
+            waehler.accept = '.html,.htm,text/html';
+            waehler.onchange = function () {
+              var datei = waehler.files && waehler.files[0];
+              if (!datei) return;
+              if (datei.size > 6 * 1024 * 1024) {
+                sagen('\u2717 Die Datei ist gr\u00f6\u00dfer als 6 MB.', 'schlecht');
+                return;
+              }
+              var leser = new FileReader();
+              leser.onload = function () {
+                var inhalt = String(leser.result || '');
+                if (!inhalt.trim()) { sagen('\u2717 Die Datei ist leer.', 'schlecht'); return; }
+                knopf.disabled = true;
+                sagen('Wird hochgeladen \u2026');
+                // Eigener Platz je Eintrag, damit sich zwei Web-Apps nicht
+                // gegenseitig ueberschreiben.
+                var kennzeichen = ('webapp-' + (webApps[i].name || ('nr' + i)))
+                  .toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 40);
+                uploadApp(kennzeichen, inhalt).then(function (res) {
+                  knopf.disabled = false;
+                  if (!res || !res.url) { sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht'); return; }
+                  z.querySelector('.fv-wa-url').value = res.url;
+                  einsammeln();
+                  sagen('\u2713 Hochgeladen \u2013 jetzt noch \u201eAlles speichern\u201c dr\u00fccken.', 'gut');
+                }).catch(function () {
+                  knopf.disabled = false;
+                  sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht');
+                });
+              };
+              leser.onerror = function () { sagen('\u2717 Die Datei lie\u00df sich nicht lesen.', 'schlecht'); };
+              leser.readAsText(datei);
+            };
+            waehler.click();
+          });
+        });
+      }
+
+      huelle.querySelector('.fv-wa-neu').addEventListener('click', function () {
+        einsammeln();
+        webApps.push({ name: 'Neue Web-App', url: '' });
+        zeichnen();
+        var felder = liste.querySelectorAll('.fv-wa-name');
+        if (felder.length) { felder[felder.length - 1].focus(); felder[felder.length - 1].select(); }
+      });
+
+      huelle.querySelector('.fv-wa-speichern').addEventListener('click', function () {
+        einsammeln();
+        // Leere Zeilen fallen weg, sonst stehen unklickbare Eintraege im Menue.
+        var sauber = webApps.filter(function (e) { return e.name && e.url; });
+        var schlecht = webApps.filter(function (e) {
+          return e.url && !/^(https?:\/\/|\/)/i.test(e.url);
+        });
+        if (schlecht.length) {
+          sagen('\u2717 Ziel muss mit https:// oder mit / beginnen: '
+              + schlecht.map(function (e) { return e.name || '(ohne Namen)'; }).join(', '), 'schlecht');
+          return;
+        }
+        webApps = sauber;
+        var knopf = this;
+        knopf.disabled = true;
+        sagen('Wird gespeichert \u2026');
+        saveWebApps().then(function (gut) {
+          knopf.disabled = false;
+          if (!gut) { sagen('\u2717 Speichern fehlgeschlagen.', 'schlecht'); return; }
+          renderWebApps();
+          sagen('\u2713 Gespeichert \u2013 auf allen Seiten.', 'gut');
+          zeichnen();
+        }).catch(function () {
+          knopf.disabled = false;
+          sagen('\u2717 Speichern fehlgeschlagen.', 'schlecht');
+        });
+      });
+
+      zeichnen();
     }
 
     /* ---- Verlauf: frühere Fassungen ansehen und zurückholen ------------ */
