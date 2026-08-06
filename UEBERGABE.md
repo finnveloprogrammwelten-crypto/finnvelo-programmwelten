@@ -357,6 +357,39 @@ Ein Test, der das Vorhandensein nicht zuerst nachweist, prüft nichts.
 
 ---
 
+## 4d. Der Web-App-Upload war nie erreichbar
+
+Gefunden am 05.08.2026, weil die Web-Apps sich nicht austauschen ließen.
+
+`enableAppUpload()` in `stats.js` suchte den Anker
+
+```js
+root.querySelector('.program-launch a.button, .program-launch__btn')
+```
+
+**`.program-launch` gibt es auf keiner einzigen Seite des Projekts.** Die
+Leiste erschien deshalb nie. Der Server konnte den Upload längst
+(`POST /api/app`, `GET /api/app/<slug>`, Tabelle `apps`) — nur kam
+niemand dorthin.
+
+Der Upload sitzt jetzt in der **Ziel-Zeile** unter jedem Knopf, also
+dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
+
+* Der Slug ist `<seite>-<knopfkennung>`, damit eine Seite mehrere
+  Web-Apps tragen kann, ohne dass sie sich überschreiben.
+* Nach dem Hochladen wird das Ziel des Knopfes **gleich mitgesetzt** —
+  sonst zeigte er weiter auf die alte Adresse.
+* Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
+  Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
+
+**Merke für Tests:** Der Prüfstand (`t/server.mjs`) setzte auf alle
+`/api/`-Antworten pauschal `content-type: application/json`. Eine
+hochgeladene Web-App kam dadurch als JSON beim Browser an — der Test
+hätte etwas geprüft, das es in Wirklichkeit nie gibt. Jetzt wird der
+Kopf der echten Antwort übernommen.
+
+---
+
 ## 6. Was noch offen ist
 
 **`/planer` — die Weboberfläche für den Rechner.** Laut Spezifikation

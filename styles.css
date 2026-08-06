@@ -1879,6 +1879,20 @@ body.fv-admin-on .site-header { top: 44px; }
   cursor: pointer;
 }
 .fv-zielzeile__speichern:hover { background: #4a90ff; }
+/* Web-App hochladen: bewusst zurueckhaltender als "Ziel speichern",
+   weil es der seltenere Griff ist. */
+.fv-zielzeile__app {
+  background: rgba(120, 170, 255, 0.10);
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  color: #eaf1ff;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fv-zielzeile__app:hover { background: var(--blue); border-color: var(--blue); }
+.fv-zielzeile__app:disabled { opacity: 0.6; cursor: default; }
 .fv-zielzeile__melde { font-size: 13px; font-weight: 700; }
 .fv-zielzeile__melde.gut { color: #4ad991; }
 .fv-zielzeile__melde.schlecht { color: var(--red); }
@@ -2048,7 +2062,8 @@ body.fv-admin-on .site-header { top: 44px; }
   /* Bearbeitbare Texte brauchen eine Trefferflaeche, sonst erwischt man
      mit dem Finger die Zeile daneben. */
   .fv-edit-on .fv-editable { padding: 4px 6px; margin: -4px -6px; }
-  .fv-zielzeile__speichern { padding: 12px 18px; }
+  .fv-zielzeile__speichern,
+  .fv-zielzeile__app { padding: 12px 18px; }
 }
 
 /* Sichtbarkeitsauge an Passwortfeldern (siehe passwortauge.js).

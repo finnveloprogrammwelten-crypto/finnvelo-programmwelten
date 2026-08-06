@@ -217,6 +217,19 @@ Der Modus gilt auf **jeder** Seite - auch Navigation und Fusszeile.
       der mit `/` beginnt - z.B. `/FinnVelo/Aufgabenplaner/App-7.41.apk`.
     - Passt etwas nicht, steht der Hinweis in der Zeile selbst.
     - Leeres Feld speichern entfernt das Ziel.
+  - **Web-App austauschen (NEU):** In derselben Zeile steht der Knopf
+    **"🌐 Web-App hochladen"**. Damit laesst sich eine in sich
+    geschlossene `.html`-Datei hochladen - z.B. eine neue Fassung des
+    Mischwaldrechners oder des Haus- und Gartenplaners.
+    - Die Datei wird auf dem Server abgelegt (`/api/app/<seite>-<knopf>`)
+      und das Ziel des Knopfes **gleich mitgesetzt**. Danach oeffnet der
+      Knopf fuer alle Besucher die neue Fassung.
+    - Hoechstens 6 MB. Alles muss in der einen Datei stecken (CSS, JS,
+      Bilder als Datenurl) - es wird nur diese eine Datei abgelegt.
+    - Jeder Knopf hat seinen eigenen Platz. Zwei Web-Apps auf derselben
+      Seite ueberschreiben sich also nicht.
+    - Die alte Fassung wird ersetzt. Wer zurueck will, laedt die alte
+      Datei wieder hoch - eine Versionsverwaltung gibt es hier nicht.
   - **Automatik zur App-Aktualisierung (NEU):** Gibt es auf derselben Seite
     den Bereich "App-Aktualisierung", uebernimmt der beim Speichern des
     Ziels von selbst:

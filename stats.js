@@ -778,10 +778,13 @@
       + '</label>'
       + '<div class="fv-zielzeile__leiste">'
       + '  <button type="button" class="fv-zielzeile__speichern">Ziel speichern</button>'
+      + '  <button type="button" class="fv-zielzeile__app">\uD83C\uDF10 Web-App hochladen</button>'
       + '  <span class="fv-zielzeile__melde"></span>'
       + '</div>'
       + '<p class="fv-zielzeile__hilfe">Vollst\u00e4ndige Adresse (https://\u2026) oder ein Pfad '
-      + 'auf dieser Seite, der mit / beginnt. Leer lassen entfernt das Ziel.</p>';
+      + 'auf dieser Seite, der mit / beginnt. Leer lassen entfernt das Ziel.<br>'
+      + '<strong>Web-App hochladen:</strong> eine in sich geschlossene .html-Datei \u2013 '
+      + 'sie wird auf dem Server abgelegt, und der Knopf zeigt danach darauf.</p>';
 
       var feld  = zeile.querySelector('input');
       var melde = zeile.querySelector('.fv-zielzeile__melde');
@@ -819,6 +822,71 @@
 
       zeile.querySelector('.fv-zielzeile__speichern').addEventListener('click', function (e) {
         e.preventDefault(); e.stopPropagation(); speichern();
+      });
+
+      /* Web-App hochladen. Frueher hing das an einem Knopf ".program-launch",
+       * den es auf keiner Seite gab - die Moeglichkeit war dadurch nie
+       * erreichbar. Jetzt sitzt sie dort, wo das Ziel des Knopfes ohnehin
+       * gepflegt wird.
+       * Der Slug ist die Seite plus die Kennung des Knopfes: so kann eine
+       * Seite mehrere Web-Apps tragen, ohne dass sie sich gegenseitig
+       * ueberschreiben. */
+      var appKnopf = zeile.querySelector('.fv-zielzeile__app');
+      appKnopf.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var waehler = document.createElement('input');
+        waehler.type = 'file';
+        waehler.accept = '.html,.htm,text/html';
+        waehler.onchange = function () {
+          var datei = waehler.files && waehler.files[0];
+          if (!datei) return;
+          if (datei.size > 6 * 1024 * 1024) {
+            sagen('\u2717 Die Datei ist gr\u00f6\u00dfer als 6 MB. Bitte eine kleinere, '
+                + 'in sich geschlossene HTML-Datei w\u00e4hlen.', 'schlecht');
+            return;
+          }
+          var leser = new FileReader();
+          leser.onload = function () {
+            var html = String(leser.result || '');
+            if (!html.trim()) { sagen('\u2717 Die Datei ist leer.', 'schlecht'); return; }
+            appKnopf.disabled = true;
+            sagen('Wird hochgeladen \u2026');
+            var kennzeichen = (SLUG + '-' + (zielId(el) || 'app')).replace(/[^a-z0-9-]/gi, '-');
+            uploadApp(kennzeichen, html).then(function (res) {
+              appKnopf.disabled = false;
+              if (!res || !res.url) {
+                sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht');
+                return;
+              }
+              // Ziel gleich mitsetzen, sonst zeigt der Knopf noch aufs Alte.
+              feld.value = res.url;
+              el.setAttribute('href', res.url);
+              var schluessel = key || el.getAttribute('data-fvk');
+              if (typeof fertig === 'function') {
+                fertig(res.url, el);
+                sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.', 'gut');
+                zielMelden(res.url);
+                return;
+              }
+              save(schluessel, 'link', res.url).then(function (gut) {
+                flash(el, gut);
+                if (gut) {
+                  sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.', 'gut');
+                  zielMelden(res.url);
+                } else {
+                  sagen('\u2717 Hochgeladen, aber das Ziel lie\u00df sich nicht speichern. '
+                      + 'Adresse steht im Feld \u2013 bitte "Ziel speichern" dr\u00fccken.', 'schlecht');
+                }
+              });
+            }).catch(function () {
+              appKnopf.disabled = false;
+              sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht');
+            });
+          };
+          leser.onerror = function () { sagen('\u2717 Die Datei lie\u00df sich nicht lesen.', 'schlecht'); };
+          leser.readAsText(datei);
+        };
+        waehler.click();
       });
       feld.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); speichern(); }
@@ -867,55 +935,13 @@
         body: JSON.stringify({ password: adminPw(), slug: appSlug, html: html })
       }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
     }
-    function enableAppUpload() {
-      var root = editRoot(); if (!root) return;
-      var btn = root.querySelector('.program-launch a.button, .program-launch__btn');
-      if (!btn || document.querySelector('.fv-app-edit')) return;
-      var action = btn.closest('.program-launch__action') || btn.parentNode;
-      var bar = document.createElement('div');
-      bar.className = 'fv-app-edit';
-      var up = document.createElement('button');
-      up.type = 'button'; up.className = 'fv-app-btn';
-      up.innerHTML = '\uD83C\uDF10 Web-App (HTML-Datei) hochladen';
-      var status = document.createElement('span');
-      status.className = 'fv-app-status';
-      status.textContent = 'Eine in sich geschlossene .html-Datei \u2013 der Knopf oeffnet sie danach.';
-      up.addEventListener('click', function () {
-        var inp = document.createElement('input');
-        inp.type = 'file'; inp.accept = '.html,.htm,text/html';
-        inp.onchange = function () {
-          var f = inp.files && inp.files[0]; if (!f) return;
-          if (f.size > 6 * 1024 * 1024) {
-            window.alert('Die Datei ist gr\u00f6\u00dfer als 6 MB. Bitte eine kleinere, in sich geschlossene HTML-Datei verwenden \u2013 oder die Ordner-Methode (Datei in planer/haus-und-gartenplaner/ ablegen und ver\u00f6ffentlichen).');
-            return;
-          }
-          var reader = new FileReader();
-          reader.onload = function () {
-            var html = String(reader.result || '');
-            status.textContent = 'Wird hochgeladen \u2026';
-            btn.classList.add('fv-saving');
-            uploadApp(SLUG, html).then(function (res) {
-              btn.classList.remove('fv-saving');
-              if (res && res.url) {
-                btn.setAttribute('href', res.url);
-                var fvk = btn.getAttribute('data-fvk');
-                if (fvk) save(fvk, 'link', res.url);
-                status.textContent = '\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.';
-                flash(btn, true);
-              } else {
-                status.textContent = '\u2717 Fehlgeschlagen (zu gro\u00df, oder Server noch nicht aktualisiert?).';
-                flash(btn, false);
-              }
-            });
-          };
-          reader.onerror = function () { status.textContent = '\u2717 Datei konnte nicht gelesen werden.'; };
-          reader.readAsText(f);
-        };
-        inp.click();
-      });
-      bar.appendChild(up); bar.appendChild(status);
-      action.appendChild(bar);
-    }
+    /* enableAppUpload() ist entfallen. Sie suchte einen Knopf
+     * ".program-launch a.button" - den es auf KEINER Seite des Projekts gibt.
+     * Die Leiste erschien deshalb nie, und der Web-App-Upload war fuer den
+     * Admin unerreichbar, obwohl der Server ihn laengst konnte.
+     * Der Upload sitzt jetzt in der Ziel-Zeile unter jedem Knopf
+     * (siehe zielZeileBauen), wo das Ziel ohnehin gepflegt wird.
+     * ------------------------------------------------------------------- */
 
     /* ---- Oberflaechen-Galerie (Block g0) ------------------------------ */
     function galleryConts() {
@@ -1609,8 +1635,7 @@
           enableNav(k.n);
           enableImages(k.i);
           enableStatus(k.s);
-          enableLinks(k.d);
-          enableAppUpload();
+          enableLinks(k.d);   // bringt die Ziel-Zeile samt Web-App-Upload mit
           enableVideo();
           enableSortable();
           // renderCustom() lief bereits in applyOverrides (inkl. Bearbeiten-Affordances)
