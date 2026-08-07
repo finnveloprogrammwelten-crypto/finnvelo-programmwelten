@@ -382,6 +382,67 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+### Nachtrag 07.08.2026 (2): angelegte Seiten als Datei sichern
+
+`POST /api/programme/datei` liefert die fertige Seite mit
+`content-disposition: attachment`. In der Verwaltungsliste steht dafür
+je Eintrag der Knopf **„Datei"**.
+
+**Die Grenze, die man kennen muss:** Der Worker kann **nicht** ins
+Deployment schreiben — die statischen Dateien liegen unveränderlich im
+veröffentlichten Paket. „Beim Anlegen eine Datei erzeugen" heißt deshalb:
+bauen und herausgeben, ablegen muss der Mensch.
+
+* Gebaut wird mit **denselben** Funktionen wie beim Ausliefern
+  (`programmSeite` / `infoSeite`) — keine zweite Fassung, die
+  auseinanderlaufen könnte.
+* Liegt die Datei später im Projekt **und** der Eintrag ist noch da,
+  gewinnt der Eintrag (die dynamische Auslieferung steht vor dem
+  ASSETS-Rückfall). Beide sind inhaltsgleich, das stört nicht.
+* Wird der Eintrag entfernt, übernimmt die Datei — nachgewiesen im Test:
+  Datei ablegen, Eintrag löschen, Seite lädt weiter und bleibt
+  bearbeitbar. Nur Kachel und Zeile verschwinden dann, weil die aus der
+  Liste kommen.
+
+**Eigener Fehler, der beinahe stehengeblieben wäre:** Ich hatte einen
+Kommentar geschrieben, der Bauplan trage `noindex`, samt einer Zeile, die
+es entfernen sollte. Der Bauplan trägt gar kein `noindex` — die Zeile war
+wirkungslos und der Kommentar falsch. Beides entfernt.
+
+### Nachtrag 07.08.2026: Seiten anlegen war nur schwer zu finden
+
+Die Verwaltung („Programme verwalten") gab es längst — aber der Block
+begann mit
+
+```js
+if (pfad !== '/programme') return;
+```
+
+Sie erschien also **nur auf der Programme-Seite, ganz unten**. Wer den
+README-Abschnitt nicht kannte, fand sie nicht. Das ist derselbe Fehlertyp
+wie beim Web-App-Upload: die Funktion war da, der Weg dorthin nicht.
+
+Jetzt: Knopf **„+ Seite"** in der Admin-Leiste, erreichbar von jeder
+Seite. Er öffnet dieselbe Verwaltung im Fenster (Hülle wie Verlauf und
+Web-Apps). Auf `/programme` bleibt der Kasten am Seitenende zusätzlich
+stehen — bestehendes Verhalten unangetastet.
+
+* Verbindung über das Ereignis `fv:seiten-oeffnen`, weil Admin-Leiste und
+  Verwaltung in getrennten IIFEs liegen.
+* `bauen(liste, wohin)` nimmt jetzt ein Ziel. Die Doppelprüfung läuft
+  gegen **das Ziel**, nicht gegen das ganze Dokument — sonst blockierte
+  der Kasten am Seitenende das Fenster.
+* Achtung: `if (pfad !== '/programme') return;` steht noch **fünf weitere
+  Male** in `stats.js` (Sicherung, Web-Apps-Menü, Seitentitel …). Beim
+  Ändern zeilengenau arbeiten, nicht global ersetzen.
+
+**Merke für Tests:** `t/server.mjs` bediente statische Pfade selbst und
+gab nur `/api/` an den Worker. Eine neu angelegte Programmseite gab
+dadurch 404, obwohl sie live läuft — der Worker **erzeugt** solche Seiten
+dynamisch. Jetzt geht *alles* durch `mod.default.fetch`, und der
+ASSETS-Nachbau löst saubere Adressen auf (`/kontakt` → `kontakt.html`,
+`/ordner/` → `ordner/index.html`).
+
 ### Nachtrag 06.08.2026: Seite „Tourenplaner" angelegt
 
 Über den **Datei-Weg** (README Abschnitt 6), nicht über „Programme

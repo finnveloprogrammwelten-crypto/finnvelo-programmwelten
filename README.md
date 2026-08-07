@@ -472,10 +472,11 @@ JSON-Text erscheinen. Danach in der App "Nach Updates suchen" antippen.
 
 ### Der einfache Weg (empfohlen) - direkt auf der Webseite
 
-1. `/admin` -> Passwort -> auf die Seite **Programme** gehen
-2. **Bearbeiten: AN**
-3. Ganz unten erscheint das Feld **"Programme verwalten"** (nur du siehst es)
-4. Eintragen:
+1. `/admin` -> Passwort -> **Bearbeiten: AN**
+2. In der Admin-Leiste oben rechts auf **"+ Seite"** klicken.
+   Das geht von **jeder** Seite aus.
+   (Auf der Seite *Programme* steht derselbe Kasten zusaetzlich ganz unten.)
+3. Eintragen:
 
 | Feld | Bedeutung |
 |---|---|
@@ -495,6 +496,24 @@ Sofort danach gibt es:
 **Kein Veroeffentlichen noetig.** Seite einmal neu laden, damit die Kachel
 erscheint. Alles Weitere - Texte, Plakette, Bildschirmfotos, Download-Knopf,
 Status-Schild - aenderst du danach ganz normal im Bearbeiten-Modus.
+
+### Eine angelegte Seite als Datei sichern (empfohlen)
+
+Angelegte Seiten liegen zunaechst **nur in der Datenbank**. In der Liste
+steht bei jedem Eintrag der Knopf **"Datei"**:
+
+1. **Datei** klicken -> `<adresse>.html` wird heruntergeladen
+2. Die Datei in den Projektordner legen (neben `index.html`)
+3. Veroeffentlichen (Abschnitt 7)
+
+Danach existiert die Seite doppelt: als Datei **und** als Eintrag. Das
+stoert nicht - der Eintrag hat Vorrang und sorgt weiter fuer Kachel und
+Zeile in der Uebersicht. Geht die Datenbank verloren, bleibt die Seite
+trotzdem erreichbar.
+
+> Warum nicht automatisch? Der Server kann seine eigenen Dateien nicht
+> aendern - sie liegen unveraenderlich im veroeffentlichten Paket. Er kann
+> die Seite nur fertig bauen und herausgeben; ablegen musst du sie selbst.
 
 **Info-Seiten** erscheinen bewusst **nicht** in der Programmübersicht - sie
 sind für Dinge wie *Über mich*, eine Anleitung oder einen Änderungsverlauf

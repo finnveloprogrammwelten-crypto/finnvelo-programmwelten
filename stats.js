@@ -1477,6 +1477,7 @@
         ? '<span class="fv-admin-hint">Texte anklicken \u00b7 Bilder klicken/ziehen \u00b7 Kacheln am Griff ziehen</span>'
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
+                + '<button type="button" class="fv-admin-btn fv-admin-seiten">+ Seite</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-webapps">\uD83C\uDF10 Web-Apps</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
@@ -1499,6 +1500,10 @@
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
       bar.querySelector('.fv-admin-webapps').addEventListener('click', webAppsVerwalten);
+      // Die Seitenverwaltung liegt in einem eigenen Block - per Ereignis rufen.
+      bar.querySelector('.fv-admin-seiten').addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:seiten-oeffnen'));
+      });
       fehlerHinweisHolen(bar);
     }
 
@@ -2471,7 +2476,12 @@
     if (!pw || !editAn) return;
 
     var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
-    if (pfad !== '/programme') return;
+    // Frueher stand hier "if (pfad !== '/programme') return;" - die Verwaltung
+    // gab es also NUR auf der Programme-Seite, und dort ganz unten. Wer sie
+    // nicht kannte, fand sie nicht. Jetzt laeuft der Block ueberall: auf
+    // /programme wie bisher als Kasten am Seitenende, sonst (und zusaetzlich)
+    // als Fenster ueber den Knopf in der Admin-Leiste.
+    var aufProgrammseite = (pfad === '/programme');
 
     function kurzname(text) {
       return String(text || '')
@@ -2499,9 +2509,11 @@
       }).catch(function () { return { ok: false, daten: {} }; });
     }
 
-    function bauen(liste) {
-      var ziel = document.querySelector('main');
-      if (!ziel || document.querySelector('.fv-progverw-box')) return;
+    function bauen(liste, wohin) {
+      var ziel = wohin || document.querySelector('main');
+      // Doppelung nur INNERHALB des Ziels pruefen - sonst blockiert der
+      // Kasten am Seitenende das Fenster (und umgekehrt).
+      if (!ziel || ziel.querySelector('.fv-progverw-box')) return;
 
       var box = document.createElement('section');
       box.className = 'fv-prog-box fv-progverw-box';
@@ -2583,6 +2595,45 @@
           });
           z.appendChild(um);
 
+          /* Als Datei herunterladen. Der Worker kann nicht selbst ins
+             Deployment schreiben - die statischen Dateien liegen fest im
+             Paket. Er baut die Seite aber fertig und gibt sie heraus:
+             in den Projektordner legen, veroeffentlichen, fertig. Danach
+             haengt die Seite nicht mehr allein an der Datenbank. */
+          var dat = document.createElement('button');
+          dat.type = 'button'; dat.className = 'fv-prog-datei'; dat.textContent = 'Datei';
+          dat.title = 'Diese Seite als ' + p.slug + '.html herunterladen';
+          dat.addEventListener('click', function () {
+            dat.disabled = true;
+            var altText = dat.textContent;
+            dat.textContent = '\u2026';
+            fetch('/api/programme/datei', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ password: pw, slug: p.slug })
+            })
+              .then(function (r) {
+                if (!r.ok) throw new Error('weg');
+                return r.blob();
+              })
+              .then(function (blob) {
+                var a = document.createElement('a');
+                var url = URL.createObjectURL(blob);
+                a.href = url; a.download = p.slug + '.html';
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a);
+                setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+                dat.disabled = false; dat.textContent = altText;
+                sagen('\u2713 ' + p.slug + '.html heruntergeladen \u2013 in den Projektordner '
+                    + 'legen und ver\u00f6ffentlichen. Danach h\u00e4ngt die Seite nicht mehr '
+                    + 'allein an der Datenbank.', true);
+              })
+              .catch(function () {
+                dat.disabled = false; dat.textContent = altText;
+                sagen('\u2717 Datei konnte nicht erzeugt werden.', false);
+              });
+          });
+          z.appendChild(dat);
+
           var weg = document.createElement('button');
           weg.type = 'button'; weg.className = 'fv-prog-weg'; weg.textContent = 'entfernen';
           weg.addEventListener('click', function () {
@@ -2614,7 +2665,10 @@
               sagen('\u2713 Angelegt! Die Seite ist unter /' + slug + ' erreichbar.'
                 + (art === 'info'
                     ? ' Info-Seiten erscheinen bewusst nicht in der Programm\u00fcbersicht \u2013 verlinke sie \u00fcber die Fu\u00dfzeile oder das Web-Apps-Men\u00fc.'
-                    : ' Seite neu laden, damit die Kachel erscheint.'), true);
+                    : ' Seite neu laden, damit die Kachel erscheint.')
+                + ' Tipp: unten in der Liste mit \u201eDatei\u201c die '
+                + slug + '.html herunterladen und ins Projekt legen \u2013 dann '
+                + '\u00fcberlebt die Seite auch einen Datenbankverlust.', true);
             } else if (a.daten && a.daten.error === 'slug_belegt') {
               sagen('\u2717 Diese Adresse ist schon vergeben \u2013 bitte eine andere w\u00e4hlen.', false);
             } else if (a.daten && a.daten.error === 'bad_slug') {
@@ -2628,7 +2682,39 @@
       });
     }
 
-    function start() { laden().then(bauen); }
+    /* Fenster - von jeder Seite aus erreichbar ueber die Admin-Leiste.
+       Nutzt dieselbe Huelle wie Verlauf und Web-Apps, damit es sich
+       gleich anfuehlt. */
+    function fensterOeffnen() {
+      var offen = document.querySelector('.fv-prog-huelle');
+      if (offen) { offen.parentNode.removeChild(offen); return; }
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-verlauf-huelle fv-prog-huelle';
+      huelle.innerHTML =
+        '<div class="fv-verlauf fv-prog-fenster" role="dialog" aria-label="Seiten anlegen">'
+      + '  <div class="fv-verlauf__kopf">'
+      + '    <h2>Seiten anlegen und verwalten</h2>'
+      + '    <button type="button" class="fv-verlauf__zu" aria-label="Schliessen">\u2715</button>'
+      + '  </div>'
+      + '  <div class="fv-prog-ziel"></div>'
+      + '</div>';
+      document.body.appendChild(huelle);
+      function zu() { if (huelle.parentNode) huelle.parentNode.removeChild(huelle); }
+      huelle.querySelector('.fv-verlauf__zu').addEventListener('click', zu);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) zu(); });
+      laden().then(function (liste) {
+        bauen(liste, huelle.querySelector('.fv-prog-ziel'));
+      });
+    }
+
+    // Die Admin-Leiste liegt in einem anderen Block - Verbindung ueber ein
+    // Ereignis, damit beide voneinander unabhaengig bleiben.
+    document.addEventListener('fv:seiten-oeffnen', fensterOeffnen);
+
+    function start() {
+      // Kasten am Seitenende: nur auf der Programme-Seite, wie gehabt.
+      if (aufProgrammseite) laden().then(function (l) { bauen(l); });
+    }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }

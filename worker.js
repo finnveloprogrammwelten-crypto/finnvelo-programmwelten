@@ -777,6 +777,44 @@ export class Counter extends DurableObject {
       });
     }
 
+    /* --- Angelegte Seite als Datei herausgeben ------------------------
+     * Der Worker kann zur Laufzeit NICHT ins Deployment schreiben - die
+     * statischen Dateien liegen unveraenderlich im Paket. Was er kann:
+     * die fertige Seite bauen und zum Herunterladen anbieten. Wer sie in
+     * den Projektordner legt und veroeffentlicht, hat sie danach als
+     * echte Datei - unabhaengig von der Datenbank.
+     * ------------------------------------------------------------------ */
+    if (url.pathname === "/api/programme/datei" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      const slug = String(body.slug || "");
+      if (!PAGE_RE.test(slug)) return json({ error: "bad_slug" }, 400);
+
+      const rows = this.sql.exec(
+        "SELECT value FROM content WHERE page = 'system' AND block = 'p0'"
+      ).toArray();
+      let liste = [];
+      if (rows.length && rows[0].value) {
+        try { const a = JSON.parse(rows[0].value); if (Array.isArray(a)) liste = a; } catch (_e) {}
+      }
+      const p = liste.filter((x) => x && x.slug === slug)[0];
+      if (!p) return json({ error: "unbekannt" }, 404);
+
+      // Genau derselbe Bauplan wie beim Ausliefern - keine zweite Fassung,
+      // die auseinanderlaufen koennte.
+      const html = (p.art === "info") ? infoSeite(p) : programmSeite(p);
+
+      return new Response(html, {
+        status: 200,
+        headers: {
+          "content-type": "text/html; charset=utf-8",
+          "content-disposition": 'attachment; filename="' + slug + '.html"',
+          "cache-control": "no-store"
+        }
+      });
+    }
+
     // --- Eigene Programme: anlegen / entfernen (nur Admin) -------------
     if (url.pathname === "/api/programme" && method === "POST") {
       let body = {};

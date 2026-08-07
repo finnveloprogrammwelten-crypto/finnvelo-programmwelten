@@ -1768,6 +1768,23 @@ body.fv-admin-on .site-header { top: 44px; }
 }
 .fv-prog-eintrag strong { font-size: 14px; }
 .fv-prog-eintrag a { font-size: 13px; color: var(--blue-light); }
+/* "Datei" - Seite als HTML herunterladen. Gleiche Masse wie "entfernen",
+   aber in Blau: es ist ein aufbauender Schritt, kein loeschender. */
+.fv-prog-datei {
+  background: rgba(120, 170, 255, 0.10);
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  color: #eaf1ff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: 400 12.5px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-prog-datei:hover:not(:disabled) { background: var(--blue); border-color: var(--blue); color: #fff; }
+.fv-prog-datei:disabled { opacity: 0.6; cursor: default; }
+@media (pointer: coarse) {
+  .fv-prog-datei { padding: 11px 14px; }
+}
+
 .fv-prog-weg {
   margin-left: auto;
   background: none;
@@ -2039,6 +2056,21 @@ body.fv-admin-on .site-header { top: 44px; }
   .fv-verlauf__zeile { grid-template-columns: 1fr; }
   .fv-verlauf__holen { grid-column: 1; grid-row: auto; margin-top: 8px; justify-self: start; }
 }
+
+/* ---------------------------------------------------------------------
+   Seiten anlegen: derselbe Kasten wie auf der Programme-Seite,
+   nur in der Fenster-Hülle. Damit er dort nicht wie ein zweiter
+   Seitenabschnitt wirkt, werden Rahmen und Abstände zurückgenommen.
+   --------------------------------------------------------------------- */
+.fv-prog-fenster { max-width: 620px; }
+.fv-prog-fenster .fv-prog-box {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.fv-prog-fenster .fv-prog-titel { margin-top: 0; }
 
 /* ---------------------------------------------------------------------
    Web-Apps im Menü verwalten (nutzt die Hülle des Verlaufsfensters)
