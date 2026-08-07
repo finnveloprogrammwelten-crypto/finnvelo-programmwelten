@@ -86,6 +86,7 @@ Alles liegt flach in einem Ordner. Die wichtigsten Dateien:
 | `index.html` | Startseite mit der Programm-Kacheluebersicht |
 | `programme.html` | Seite "Programme" (Liste aller Programme) |
 | `archivar.html`, `finanzmanager.html`, `haus-und-gartenplaner.html`, ... | je EINE Seite pro Programm |
+| `tourenplaner.html` | Finnvelo Tourenplaner (angelegt 06.08.2026, Inhalte folgen) |
 | `_vorlage-programm.html` | **Kopiervorlage** fuer ein neues Programm (siehe Abschnitt 6) |
 | `styles.css` | das gesamte Design (Farben, Abstaende, Raster) |
 | `stats.js` | Besucherzaehler **und** der versteckte Bearbeiten-Modus |

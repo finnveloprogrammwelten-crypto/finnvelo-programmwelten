@@ -382,6 +382,34 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+### Nachtrag 06.08.2026: Seite „Tourenplaner" angelegt
+
+Über den **Datei-Weg** (README Abschnitt 6), nicht über „Programme
+verwalten" — so steht die Seite dauerhaft in den Quellen und geht bei
+einem Datenbankverlust nicht mit verloren.
+
+Angefasst wurden: `tourenplaner.html` (neu, aus `_vorlage-programm.html`),
+Kachel in `index.html`, Zeile in `programme.html`, `PROGRAM_PAGES` in
+`stats.js`, Eintrag in `sitemap.xml`.
+
+**Zwei Entscheidungen, die nicht offensichtlich sind:**
+
+* **Der Download-Knopf steht schon jetzt sichtbar da**, obwohl es noch
+  keine Datei gibt (Vorlage hätte ihn auskommentiert gelassen). Grund:
+  Die Zeile „Ziel des Knopfes" — und damit auch „Web-App hochladen" —
+  hängt an einem *sichtbaren* Knopf. Ohne ihn ließe sich auf der neuen
+  Seite nichts einhängen.
+* **Als Plakette steht vorläufig das Finnvelo-Wappen** statt eines
+  fehlenden `tourenplaner-label.webp`. Ein fehlendes Bild hinterlässt
+  sonst ein kaputtes Symbol auf Seite, Kachel und Programmliste.
+  Austauschen geht im Bearbeiten-Modus.
+
+**Merke für Tests:** `t/server.mjs` löste saubere Adressen ohne `.html`
+nicht auf — nur `/serverstatus` und `/admin` waren von Hand gemappt.
+Jede neue Programmseite wäre im Test durchgefallen, obwohl sie live
+einwandfrei liefe (der echte Worker macht das über ASSETS). Jetzt wird
+`<pfad>.html` allgemein probiert.
+
 ### Nachtrag 05.08.2026: das Menü selbst verwalten
 
 Der Upload an den Programmseiten war nur die halbe Antwort — gesucht
