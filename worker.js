@@ -1139,11 +1139,24 @@ ${KOPFZEILE}
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
-          <h2 id="download-title">Download</h2>
+          <h2 id="download-title">Download (Android)</h2>
           <div class="download-slot">
-            <h3>Hauptdatei</h3>
-            <p>Sobald es eine Datei gibt, hier den Knopf anklicken und die GitHub-Adresse eintragen.</p>
+            <h3>App herunterladen</h3>
+            <p>Sobald es eine Datei gibt, hier den Knopf anklicken und die Adresse eintragen.</p>
             <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">Download starten</a>
+          </div>
+        </section>
+
+        <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
+          <h2 id="download-pc-title">Download (PC)</h2>
+          <div class="download-slot">
+            <h3>Programm herunterladen</h3>
+            <p>Die Fassung f&uuml;r Windows. Sie l&auml;uft eigenst&auml;ndig, eine Installation ist nicht n&ouml;tig.</p>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">PC-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Hinweis</h3>
+            <p>Windows meldet bei unbekannten Programmen einen Warnhinweis. &Uuml;ber &bdquo;Weitere Informationen&ldquo; &rarr; &bdquo;Trotzdem ausf&uuml;hren&ldquo; l&auml;sst sich der Start fortsetzen.</p>
           </div>
         </section>
       </div>

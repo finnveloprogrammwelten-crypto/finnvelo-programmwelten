@@ -261,6 +261,22 @@ Fenster mit den Eintraegen, die oben im Menue unter *Web-Apps* stehen.
 - Ein Ziel muss mit `https://` oder mit `/` beginnen, sonst weist das
   Fenster es ab. Eintraege ohne Namen oder Ziel fallen beim Speichern weg.
 
+### Download-Bereiche ein- und ausblenden
+Jede Programmseite hat **zwei vollstaendige Download-Bereiche**:
+*Download (Android)* und *Download (PC)*. Im Bearbeiten-Modus steht ueber
+jedem ein Schalter:
+
+- **gruen "Bereich wird gezeigt"** - Besucher sehen ihn
+- **grau "Bereich ausgeblendet"** - Besucher sehen ihn nicht
+
+Ausgeblendet verschwindet der **ganze** Bereich: Ueberschrift, Texte,
+Knoepfe. Wer nur eine Android-App anbietet, schaltet den PC-Bereich ab.
+
+Im Bearbeiten-Modus bleibt ein abgeschalteter Bereich gedaempft sichtbar -
+sonst koenntest du ihn nicht wieder einschalten.
+
+Gespeichert je Seite in Block `y0`. Fehlt der Block, sind beide sichtbar.
+
 ### Mehrere Fassungen je Programm (Android / PC / Web)
 Oben in der **App-Aktualisierung** stehen drei Reiter. Jeder hat eigene
 Felder, gespeichert wird alles in **einer** `version.json`:

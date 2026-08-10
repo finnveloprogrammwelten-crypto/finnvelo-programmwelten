@@ -554,6 +554,9 @@
         // gleich aussehen. Muss auch fuer Besucher laufen, nicht nur im
         // Bearbeiten-Modus - sonst sehen sie noch die alten Eintraege.
         parseWebApps(gmap['w0']); renderWebApps();
+        // Download-Bereiche ein-/ausblenden. Muss auch fuer Besucher laufen -
+        // sonst sehen sie einen Bereich, den der Admin abgeschaltet hat.
+        parseBereiche(map['y0']); renderBereiche();
       }).catch(function () {});
     }
 
@@ -1815,6 +1818,96 @@
       zeichnen();
     }
 
+    /* ================================================================
+     * Download-Bereiche ein- und ausblenden
+     * ----------------------------------------------------------------
+     * Jede Programmseite hat zwei vollstaendige Bereiche: einen fuer die
+     * App, einen fuer die PC-Fassung. Wer nur eines von beiden anbietet,
+     * blendet den anderen als GANZES aus - samt Ueberschrift, Texten und
+     * Knoepfen.
+     *
+     * Gespeichert je Seite in Block "y0". Fehlt der Block, sind beide
+     * sichtbar - so bleibt alles, wie es war, bis jemand etwas abschaltet.
+     * ================================================================ */
+    var BEREICHE = [
+      { kennung: 'app', wahl: '.program-download-block:not(.program-download-block--pc)',
+        titel: 'App-Download' },
+      { kennung: 'pc',  wahl: '.program-download-block--pc', titel: 'PC-Download' }
+    ];
+    var bereichAus = {};       // { app: true } = ausgeblendet
+
+    function parseBereiche(item) {
+      bereichAus = {};
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var o = JSON.parse(item.value);
+          if (o && typeof o === 'object') {
+            BEREICHE.forEach(function (b) { if (o[b.kennung] === true) bereichAus[b.kennung] = true; });
+          }
+        } catch (e) { bereichAus = {}; }
+      }
+    }
+
+    function renderBereiche() {
+      BEREICHE.forEach(function (b) {
+        var el = document.querySelector(b.wahl);
+        if (!el) return;
+        var aus = bereichAus[b.kennung] === true;
+        if (EDITING) {
+          // Im Bearbeiten-Modus bleibt der Bereich sichtbar, aber gedaempft -
+          // sonst koennte man ihn nicht wieder einschalten.
+          el.hidden = false;
+          el.classList.toggle('fv-bereich-aus', aus);
+        } else {
+          el.hidden = aus;
+          el.classList.remove('fv-bereich-aus');
+        }
+      });
+    }
+
+    function speichereBereiche() {
+      return save('y0', 'text', JSON.stringify(bereichAus));
+    }
+
+    function bereichSchalter() {
+      if (!EDITING) return;
+      BEREICHE.forEach(function (b) {
+        var el = document.querySelector(b.wahl);
+        if (!el || el.querySelector('.fv-bereich-schalter')) return;
+        var leiste = document.createElement('div');
+        leiste.className = 'fv-bereich-leiste';
+        var aus = bereichAus[b.kennung] === true;
+        leiste.innerHTML =
+          '<button type="button" class="fv-bereich-schalter' + (aus ? '' : ' an') + '">'
+        + '  <span class="fv-bereich-schalter__punkt"></span>'
+        + '  <span class="fv-bereich-schalter__text">'
+        + (aus ? 'Bereich ausgeblendet' : 'Bereich wird gezeigt') + '</span>'
+        + '</button>'
+        + '<span class="fv-bereich-name">' + b.titel + '</span>'
+        + '<span class="fv-bereich-melde"></span>';
+        el.insertBefore(leiste, el.firstChild);
+
+        var knopf = leiste.querySelector('.fv-bereich-schalter');
+        var melde = leiste.querySelector('.fv-bereich-melde');
+        knopf.addEventListener('click', function () {
+          var jetztAus = !(bereichAus[b.kennung] === true);
+          if (jetztAus) bereichAus[b.kennung] = true; else delete bereichAus[b.kennung];
+          knopf.classList.toggle('an', !jetztAus);
+          knopf.querySelector('.fv-bereich-schalter__text').textContent =
+            jetztAus ? 'Bereich ausgeblendet' : 'Bereich wird gezeigt';
+          renderBereiche();
+          melde.textContent = 'Wird gespeichert \u2026';
+          speichereBereiche().then(function (gut) {
+            melde.textContent = gut
+              ? (jetztAus ? '\u2713 Für Besucher unsichtbar' : '\u2713 Für Besucher sichtbar')
+              : '\u2717 Speichern fehlgeschlagen';
+            melde.className = 'fv-bereich-melde ' + (gut ? 'gut' : 'schlecht');
+            setTimeout(function () { melde.textContent = ''; }, 3500);
+          });
+        });
+      });
+    }
+
     /* ---- Verlauf: frühere Fassungen ansehen und zurückholen ------------ */
     function verlaufZeigen() {
       var alt = document.querySelector('.fv-verlauf-huelle');
@@ -1924,6 +2017,7 @@
           enableImages(k.i);
           enableStatus(k.s);
           enableLinks(k.d);   // bringt die Ziel-Zeile samt Web-App-Upload mit
+          bereichSchalter();  // Ein-/Ausblenden der beiden Download-Bereiche
           enableVideo();
           enableSortable();
           // renderCustom() lief bereits in applyOverrides (inkl. Bearbeiten-Affordances)

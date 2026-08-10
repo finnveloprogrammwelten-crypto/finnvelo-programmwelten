@@ -382,6 +382,41 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4g. Zwei Download-Bereiche + Statuszeichen (10.08.2026)
+
+**Zwei Bereiche je Programmseite.** `program-download-block` (App) und
+neu `program-download-block--pc`. In alle 10 Seiten mit Download-Bereich
+eingefügt, per Skript, damit keine vergessen wird — **und in
+`programmSeite()` im Worker**, damit auch über „+ Seite" angelegte
+Programme beide Bereiche bekommen.
+
+`infoSeite()` bleibt bewusst ohne Download-Bereich: Info-Seiten sind für
+Texte gedacht, nicht für Programme.
+
+Schalter je Bereich, Zustand in Block **`y0`** je Seite
+(`{"pc": true}` = ausgeblendet). Läuft in `applyOverrides`, also **auch
+für Besucher** — sonst sähen sie einen abgeschalteten Bereich.
+
+Im Bearbeiten-Modus wird ein abgeschalteter Bereich nur *gedämpft*
+(`.fv-bereich-aus`, `opacity: .42`), nicht versteckt — sonst gäbe es
+keinen Weg zurück.
+
+**Statuszeichen der Kacheln.** Lag `position: absolute` über der
+Plakette. Bei „Web-App in Entwicklung, Desktopapp in Entwicklung" wuchs
+es über drei Zeilen und verdeckte sie vollständig (vom Nutzer per
+Bildschirmfoto belegt). Jetzt `position: static`, `grid-row: 3` — unter
+der Beschreibung.
+
+Bewusst über **CSS**, nicht über geänderten HTML-Aufbau: so wirkt es auch
+für Kacheln, die erst zur Laufzeit entstehen (angelegte Programme). Die
+Mindestbreite `min-width` auf schmalen Schirmen wurde auf 0 gesetzt, sonst
+brach der Text mitten im Wort um.
+
+Geprüft mit genau dem langen Text aus dem Bildschirmfoto, auf 1500 und
+390 px, für alle 9 Kacheln: keine Überdeckung mehr.
+
+---
+
 ## 4f. Der Web-App-Upload zerstörte die APK-Adresse (10.08.2026)
 
 **Gemeldet, bestätigt, behoben.** Ablauf des Fehlers:

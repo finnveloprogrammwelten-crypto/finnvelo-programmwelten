@@ -318,18 +318,32 @@ h1 {
   box-shadow: none;
 }
 
+/* Das Statuszeichen lag frueher ABSOLUT ueber der Plakette. Bei kurzen
+   Woertern ging das gerade noch; bei "Web-App in Entwicklung, Desktopapp
+   in Entwicklung" wuchs es ueber drei Zeilen und verdeckte die Plakette
+   vollstaendig. Jetzt steht es unter der Beschreibung: es darf beliebig
+   lang werden, ohne irgendetwas zu ueberdecken.
+
+   Umgesetzt ueber die Reihenfolge im Raster, nicht ueber geaenderten
+   HTML-Aufbau - so wirkt es auch fuer Kacheln, die erst zur Laufzeit
+   entstehen (angelegte Programme). */
+.program-button {
+  grid-template-rows: auto 1fr auto;
+}
 .program-button__status {
-  position: absolute;
-  left: clamp(30px, 1.6vw, 40px);
-  top: clamp(36px, 2vw, 50px);
+  position: static;
+  grid-row: 3;
+  justify-self: start;
+  margin-top: 10px;
   z-index: 2;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: auto;
-  min-width: clamp(92px, 5.6vw, 124px);
+  min-width: 0;
+  max-width: 100%;
   min-height: 25px;
-  padding: 5px 10px;
+  padding: 5px 11px;
   border-radius: 999px;
   background: rgba(9, 12, 21, 0.86);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -857,7 +871,10 @@ footer a {
   }
 
   .program-button__status {
-    min-width: 96px;
+    /* Auf schmalen Schirmen darf das Zeichen so breit werden, wie der
+       Text es braucht - eine feste Mindestbreite zwang frueher zum
+       Umbruch mitten im Wort. */
+    min-width: 0;
   }
 }
 
@@ -1932,6 +1949,45 @@ body.fv-admin-on .site-header { top: 44px; }
   border-color: rgba(240, 180, 41, 0.8);
   background: rgba(240, 180, 41, 0.10);
 }
+/* ---------------------------------------------------------------------
+   Download-Bereiche ein- und ausblenden (App / PC)
+   --------------------------------------------------------------------- */
+.fv-bereich-leiste {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(120, 170, 255, 0.07);
+  border: 1px dashed rgba(120, 170, 255, 0.4);
+}
+.fv-bereich-schalter {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 7px 13px; border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--soft);
+  font: 700 13px/1.2 inherit; cursor: pointer;
+}
+.fv-bereich-schalter__punkt {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--muted); flex: none;
+}
+.fv-bereich-schalter.an { border-color: #4ad991; color: #d8ffe9; }
+.fv-bereich-schalter.an .fv-bereich-schalter__punkt { background: #4ad991; }
+.fv-bereich-name {
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--muted);
+}
+.fv-bereich-melde { font-size: 13px; font-weight: 700; }
+.fv-bereich-melde.gut { color: #4ad991; }
+.fv-bereich-melde.schlecht { color: var(--red); }
+/* Ausgeblendeter Bereich bleibt im Bearbeiten-Modus sichtbar, aber gedaempft -
+   sonst koennte man ihn nicht wieder einschalten. */
+.fv-bereich-aus { opacity: 0.42; }
+.fv-bereich-aus .fv-bereich-leiste { opacity: 1; }
+@media (pointer: coarse) {
+  .fv-bereich-schalter { padding: 11px 16px; }
+}
+
 /* Reiter fuer die Fassungen (Android / PC / Web) in der App-Aktualisierung */
 .fv-update-reiter {
   display: flex; gap: 6px; flex-wrap: wrap;
