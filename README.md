@@ -261,6 +261,34 @@ Fenster mit den Eintraegen, die oben im Menue unter *Web-Apps* stehen.
 - Ein Ziel muss mit `https://` oder mit `/` beginnen, sonst weist das
   Fenster es ab. Eintraege ohne Namen oder Ziel fallen beim Speichern weg.
 
+### Mehrere Fassungen je Programm (Android / PC / Web)
+Oben in der **App-Aktualisierung** stehen drei Reiter. Jeder hat eigene
+Felder, gespeichert wird alles in **einer** `version.json`:
+
+| Reiter | Was gepflegt wird | Wo es landet |
+|---|---|---|
+| Android-App | Versionsnummer, Code, APK-Adresse, Hinweis | **ganz oben**, unveraendert |
+| PC-Version | dieselben Angaben fuer EXE/ZIP | eigener Block `"pc"` |
+| Web-Version | nur die Adresse | eigener Block `"web"` |
+
+> **Warum steht Android weiterhin oben?** Alle Apps, die schon auf
+> Geraeten liegen, lesen genau diese Felder. Kaeme die Android-Fassung in
+> einen eigenen Block, wuerde keine verteilte App je wieder eine
+> Aktualisierung bemerken. Weitere Fassungen kommen deshalb *zusaetzlich*
+> darunter - aeltere Apps uebersehen sie einfach.
+
+- Die **Web-Fassung braucht keine Versionsnummer**: sie ist aktuell,
+  sobald die Datei getauscht ist. Dort steht nur, wo sie liegt.
+- **Leere Reiter erzeugen keinen Block** - was du nicht ausfuellst,
+  taucht in der `version.json` auch nicht auf.
+- Die Automatik (Ziel des Knopfes uebernehmen) fuellt immer den Reiter,
+  der gerade offen ist. Ein PC-Download landet also nicht versehentlich
+  in den Feldern der Android-App.
+
+**Mehrere Download-Knoepfe** legst du mit **+ Knopf** an - im
+Bearbeiten-Modus unten in jedem Abschnitt. Jeder Knopf bekommt seine
+eigene Zeile "Ziel des Knopfes" samt Web-App-Upload.
+
 ### Verlauf: eine Aenderung zuruecknehmen
 In der Admin-Leiste steht der Knopf **"↺ Verlauf"**. Er zeigt die frueheren
 Faessungen dieser Seite - die letzten **zehn je Feld**, neueste zuerst, mit

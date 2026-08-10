@@ -11,7 +11,7 @@
   'use strict';
 
   var API = '/api';
-  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'tester'];
+  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'tester'];
 
   function pageKey() {
     var path = (location.pathname || '').toLowerCase();
@@ -1997,6 +1997,27 @@
     // festen Werte immer mitgeschrieben werden (fest).
     var APPS = [
       {
+        /* Die Einkaufsliste liefert ihre version.json selbst aus
+           (/apps/einkaufsliste/version.json) - dieselbe Datei, die auch die
+           Android-App abfragt. Wer hier speichert, aendert genau diese. */
+        seite: 'einkaufsliste',
+        ablage: 'einkaufsliste',
+        pruef: '/apps/einkaufsliste/version.json',
+        titel: 'Einkaufsliste',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.3.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 10300' },
+          { key: 'url', label: 'Download-Adresse der APK', typ: 'url', ph: 'https://finnveloprogramme.com/apps/einkaufsliste/...apk' },
+          { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Hintergrundbilder zur Auswahl' }
+        ],
+        fest: {},
+        vorgabe: {
+          versionCode: 10300, versionName: '1.3.0',
+          url: 'https://finnveloprogramme.com/apps/einkaufsliste/FINNVELO-Einkaufsliste-1.3.0.apk',
+          hinweis: ''
+        }
+      },
+      {
         seite: 'mischwaldrechner',
         ablage: 'mischwald',
         pruef: '/mischwaldrechner/version.json',
@@ -2169,6 +2190,54 @@
     }
     function copy(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
 
+    /* ================================================================
+     * Mehrere Fassungen je Programm: Android, PC, Web
+     * ----------------------------------------------------------------
+     * Frueher gab es genau EINEN Satz Felder - also nur eine Fassung.
+     * Wer eine PC-Fassung nachschob, musste sich entscheiden, welche
+     * Nummer in der version.json steht.
+     *
+     * Ablage, und das ist der Punkt: Die Android-Fassung bleibt dort,
+     * wo sie immer war - GANZ OBEN in der version.json. Alle Apps, die
+     * heute draussen sind, lesen genau diese Felder. Weitere Fassungen
+     * kommen als eigener Block darunter ("pc": {...}). Aeltere Apps
+     * uebersehen ihn einfach, und nichts bricht.
+     *
+     * Die Web-Fassung braucht keine Nummer - sie ist immer aktuell,
+     * sobald die Datei ausgetauscht ist. Fuer sie wird nur die Adresse
+     * gepflegt.
+     * ================================================================ */
+    var PLATTFORMEN = [
+      { schluessel: '',    titel: 'Android-App', unten: 'APK',
+        hinweis: 'Diese Felder liest die Android-App. Sie stehen oben in der version.json - '
+               + 'daran darf sich nichts aendern, sonst merken bereits verteilte Apps '
+               + 'keine Aktualisierung mehr.' },
+      { schluessel: 'pc',  titel: 'PC-Version', unten: 'EXE oder ZIP',
+        hinweis: 'Eigener Block "pc" in derselben version.json. Die PC-Fassung fragt ihn ab; '
+               + 'die Android-App uebersieht ihn.' },
+      { schluessel: 'web', titel: 'Web-Version', unten: 'HTML', nurAdresse: true,
+        hinweis: 'Die Web-Fassung ist immer aktuell, sobald die Datei getauscht ist - '
+               + 'eine Versionsnummer braucht sie nicht. Hier steht nur, wo sie liegt.' }
+    ];
+
+    // Felder einer Plattform: Android nutzt die gewohnten Schluessel,
+    // die anderen bekommen einheitliche.
+    function plattformFelder(pf) {
+      if (!pf.schluessel) return cfg.felder;               // Android: unveraendert
+      if (pf.nurAdresse) {
+        return [{ key: 'url', label: 'Adresse der Web-Fassung', typ: 'url',
+                  ph: '/apps/... oder https://\u2026' }];
+      }
+      return [
+        { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.3.0' },
+        { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)',
+          typ: 'zahl', ph: 'z. B. 10300' },
+        { key: 'url', label: 'Download-Adresse (' + pf.unten + ')', typ: 'url',
+          ph: 'https://\u2026' },
+        { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+      ];
+    }
+
     function speichern(obj) {
       return fetch('/api/content', {
         method: 'POST', headers: { 'content-type': 'application/json' },
@@ -2182,13 +2251,31 @@
 
       var box = document.createElement('div');
       box.className = 'fv-update-box';
-      var felderHtml = '';
-      cfg.felder.forEach(function (f) {
-        var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
-        var extra = (f.typ === 'zahl') ? ' min="1" step="1"' : '';
-        felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
-                    + ' data-key="' + f.key + '" placeholder="' + f.ph + '"></label>';
+      // Reiter fuer die Fassungen. data-pf traegt den Schluessel; leer = Android.
+      var reiterHtml = '<div class="fv-update-reiter">';
+      PLATTFORMEN.forEach(function (pf, i) {
+        reiterHtml += '<button type="button" class="fv-update-reiter__k' + (i === 0 ? ' an' : '')
+                    + '" data-pf="' + pf.schluessel + '">' + pf.titel + '</button>';
       });
+      reiterHtml += '</div>';
+
+      var felderHtml = '';
+      PLATTFORMEN.forEach(function (pf, i) {
+        felderHtml += '<div class="fv-update-fach" data-fach="' + pf.schluessel + '"'
+                    + (i === 0 ? '' : ' hidden') + '>'
+                    + '<p class="fv-update-pfhinweis">' + pf.hinweis + '</p>';
+        plattformFelder(pf).forEach(function (f) {
+          var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
+          var extra = (f.typ === 'zahl') ? ' min="1" step="1"' : '';
+          // Der Schluessel traegt die Plattform mit, damit sich die Felder
+          // nicht gegenseitig ueberschreiben.
+          var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
+          felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
+                      + ' data-key="' + kennung + '" placeholder="' + f.ph + '"></label>';
+        });
+        felderHtml += '</div>';
+      });
+      felderHtml = reiterHtml + felderHtml;
 
       var einstellHtml = '';
       if (!festeApp) {
@@ -2289,8 +2376,15 @@
         var urlKey = urlFeldName();
         var geaendert = [];
 
+        // In welche Fassung soll die Adresse? Die gerade offene - sonst
+        // landet ein PC-Download in den Feldern der Android-App.
+        var offen = box.querySelector('.fv-update-reiter__k.an');
+        var pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
+        var vorsatz = pfSchluessel ? (pfSchluessel + '.') : '';
+
         if (urlKey) {
-          var uFeld = box.querySelector('[data-key="' + urlKey + '"]');
+          var uFeld = box.querySelector('[data-key="' + vorsatz
+                    + (pfSchluessel ? 'url' : urlKey) + '"]');
           if (uFeld && uFeld.value !== url) {
             uFeld.value = url;
             uFeld.classList.add('fv-uebernommen');
@@ -2300,7 +2394,7 @@
 
         var ver = versionAusName(url);
         if (ver) {
-          var vFeld = box.querySelector('[data-key="versionName"]');
+          var vFeld = box.querySelector('[data-key="' + vorsatz + 'versionName"]');
           if (vFeld && vFeld.value !== ver) {
             vFeld.value = ver;
             vFeld.classList.add('fv-uebernommen');
@@ -2311,7 +2405,7 @@
         if (!geaendert.length) return;
 
         // Versions-Code auffaellig machen - der muss von Hand hoch.
-        var cFeld = box.querySelector('[data-key="versionCode"]');
+        var cFeld = box.querySelector('[data-key="' + vorsatz + 'versionCode"]');
         if (cFeld) {
           cFeld.classList.add('fv-pruefen');
           codePlusAnbieten(cFeld);
@@ -2398,19 +2492,42 @@
 
       function ausFeldern() {
         var o = copy(cfg.fest);
-        cfg.felder.forEach(function (f) {
-          var el = box.querySelector('[data-key="' + f.key + '"]');
-          var v = (el.value || '').trim();
-          if (f.typ === 'zahl') v = parseInt(v, 10) || 0;
-          o[f.key] = v;
-          if (f.auch) f.auch.forEach(function (k2) { o[k2] = v; });
+        PLATTFORMEN.forEach(function (pf) {
+          var unter = {};
+          var leer = true;
+          plattformFelder(pf).forEach(function (f) {
+            var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
+            var el = box.querySelector('[data-key="' + kennung + '"]');
+            if (!el) return;
+            var v = (el.value || '').trim();
+            if (f.typ === 'zahl') v = parseInt(v, 10) || 0;
+            if (v !== '' && v !== 0) leer = false;
+            if (pf.schluessel) {
+              unter[f.key] = v;
+            } else {
+              o[f.key] = v;
+              if (f.auch) f.auch.forEach(function (k2) { o[k2] = v; });
+            }
+          });
+          // Leere Zusatzfassungen gar nicht erst schreiben - sonst stehen
+          // leere Bloecke in der version.json, die niemand braucht.
+          if (pf.schluessel) {
+            if (leer) delete o[pf.schluessel];
+            else o[pf.schluessel] = unter;
+          }
         });
         return o;
       }
       function inFelder(o) {
-        cfg.felder.forEach(function (f) {
-          var el = box.querySelector('[data-key="' + f.key + '"]');
-          el.value = (o[f.key] === undefined || o[f.key] === null) ? '' : o[f.key];
+        PLATTFORMEN.forEach(function (pf) {
+          var quelle = pf.schluessel ? (o[pf.schluessel] || {}) : o;
+          plattformFelder(pf).forEach(function (f) {
+            var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
+            var el = box.querySelector('[data-key="' + kennung + '"]');
+            if (!el) return;
+            var w = quelle[f.key];
+            el.value = (w === undefined || w === null) ? '' : w;
+          });
         });
         roh.value = JSON.stringify(mischKomplett(o), null, 2);
       }
@@ -2421,6 +2538,19 @@
         return r;
       }
       inFelder(daten);
+
+      // Zwischen den Fassungen umschalten
+      Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (k) {
+        k.addEventListener('click', function () {
+          var wahl = k.getAttribute('data-pf');
+          Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (a) {
+            a.classList.toggle('an', a === k);
+          });
+          Array.prototype.forEach.call(box.querySelectorAll('.fv-update-fach'), function (f) {
+            f.hidden = (f.getAttribute('data-fach') !== wahl);
+          });
+        });
+      });
 
       function sagen(text, gut) {
         melde.textContent = text;
@@ -2442,11 +2572,30 @@
         } else {
           obj = ausFeldern();
         }
-        if (!obj.versionCode || obj.versionCode < 1) { sagen('\u2717 Versions-Code fehlt.', false); return; }
-        var urlWert = obj.apk || obj.download || '';
+        if (!obj.versionCode || obj.versionCode < 1) {
+          sagen('\u2717 Versions-Code der Android-App fehlt.', false); return;
+        }
+        var urlWert = obj.apk || obj.download || obj.url || '';
         if (urlWert && !/^https?:\/\//i.test(urlWert)) {
           sagen('\u2717 Die Download-Adresse muss mit https:// beginnen.', false); return;
         }
+        // Zusatzfassungen ebenso pruefen - eine krumme Adresse dort faellt
+        // sonst erst auf, wenn jemand vergeblich klickt.
+        var meckern = '';
+        PLATTFORMEN.forEach(function (pf) {
+          if (!pf.schluessel) return;
+          var u = obj[pf.schluessel];
+          if (!u || !u.url) return;
+          var erlaubt = pf.nurAdresse ? /^(https?:\/\/|\/)/i : /^https?:\/\//i;
+          if (!erlaubt.test(u.url)) {
+            meckern = pf.titel + ': die Adresse muss mit '
+                    + (pf.nurAdresse ? 'https:// oder / ' : 'https:// ') + 'beginnen.';
+          }
+          if (!pf.nurAdresse && u.versionCode && u.versionCode < 1) {
+            meckern = pf.titel + ': der Versions-Code muss groesser als 0 sein.';
+          }
+        });
+        if (meckern) { sagen('\u2717 ' + meckern, false); return; }
         speichern(obj).then(function (ok) {
           if (ok) { inFelder(obj); sagen('\u2713 Gespeichert \u2013 die App sieht die neue Fassung sofort.', true); }
           else { sagen('\u2717 Speichern fehlgeschlagen.', false); }

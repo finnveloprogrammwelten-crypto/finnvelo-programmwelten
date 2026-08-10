@@ -382,6 +382,32 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4e. Mehrere Fassungen je Programm (10.08.2026)
+
+`PLATTFORMEN` in `stats.js`: Android (Schlüssel `''`), PC (`pc`), Web
+(`web`, nur Adresse). Reiter in der Update-Kachel, Feldkennungen tragen
+den Schlüssel als Vorsatz (`pc.versionName`).
+
+**Die eine Entscheidung, die alles trägt:** Die Android-Felder bleiben
+auf der **obersten Ebene** der `version.json`. Verteilte Apps lesen genau
+`versionCode`, `versionName` und `apk`/`url`. Kämen sie in einen eigenen
+Block, würde **keine App auf einem Gerät je wieder ein Update bemerken** —
+und man merkte es erst, wenn sich Wochen später niemand aktualisiert hat.
+Weitere Fassungen liegen deshalb als Unterblock daneben.
+
+* Leere Fassungen werden mit `delete o[schluessel]` entfernt, statt leere
+  Blöcke zu schreiben.
+* Die Web-Fassung erlaubt auch einen Pfad (`/apps/...`), die anderen
+  verlangen `https://` — ein Download muss absolut sein.
+* Die Übernahme aus der Ziel-Zeile schreibt in den **gerade offenen**
+  Reiter (`.fv-update-reiter__k.an`).
+
+**Merke für Tests:** Die Ablage heißt je App verschieden (`aufgabenplaner`,
+`mischwald`, `einkaufsliste`) — nicht wie die Seite. Wer die falsche liest,
+bekommt `{}` und hält ein funktionierendes Speichern für kaputt.
+
+---
+
 ## 5. Zugekaufte Dienste: Einkaufsliste und Tourenplaner (10.08.2026)
 
 Beide kamen als fertige Module. Eingebaut in **denselben** Worker, nicht
@@ -394,6 +420,26 @@ Route, und genau daran ist der Tourendienst schon einmal gescheitert
 | `einkauf-modul.js` | unverändert übernommen |
 | `tourenapi-modul.js` | aus `server/worker.js`, **mit Änderungen** (siehe unten) |
 | `apps/einkaufsliste/` | Web-Fassung, APK, Hintergründe, `_headers` |
+
+### Programmseiten (10.08.2026)
+
+`einkaufsliste.html` neu, aus `_vorlage-programm.html`. Eingebunden in
+Kachel, Programmliste, `PROGRAM_PAGES`, Sitemap und **in alle 21
+Web-Apps-Menüs**. In `APPS` (stats.js) steht ein Eintrag, der auf
+`/apps/einkaufsliste/version.json` zeigt — dieselbe Datei, die auch die
+Android-App abfragt.
+
+**Falle in der Vorlage:** Der Abschnitt `program-launch` („Sofort
+starten") steckt dort in einem **HTML-Kommentar**. Wer nur den `href`
+ersetzt, hat einen Knopf, der im Rohtext steht und im Browser fehlt —
+ohne Fehlermeldung. Beim Prüfen fiel auf: auch ohne JavaScript war der
+Abschnitt nicht im DOM. Erst das verriet den Kommentar.
+
+**Nachgebessert am Tourenplaner:** Dort zeigte der Startknopf auf
+`/planer/tourenplaner/` — ein Ordner, den es nicht gibt. Ein Knopf, der
+ins Leere führt, ist schlimmer als keiner: er verspricht etwas und
+liefert die 404-Seite. Der Abschnitt ist jetzt sauber auskommentiert, bis
+die Web-Fassung wirklich da ist.
 
 ### Der Namenskonflikt, der Daten gekostet hätte
 

@@ -1932,6 +1932,39 @@ body.fv-admin-on .site-header { top: 44px; }
   border-color: rgba(240, 180, 41, 0.8);
   background: rgba(240, 180, 41, 0.10);
 }
+/* Reiter fuer die Fassungen (Android / PC / Web) in der App-Aktualisierung */
+.fv-update-reiter {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.fv-update-reiter__k {
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--soft);
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-update-reiter__k:hover { color: var(--text); border-color: rgba(120, 170, 255, 0.5); }
+.fv-update-reiter__k.an {
+  background: var(--blue); border-color: var(--blue); color: #fff;
+}
+.fv-update-pfhinweis {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-update-fach { display: flex; flex-direction: column; gap: 2px; }
+@media (pointer: coarse) {
+  .fv-update-reiter__k { padding: 11px 16px; }
+}
+
 /* Angebot, den Versions-Code um eins hochzuzaehlen */
 .fv-update-box .fv-code-plus {
   align-self: flex-start;
