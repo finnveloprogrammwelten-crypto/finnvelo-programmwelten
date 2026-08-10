@@ -24,6 +24,12 @@
 //   POST /api/zugang {aktion:"zuruecksetzen", pin, neu}     -> ohne altes Passwort
 
 import { DurableObject } from "cloudflare:workers";
+import { behandleEinkauf, EinkaufSpeicher } from "./einkauf-modul.js";
+import { behandleTourenapi, TourenKanal, TourenKopplung } from "./tourenapi-modul.js";
+
+// Durable Objects der beiden zugekauften Dienste weiterreichen - Cloudflare
+// findet sie sonst nicht, obwohl sie in der wrangler.jsonc stehen.
+export { EinkaufSpeicher, TourenKanal, TourenKopplung };
 
 const KEY_RE = /^[a-z]+:[a-z0-9-]{1,40}$/;
 const ALLOWED_PREFIXES = ["views", "video", "download"];
@@ -46,7 +52,14 @@ const RESERVIERT = [
   "admin", "downloads", "tester", "404", "assets", "planer", "tess", "api",
   "mischwald", "mischwaldrechner", "aufgabenplaner", "archivar", "finanzmanager",
   "medienstudio", "command-control", "haus-und-gartenplaner", "finnvelo", "sitemap",
-  "robots", "favicon", "koppeln", "planer", "well-known", "serverstatus"
+  "robots", "favicon", "koppeln", "planer", "well-known", "serverstatus",
+  // Ordner und Dienste, die es als Datei bzw. Weg schon gibt. Ohne diese
+  // Eintraege koennte eine angelegte Seite sie verschatten: der Worker
+  // liefert eigene Programmseiten VOR dem Rueckgriff auf die Dateien.
+  "apps",          // /apps/einkaufsliste/ - die Web-Fassung samt APK
+  "tourenapi",     // Kopplungsdienst des Tourenplaners
+  "einkaufsliste", // Programmseite der Einkaufsliste
+  "tourenplaner"   // Programmseite des Tourenplaners (liegt als Datei vor)
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
@@ -1313,6 +1326,35 @@ export default {
 
   async bearbeiten(request, env, ctx) {
     const url = new URL(request.url);
+
+    /* =================================================================
+     * ZUERST die beiden eigenstaendigen Dienste - noch VOR allem anderen.
+     *
+     * Reihenfolge ist hier keine Geschmacksfrage: steht /api/einkauf/
+     * hinter der Sammelroute /api/, verschluckt die Sammelroute jeden
+     * Aufruf und die Kopplung antwortet 404. Bei /tourenapi/ gilt
+     * dasselbe gegenueber der Dateiauslieferung, die auf PUT mit 405
+     * antwortet. Beides ist laut Auftrag schon passiert.
+     *
+     * Fehlt die Bindung, sagt der Dienst das im Klartext, statt still
+     * einen Fehler zu werfen - sonst sucht man an der falschen Stelle.
+     * ================================================================= */
+    if (url.pathname.startsWith("/api/einkauf/")) {
+      if (!env || !env.EINKAUF) {
+        return json({ fehler: "Der Einkaufsdienst ist nicht eingerichtet " +
+                              "(Bindung EINKAUF fehlt in der wrangler.jsonc)." }, 503);
+      }
+      return behandleEinkauf(request, env, url);
+    }
+
+    if (url.pathname === "/tourenapi" || url.pathname.startsWith("/tourenapi/")) {
+      if (!env || !env.TOUREN_KANAL || !env.TOUREN_KOPPLUNG) {
+        return json({ fehler: "Der Tourendienst ist nicht eingerichtet " +
+                              "(Bindungen TOUREN_KANAL und TOUREN_KOPPLUNG fehlen)." }, 503);
+      }
+      return behandleTourenapi(request, env);
+    }
+
     /* =================================================================
      * Gerätekopplung: alles unter /api/kanal/ ...
      * Jeder Kanal hat ein eigenes Durable Object. Der Worker sucht anhand

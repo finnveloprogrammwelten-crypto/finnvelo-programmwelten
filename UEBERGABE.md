@@ -382,6 +382,73 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5. Zugekaufte Dienste: Einkaufsliste und Tourenplaner (10.08.2026)
+
+Beide kamen als fertige Module. Eingebaut in **denselben** Worker, nicht
+als eigene Worker — zwei Worker auf einer Domain streiten sich um die
+Route, und genau daran ist der Tourendienst schon einmal gescheitert
+(405 von der Dateiauslieferung).
+
+| Datei | Inhalt |
+|---|---|
+| `einkauf-modul.js` | unverändert übernommen |
+| `tourenapi-modul.js` | aus `server/worker.js`, **mit Änderungen** (siehe unten) |
+| `apps/einkaufsliste/` | Web-Fassung, APK, Hintergründe, `_headers` |
+
+### Der Namenskonflikt, der Daten gekostet hätte
+
+Der gelieferte Tourendienst bringt `export class Kanal` mit — **diesen
+Namen gibt es im Website-Worker bereits** (die Kanäle des
+Aufgabenplaners). Zwei gleichnamige Klassen in einer Datei überschreiben
+einander; im schlimmsten Fall hätte der Aufgabenplaner-Kanal Tourendaten
+verwaltet.
+
+Umbenannt zu **`TourenKanal`** und **`TourenKopplung`**, Bindungen
+entsprechend `TOUREN_KANAL` / `TOUREN_KOPPLUNG`. Der Rest ist unverändert;
+die Abweichungen stehen als Kommentar oben in `tourenapi-modul.js`.
+
+### Reihenfolge (wieder einmal)
+
+```
+/api/einkauf/   →  Einkaufsdienst      ─┐
+/tourenapi/     →  Tourendienst         │ ganz oben in bearbeiten()
+/api/kanal/     →  Aufgabenplaner       │
+/api/           →  Sammelroute         ─┘ zuletzt
+```
+
+Steht `/api/einkauf/` hinter der Sammelroute, verschluckt sie jeden
+Aufruf → 404. Bei `/tourenapi/` gilt dasselbe gegenüber der
+Dateiauslieferung → 405 auf PUT.
+
+### `RESERVIERT` ergänzt
+
+`apps`, `tourenapi`, `einkaufsliste`, `tourenplaner`. Ohne diese Einträge
+könnte eine über „+ Seite" angelegte Seite den Ordner `/apps/` oder den
+Dienst verschatten — angelegte Seiten werden **vor** dem Rückgriff auf
+die Dateien ausgeliefert.
+
+### Was beim Prüfen auffiel
+
+* Der Codevorrat der Einkaufsliste ist `ABCDEFGHJKMNPQRSTUVWXYZ23456789`
+  — ohne `0`, `1`, `I`, `L`, `O`. Ein Code wie „123456" ist ungültig.
+* Pakete haben die Form `{iv, daten}`, nicht `{paket}`.
+* **Cloudflare-Stubs nehmen `(url, init)` genauso wie einen fertigen
+  Request.** Ein Nachbau, der nur Requests annimmt, scheitert mit
+  „Invalid URL" — das sieht nach einem Serverfehler aus, ist aber keiner.
+  `t/server.mjs` und die Prüfskripte bilden das jetzt nach.
+* Die Prüfskripte legen ihre Worker-Kopie in `site/`, nicht in `t/`:
+  `worker.js` importiert die Module relativ zu sich selbst.
+
+### APK im Paket — Ausnahme von Regel 1
+
+`apps/einkaufsliste/FINNVELO-Einkaufsliste-1.3.0.apk` (1,1 MB) **gehört
+ins Paket**: sie wird ausgeliefert, damit man die App laden kann. Regel 1
+(keine APKs) zielt auf versehentlich eingepackte Bauartefakte. Alles
+unter `apps/` ist Auslieferung. Schlüsseldateien bleiben ausnahmslos
+draußen.
+
+---
+
 ### Nachtrag 07.08.2026 (2): angelegte Seiten als Datei sichern
 
 `POST /api/programme/datei` liefert die fertige Seite mit

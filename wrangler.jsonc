@@ -15,11 +15,20 @@
     "bindings": [
       { "name": "COUNTERS", "class_name": "Counter" },
       // Ein eigenes Objekt je Kanal des Aufgabenplaners
-      { "name": "KANAELE", "class_name": "Kanal" }
+      { "name": "KANAELE", "class_name": "Kanal" },
+      // Einkaufsliste: ein Objekt je Kanal, je Einladungscode und je Adresse
+      { "name": "EINKAUF", "class_name": "EinkaufSpeicher" },
+      // Tourenplaner: getrennte Objekte fuer Kopplung und Abgleich.
+      // Die Klasse heisst TourenKanal, NICHT Kanal - der Name ist oben
+      // schon vom Aufgabenplaner belegt.
+      { "name": "TOUREN_KANAL", "class_name": "TourenKanal" },
+      { "name": "TOUREN_KOPPLUNG", "class_name": "TourenKopplung" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["Counter"] },
-    { "tag": "v2", "new_sqlite_classes": ["Kanal"] }
+    { "tag": "v2", "new_sqlite_classes": ["Kanal"] },
+    { "tag": "v3", "new_sqlite_classes": ["EinkaufSpeicher"] },
+    { "tag": "v4", "new_sqlite_classes": ["TourenKanal", "TourenKopplung"] }
   ]
 }

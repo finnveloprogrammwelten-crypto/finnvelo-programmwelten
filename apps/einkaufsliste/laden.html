@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#2f6fed">
+<title>FINNVELO Einkaufsliste – App laden</title>
+<meta name="description" content="Gemeinsame Einkaufslisten für Android. Listen anlegen, abhaken, mit Familie und Freunden koppeln.">
+<link rel="icon" href="symbol-192.png">
+<style>
+:root{
+  --schrift:"Segoe UI",Roboto,"Helvetica Neue",system-ui,-apple-system,sans-serif;
+  --akzent:#2f6fed; --akzent-hell:#5b90f5; --akzent-tief:#1d4fbb;
+  --bg:#e9edf4; --flaeche:#fff; --flaeche-tief:rgba(15,23,42,.05);
+  --rand:rgba(15,23,42,.12); --text:#0f172a; --schwach:#5a6577; --leise:#8b95a5;
+  --schatten:0 4px 18px rgba(15,23,42,.12); --gross:0 18px 50px rgba(15,23,42,.20);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1319; --flaeche:#1c232e; --flaeche-tief:rgba(255,255,255,.055);
+    --rand:rgba(255,255,255,.12); --text:#e9eef6; --schwach:#9fabbb; --leise:#71808f;
+    --schatten:0 4px 18px rgba(0,0,0,.5); --gross:0 18px 50px rgba(0,0,0,.6);
+  }
+}
+*,*::before,*::after{box-sizing:border-box}
+body{
+  margin:0;font-family:var(--schrift);font-size:16px;line-height:1.55;
+  color:var(--text);background:var(--bg);-webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='420'%3E%3Cg fill='none' stroke='%232f6fed'%3E%3Cpath d='M0 20 C 90 -14, 190 52, 300 12 S 470 50, 600 4' stroke-width='2.1' opacity='.5'/%3E%3Cpath d='M0 65 C 90 31, 190 97, 300 57 S 470 95, 600 49' stroke-width='1.2' opacity='.3'/%3E%3Cpath d='M0 110 C 90 76, 190 142, 300 102 S 470 140, 600 94' stroke-width='1.2' opacity='.3'/%3E%3Cpath d='M0 155 C 90 121, 190 187, 300 147 S 470 185, 600 139' stroke-width='2.1' opacity='.5'/%3E%3Cpath d='M0 200 C 90 166, 190 232, 300 192 S 470 230, 600 184' stroke-width='1.2' opacity='.3'/%3E%3Cpath d='M0 245 C 90 211, 190 277, 300 237 S 470 275, 600 229' stroke-width='1.2' opacity='.3'/%3E%3Cpath d='M0 290 C 90 256, 190 322, 300 282 S 470 320, 600 274' stroke-width='2.1' opacity='.5'/%3E%3Cpath d='M0 335 C 90 301, 190 367, 300 327 S 470 365, 600 319' stroke-width='1.2' opacity='.3'/%3E%3Cpath d='M0 380 C 90 346, 190 412, 300 372 S 470 410, 600 364' stroke-width='1.2' opacity='.3'/%3E%3C/g%3E%3C/svg%3E");
+  background-repeat:repeat;
+}
+.blatt{position:relative;z-index:1;max-width:860px;margin:0 auto;padding:32px 20px 80px}
+
+.kopf{display:flex;align-items:center;gap:16px;margin-bottom:34px}
+.zeichen{
+  width:76px;height:76px;flex:0 0 auto;border-radius:22px;
+  background:linear-gradient(140deg,var(--akzent-hell),var(--akzent-tief));
+  display:grid;place-items:center;box-shadow:var(--schatten);
+}
+.zeichen svg{width:42px;height:42px}
+h1{margin:0;font-size:27px;font-weight:700;letter-spacing:-.3px}
+.unter{color:var(--schwach);font-size:15px;margin-top:2px}
+.marke{
+  display:inline-block;margin-top:7px;padding:3px 10px;border-radius:999px;
+  background:var(--flaeche-tief);color:var(--leise);
+  font-size:12px;font-weight:700;font-variant-numeric:tabular-nums;
+}
+
+.karte{
+  background:var(--flaeche);border:1px solid var(--rand);border-radius:18px;
+  padding:24px;box-shadow:var(--schatten);margin-bottom:20px;
+}
+.karte h2{margin:0 0 12px;font-size:17px;font-weight:700}
+.karte p{margin:0 0 12px;color:var(--schwach);font-size:15px}
+.karte p:last-child{margin-bottom:0}
+
+.laden{
+  display:flex;align-items:center;justify-content:center;gap:11px;
+  width:100%;padding:17px 22px;border-radius:14px;
+  background:linear-gradient(135deg,var(--akzent-hell),var(--akzent-tief));
+  color:#fff;font-size:17px;font-weight:700;text-decoration:none;
+  box-shadow:0 6px 22px color-mix(in srgb,var(--akzent) 42%,transparent);
+  transition:transform .16s ease,box-shadow .16s ease;
+}
+.laden:hover{transform:translateY(-1px);box-shadow:0 9px 28px color-mix(in srgb,var(--akzent) 48%,transparent)}
+.laden:active{transform:translateY(0)}
+.laden svg{width:21px;height:21px}
+.dazu{
+  display:flex;flex-wrap:wrap;gap:14px;justify-content:center;
+  margin-top:14px;font-size:13.5px;color:var(--leise);
+}
+.dazu span{font-variant-numeric:tabular-nums}
+.zweitweg{
+  display:inline-flex;align-items:center;gap:8px;margin-top:16px;
+  color:var(--akzent);font-weight:650;font-size:15px;text-decoration:none;
+}
+.zweitweg:hover{text-decoration:underline}
+
+.schau{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;margin-bottom:20px}
+.schau img{
+  width:100%;border-radius:16px;border:1px solid var(--rand);
+  box-shadow:var(--gross);display:block;
+}
+
+.punkte{margin:0;padding:0;list-style:none;display:grid;gap:13px}
+.punkte li{display:flex;gap:12px;align-items:flex-start;font-size:15px}
+.punkte .zeichenchen{
+  flex:0 0 auto;width:26px;height:26px;border-radius:9px;margin-top:1px;
+  background:color-mix(in srgb,var(--akzent) 14%,transparent);
+  color:var(--akzent);display:grid;place-items:center;font-size:14px;font-weight:800;
+}
+.punkte b{font-weight:650}
+.punkte span.text{color:var(--schwach)}
+.punkte b + span.text::before{content:" — "}
+
+ol.schritte{margin:0;padding-left:22px;display:grid;gap:9px;color:var(--schwach);font-size:15px}
+ol.schritte b{color:var(--text);font-weight:650}
+
+.pruefsumme{
+  margin-top:12px;padding:11px 13px;border-radius:10px;
+  background:var(--flaeche-tief);border:1px solid var(--rand);
+  font-family:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  font-size:11.5px;color:var(--leise);word-break:break-all;line-height:1.6;
+}
+.pruefsumme b{color:var(--schwach);font-family:var(--schrift);font-size:12px}
+
+footer{margin-top:34px;text-align:center;color:var(--leise);font-size:13px}
+footer a{color:var(--leise)}
+</style>
+</head>
+<body>
+<div class="blatt">
+
+  <header class="kopf">
+    <div class="zeichen" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 8h18l-1.6 11.2A2 2 0 0 1 17.4 21H6.6a2 2 0 0 1-2-1.8L3 8zM8 8 12 2l4 6M9.5 12.5v4M14.5 12.5v4"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Einkaufsliste</h1>
+      <div class="unter">Gemeinsame Listen für Einkauf, Freizeit und alles andere</div>
+      <div class="marke">FINNVELO Programmwelten</div>
+    </div>
+  </header>
+
+  <div class="karte">
+    <a class="laden" href="FINNVELO-Einkaufsliste-1.3.0.apk" download>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 3v13M6 11l6 6 6-6M4 21h16"/>
+      </svg>
+      Für Android laden
+    </a>
+    <div class="dazu">
+      <span>Fassung 1.3.0</span>
+      <span>1036 KB</span>
+      <span>ab Android 8</span>
+      <span>ohne Werbung, ohne Konto</span>
+    </div>
+    <div style="text-align:center">
+      <a class="zweitweg" href="./">
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18"/>
+        </svg>
+        Lieber gleich im Browser benutzen
+      </a>
+    </div>
+  </div>
+
+  <div class="schau">
+    <img src="schau-hell.png" alt="Die Einkaufsliste im hellen Erscheinungsbild mit mehreren Einträgen" loading="lazy" width="400" height="820">
+    <img src="schau-dunkel.png" alt="Dieselbe Liste im dunklen Erscheinungsbild mit türkisem Akzent" loading="lazy" width="400" height="820">
+  </div>
+
+  <div class="karte">
+    <h2>Was sie kann</h2>
+    <ul class="punkte">
+      <li><span class="zeichenchen">≡</span><span><b>Mehrere Listen als Reiter</b><span class="text">Einkauf, Spaß, Sonstiges – oder eigene, mit Symbol und Farbe.</span></span></li>
+      <li><span class="zeichenchen">↔</span><span><b>Wischen statt suchen</b><span class="text">nach links löschen, nach rechts bearbeiten, auf freier Fläche zur Nachbarliste blättern.</span></span></li>
+      <li><span class="zeichenchen">×</span><span><b>Mengen von selbst erkannt</b><span class="text">„2x Milch“ oder „Mehl 1,5 kg“ landen richtig sortiert in der Liste.</span></span></li>
+      <li><span class="zeichenchen">⇄</span><span><b>Geräte koppeln</b><span class="text">ein sechsstelliger Code, und Familie und Freunde stehen in derselben Liste.</span></span></li>
+      <li><span class="zeichenchen">🔒</span><span><b>Verschlüsselt unterwegs</b><span class="text">alles wird auf dem Gerät verschlüsselt; der Server sieht nur unlesbare Pakete.</span></span></li>
+      <li><span class="zeichenchen">✈</span><span><b>Auch ohne Netz</b><span class="text">im Laden im Funkloch abhaken, der Abgleich holt es später nach.</span></span></li>
+    </ul>
+  </div>
+
+  <div class="karte">
+    <h2>Aufspielen</h2>
+    <ol class="schritte">
+      <li>Oben auf <b>Für Android laden</b> tippen.</li>
+      <li>Android fragt, ob dieser Quelle vertraut werden darf – <b>erlauben</b>. Die App kommt nicht aus dem Play Store, deshalb die Rückfrage.</li>
+      <li>Die geladene Datei öffnen und <b>Installieren</b> wählen.</li>
+      <li>Beim ersten Start liegen die Listen nur auf diesem Gerät. Unter <b>Einstellungen → Geräte koppeln</b> einen Code erzeugen und am zweiten Gerät eingeben.</li>
+    </ol>
+    <div class="pruefsumme">
+      <b>SHA-256 der Datei</b><br>
+      ddda0ea58876905459eb052f304b1a7e20bb28ae017aab244cd501badc5a1d1e
+    </div>
+  </div>
+
+  <div class="karte">
+    <h2>Aktualisierungen</h2>
+    <p>Die App sieht einmal am Tag nach, ob hier eine neuere Fassung liegt, und meldet sich dann von selbst. Wer nicht warten will, findet unter <b>Einstellungen → Über</b> den Knopf <b>Auf Aktualisierung prüfen</b>.</p>
+    <p>Eine neue Fassung legt sich über die alte. Listen, Einstellungen und die Kopplung bleiben dabei erhalten.</p>
+  </div>
+
+  <footer>
+    FINNVELO Programmwelten · <a href="/">zur Übersicht</a>
+  </footer>
+
+</div>
+</body>
+</html>
