@@ -756,10 +756,20 @@
       return el.getAttribute('data-fvk') || el.getAttribute('data-fvx') || 'x';
     }
 
-    // Sagt Bescheid, dass ein Ziel gesetzt wurde. Wer will, hoert zu.
-    function zielMelden(url) {
+    /* Sagt Bescheid, dass ein Ziel gesetzt wurde. Wer will, hoert zu.
+     *
+     * "art" sagt, um welche Fassung es geht:
+     *   ''     - vom Knopf "Ziel speichern": gilt fuer den gerade offenen Reiter
+     *   'web'  - vom Web-App-Upload: gehoert IMMER in die Web-Fassung
+     *
+     * Ohne diese Unterscheidung passierte Folgendes: Wer eine Web-App hochlud,
+     * waehrend der Reiter "Android-App" offen war, bekam die Adresse der
+     * Web-App in das APK-Feld geschrieben - die Download-Adresse der
+     * Android-App war damit weg. */
+    function zielMelden(url, art) {
       try {
-        document.dispatchEvent(new CustomEvent('fv:ziel-gesetzt', { detail: { url: url } }));
+        document.dispatchEvent(new CustomEvent('fv:ziel-gesetzt',
+          { detail: { url: url, art: art || '' } }));
       } catch (_e) { /* aeltere Browser: dann eben ohne Automatik */ }
     }
 
@@ -869,14 +879,15 @@
               if (typeof fertig === 'function') {
                 fertig(res.url, el);
                 sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.', 'gut');
-                zielMelden(res.url);
+                zielMelden(res.url, 'web');
                 return;
               }
               save(schluessel, 'link', res.url).then(function (gut) {
                 flash(el, gut);
                 if (gut) {
-                  sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.', 'gut');
-                  zielMelden(res.url);
+                  sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App. '
+                      + 'Die Adresse steht in der App-Aktualisierung unter "Web-Version".', 'gut');
+                  zielMelden(res.url, 'web');
                 } else {
                   sagen('\u2717 Hochgeladen, aber das Ziel lie\u00df sich nicht speichern. '
                       + 'Adresse steht im Feld \u2013 bitte "Ziel speichern" dr\u00fccken.', 'schlecht');
@@ -2371,16 +2382,39 @@
         label.appendChild(knopf);
       }
 
-      function uebernehmen(url) {
+      function uebernehmen(url, art) {
         if (!url) return;
         var urlKey = urlFeldName();
         var geaendert = [];
 
-        // In welche Fassung soll die Adresse? Die gerade offene - sonst
-        // landet ein PC-Download in den Feldern der Android-App.
-        var offen = box.querySelector('.fv-update-reiter__k.an');
-        var pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
+        /* In welche Fassung soll die Adresse?
+         *  - Kommt sie vom Web-App-Upload ("web"), gehoert sie IMMER in die
+         *    Web-Fassung. Frueher landete sie im gerade offenen Reiter und
+         *    ueberschrieb dort die APK-Adresse - der Android-Download war weg.
+         *  - Sonst in den offenen Reiter, wie beim Knopf "Ziel speichern". */
+        var pfSchluessel;
+        if (art === 'web') {
+          pfSchluessel = 'web';
+        } else {
+          var offen = box.querySelector('.fv-update-reiter__k.an');
+          pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
+        }
         var vorsatz = pfSchluessel ? (pfSchluessel + '.') : '';
+
+        // Die Web-Fassung hat keine Versionsnummer und keinen Code - dort
+        // nur die Adresse eintragen und den Reiter zeigen.
+        if (pfSchluessel === 'web') {
+          var wFeld = box.querySelector('[data-key="web.url"]');
+          if (wFeld) {
+            wFeld.value = url;
+            wFeld.classList.add('fv-uebernommen');
+            reiterZeigen('web');
+            melde.textContent = '\u2713 Adresse der Web-Fassung übernommen. '
+                              + 'Zum Festschreiben noch "Speichern" drücken.';
+            melde.className = 'fv-update-melde gut';
+          }
+          return;
+        }
 
         if (urlKey) {
           var uFeld = box.querySelector('[data-key="' + vorsatz
@@ -2418,7 +2452,10 @@
       }
 
       document.addEventListener('fv:ziel-gesetzt', function (e) {
-        try { uebernehmen(e && e.detail ? e.detail.url : ''); } catch (_x) { /* nie stoeren */ }
+        try {
+          var d = (e && e.detail) || {};
+          uebernehmen(d.url || '', d.art || '');
+        } catch (_x) { /* nie stoeren */ }
       });
 
       // Beim Tippen die Markierung wieder wegnehmen
@@ -2540,15 +2577,17 @@
       inFelder(daten);
 
       // Zwischen den Fassungen umschalten
+      function reiterZeigen(wahl) {
+        Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (a) {
+          a.classList.toggle('an', (a.getAttribute('data-pf') || '') === wahl);
+        });
+        Array.prototype.forEach.call(box.querySelectorAll('.fv-update-fach'), function (f) {
+          f.hidden = ((f.getAttribute('data-fach') || '') !== wahl);
+        });
+      }
       Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (k) {
         k.addEventListener('click', function () {
-          var wahl = k.getAttribute('data-pf');
-          Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (a) {
-            a.classList.toggle('an', a === k);
-          });
-          Array.prototype.forEach.call(box.querySelectorAll('.fv-update-fach'), function (f) {
-            f.hidden = (f.getAttribute('data-fach') !== wahl);
-          });
+          reiterZeigen(k.getAttribute('data-pf') || '');
         });
       });
 

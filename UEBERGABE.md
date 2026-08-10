@@ -382,6 +382,32 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4f. Der Web-App-Upload zerstörte die APK-Adresse (10.08.2026)
+
+**Gemeldet, bestätigt, behoben.** Ablauf des Fehlers:
+
+1. Reiter „Android-App" ist offen (Vorgabe)
+2. Web-App hochladen → `zielMelden(res.url)`
+3. `uebernehmen()` schrieb in den **gerade offenen** Reiter
+4. Die Adresse der Web-App landete im APK-Feld — **die
+   Download-Adresse der Android-App war weg**
+
+Das Ereignis `fv:ziel-gesetzt` trägt jetzt ein `art`-Feld:
+
+| Auslöser | `art` | Zielt auf |
+|---|---|---|
+| Knopf „Ziel speichern" | `''` | den offenen Reiter |
+| Web-App-Upload | `'web'` | **immer** die Web-Fassung |
+
+Bei `art === 'web'` wird nur `web.url` gesetzt, der Web-Reiter geöffnet
+und gemeldet — Versionsnummer und Code gibt es dort nicht.
+
+Geprüft wird ausdrücklich der gefährliche Fall: Upload bei offenem
+Android-Reiter, danach Vergleich der APK-Adresse mit dem Wert davor.
+Zusätzlich derselbe Fall bei offenem PC-Reiter.
+
+---
+
 ## 4e. Mehrere Fassungen je Programm (10.08.2026)
 
 `PLATTFORMEN` in `stats.js`: Android (Schlüssel `''`), PC (`pc`), Web
