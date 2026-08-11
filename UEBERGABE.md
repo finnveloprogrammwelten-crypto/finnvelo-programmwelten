@@ -382,7 +382,39 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
-## 4p. Die Übertragung nach Cloudflare fehlte (11.08.2026)
+## 4p. Die Übertragung nach Cloudflare (11.08.2026)
+
+**Verlauf, damit der nächste es nicht wieder falsch herum aufrollt:**
+
+1. Push kam an, Webseite blieb alt, nirgends ein Fehler.
+2. Es gab keinen `.github/workflows/`-Ordner - neu angelegt.
+3. Der Workflow **läuft** seitdem, scheitert aber:
+   `Der Prozess '.../npx' ist mit dem Exit-Code 1 fehlgeschlagen`.
+   Das ist `wrangler deploy` ohne Zugangsdaten.
+
+**Nötig sind zwei Geheimnisse** im GitHub-Projekt unter
+*Settings → Secrets and variables → Actions*:
+
+| Name | Woher |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens, Vorlage „Edit Cloudflare Workers" |
+| `CLOUDFLARE_ACCOUNT_ID` | rechts in der Cloudflare-Übersicht |
+
+**Heißen sie im Projekt anders** (z. B. `CF_API_TOKEN`), muss der Name in
+`deploy.yml` angepasst werden - GitHub gibt kein Geheimnis heraus, dessen
+Name nicht exakt stimmt, und wrangler bricht dann wortlos ab.
+
+Der Workflow prüft das jetzt **vorher** und schreibt im Klartext hin, was
+fehlt, statt mit Exit-Code 1 abzubrechen. Node steht auf 24 (20 wird von
+GitHub nicht mehr unterstützt).
+
+**Zweiter möglicher Weg:** Im Cloudflare-Dashboard zeigt der
+Versionsverlauf Einträge mit Git-Symbol und Branch `main` - das Muster
+von *Workers Builds*, bei dem Cloudflare selbst aus GitHub zieht. Ist das
+aktiv (Einstellungen → Builds), braucht es gar keinen Workflow. Dann
+`deploy.yml` löschen, damit nicht zwei Wege parallel laufen.
+
+---
 
 **Symptom:** Push nach GitHub lief durch, die Webseite blieb trotzdem auf
 dem alten Stand - ohne Fehlermeldung irgendwo.

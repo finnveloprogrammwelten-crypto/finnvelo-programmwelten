@@ -1,10 +1,5 @@
 # Übertragung von GitHub nach Cloudflare
 # ---------------------------------------------------------------------
-# Diese Datei ist der Grund, warum ein "git push" auf der Webseite
-# ankommt. Fehlt sie, wird zwar nach GitHub hochgeladen, aber nichts
-# nach Cloudflare übertragen - die Seite bleibt auf dem alten Stand,
-# ohne dass irgendwo ein Fehler erscheint.
-#
 # EINMALIG nötig: zwei Geheimnisse im GitHub-Projekt hinterlegen unter
 #   Settings -> Secrets and variables -> Actions -> New repository secret
 #
@@ -12,35 +7,62 @@
 #                           Vorlage "Edit Cloudflare Workers"
 #   CLOUDFLARE_ACCOUNT_ID   steht rechts in der Cloudflare-Übersicht
 #
-# Danach läuft die Übertragung bei jedem Push auf "main" von selbst.
-# Nachsehen kann man sie im GitHub-Projekt unter "Actions".
+# Fehlt eines davon, bricht wrangler mit "Exit-Code 1" ab, ohne zu sagen
+# warum. Der erste Schritt unten prüft das deshalb vorher und schreibt
+# im Klartext hin, was fehlt.
 
 name: Auf Cloudflare veröffentlichen
 
 on:
   push:
     branches: [main]
-  # Erlaubt das Auslösen von Hand im Reiter "Actions" - praktisch,
-  # wenn ein Lauf fehlgeschlagen ist und man ihn wiederholen will.
   workflow_dispatch:
 
 jobs:
   veroeffentlichen:
     runs-on: ubuntu-latest
     steps:
+      - name: Zugangsdaten prüfen
+        env:
+          TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          KONTO: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          fehlt=""
+          [ -z "$TOKEN" ] && fehlt="$fehlt CLOUDFLARE_API_TOKEN"
+          [ -z "$KONTO" ] && fehlt="$fehlt CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$fehlt" ]; then
+            echo "::error::Es fehlen diese Geheimnisse:$fehlt"
+            echo ""
+            echo "Anlegen unter: Settings -> Secrets and variables -> Actions"
+            echo "  CLOUDFLARE_API_TOKEN   = Cloudflare -> My Profile -> API Tokens"
+            echo "                           Vorlage 'Edit Cloudflare Workers'"
+            echo "  CLOUDFLARE_ACCOUNT_ID  = rechts in der Cloudflare-Uebersicht"
+            echo ""
+            echo "Heissen die Geheimnisse bei dir anders, hier in der Datei"
+            echo "die Namen anpassen - oder in GitHub umbenennen."
+            exit 1
+          fi
+          echo "Beide Geheimnisse sind vorhanden."
+
       - name: Dateien holen
         uses: actions/checkout@v4
 
       - name: Node bereitstellen
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          # Node 24: Node 20 wird von GitHub nicht mehr unterstuetzt
+          # (die Warnung im letzten Lauf).
+          node-version: '24'
 
       - name: Nach Cloudflare übertragen
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          # wrangler.jsonc im Wurzelverzeichnis wird von selbst gefunden.
-          # Die Durable-Object-Migrationen (v1 bis v4) laufen dabei mit.
+          # Ohne diese Zeile nahm die Aktion Wrangler 3.90.0 - eine Fassung
+          # von Ende 2024. Die wrangler.jsonc hier hat aber
+          # compatibility_date 2026-05-27, fuenf Durable-Object-Bindungen und
+          # Migrationen bis v4. Eine so alte Fassung kennt das nicht und
+          # bricht mit "exit code 1" ab, ohne verstaendlich zu sagen warum.
+          wranglerVersion: '4'
           command: deploy
