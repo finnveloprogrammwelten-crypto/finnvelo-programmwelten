@@ -1,0 +1,55 @@
+FINNVELO PROGRAMMWELTEN - BESUCHER-/EREIGNISZAEHLER EINRICHTEN
+=============================================================
+
+Was ist neu?
+- worker.js      : kleine Server-Logik (Cloudflare Worker) fuer die Zaehler
+- stats.js       : Frontend-Anzeige (Eck-Badge) + Klick-Erfassung
+- wrangler.jsonc : Konfiguration (ersetzt die bisherige wrangler.jsonc.txt)
+- alle *.html    : binden jetzt stats.js ein
+
+Angezeigt wird:
+- Startseite (index.html)      -> OBEN LINKS:  Besucher gesamt
+- Programmseiten (command-control, archivar, aufgabenplaner,
+  finanzmanager, medienstudio, tester) -> OBEN RECHTS:
+  Besucher / Video-Klicks / Downloads
+Andere Seiten zaehlen still mit (fuer "Besucher gesamt").
+
+Datenschutz: Es werden KEINE Cookies gesetzt und KEINE IP-Adressen
+gespeichert - nur anonyme Zahlen. Der "schon gezaehlt"-Merker liegt
+anonym im localStorage des Browsers.
+
+------------------------------------------------------------------
+EINRICHTEN (einmalig) - im Projektordner der Webseite:
+------------------------------------------------------------------
+
+1) Dateien uebernehmen
+   - worker.js und stats.js in den Projektordner legen.
+   - Die 12 *.html-Dateien aus diesem Paket uebernehmen (ueberschreiben).
+   - Die bisherige "wrangler.jsonc.txt" durch die neue "wrangler.jsonc"
+     ersetzen (also als wrangler.jsonc speichern).
+
+2) KV-Speicher (Zaehler-Datenbank) anlegen:
+       npx wrangler kv namespace create COUNTERS
+   Das gibt eine ID aus, z. B.:
+       id = "a1b2c3d4e5f6...."
+   Diese ID in wrangler.jsonc bei "kv_namespaces" -> "id" eintragen
+   (statt HIER_DEINE_KV_NAMESPACE_ID_EINTRAGEN).
+
+3) Veroeffentlichen:
+       npx wrangler deploy
+
+Fertig. Die Zaehler starten bei 0 und laufen ab sofort hoch.
+
+------------------------------------------------------------------
+Hinweise
+------------------------------------------------------------------
+- Video-Klicks zaehlen den Klick auf "Video auf YouTube oeffnen" bzw.
+  den Video-Bereich. Klicks INNERHALB des YouTube-Players koennen aus
+  Datenschutzgruenden (fremde Domain) technisch nicht gezaehlt werden.
+- Downloads zaehlen Klicks auf die Setup-/Patch-Links (.exe/.zip bzw.
+  GitHub-Release-Links).
+- Freie Cloudflare-Grenzen reichen fuer kleine bis mittlere Seiten locker
+  (ca. 1000 Schreibvorgaenge/Tag, 100.000 Lesevorgaenge/Tag).
+- Die Zahlen koennen ein paar Sekunden nachlaufen (KV ist "eventually
+  consistent"). Fuer exakte, manipulationssichere Zaehler liesse sich
+  spaeter D1 oder ein Durable Object nutzen - sag Bescheid, falls noetig.

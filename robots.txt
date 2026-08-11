@@ -1,0 +1,6 @@
+# Alle Suchmaschinen duerfen die ganze Seite crawlen.
+User-agent: *
+Allow: /
+
+# Wo die Sitemap liegt:
+Sitemap: https://finnveloprogramme.com/sitemap.xml

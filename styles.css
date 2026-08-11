@@ -1,0 +1,2488 @@
+:root {
+  --header-height: 66px;
+  --footer-space: 78px;
+  --background-inset: 20px;
+  --bg: #03050a;
+  --bg-soft: #070b13;
+  --panel: rgba(255, 255, 255, 0.055);
+  --panel-strong: rgba(255, 255, 255, 0.095);
+  --line: rgba(255, 255, 255, 0.105);
+  --text: #f4f7fb;
+  --muted: #c7d3e7;
+  --soft: #95a6bf;
+  --blue: #317cff;
+  --blue-light: #bdd7ff;
+  --red: #ff4964;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--bg);
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: calc(var(--header-height) + var(--background-inset));
+  right: var(--background-inset);
+  bottom: calc(var(--footer-space) + var(--background-inset));
+  left: var(--background-inset);
+  z-index: 0;
+  background-image: url("assets/images/programmwelten-hintergrund.webp");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  opacity: 0.20;
+  filter: brightness(1.65) contrast(1.08);
+  pointer-events: none;
+}
+
+img {
+  max-width: 100%;
+}
+
+main {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow: hidden;
+  flex: 1 0 auto;
+  background: transparent;
+}
+
+main > * {
+  position: relative;
+  z-index: 1;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 14px clamp(22px, 7.8vw, 150px);
+  min-height: 66px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(6, 9, 16, 0.88);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.brand-logo {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+}
+
+.brand-text {
+  display: grid;
+  gap: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  line-height: 1;
+}
+
+.brand-text strong {
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.brand-text small {
+  font-size: 9px;
+  font-weight: 900;
+  color: #d9e5f8;
+}
+
+nav {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+a {
+  color: #dbe7ff;
+  text-decoration: none;
+}
+
+a:hover,
+a[aria-current="page"] {
+  color: #ffffff;
+}
+
+a[aria-current="page"] {
+  font-weight: 800;
+}
+
+nav a {
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+nav a[aria-current="page"] {
+  background: rgba(255, 255, 255, 0.095);
+}
+
+.main-canvas {
+  background: transparent;
+}
+
+.home-main {
+  padding: 0 clamp(22px, 5.6vw, 110px);
+}
+
+.home-stage {
+  min-height: clamp(760px, 52vw, 980px);
+  padding: clamp(34px, 3.6vw, 58px) 0 clamp(34px, 4vw, 64px);
+}
+
+.home-stage__intro,
+.program-overview--home {
+  max-width: none;
+}
+
+.home-stage__intro {
+  width: min(610px, 100%);
+}
+
+.section-kicker {
+  margin: 0;
+  color: var(--blue-light);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+h1,
+h2,
+h3 {
+  color: var(--text);
+}
+
+h1 {
+  font-size: clamp(45px, 4.8vw, 72px);
+  line-height: 0.98;
+  margin: 18px 0 18px;
+  letter-spacing: -0.04em;
+}
+
+.hero-lead {
+  max-width: 560px;
+  margin: 0;
+  color: #d7e2f5;
+  font-size: clamp(16px, 1.12vw, 19px);
+  line-height: 1.62;
+}
+
+.dev-note {
+  margin-top: clamp(22px, 2.4vw, 34px);
+  max-width: 560px;
+  padding: 16px 18px;
+  border-left: 3px solid var(--blue-light);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+}
+
+.dev-note__label {
+  margin: 0 0 6px;
+  color: var(--blue-light);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.dev-note__text {
+  margin: 0;
+  color: #d7e2f5;
+  font-size: clamp(15px, 1.05vw, 17px);
+  line-height: 1.6;
+}
+
+.program-overview {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.program-overview--home {
+  margin-top: clamp(90px, 10vw, 170px);
+}
+
+.section-heading {
+  margin-bottom: 22px;
+}
+
+.section-heading--flush {
+  max-width: 720px;
+  margin-bottom: 18px;
+}
+
+.section-heading h1,
+.section-heading h2,
+.program-index__heading h2 {
+  margin: 9px 0 0;
+  font-size: clamp(31px, 3vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.program-index__heading h1 {
+  margin: 18px 0 18px;
+  font-size: clamp(45px, 4.8vw, 72px);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+}
+
+.section-heading p:not(.section-kicker),
+.program-index__heading p:not(.section-kicker) {
+  max-width: 660px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.program-button-grid {
+  display: grid;
+  /* Passt sich der Anzahl an: solange Platz ist, stehen alle Kacheln in einer
+     Reihe - kommen neue Programme dazu, wird automatisch umgebrochen. */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: clamp(16px, 1.6vw, 30px);
+  align-items: start;
+}
+
+.program-button {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  align-content: start;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  outline-offset: 6px;
+  transition: transform 160ms ease, filter 160ms ease;
+}
+
+.program-button:hover {
+  color: inherit;
+  transform: translateY(-3px);
+  filter: brightness(1.08);
+}
+
+.program-button img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Das Statuszeichen lag frueher ABSOLUT ueber der Plakette. Bei kurzen
+   Woertern ging das gerade noch; bei "Web-App in Entwicklung, Desktopapp
+   in Entwicklung" wuchs es ueber drei Zeilen und verdeckte die Plakette
+   vollstaendig. Jetzt steht es unter der Beschreibung: es darf beliebig
+   lang werden, ohne irgendetwas zu ueberdecken.
+
+   Umgesetzt ueber die Reihenfolge im Raster, nicht ueber geaenderten
+   HTML-Aufbau - so wirkt es auch fuer Kacheln, die erst zur Laufzeit
+   entstehen (angelegte Programme). */
+.program-button {
+  grid-template-rows: auto 1fr auto;
+}
+.program-button__status {
+  position: static;
+  grid-row: 3;
+  justify-self: start;
+  margin-top: 10px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 25px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: rgba(9, 12, 21, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffe3ed;
+  font-size: clamp(8px, 0.58vw, 10px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.30);
+}
+
+.program-button__status--live {
+  background: rgba(9, 12, 21, 0.86);
+  border-color: rgba(45, 204, 112, 0.45);
+  color: #d9ffe8;
+}
+
+.program-button__description {
+  display: block;
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: clamp(12px, 0.82vw, 14px);
+  line-height: 1.45;
+}
+
+.page {
+  width: 100%;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 74px 8% 80px;
+}
+
+.program-index-page,
+.program-detail-page,
+.contact-page {
+  padding: clamp(54px, 5vw, 86px) clamp(22px, 5.6vw, 110px) clamp(60px, 6vw, 96px);
+}
+
+.program-index-page {
+  min-height: clamp(820px, 58vw, 1080px);
+}
+
+.program-index,
+.contact-layout {
+  width: min(1440px, 100%);
+  margin: 0;
+}
+
+.program-index__heading,
+.contact-layout__intro {
+  width: min(660px, 100%);
+  margin-left: 0;
+}
+
+.program-row-list {
+  display: grid;
+  gap: clamp(18px, 2vw, 30px);
+  margin-top: clamp(36px, 4vw, 68px);
+}
+
+.program-row {
+  display: grid;
+  grid-template-columns: minmax(250px, 380px) minmax(0, 1fr);
+  gap: clamp(26px, 5vw, 82px);
+  align-items: center;
+  padding: 0 0 clamp(18px, 2.2vw, 34px);
+  color: inherit;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  transition: transform 160ms ease, filter 160ms ease, border-color 160ms ease;
+}
+
+.program-row:hover {
+  color: inherit;
+  transform: translateX(6px);
+  filter: brightness(1.08);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+.program-row__image img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.5 / 1;
+  object-fit: contain;
+}
+
+.program-row__content {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.program-row__content strong {
+  color: var(--text);
+  font-size: clamp(28px, 3.2vw, 52px);
+  line-height: 1;
+  letter-spacing: -0.035em;
+}
+
+.program-row__content span:not(.status) {
+  color: var(--muted);
+  font-size: clamp(16px, 1.08vw, 19px);
+  line-height: 1.6;
+}
+
+.program-detail-page {
+  min-height: clamp(760px, 56vw, 1040px);
+}
+
+.program-detail {
+  width: min(1380px, 100%);
+  margin: 0 auto;
+}
+
+.program-detail__top {
+  display: grid;
+  grid-template-columns: minmax(260px, 460px) minmax(0, 1fr);
+  gap: clamp(34px, 6vw, 92px);
+  align-items: center;
+}
+
+.program-detail__label img {
+  display: block;
+  width: 100%;
+  object-fit: contain;
+}
+
+.program-detail__summary h1 {
+  max-width: 760px;
+  margin-bottom: 14px;
+}
+
+.program-detail__summary .status {
+  margin-bottom: 22px;
+}
+
+.lead,
+.content-box p,
+.content-box li,
+.cards p,
+.program-list p,
+.download-card p,
+.program-info-block p,
+.download-slot p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.lead {
+  max-width: 760px;
+  font-size: clamp(17px, 1.18vw, 20px);
+}
+
+.program-detail__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+  gap: clamp(26px, 4vw, 64px);
+  margin-top: clamp(48px, 6vw, 96px);
+}
+
+/* Prominenter "Planer direkt oeffnen"-Bereich (Web-App-Programme). */
+.program-launch {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(24px, 4vw, 60px);
+  margin-top: clamp(36px, 4.4vw, 64px);
+  padding: clamp(24px, 2.6vw, 36px);
+  border: 1px solid rgba(45, 204, 112, 0.30);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 140% at 100% 0%, rgba(45, 204, 112, 0.10), transparent 60%),
+    var(--panel);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
+}
+
+.program-launch h2 {
+  margin: 8px 0 10px;
+  font-size: clamp(24px, 2vw, 34px);
+  letter-spacing: -0.025em;
+}
+
+.program-launch__text p:not(.section-kicker) {
+  margin: 0;
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.program-launch__action {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+
+.program-launch__btn {
+  min-height: 56px;
+  padding: 16px 34px;
+  font-size: clamp(16px, 1.05vw, 18px);
+  background: #22b56a;
+  box-shadow: 0 16px 40px rgba(34, 181, 106, 0.32);
+}
+
+.program-launch__btn:hover {
+  filter: brightness(1.06);
+}
+
+.program-launch__note {
+  color: var(--soft);
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .program-launch {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+  .program-launch__action {
+    justify-items: stretch;
+  }
+  .program-launch__btn {
+    width: 100%;
+  }
+}
+
+.program-info-block {
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.program-info-block h2 {
+  margin: 0 0 14px;
+  font-size: clamp(24px, 2vw, 34px);
+  letter-spacing: -0.025em;
+}
+
+.download-slot {
+  padding: 18px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.download-slot:first-of-type {
+  border-top: 0;
+}
+
+.download-slot h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+
+.download-slot--muted {
+  opacity: 0.78;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 0 8% 80px;
+}
+
+.cards article,
+.content-box,
+.program-list article,
+.download-card,
+.notice {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+}
+
+.cards article,
+.content-box,
+.program-list article {
+  padding: 26px;
+}
+
+.cards h2,
+.program-list h2,
+.download-card h2 {
+  margin-top: 0;
+}
+
+.content-box {
+  max-width: 980px;
+}
+
+.program-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.status,
+.badge {
+  display: inline-flex;
+  width: fit-content;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(49, 124, 255, 0.17);
+  color: #bdd7ff;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.status--download,
+.status--live {
+  background: rgba(45, 204, 112, 0.16);
+  color: #d9ffe8;
+}
+
+.notice {
+  padding: 18px;
+  margin: 24px 0;
+  background: rgba(49, 124, 255, 0.12);
+  color: var(--muted);
+}
+
+.check-list {
+  padding-left: 22px;
+}
+
+.check-list li {
+  margin-bottom: 8px;
+}
+
+.download-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  margin-top: 24px;
+  background: var(--panel-strong);
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 14px 20px;
+  border-radius: 15px;
+  background: var(--blue);
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 16px 38px rgba(49, 124, 255, 0.25);
+}
+
+.button.secondary {
+  background: rgba(255, 255, 255, 0.10);
+  box-shadow: none;
+}
+
+.small-text {
+  color: var(--soft) !important;
+  font-size: 14px;
+}
+
+code {
+  padding: 2px 6px;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+}
+
+.legal {
+  max-width: 900px;
+}
+
+.contact-layout {
+  min-height: clamp(620px, 48vw, 900px);
+}
+
+.contact-info {
+  max-width: 720px;
+  margin-top: clamp(84px, 11vw, 170px);
+  padding-top: 22px;
+  border-top: 1px solid rgba(255, 255, 255, 0.13);
+}
+
+.contact-info h2 {
+  margin: 0 0 14px;
+  font-size: clamp(28px, 2.6vw, 42px);
+  letter-spacing: -0.03em;
+}
+
+.contact-info p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.contact-info a {
+  color: #ffffff;
+  font-weight: 800;
+}
+
+footer {
+  position: relative;
+  z-index: 2;
+  flex: 0 0 auto;
+  padding: 30px clamp(22px, 7.8vw, 150px);
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  color: var(--soft);
+  background: #03050a;
+}
+
+footer a {
+  color: var(--soft);
+}
+
+.label {
+  margin: 0 0 12px;
+  color: var(--blue-light);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.actions {
+  display: flex;
+  gap: 14px;
+  margin-top: 32px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 1380px) {
+  .program-button-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1040px) {
+  .program-button-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 980px) {
+  .program-row,
+  .program-detail__top,
+  .program-detail__body {
+    grid-template-columns: 1fr;
+  }
+
+  .program-detail__label {
+    max-width: 520px;
+  }
+}
+
+@media (max-width: 860px) {
+  .site-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .home-stage {
+    min-height: auto;
+  }
+
+  .program-overview--home {
+    margin-top: 230px;
+  }
+
+  .program-button-grid,
+  .cards,
+  .program-list {
+    grid-template-columns: 1fr;
+  }
+
+  .download-card {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 520px) {
+  nav {
+    gap: 8px;
+  }
+
+  nav a {
+    padding: 8px 9px;
+    font-size: 13px;
+  }
+
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .brand-text strong {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 42px;
+  }
+
+  .home-main,
+  .page,
+  .cards,
+  .site-header,
+  footer,
+  .program-index-page,
+  .program-detail-page,
+  .contact-page {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .home-stage {
+    padding-top: 32px;
+    padding-bottom: 28px;
+  }
+
+  .program-overview--home {
+    margin-top: 180px;
+  }
+
+  .program-button__status {
+    /* Auf schmalen Schirmen darf das Zeichen so breit werden, wie der
+       Text es braucht - eine feste Mindestbreite zwang frueher zum
+       Umbruch mitten im Wort. */
+    min-width: 0;
+  }
+}
+
+.program-detail__body--archivar,
+.program-detail__body--command-control {
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(28px, 3.8vw, 58px);
+}
+
+.program-info-block--wide {
+  max-width: 1180px;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 1.8vw, 26px);
+  margin-top: clamp(26px, 3vw, 44px);
+}
+
+.feature-grid article {
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.feature-grid h3 {
+  margin: 0 0 9px;
+  color: var(--text);
+  font-size: clamp(18px, 1.25vw, 22px);
+  letter-spacing: -0.018em;
+}
+
+.feature-grid p {
+  margin: 0;
+}
+
+.feature-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px clamp(18px, 3vw, 44px);
+  margin: 16px 0 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.feature-list li::marker {
+  color: var(--blue-light);
+}
+
+@media (max-width: 900px) {
+  .feature-grid,
+  .feature-list,
+  .program-media-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.program-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 34px);
+  margin-top: clamp(24px, 3vw, 42px);
+}
+
+.program-media-card {
+  margin: 0;
+  padding: 0;
+}
+
+.program-media-card img {
+  display: block;
+  width: 100%;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.30);
+}
+
+.program-media-card figcaption {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (max-width: 900px) {
+  .program-media-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.video-embed {
+  position: relative;
+  width: 100%;
+  max-width: 980px;
+  aspect-ratio: 16 / 9;
+  margin-top: clamp(20px, 2.5vw, 36px);
+  overflow: hidden;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.34);
+  box-shadow: 0 24px 62px rgba(0, 0, 0, 0.34);
+}
+
+.video-embed iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.video-link {
+  margin-top: 14px;
+}
+
+.video-link a {
+  color: var(--blue-light);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.video-link a:hover {
+  text-decoration: underline;
+}
+
+/* ===== Spenden / Unterstützen ===== */
+.support-stage {
+  display: flex;
+  justify-content: center;
+  padding: clamp(24px, 4vw, 48px) var(--background-inset) clamp(8px, 2vw, 24px);
+}
+.support-card {
+  width: 100%;
+  max-width: 760px;
+  text-align: center;
+  padding: clamp(24px, 4vw, 40px);
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: rgba(49, 124, 255, 0.10);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
+}
+.support-card h2 {
+  margin: 0 0 10px;
+  font-size: clamp(22px, 3vw, 30px);
+}
+.support-card p {
+  margin: 0 auto 22px;
+  max-width: 540px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.donate-button {
+  gap: 10px;
+}
+.donate-button svg {
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+.donate-note {
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--soft);
+}
+
+/* --- Kommentare --- */
+.comments-page {
+  padding: 0 clamp(22px, 5.6vw, 110px);
+}
+
+.comments-layout {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(20px, 2.4vw, 34px);
+  padding: clamp(34px, 3.6vw, 58px) 0 clamp(34px, 4vw, 64px);
+  max-width: 820px;
+}
+
+.comments-intro {
+  max-width: 620px;
+}
+
+.comment-form-card,
+.comment-list-wrap {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: clamp(18px, 2vw, 26px);
+}
+
+.comment-form-card h2,
+.comment-list-head h2 {
+  margin: 0 0 14px;
+  font-size: clamp(20px, 2vw, 26px);
+}
+
+#comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.comment-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.comment-field > span {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d7e2f5;
+}
+
+.comment-field input,
+.comment-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 9px;
+  padding: 10px 12px;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+
+.comment-field textarea {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.comment-field input:focus,
+.comment-field textarea:focus {
+  outline: none;
+  border-color: var(--blue-light);
+}
+
+.comment-hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.comment-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.comment-status {
+  font-size: 13px;
+  color: #9fb3d1;
+}
+
+.comment-list-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.comment-mod-toggle {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #9fb3d1;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.comment-mod-toggle:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.comment-mod-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 4px;
+}
+
+.comment-mod-box input {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: var(--text);
+  font: inherit;
+}
+
+.button--small {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.comment-list {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.comment-empty {
+  color: #9fb3d1;
+  font-size: 15px;
+}
+
+.comment {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.comment__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.comment__name {
+  font-weight: 800;
+  color: var(--text);
+  font-size: 15px;
+}
+
+.comment__date {
+  font-size: 12px;
+  color: #8298b8;
+}
+
+.comment__text {
+  margin: 0;
+  color: #d7e2f5;
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.comment--removed {
+  opacity: 0.75;
+}
+
+.comment__text--removed {
+  color: #e6a4a4;
+  font-style: italic;
+}
+
+.comment__remove {
+  margin-top: 10px;
+  background: none;
+  border: 1px solid rgba(230, 120, 120, 0.5);
+  color: #e6a4a4;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.comment__remove:hover {
+  background: rgba(230, 120, 120, 0.12);
+}
+
+/* =====================================================================
+   Spenden vorerst KOMPLETT ausgeblendet (Markup bleibt im HTML erhalten).
+   --> Reaktivieren: einfach die folgende eine Regel wieder loeschen.
+   ===================================================================== */
+.support-stage { display: none !important; }
+
+/* =====================================================================
+   Rechtstexte (Impressum / Datenschutz): ruhige, gut lesbare Darstellung.
+   Auf diesen Seiten kein grosses Hintergrund-Logo, deckende Inhaltsbox.
+   Aktiv ueber <body class="legal-body"> auf impressum.html + datenschutz.html.
+   ===================================================================== */
+body.legal-body::before { display: none !important; }       /* Hintergrund-Logo aus */
+
+body.legal-body .page.legal-page {
+  padding-top: clamp(28px, 4vw, 52px);
+}
+
+body.legal-body .content-box.legal {
+  background: var(--bg-soft);                                /* deckend -> klar lesbar */
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.30);
+}
+
+/* =====================================================================
+   Inline-Editor – nur im Admin-Modus sichtbar (Klassen per JS gesetzt).
+   Fuer normale Besucher hat nichts davon eine Wirkung.
+   ===================================================================== */
+.fv-admin-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10000;
+  display: flex; gap: 14px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  background: #10233f; color: #dce8fb; border-bottom: 1px solid rgba(255,255,255,.18);
+  padding: 7px 14px; font: 13px/1.3 system-ui, "Segoe UI", Arial, sans-serif;
+  box-shadow: 0 4px 18px rgba(0,0,0,.35);
+}
+.fv-admin-bar--edit { background: #123a24; border-bottom-color: rgba(120,255,170,.3); }
+.fv-admin-left, .fv-admin-mid, .fv-admin-right { display: flex; gap: 10px; align-items: center; }
+.fv-admin-title { font-weight: 700; white-space: nowrap; }
+.fv-admin-page { opacity: .7; white-space: nowrap; }
+.fv-admin-hint { opacity: .72; font-size: 12px; }
+.fv-tgl {
+  border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 5px 12px;
+  font: inherit; font-weight: 600; cursor: pointer; color: #fff; white-space: nowrap;
+}
+.fv-tgl--off { background: rgba(255,255,255,.10); }
+.fv-tgl--off:hover { background: rgba(255,255,255,.20); }
+.fv-tgl--on { background: #2ecc70; color: #04160c; border-color: rgba(0,0,0,.25); }
+.fv-tgl--on:hover { background: #42d982; }
+.fv-admin-btn {
+  background: rgba(255,255,255,.12); color: #fff; border: 1px solid rgba(255,255,255,.25);
+  border-radius: 8px; padding: 5px 12px; font: inherit; cursor: pointer; white-space: nowrap;
+}
+.fv-admin-btn:hover { background: rgba(255,255,255,.22); }
+body.fv-admin-on { padding-top: 44px; }
+body.fv-admin-on .site-header { top: 44px; }
+@media (max-width: 760px) {
+  body.fv-admin-on { padding-top: 74px; }
+  body.fv-admin-on .site-header { top: 74px; }
+  .fv-admin-hint { display: none; }
+}
+
+.fv-editable { outline: 1px dashed rgba(120,170,255,.55); outline-offset: 3px; border-radius: 3px; cursor: text; transition: background .15s; }
+.fv-editable:hover { background: rgba(120,170,255,.08); }
+.fv-editable:focus { outline: 2px solid var(--blue); background: rgba(120,170,255,.10); }
+.fv-editable-img { outline: 2px dashed rgba(120,170,255,.6); outline-offset: 3px; cursor: pointer; }
+.fv-editable-img:hover { outline-color: var(--blue); }
+.fv-editable-link { outline: 2px dashed rgba(120,170,255,.6); outline-offset: 3px; cursor: pointer; position: relative; }
+.fv-editable-link:hover { outline-color: var(--blue); }
+.fv-drop { outline: 3px solid #4ade80 !important; }
+.fv-saving { opacity: .55; }
+.fv-saved { outline: 2px solid #4ade80 !important; }
+.fv-error { outline: 2px solid #ff6b6b !important; }
+
+/* Video setzen im Edit-Modus */
+.fv-vid-edit { margin: 10px 0; }
+.fv-vid-btn { background: rgba(120,170,255,.12); color: #dce8fb; border: 1px dashed rgba(120,170,255,.6);
+  border-radius: 9px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+.fv-vid-btn:hover { background: rgba(120,170,255,.2); }
+
+/* Kommentar-Schreibzeile (unten auf der Kommentarseite) */
+.comment-composer { margin-top: 26px; display: grid; gap: 10px; }
+.comment-composer__name { width: 100%; max-width: 320px; padding: 9px 12px; border-radius: 9px;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); color: var(--text); font: inherit; }
+.comment-composer__row { display: flex; gap: 10px; align-items: stretch; }
+.comment-composer__text { flex: 1; min-height: 46px; resize: vertical; padding: 11px 13px; border-radius: 11px;
+  border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.05); color: var(--text); font: inherit; line-height: 1.4; }
+.comment-composer__send { white-space: nowrap; align-self: flex-end; }
+@media (max-width: 560px) { .comment-composer__row { flex-direction: column; } .comment-composer__send { align-self: stretch; } }
+
+/* =====================================================================
+   Oberflaechen-Galerie (admin-gepflegt, ueber stats.js befuellt)
+   ===================================================================== */
+.fv-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 2.2vw, 34px);
+  margin-top: clamp(20px, 2.4vw, 32px);
+}
+@media (max-width: 900px) {
+  .fv-gallery { grid-template-columns: 1fr; }
+}
+.fv-gallery__item { position: relative; margin: 0; padding: 0; }
+.fv-gallery__ctrls {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; gap: 6px;
+}
+.fv-gallery__btn {
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1px solid rgba(255,255,255,.25);
+  background: rgba(10,18,32,.82); color: #e8eef5;
+  font: 15px/1 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  transition: background .15s, border-color .15s;
+}
+.fv-gallery__btn:hover { background: rgba(20,40,70,.95); border-color: var(--blue); }
+.fv-gallery__btn--del:hover { background: rgba(120,20,30,.95); border-color: var(--red); }
+.fv-gallery__add {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  min-height: 170px; border-radius: 18px;
+  border: 2px dashed rgba(120,170,255,.55);
+  background: rgba(120,170,255,.06); color: var(--blue-light);
+  font: 600 15px/1.2 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.fv-gallery__add:hover { background: rgba(120,170,255,.12); border-color: var(--blue); }
+.fv-gallery__plus { font-size: 34px; line-height: 1; font-weight: 400; }
+.fv-gallery--drop { outline: 3px solid #4ade80; outline-offset: 6px; border-radius: 18px; }
+
+/* =====================================================================
+   Inline-Editor v2 – Zusatzfunktionen
+   (Status-Platzhalter, Kacheln ziehen, Zusatz-Textfelder)
+   Fuer normale Besucher ohne Wirkung.
+   ===================================================================== */
+
+/* Leeres Status-Schild im Bearbeiten-Modus -> Platzhalter zum Befuellen. */
+.fv-status-empty { min-width: 44px; opacity: .85; }
+.fv-status-empty:empty::before { content: "\002B Status"; opacity: .65; font-style: italic; }
+
+/* Kachel-Griff zum Ziehen (Sortieren) – oben rechts, damit er nicht mit dem
+   Status-Schild (oben links) kollidiert. */
+.fv-sortable-item { position: relative; }
+.fv-drag-handle {
+  position: absolute; top: 8px; right: 8px; z-index: 6;
+  width: 30px; height: 30px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10,18,32,.85); color: #e8eef5; border: 1px solid rgba(255,255,255,.28);
+  cursor: grab; font-size: 16px; line-height: 1;
+  -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  touch-action: none; user-select: none;
+}
+.fv-drag-handle:hover { background: rgba(20,40,70,.95); border-color: var(--blue); }
+.fv-drag-handle:active { cursor: grabbing; }
+.fv-dragging { opacity: .5; outline: 2px dashed var(--blue); outline-offset: 2px; }
+
+/* Zusatz-Textfelder (unten im Inhalt hinzufuegbar). */
+/* =====================================================================
+   Zusatz-Felder (Text + Bild), frei platzierbar im Bearbeiten-Modus
+   ===================================================================== */
+.fv-extra-zone {
+  margin-top: clamp(16px, 2vw, 26px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: clamp(12px, 1.4vw, 20px);
+}
+.fv-extra { position: relative; flex: 0 0 auto; min-width: 0; }
+.fv-extra--voll    { width: 100%; }
+.fv-extra--halb    { width: calc(50% - clamp(12px, 1.4vw, 20px) / 2); }
+.fv-extra--drittel { width: calc(33.333% - clamp(12px, 1.4vw, 20px) * 2 / 3); }
+.fv-extra--viertel { width: calc(25% - clamp(12px, 1.4vw, 20px) * 3 / 4); }
+
+.fv-extra__text { margin: 0; color: var(--muted); line-height: 1.6; }
+
+.fv-extra__figur { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.fv-extra__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.24);
+}
+.fv-extra__bu { margin: 0; font-size: 13px; line-height: 1.45; color: var(--muted); }
+
+/* Werkzeugleiste je Feld - nur im Bearbeiten-Modus vorhanden */
+.fv-extra__leiste {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 5px;
+  border-radius: 10px;
+  background-color: #070b14;
+  border: 1px solid rgba(120, 170, 255, 0.4);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
+  z-index: 6;
+}
+.fv-extra__k {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 14px/1 inherit;
+  cursor: pointer;
+}
+.fv-extra__k:hover { background: rgba(120, 170, 255, 0.2); color: #fff; border-color: var(--blue); }
+.fv-extra__k--aus { opacity: 0.3; cursor: default; }
+.fv-extra__k--weg:hover { background: rgba(160, 30, 44, 0.95); border-color: var(--red); color: #fff; }
+.fv-extra__sel {
+  height: 26px;
+  max-width: 130px;
+  padding: 0 6px;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 255, 0.55);
+  /* Deckende Farben: bei durchsichtigem Hintergrund zeichnet Windows die
+     Klappliste hell und der helle Text darauf ist nicht mehr lesbar. */
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 600 12px/1 inherit;
+  cursor: pointer;
+}
+.fv-extra__sel:hover { border-color: var(--blue); background-color: #16223a; }
+.fv-extra__sel:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+/* Die aufgeklappte Liste selbst - ohne diese Regel ist sie hell auf hell. */
+.fv-extra__sel option {
+  background-color: #101827;
+  color: #eaf1ff;
+  font-weight: 600;
+}
+.fv-extra__sel option:checked { background-color: #2a6adf; color: #ffffff; }
+.fv-extra__sel--ziel { max-width: 150px; }
+
+/* Knopfleiste zum Anlegen - je Abschnitt eine */
+.fv-extra-add-box {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+.fv-extra-add {
+  background: rgba(120, 170, 255, 0.07);
+  border: 1px dashed rgba(120, 170, 255, 0.5);
+  color: var(--blue-light);
+  border-radius: 10px;
+  padding: 7px 14px;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-extra-add:hover { background: rgba(120, 170, 255, 0.16); border-color: var(--blue); }
+.fv-extra-add__wo { font-size: 12px; color: var(--muted); opacity: 0.85; }
+
+/* Auf schmalen Bildschirmen steht jedes Feld fuer sich - sonst wird es unlesbar */
+@media (max-width: 820px) {
+  .fv-extra--halb,
+  .fv-extra--drittel,
+  .fv-extra--viertel { width: 100%; }
+}
+
+/* Planer/HTML-App im Bearbeiten-Modus hochladen (Startknopf). */
+.fv-app-edit { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.fv-app-btn {
+  background: rgba(120,170,255,.12); color: #dce8fb; border: 1px dashed rgba(120,170,255,.6);
+  border-radius: 9px; padding: 8px 14px; font: 600 14px/1.2 system-ui, "Segoe UI", Arial, sans-serif; cursor: pointer;
+}
+.fv-app-btn:hover { background: rgba(120,170,255,.2); border-color: var(--blue); }
+.fv-app-status { font: 12px/1.4 system-ui, "Segoe UI", Arial, sans-serif; color: var(--soft); }
+
+/* =====================================================================
+   Schnellauswahl "Web-Apps" in der Hauptnavigation
+   ===================================================================== */
+.nav-apps { position: relative; display: inline-flex; }
+.nav-apps__btn::after { content: "\25BE"; margin-left: 7px; font-size: 11px; opacity: .75; }
+.nav-apps--open .nav-apps__btn { background: rgba(255, 255, 255, 0.095); }
+.nav-apps__menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  min-width: 236px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: rgba(8, 12, 20, 0.97);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+.nav-apps__menu[hidden] { display: none; }
+.nav-apps__menu a {
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.nav-apps__menu a:hover { background: rgba(255, 255, 255, 0.095); }
+
+@media (max-width: 760px) {
+  /* Auf schmalen Bildschirmen spannt sich die Liste unter die ganze Kopfzeile,
+     damit sie nie ueber den Bildschirmrand hinauslaeuft. */
+  .nav-apps { position: static; }
+  .nav-apps__menu { left: 0; right: 0; min-width: 0; }
+}
+
+/* Hinweisblock "Web-Apps" auf der Startseite (gruener Akzent = laeuft im Browser). */
+.webapp-note {
+  margin-top: clamp(18px, 2vw, 26px);
+  max-width: 560px;
+  padding: 16px 18px;
+  border-left: 3px solid #4ad991;
+  background: rgba(74, 217, 145, 0.055);
+  border-radius: 10px;
+}
+.webapp-note__label {
+  margin: 0 0 6px;
+  color: #8bf0bd;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 12px;
+  font-weight: 900;
+}
+.webapp-note__text {
+  margin: 0;
+  color: #d7e2f5;
+  font-size: clamp(15px, 1.05vw, 17px);
+  line-height: 1.6;
+}
+.webapp-note__text strong { color: #ffffff; }
+
+/* Bildraster fuer Hochformat-Aufnahmen (Handy-Bildschirmfotos). */
+.program-media-grid--hoch {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(12px, 1.4vw, 22px);
+}
+.program-media-grid--hoch img {
+  height: auto;          /* sonst wird die Hoehenangabe im HTML woertlich genommen */
+  aspect-ratio: 1080 / 2340;
+  object-fit: cover;
+  border-radius: 14px;
+}
+.program-media-grid--hoch figcaption {
+  font-size: 13px;
+  line-height: 1.4;
+}
+@media (max-width: 1080px) {
+  .program-media-grid--hoch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .program-media-grid--hoch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* =====================================================================
+   Bedienfeld "App-Aktualisierung" (nur im Bearbeiten-Modus sichtbar)
+   ===================================================================== */
+.fv-update-box {
+  margin-top: clamp(20px, 2.4vw, 32px);
+  padding: 18px 20px 20px;
+  background: rgba(120, 170, 255, 0.06);
+  border: 2px dashed rgba(120, 170, 255, 0.45);
+  border-radius: 14px;
+}
+.fv-update-titel {
+  margin: 0 0 6px;
+  font-size: 16px;
+  color: var(--blue-light);
+}
+.fv-update-titel span { font-weight: 400; font-size: 13px; opacity: 0.7; }
+.fv-update-hilfe { margin: 0 0 14px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.fv-update-hilfe code {
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-size: 12.5px;
+}
+.fv-update-felder { display: flex; flex-direction: column; gap: 2px; }
+.fv-update-box label,
+.fv-update-lang {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+  text-transform: uppercase;
+}
+.fv-update-box input {
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-update-box input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-update-zeile { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.fv-update-btn {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 18px;
+  font: 700 14px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-update-btn:hover { background: #4a90ff; }
+.fv-update-link { font-size: 13px; color: var(--blue-light); }
+.fv-update-mehr {
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--soft);
+  border-radius: 9px;
+  padding: 8px 13px;
+  font: 400 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-update-mehr:hover { color: var(--text); border-color: var(--blue); }
+.fv-update-melde { font-size: 13px; font-weight: 700; }
+.fv-update-melde.gut { color: #4ad991; }
+.fv-update-melde.schlecht { color: var(--red); }
+.fv-update-roh {
+  width: 100%;
+  min-height: 150px;
+  margin-top: 12px;
+  padding: 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.38);
+  color: var(--text);
+  font: 400 13px/1.5 ui-monospace, "Consolas", monospace;
+  resize: vertical;
+}
+.fv-update-warn {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+@media (max-width: 700px) {
+  .fv-update-felder { gap: 2px; }
+}
+
+/* =====================================================================
+   Bedienfeld "Programme verwalten" (nur im Bearbeiten-Modus sichtbar)
+   ===================================================================== */
+.fv-prog-box {
+  margin: clamp(24px, 3vw, 40px) clamp(22px, 5.6vw, 110px) clamp(30px, 4vw, 50px);
+  padding: 20px 22px 22px;
+  background: rgba(120, 170, 255, 0.06);
+  border: 2px dashed rgba(120, 170, 255, 0.45);
+  border-radius: 14px;
+}
+.fv-prog-titel { margin: 0 0 6px; font-size: 16px; color: var(--blue-light); }
+.fv-prog-titel span { font-weight: 400; font-size: 13px; opacity: 0.7; }
+.fv-prog-hilfe { margin: 0 0 16px; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.fv-prog-felder { display: flex; flex-direction: column; gap: 12px; }
+.fv-prog-box label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.fv-prog-box input {
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-prog-box input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-prog-zeile { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 14px; }
+.fv-prog-btn {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 10px 20px;
+  font: 700 14px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-prog-btn:hover { background: #4a90ff; }
+.fv-prog-melde { font-size: 13px; font-weight: 700; line-height: 1.4; }
+.fv-prog-melde.gut { color: #4ad991; }
+.fv-prog-melde.schlecht { color: var(--red); }
+.fv-prog-liste { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+.fv-prog-kopf {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.fv-prog-leer { margin: 0; font-size: 13px; color: var(--muted); }
+.fv-prog-eintrag {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 9px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.26);
+  border: 1px solid var(--line);
+}
+.fv-prog-eintrag strong { font-size: 14px; }
+.fv-prog-eintrag a { font-size: 13px; color: var(--blue-light); }
+/* "Datei" - Seite als HTML herunterladen. Gleiche Masse wie "entfernen",
+   aber in Blau: es ist ein aufbauender Schritt, kein loeschender. */
+.fv-prog-datei {
+  background: rgba(120, 170, 255, 0.10);
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  color: #eaf1ff;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: 400 12.5px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-prog-datei:hover:not(:disabled) { background: var(--blue); border-color: var(--blue); color: #fff; }
+.fv-prog-datei:disabled { opacity: 0.6; cursor: default; }
+@media (pointer: coarse) {
+  .fv-prog-datei { padding: 11px 14px; }
+}
+
+.fv-prog-weg {
+  margin-left: auto;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font: 400 12.5px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-prog-weg:hover { background: rgba(160, 30, 44, 0.9); border-color: var(--red); color: #fff; }
+@media (max-width: 700px) {
+  .fv-prog-box { margin-left: 14px; margin-right: 14px; padding: 16px; }
+}
+
+/* =====================================================================
+   Ausblenden vorhandener Elemente (nur im Bearbeiten-Modus bedienbar)
+   ===================================================================== */
+.fv-weg-btn {
+  position: absolute;
+  z-index: 90;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  background-color: #a01e2c;
+  color: #ffffff;
+  font: 700 13px/1 inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.55);
+}
+.fv-weg-btn:hover { background-color: #c9283a; transform: scale(1.08); }
+
+/* Ausgeblendetes Element im Bearbeiten-Modus: blass und durchgestrichen */
+.fv-verborgen {
+  opacity: 0.32 !important;
+  filter: grayscale(1);
+  outline: 1px dashed rgba(200, 60, 80, 0.7) !important;
+  outline-offset: 2px;
+}
+.fv-zurueck {
+  display: inline-block;
+  margin: 6px 0 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 12px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-zurueck:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+
+/* Auch die Auswahlfelder im Programm-Feld deckend halten */
+.fv-prog-box select,
+.fv-prog-box select option,
+.fv-update-box select,
+.fv-update-box select option {
+  background-color: #101827;
+  color: #eaf1ff;
+}
+
+/* Knopf zum Aendern des Link-Ziels (nur im Bearbeiten-Modus) */
+/* Ziel-Zeile unter dem Knopf: Pfad hineinkopieren statt Popup-Dialog.
+   Masse und Farben stammen unveraendert aus .fv-update-box (App-Aktualisierung),
+   damit beide Bereiche gleich aussehen. */
+.fv-zielzeile {
+  flex-basis: 100%;
+  width: 100%;
+  margin-top: 12px;
+  padding: 14px 16px 12px;
+  background: rgba(120, 170, 255, 0.06);
+  border: 2px dashed rgba(120, 170, 255, 0.45);
+  border-radius: 14px;
+  text-align: left;
+}
+.fv-zielzeile__feld {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--soft);
+  text-transform: uppercase;
+}
+.fv-zielzeile__feld input {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-zielzeile__feld input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-zielzeile__leiste { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.fv-zielzeile__speichern {
+  background: var(--blue);
+  color: #fff;
+  border: 0;
+  border-radius: 9px;
+  padding: 9px 18px;
+  font: 700 14px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-zielzeile__speichern:hover { background: #4a90ff; }
+/* Web-App hochladen: bewusst zurueckhaltender als "Ziel speichern",
+   weil es der seltenere Griff ist. */
+.fv-zielzeile__app {
+  background: rgba(120, 170, 255, 0.10);
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  color: #eaf1ff;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fv-zielzeile__app:hover { background: var(--blue); border-color: var(--blue); }
+.fv-zielzeile__app:disabled { opacity: 0.6; cursor: default; }
+.fv-zielzeile__melde { font-size: 13px; font-weight: 700; }
+.fv-zielzeile__melde.gut { color: #4ad991; }
+.fv-zielzeile__melde.schlecht { color: var(--red); }
+.fv-zielzeile__hilfe {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* Felder, die die Automatik aus dem Download-Ziel gefuellt hat.
+   Zwei Klassen, damit es gegen ".fv-update-box input" ankommt. */
+.fv-update-box input.fv-uebernommen {
+  border-color: rgba(74, 217, 145, 0.75);
+  background: rgba(74, 217, 145, 0.09);
+}
+/* Der Versions-Code laesst sich nicht aus dem Dateinamen ableiten -
+   dieses Feld will noch von Hand angefasst werden. */
+.fv-update-box input.fv-pruefen {
+  border-color: rgba(240, 180, 41, 0.8);
+  background: rgba(240, 180, 41, 0.10);
+}
+/* Link und Aktualisierung gehoeren zusammen: der Download-Abschnitt wird
+   optisch zu EINEM Fenster, in dem oben steht, wo die Datei liegt, und
+   unten, was dazu gepflegt wird. Frueher wirkten beide wie zwei zufaellig
+   untereinanderliegende Kaesten. */
+.fv-edit-on .program-download-block {
+  border: 1px solid rgba(120, 170, 255, 0.22);
+  border-radius: 16px;
+  padding: 18px 20px 20px;
+  margin-bottom: 22px;
+  background: rgba(120, 170, 255, 0.035);
+}
+.fv-edit-on .program-download-block .fv-update-box {
+  margin-top: 16px;
+  margin-bottom: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  padding-top: 16px;
+}
+@media (max-width: 560px) {
+  .fv-edit-on .program-download-block { padding: 14px 13px 16px; }
+}
+
+/* ---------------------------------------------------------------------
+   Download-Bereiche ein- und ausblenden (Web / App / PC)
+   --------------------------------------------------------------------- */
+.fv-bereich-leiste {
+  /* Der "Sofort starten"-Kasten ist ein Raster mit zwei Spalten. Ohne diese
+     Zeile besetzt die Leiste die erste Spalte, der Text rutscht nach rechts
+     und der Knopf nach unten - die Anordnung faellt auseinander. Mit
+     "1 / -1" bekommt sie eine eigene volle Zeile, alles andere bleibt an
+     seinem Platz. Bei Bereichen ohne Raster hat es keine Wirkung. */
+  grid-column: 1 / -1;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  margin: 0 0 16px; padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(120, 170, 255, 0.07);
+  border: 1px dashed rgba(120, 170, 255, 0.4);
+}
+.fv-bereich-schalter {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 7px 13px; border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--soft);
+  font: 700 13px/1.2 inherit; cursor: pointer;
+}
+.fv-bereich-schalter__punkt {
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--muted); flex: none;
+}
+.fv-bereich-schalter.an { border-color: #4ad991; color: #d8ffe9; }
+.fv-bereich-schalter.an .fv-bereich-schalter__punkt { background: #4ad991; }
+.fv-bereich-name {
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; color: var(--muted);
+}
+.fv-bereich-melde { font-size: 13px; font-weight: 700; }
+.fv-bereich-melde.gut { color: #4ad991; }
+.fv-bereich-melde.schlecht { color: var(--red); }
+/* Ausgeblendeter Bereich bleibt im Bearbeiten-Modus sichtbar, aber gedaempft -
+   sonst koennte man ihn nicht wieder einschalten. */
+.fv-bereich-aus { opacity: 0.42; }
+.fv-bereich-aus .fv-bereich-leiste { opacity: 1; }
+@media (pointer: coarse) {
+  .fv-bereich-schalter { padding: 11px 16px; }
+}
+
+/* Reiter fuer die Fassungen (Android / PC / Web) in der App-Aktualisierung */
+.fv-update-reiter {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+.fv-update-reiter__k {
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.28);
+  color: var(--soft);
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-update-reiter__k:hover { color: var(--text); border-color: rgba(120, 170, 255, 0.5); }
+.fv-update-reiter__k.an {
+  background: var(--blue); border-color: var(--blue); color: #fff;
+}
+.fv-update-pfhinweis {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-update-fach { display: flex; flex-direction: column; gap: 2px; }
+@media (pointer: coarse) {
+  .fv-update-reiter__k { padding: 11px 16px; }
+}
+
+/* Angebot, den Versions-Code um eins hochzuzaehlen */
+.fv-update-box .fv-code-plus {
+  align-self: flex-start;
+  margin-top: 7px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(240, 180, 41, 0.7);
+  background: rgba(240, 180, 41, 0.12);
+  color: #f0b429;
+  font: 700 12.5px/1.2 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+}
+.fv-update-box .fv-code-plus:hover { background: rgba(240, 180, 41, 0.22); }
+
+/* ---------------------------------------------------------------------
+   Hinweis auf neue Fehler in der Admin-Leiste
+   --------------------------------------------------------------------- */
+.fv-admin-fehler { display: inline-flex; }
+.fv-admin-btn.fv-admin-btn--warn {
+  background: rgba(240, 180, 41, 0.22);
+  border-color: rgba(240, 180, 41, 0.75);
+  color: #ffd97a;
+  font-weight: 700;
+}
+.fv-admin-btn.fv-admin-btn--warn:hover { background: rgba(240, 180, 41, 0.34); }
+
+/* ---------------------------------------------------------------------
+   Verlauf: fruehere Fassungen ansehen und zurueckholen
+   --------------------------------------------------------------------- */
+.fv-verlauf-huelle {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 60px 16px 30px;
+  background: rgba(2, 5, 11, 0.72);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  overflow-y: auto;
+}
+.fv-verlauf {
+  width: 100%;
+  max-width: 720px;
+  padding: 22px 24px 24px;
+  border-radius: 16px;
+  background: var(--bg-soft);
+  border: 1px solid rgba(120, 170, 255, 0.35);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.55);
+}
+.fv-verlauf__kopf { display: flex; align-items: flex-start; gap: 14px; }
+.fv-verlauf__kopf h2 { flex: 1; margin: 0; font-size: 18px; color: var(--blue-light); }
+.fv-verlauf__zu {
+  width: 34px; height: 34px; flex: none;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--soft);
+  font: 400 17px/1 inherit;
+  cursor: pointer;
+}
+.fv-verlauf__zu:hover { color: var(--text); border-color: var(--blue); }
+.fv-verlauf__hilfe {
+  margin: 10px 0 18px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.fv-verlauf__leer { margin: 0; font-size: 14px; color: var(--muted); }
+.fv-verlauf__zeile {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 14px;
+  align-items: center;
+  padding: 11px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+.fv-verlauf__wann {
+  grid-column: 1;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.fv-verlauf__block {
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: rgba(120, 170, 255, 0.14);
+  color: var(--blue-light);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-verlauf__probe {
+  grid-column: 1;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.fv-verlauf__holen {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  padding: 8px 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background: rgba(120, 170, 255, 0.10);
+  color: #eaf1ff;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fv-verlauf__holen:hover { background: var(--blue); border-color: var(--blue); }
+.fv-verlauf__holen:disabled { opacity: 0.6; cursor: default; }
+.fv-verlauf__zeile--fertig { opacity: 0.55; }
+@media (max-width: 560px) {
+  .fv-verlauf-huelle { padding: 54px 10px 20px; }
+  .fv-verlauf { padding: 18px 16px 20px; }
+  .fv-verlauf__zeile { grid-template-columns: 1fr; }
+  .fv-verlauf__holen { grid-column: 1; grid-row: auto; margin-top: 8px; justify-self: start; }
+}
+
+/* ---------------------------------------------------------------------
+   Seiten anlegen: derselbe Kasten wie auf der Programme-Seite,
+   nur in der Fenster-Hülle. Damit er dort nicht wie ein zweiter
+   Seitenabschnitt wirkt, werden Rahmen und Abstände zurückgenommen.
+   --------------------------------------------------------------------- */
+.fv-prog-fenster { max-width: 620px; }
+.fv-prog-fenster .fv-prog-box {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+.fv-prog-fenster .fv-prog-titel { margin-top: 0; }
+
+/* ---------------------------------------------------------------------
+   Web-Apps im Menü verwalten (nutzt die Hülle des Verlaufsfensters)
+   --------------------------------------------------------------------- */
+.fv-wa-zeile {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+}
+.fv-wa-felder { flex: 1 1 320px; display: flex; flex-direction: column; gap: 9px; }
+.fv-wa-felder label {
+  display: flex; flex-direction: column; gap: 5px;
+  font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--soft);
+}
+.fv-wa-felder input {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(0, 0, 0, 0.32);
+  color: var(--text);
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-wa-felder input:focus { outline: 2px solid var(--blue); outline-offset: 1px; }
+.fv-wa-knoepfe { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.fv-wa-knoepfe button {
+  border-radius: 9px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background: rgba(120, 170, 255, 0.10);
+  color: #eaf1ff;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+  padding: 9px 12px;
+}
+.fv-wa-knoepfe button:hover:not(:disabled) { background: var(--blue); border-color: var(--blue); }
+.fv-wa-knoepfe button:disabled { opacity: 0.35; cursor: default; }
+.fv-wa-hoch, .fv-wa-runter, .fv-wa-weg { min-width: 38px; }
+.fv-wa-weg { border-color: rgba(230, 120, 120, 0.5); background: rgba(230, 120, 120, 0.10); }
+.fv-wa-weg:hover:not(:disabled) { background: var(--red); border-color: var(--red); }
+.fv-wa-fuss {
+  display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+  margin-top: 18px; padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.fv-wa-neu {
+  background: none; border: 1px dashed rgba(120, 170, 255, 0.55);
+  color: var(--blue-light); border-radius: 9px; padding: 9px 14px;
+  font: 700 13px/1.2 inherit; cursor: pointer;
+}
+.fv-wa-neu:hover { background: rgba(120, 170, 255, 0.12); }
+.fv-wa-speichern {
+  background: var(--blue); color: #fff; border: 0; border-radius: 9px;
+  padding: 10px 18px; font: 700 14px/1.2 inherit; cursor: pointer;
+}
+.fv-wa-speichern:hover { background: #4a90ff; }
+.fv-wa-speichern:disabled { opacity: 0.6; cursor: default; }
+@media (max-width: 560px) {
+  .fv-wa-zeile { flex-direction: column; align-items: stretch; }
+  .fv-wa-knoepfe { justify-content: flex-start; }
+}
+@media (pointer: coarse) {
+  .fv-wa-knoepfe button { padding: 12px 14px; min-height: 44px; }
+  .fv-wa-neu, .fv-wa-speichern { padding: 12px 18px; }
+}
+
+/* ---------------------------------------------------------------------
+   Bedienung mit dem Finger (Tablet, Handy)
+   Nur wo es keinen genauen Zeiger gibt - am Rechner bleibt alles kompakt.
+   44 px ist die uebliche Mindestgroesse fuer eine Fingerflaeche.
+   --------------------------------------------------------------------- */
+@media (pointer: coarse) {
+  .fv-drag-handle {
+    width: 44px; height: 44px;
+    font-size: 20px;
+    top: 6px; right: 6px;
+  }
+  .fv-extra__k {
+    width: 40px; height: 40px;
+    font-size: 17px;
+  }
+  .fv-extra__leiste { gap: 7px; padding: 6px 7px; }
+  .fv-admin-btn { padding: 9px 14px; }
+  .fv-verlauf__holen { padding: 11px 16px; }
+  .fv-verlauf__zu { width: 44px; height: 44px; }
+  /* Bearbeitbare Texte brauchen eine Trefferflaeche, sonst erwischt man
+     mit dem Finger die Zeile daneben. */
+  .fv-edit-on .fv-editable { padding: 4px 6px; margin: -4px -6px; }
+  .fv-zielzeile__speichern,
+  .fv-zielzeile__app { padding: 12px 18px; }
+}
+
+/* Sichtbarkeitsauge an Passwortfeldern (siehe passwortauge.js).
+   Die Huelle gibt sich als reines Block-Element, damit sie an der Stelle
+   des Feldes keine Layouts verschiebt.
+
+   Zur Spezifitaet: Die Seiten bringen eigene Regeln wie ".fv-login button"
+   oder ".status-anmeldung input" mit - die haben Klasse+Element und wuerden
+   eine einfache Klasse hier schlagen. Deshalb wird durchgehend
+   ".fv-pw-huelle > .fv-pw-..." geschrieben (zwei Klassen). Damit gewinnt
+   diese Datei, ohne dass irgendwo !important noetig waere. */
+.fv-pw-huelle {
+  display: block;
+  position: relative;
+  width: 100%;
+}
+.fv-pw-huelle > .fv-pw-feld {
+  width: 100%;
+  /* Platz fuer den Knopf, damit langer Text nicht darunter verschwindet */
+  padding-right: 46px;
+}
+.fv-pw-huelle > .fv-pw-auge {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  bottom: auto;
+  left: auto;
+  transform: translateY(-50%);
+  width: 34px;
+  height: 34px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--soft);
+  font: 400 16px/1 inherit;
+  cursor: pointer;
+  opacity: 0.75;
+}
+.fv-pw-huelle > .fv-pw-auge > svg { display: block; pointer-events: none; }
+.fv-pw-huelle > .fv-pw-auge:hover { opacity: 1; background: rgba(120, 170, 255, 0.14); }
+/* Offenes Auge: deutlich sichtbar, damit klar ist, dass gerade jemand mitlesen kann */
+.fv-pw-huelle > .fv-pw-auge.an { opacity: 1; color: var(--blue-light); }
+.fv-pw-huelle > .fv-pw-auge:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+
+/* Selbst angelegte Knopf-Felder */
+.fv-extra__knopf { display: inline-block; }
+.fv-extra--knopf .fv-extra__leiste { top: -10px; }
+
+/* Zeichenzaehler im Google-Eintrag-Feld */
+.fv-zaehl {
+  font-weight: 400;
+  font-size: 11px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted);
+  opacity: 0.85;
+}
+.fv-zaehl.warn { color: #f0b429; opacity: 1; }
+
+/* Neue Ueberschrift als eigenes Feld */
+.fv-extra__ueberschrift {
+  margin: 6px 0 2px;
+  font-size: clamp(19px, 1.5vw, 23px);
+  color: var(--text);
+}
+
+/* Pfeile zum Umsortieren ganzer Abschnitte */
+.program-info-block { position: relative; }
+.fv-sec-leiste {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 5px;
+  padding: 4px 5px;
+  border-radius: 10px;
+  background-color: #070b14;
+  border: 1px solid rgba(120, 170, 255, 0.4);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.6);
+  z-index: 5;
+}
+.fv-sec-k {
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 14px/1 inherit;
+  cursor: pointer;
+}
+.fv-sec-k:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+
+/* Schalter "Aktiv / Nicht aktiv" fuer die Update-Pruefung */
+.fv-update-schalter {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+}
+.fv-schalter {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 15px 7px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-schalter__punkt {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background-color: #6b7480;
+  box-shadow: 0 0 0 3px rgba(107, 116, 128, 0.2);
+}
+.fv-schalter.an { border-color: #4ad991; }
+.fv-schalter.an .fv-schalter__punkt {
+  background-color: #4ad991;
+  box-shadow: 0 0 0 3px rgba(74, 217, 145, 0.25);
+}
+.fv-schalter:hover { background-color: #16223a; }
+.fv-schalter__hinweis { font-size: 12.5px; line-height: 1.5; color: var(--muted); flex: 1 1 260px; }
+.fv-update-einstell { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.fv-update-einstell[hidden] { display: none; }
+.fv-update-einstell select {
+  padding: 9px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 400 14px/1.3 inherit;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.fv-update-einstell select option { background-color: #101827; color: #eaf1ff; }
+
+/* Schlichte Info-Seite (ohne Wappen und Download-Bereich) */
+.info-page { padding: clamp(28px, 4vw, 60px) clamp(22px, 5.6vw, 110px) clamp(40px, 5vw, 80px); }
+.info-seite { max-width: 860px; }
+.info-seite h1 { margin: 6px 0 12px; font-size: clamp(28px, 3.4vw, 44px); }
+.info-seite .lead { margin: 0 0 clamp(22px, 2.6vw, 34px); font-size: clamp(16px, 1.2vw, 19px); color: var(--soft); line-height: 1.65; }
+@media (max-width: 700px) { .info-page { padding-left: 16px; padding-right: 16px; } }
+
+/* Bilder-Übersicht */
+.fv-bild-gitter { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.fv-bild {
+  position: relative;
+  padding: 8px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.fv-bild--frei { border-color: rgba(240, 180, 41, 0.55); }
+.fv-bild img { width: 100%; height: 90px; object-fit: contain; border-radius: 6px; background: rgba(0,0,0,.3); }
+.fv-bild__info { font-size: 11.5px; color: var(--muted); }
+.fv-bild__ja { color: #4ad991; }
+.fv-bild__nein { color: #f0b429; font-weight: 700; }
+.fv-bild__weg {
+  background: none; border: 1px solid var(--line); color: var(--muted);
+  border-radius: 7px; padding: 5px 9px; font: 400 11.5px/1.2 inherit; cursor: pointer;
+}
+.fv-bild__weg:hover { background: rgba(160, 30, 44, 0.9); border-color: var(--red); color: #fff; }
+
+/* Kennzeichnung der Seitenart in der Programmliste */
+.fv-prog-art {
+  font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 999px;
+  background: rgba(120,170,255,.14); color: var(--blue-light);
+}
+.fv-prog-box select {
+  padding: 9px 11px; border-radius: 9px; border: 1px solid var(--line);
+  background-color: #101827; color: #eaf1ff; font: 400 14px/1.3 inherit;
+  text-transform: none; letter-spacing: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Ausgeblendete Bereiche wirklich verstecken.
+   "display: grid" bzw. "flex" aus den Grundregeln schlaegt das
+   hidden-Merkmal - ohne diese Zeile bleibt ein abgeschalteter Bereich
+   fuer Besucher sichtbar, obwohl er als versteckt gilt. Steht bewusst
+   ganz am Ende, damit es nicht seinerseits ueberschrieben wird.
+   --------------------------------------------------------------------- */
+.program-launch[hidden],
+.program-download-block[hidden],
+.program-info-block[hidden] { display: none !important; }

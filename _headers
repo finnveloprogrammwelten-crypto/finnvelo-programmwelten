@@ -1,0 +1,44 @@
+# Kopfzeilen fuer Cloudflare (Workers Static Assets / Pages)
+#
+# WICHTIG: Diese Datei wird NUR im Wurzelverzeichnis gelesen. Eine
+# _headers in einem Unterordner (z. B. einkaufsliste/_headers) bleibt
+# wirkungslos - deshalb stehen alle Regeln hier.
+#
+# Die drei "no-store" sind kein Geschmack, sondern Voraussetzung dafuer,
+# dass eine neue Fassung ueberhaupt ankommt. Der APK-Name traegt die
+# Fassung, deshalb darf die Datei beliebig lange liegen bleiben.
+
+/einkaufsliste/*.apk
+  Content-Type: application/vnd.android.package-archive
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=31536000, immutable
+
+/einkaufsliste/version.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+
+/einkaufsliste/sw.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-store
+  Service-Worker-Allowed: /einkaufsliste
+
+/einkaufsliste/index.html
+  Content-Type: text/html; charset=utf-8
+  Cache-Control: no-store
+
+/einkaufsliste/*.png
+  Cache-Control: public, max-age=604800
+
+/einkaufsliste/hintergruende/*
+  Cache-Control: public, max-age=604800
+
+# Alter Ort - bleibt erreichbar, damit vorhandene Verweise nicht ins Leere laufen
+/apps/einkaufsliste/*.apk
+  Content-Type: application/vnd.android.package-archive
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=31536000, immutable
+
+/apps/einkaufsliste/version.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store

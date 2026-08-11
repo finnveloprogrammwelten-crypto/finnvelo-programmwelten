@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Finnvelo Tourenplaner: Wander-, Lauf- und Radtouren automatisch erzeugen lassen oder von Hand planen – mit Wunschlaenge, Rundkurs oder Zielpunkt und waehlbarem Wegbelag.">
+  <title>Finnvelo Tourenplaner · Finnvelo</title>
+  <link rel="canonical" href="https://finnveloprogramme.com/tourenplaner">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
+      <img class="brand-logo" src="assets/images/finnvelo-plakette.webp" alt="Finnvelo Plakette">
+      <span class="brand-text">
+        <strong>Finnvelo</strong>
+        <small>Programmwelten</small>
+      </span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="/">Start</a>
+      <a href="/programme" aria-current="page">Programme</a>
+      <span class="nav-apps">
+        <a class="nav-apps__btn" href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" aria-haspopup="true" aria-expanded="false">Web-Apps</a>
+        <span class="nav-apps__menu" hidden>
+          <a href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" data-fv-nav-extra>Haus- und Gartenplaner</a>
+          <a href="/mischwald" target="_blank" rel="noopener" data-fv-nav-extra>Mischwaldrechner</a>
+          <a href="/einkaufsliste/" target="_blank" rel="noopener" data-fv-nav-extra>Einkaufsliste</a>
+        </span>
+      </span>
+      <a href="/kommentare">Kommentare</a>
+      <a href="/kontakt">Kontakt</a>
+    </nav>
+  </header>
+
+  <main class="main-canvas program-detail-page">
+    <article class="program-detail" aria-labelledby="program-title">
+      <div class="program-detail__top">
+        <div class="program-detail__label">
+          <!-- Plakette: bis die eigene vorliegt, steht hier das Finnvelo-Wappen.
+               Austauschen im Bearbeiten-Modus oder als
+               assets/images/tourenplaner-label.webp ablegen. -->
+          <img src="assets/images/finnvelo-plakette.webp" alt="Finnvelo Tourenplaner">
+        </div>
+
+        <div class="program-detail__summary">
+          <p class="section-kicker">Wandern · Laufen · Radfahren · Routenplanung</p>
+          <h1 id="program-title">Finnvelo Tourenplaner</h1>
+          <!-- Status-Schild: fuer "in Arbeit" die naechste Zeile drinlassen, sonst loeschen -->
+          <span class="status">In Entwicklung</span>
+          <p class="lead">Touren planen, ohne lange zu suchen: Du sagst, wie weit es gehen soll
+            und womit du unterwegs bist – den Rest schlaegt der Tourenplaner vor. Jede Route
+            lässt sich danach von Hand nachbessern, und ganz eigene Touren zeichnest du
+            einfach selbst.</p>
+        </div>
+      </div>
+
+      <!--
+        OPTIONAL - nur fuer Programme, die direkt im Browser laufen (Web-App):
+        Diesen Block hier einfuegen und den Link auf den Web-App-Ordner setzen.
+        (Vorbild: haus-und-gartenplaner.html)
+
+        <!-- Der Web-App-Block ist ausgeblendet, bis es die Datei wirklich gibt.
+             Ein Knopf, der ins Leere zeigt, ist schlimmer als keiner: er
+             verspricht etwas und liefert die 404-Seite.
+             Sobald die Web-Fassung da ist: Kommentarzeichen entfernen und
+             das Ziel setzen - oder im Bearbeiten-Modus "Web-App hochladen"
+             am Download-Knopf benutzen.
+                <section class="program-launch" aria-labelledby="launch-title">
+          <div class="program-launch__text">
+            <p class="section-kicker">Direkt im Browser</p>
+            <h2 id="launch-title">Sofort starten</h2>
+            <p>Laeuft direkt hier auf der Webseite - ohne Installation.</p>
+          </div>
+          <div class="program-launch__action">
+            <a class="button program-launch__btn" href="/planer/tourenplaner/">Jetzt oeffnen</a>
+            <span class="program-launch__note">Laeuft im Browser - keine Installation noetig</span>
+          </div>
+        </section>
+        -->
+      -->
+
+      <div class="program-detail__body program-detail__body--archivar">
+        <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
+          <h2 id="description-title">Beschreibung</h2>
+          <p>Der Tourenplaner erzeugt Wander-, Lauf- und Radtouren auf Wunsch von selbst.
+            Du gibst an, wie du unterwegs bist, wie lang die Tour werden soll und wo sie
+            beginnt – daraus entsteht ein Vorschlag. Wahlweise als <strong>Rundkurs</strong>,
+            der wieder am Startpunkt endet, oder als <strong>Strecke</strong> zu einem festen
+            Zielpunkt.</p>
+          <p>Dabei lässt sich mitgeben, woraus die Route bestehen soll: wie viel Straße es
+            sein darf und welcher Art, wie viel auf unbefestigten Wegen, Schotter oder
+            Waldwegen verlaufen soll. So passt der Vorschlag zu dem, was du und dein Rad
+            – oder deine Schuhe – an dem Tag vorhaben.</p>
+          <p>Jeder automatisch erzeugte Vorschlag ist ein Anfang, kein Diktat: Du kannst ihn
+            von Hand nachbearbeiten, einzelne Abschnitte umlegen oder eine Tour komplett
+            selbst anlegen.</p>
+
+          <div class="feature-grid" aria-label="Kernfunktionen">
+            <article><h3>Automatisch vorschlagen</h3><p>Fortbewegungsart und Wunschlänge angeben – die Route entsteht von selbst.</p></article>
+            <article><h3>Rundkurs oder Strecke</h3><p>Zurück zum Startpunkt oder von A nach B mit festem Ziel.</p></article>
+            <article><h3>Wegbelag wählen</h3><p>Anteil an Straße, Schotter, Feld- und Waldwegen selbst bestimmen.</p></article>
+            <article><h3>Von Hand nachbessern</h3><p>Jeden Vorschlag anpassen – einzelne Abschnitte umlegen statt neu anfangen.</p></article>
+            <article><h3>Eigene Touren anlegen</h3><p>Auch ganz ohne Vorschlag: Route selbst zeichnen und speichern.</p></article>
+            <article><h3>Für mehrere Sportarten</h3><p>Wandern, Joggen, Radfahren, Trekking, Gravel und Mountainbike.</p></article>
+          </div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
+          <h2 id="surface-title">Oberflaeche</h2>
+          <p>Ansichten und Bildschirmfotos werden hier ergaenzt.</p>
+          <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
+          <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
+          <h2 id="tutorial-title">Tutorial-Video</h2>
+          <p>Ein Tutorial-Video wird hier ergaenzt, sobald es bereitsteht.</p>
+          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
+        </section>
+
+        <section class="program-info-block" aria-labelledby="advantages-title">
+          <h2 id="advantages-title">Besondere Vorteile</h2>
+          <ul class="feature-list">
+            <li>Kein langes Suchen – Wunschlänge nennen, Vorschlag bekommen</li>
+            <li>Rundkurs oder Zielpunkt, je nachdem was gerade passt</li>
+            <li>Wegbelag lässt sich vorgeben statt hinterher zu ärgern</li>
+            <li>Vorschläge sind nachbearbeitbar, nicht in Stein gemeißelt</li>
+            <li>Eigene Touren gehen genauso wie erzeugte</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block" aria-labelledby="target-title">
+          <h2 id="target-title">Zielgruppe</h2>
+          <p>Für alle, die gern draußen unterwegs sind und nicht jedes Mal von Neuem eine
+            Strecke zusammensuchen wollen – ob zur Feierabendrunde mit dem Rad, zur
+            Wanderung am Wochenende oder zur festen Laufrunde. Wer genaue Vorstellungen
+            hat, gibt sie vor; wer einfach los will, nimmt den Vorschlag.</p>
+        </section>
+
+        <section class="program-info-block program-download-block program-download-block--web" aria-labelledby="download-web-title">
+          <h2 id="download-web-title">Web-Version</h2>
+          <div class="download-slot">
+            <h3>Im Browser &ouml;ffnen</h3>
+            <p>L&auml;uft ohne Installation direkt im Browser. Immer die neueste Fassung &ndash; es gibt nichts zu aktualisieren.</p>
+            <a class="button" href="/apps/" target="_blank" rel="noopener">Web-Version &ouml;ffnen</a>
+          </div>
+        </section>
+
+        <section class="program-info-block program-download-block" aria-labelledby="download-title">
+          <h2 id="download-title">Download</h2>
+          <div class="download-slot">
+            <h3>Hauptdatei</h3>
+            <p>Die erste oeffentliche Fassung wird hier eingehaengt.</p>
+            <!-- Der Knopf steht bewusst schon jetzt da: nur ueber einen sichtbaren
+                 Knopf gibt es im Bearbeiten-Modus die Zeile "Ziel des Knopfes" -
+                 und damit auch "Web-App hochladen". Ziel spaeter dort aendern. -->
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">Download starten</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Weitere Versionen und Patches</h3>
+            <p>Platzhalter fuer spaetere Updates, Patchdateien und aeltere Versionen.</p>
+          </div>
+        </section>
+        <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
+          <h2 id="download-pc-title">Download (PC)</h2>
+          <div class="download-slot">
+            <h3>Programm herunterladen</h3>
+            <p>Die Fassung f&uuml;r Windows. Sie l&auml;uft eigenst&auml;ndig, eine Installation ist nicht n&ouml;tig.</p>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">PC-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Hinweis</h3>
+            <p>Windows meldet bei unbekannten Programmen einen Warnhinweis. &Uuml;ber &bdquo;Weitere Informationen&ldquo; &rarr; &bdquo;Trotzdem ausf&uuml;hren&ldquo; l&auml;sst sich der Start fortsetzen.</p>
+          </div>
+        </section>
+      </div>
+    </article>
+    <section class="support-stage" aria-labelledby="support-title">
+      <div class="support-card">
+        <h2 id="support-title">Finnvelo unterstuetzen</h2>
+        <p>Alle Finnvelo-Programme sind kostenlos. Wenn sie dir helfen und gefallen, freue ich mich sehr ueber eine kleine Spende – sie haelt die Weiterentwicklung am Laufen.</p>
+        <a class="button donate-button" href="https://www.paypal.me/TatorasavoFinnvelo" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Mit PayPal spenden
+        </a>
+        <p class="donate-note">Sichere Abwicklung ueber PayPal.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Finnvelo Programmwelten</span>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+  </footer>
+  <script src="stats.js" defer></script>
+</body>
+</html>

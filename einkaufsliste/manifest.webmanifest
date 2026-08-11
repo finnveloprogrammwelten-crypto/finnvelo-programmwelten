@@ -1,0 +1,17 @@
+{
+  "name": "FINNVELO Einkaufsliste",
+  "short_name": "Einkauf",
+  "description": "Gemeinsame Listen für Einkauf, Freizeit und alles andere.",
+  "start_url": "/einkaufsliste",
+  "scope": "/einkaufsliste",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "de",
+  "background_color": "#e9edf4",
+  "theme_color": "#2f6fed",
+  "icons": [
+    { "src": "symbol-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "symbol-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "symbol-512-rand.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Finnvelo Einkaufsliste: gemeinsame Einkaufslisten auf mehreren Geräten – verschlüsselt, ohne Konto, im Browser und als Android-App.">
+  <title>Finnvelo Einkaufsliste · Finnvelo</title>
+  <link rel="canonical" href="https://finnveloprogramme.com/einkaufsliste">
+  <link rel="icon" href="favicon.ico" sizes="any">
+  <link rel="icon" type="image/png" href="assets/images/favicon.png">
+  <link rel="apple-touch-icon" href="assets/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
+      <img class="brand-logo" src="assets/images/finnvelo-plakette.webp" alt="Finnvelo Plakette">
+      <span class="brand-text">
+        <strong>Finnvelo</strong>
+        <small>Programmwelten</small>
+      </span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="/">Start</a>
+      <a href="/programme" aria-current="page">Programme</a>
+      <span class="nav-apps">
+        <a class="nav-apps__btn" href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" aria-haspopup="true" aria-expanded="false">Web-Apps</a>
+        <span class="nav-apps__menu" hidden>
+          <a href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" data-fv-nav-extra>Haus- und Gartenplaner</a>
+          <a href="/mischwald" target="_blank" rel="noopener" data-fv-nav-extra>Mischwaldrechner</a>
+          <a href="/einkaufsliste/" target="_blank" rel="noopener" data-fv-nav-extra>Einkaufsliste</a>
+        </span>
+      </span>
+      <a href="/kommentare">Kommentare</a>
+      <a href="/kontakt">Kontakt</a>
+    </nav>
+  </header>
+
+  <main class="main-canvas program-detail-page">
+    <article class="program-detail" aria-labelledby="program-title">
+      <div class="program-detail__top">
+        <div class="program-detail__label">
+          <!-- Plakette: bis die eigene vorliegt, steht hier das Finnvelo-Wappen.
+               Austauschen im Bearbeiten-Modus. -->
+          <img src="assets/images/finnvelo-plakette.webp" alt="Finnvelo Einkaufsliste">
+        </div>
+
+        <div class="program-detail__summary">
+          <p class="section-kicker">Einkaufen · Gemeinsam · Verschlüsselt</p>
+          <h1 id="program-title">Finnvelo Einkaufsliste</h1>
+          <!-- Status-Schild: fuer "in Arbeit" die naechste Zeile drinlassen, sonst loeschen -->
+          <span class="status">In Entwicklung</span>
+          <p class="lead">Eine Einkaufsliste, die auf allen Geräten gleich aussieht – ohne Konto,
+            ohne Anmeldung. Was einer einträgt, steht kurz darauf auch beim anderen auf dem Zettel.</p>
+        </div>
+      </div>
+
+        <section class="program-launch" aria-labelledby="launch-title">
+          <div class="program-launch__text">
+            <p class="section-kicker">Direkt im Browser</p>
+            <h2 id="launch-title">Sofort starten</h2>
+            <p>Laeuft direkt hier auf der Webseite - ohne Installation.</p>
+          </div>
+          <div class="program-launch__action">
+            <a class="button program-launch__btn" href="/einkaufsliste/">Einkaufsliste öffnen</a>
+            <span class="program-launch__note">Läuft im Browser – keine Installation nötig</span>
+          </div>
+        </section>
+
+      <div class="program-detail__body program-detail__body--archivar">
+        <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
+          <h2 id="description-title">Beschreibung</h2>
+          <p>Mehrere Listen nebeneinander, jede mit eigenem Namen, Symbol und eigener Farbe –
+            Wocheneinkauf, Baumarkt, Getränke. Beim Eintippen erkennt die App Mengen von selbst:
+            aus „2x Milch“ oder „Mehl 1,5 kg“ wird Eintrag und Menge, ohne zwei Felder
+            auszufüllen.</p>
+          <p>Bedient wird mit dem Daumen: Wischen nach links löscht, nach rechts öffnet die
+            Bearbeitung, ein langer Druck bringt das Menü. Abgehaktes wandert auf Wunsch nach
+            drei Tagen von selbst in den Papierkorb – von dort lässt es sich zurückholen.</p>
+          <p><strong>Geteilt wird über einen sechsstelligen Code.</strong> Auf dem ersten Gerät
+            erzeugen, auf dem zweiten eintippen – fertig. Der Code gilt 15 Minuten und funktioniert
+            für bis zu fünf Geräte. Ab da gleichen sich die Listen im Hintergrund ab.</p>
+          <p>Was dabei über die Leitung geht, ist bereits auf dem Gerät verschlüsselt
+            (AES-256-GCM). <strong>Der Server sieht nur unlesbare Blöcke</strong> – keine Konten,
+            keine Anmeldung, keine Namen. Der Schlüssel steckt im Code und verlässt die Geräte
+            nie.</p>
+
+          <div class="feature-grid" aria-label="Kernfunktionen">
+            <article><h3>Mehrere Listen</h3><p>Eigener Name, Symbol und Farbe je Liste – blattweise umschalten.</p></article>
+            <article><h3>Mengen von selbst</h3><p>„2x Milch“ oder „Mehl 1,5 kg“ wird beim Tippen erkannt.</p></article>
+            <article><h3>Koppeln per Code</h3><p>Sechs Ziffern, 15 Minuten gültig, bis zu fünf Geräte.</p></article>
+            <article><h3>Wischen statt tippen</h3><p>Links löschen, rechts bearbeiten, langer Druck fürs Menü.</p></article>
+            <article><h3>Papierkorb</h3><p>Erledigtes räumt sich auf und bleibt trotzdem holbar.</p></article>
+            <article><h3>Im Browser und als App</h3><p>Dieselbe Liste am Rechner, auf dem Tablet und dem Handy.</p></article>
+          </div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
+          <h2 id="surface-title">Oberflaeche</h2>
+          <p>Ansichten und Bildschirmfotos werden hier ergaenzt.</p>
+          <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
+          <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
+          <h2 id="tutorial-title">Tutorial-Video</h2>
+          <p>Ein Tutorial-Video wird hier ergaenzt, sobald es bereitsteht.</p>
+          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
+        </section>
+
+        <section class="program-info-block" aria-labelledby="advantages-title">
+          <h2 id="advantages-title">Besondere Vorteile</h2>
+          <ul class="feature-list">
+            <li>Kein Konto, keine Anmeldung, keine E-Mail-Adresse</li>
+            <li>Verschlüsselt vor dem Senden – der Server sieht nichts Lesbares</li>
+            <li>13 Hintergrundbilder oder ein eigenes Foto</li>
+            <li>Sicherung speichern und laden – die Daten gehören dir</li>
+            <li>Funktioniert auch ohne Netz weiter</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block" aria-labelledby="target-title">
+          <h2 id="target-title">Zielgruppe</h2>
+          <p>Für Haushalte, in denen mehr als einer einkauft – wenn der eine im Laden steht und
+            der andere zu Hause noch etwas einfällt. Genauso für alle, die einfach eine Liste
+            wollen, die nicht nach einem Konto fragt.</p>
+        </section>
+
+        <section class="program-info-block program-download-block program-download-block--web" aria-labelledby="download-web-title">
+          <h2 id="download-web-title">Web-Version</h2>
+          <div class="download-slot">
+            <h3>Im Browser &ouml;ffnen</h3>
+            <p>L&auml;uft ohne Installation direkt im Browser. Immer die neueste Fassung &ndash; es gibt nichts zu aktualisieren.</p>
+            <a class="button" href="/apps/" target="_blank" rel="noopener">Web-Version &ouml;ffnen</a>
+          </div>
+        </section>
+
+        <section class="program-info-block program-download-block" aria-labelledby="download-title">
+          <h2 id="download-title">Download</h2>
+          <div class="download-slot">
+            <h3>Android-App</h3>
+            <p>Fassung 1.3.0. Die App meldet sich selbst, wenn es etwas Neues gibt.</p>
+            <a class="button" href="/apps/einkaufsliste/laden.html">Zur Ladeseite</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Weitere Versionen und Patches</h3>
+            <p>Platzhalter fuer spaetere Updates, Patchdateien und aeltere Versionen.</p>
+          </div>
+        </section>
+        <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
+          <h2 id="download-pc-title">Download (PC)</h2>
+          <div class="download-slot">
+            <h3>Programm herunterladen</h3>
+            <p>Die Fassung f&uuml;r Windows. Sie l&auml;uft eigenst&auml;ndig, eine Installation ist nicht n&ouml;tig.</p>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">PC-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Hinweis</h3>
+            <p>Windows meldet bei unbekannten Programmen einen Warnhinweis. &Uuml;ber &bdquo;Weitere Informationen&ldquo; &rarr; &bdquo;Trotzdem ausf&uuml;hren&ldquo; l&auml;sst sich der Start fortsetzen.</p>
+          </div>
+        </section>
+      </div>
+    </article>
+    <section class="support-stage" aria-labelledby="support-title">
+      <div class="support-card">
+        <h2 id="support-title">Finnvelo unterstuetzen</h2>
+        <p>Alle Finnvelo-Programme sind kostenlos. Wenn sie dir helfen und gefallen, freue ich mich sehr ueber eine kleine Spende – sie haelt die Weiterentwicklung am Laufen.</p>
+        <a class="button donate-button" href="https://www.paypal.me/TatorasavoFinnvelo" target="_blank" rel="noopener noreferrer">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          Mit PayPal spenden
+        </a>
+        <p class="donate-note">Sichere Abwicklung ueber PayPal.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 Finnvelo Programmwelten</span>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+  </footer>
+  <script src="stats.js" defer></script>
+</body>
+</html>

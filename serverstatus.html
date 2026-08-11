@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Serverstatus &middot; Finnvelo Programmwelten</title>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    /* Deckende Flaeche: nichts scheint durch, kein Hintergrundbild */
+    body.legal-body::before { display:none !important; }
+    .status-seite { background:#04070d; min-height:100vh; padding: clamp(24px, 3.4vw, 50px) clamp(18px, 4vw, 80px) clamp(40px, 5vw, 70px); }
+    .status-kopf { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:6px; }
+    .status-kopf h1 { margin:0; font-size: clamp(24px, 2.8vw, 34px); }
+    .status-zeit { font-size:13px; color:var(--muted); }
+    .status-anmeldung { max-width:420px; margin-top:24px; }
+    .status-anmeldung input {
+      width:100%; padding:11px 13px; border-radius:10px; border:1px solid var(--line);
+      background:rgba(0,0,0,.34); color:var(--text); font:400 15px/1.3 inherit;
+    }
+    .fvs-reihe { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:14px; margin:22px 0 30px; }
+    .fvs-kachel { padding:16px 18px; border-radius:14px; background:rgba(0,0,0,.3); border:1px solid var(--line); }
+    .fvs-kachel__wert { font:800 clamp(24px,2.4vw,30px)/1.1 inherit; color:#eaf1ff; }
+    .fvs-kachel__name { margin-top:6px; font-size:12.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+    .fvs-von { font-size:.52em; font-weight:400; color:var(--muted); letter-spacing:0; }
+    .fvs-balken { margin:8px 0 6px; height:6px; border-radius:999px;
+      background:rgba(255,255,255,.10); overflow:hidden; }
+    .fvs-balken span { display:block; height:100%; border-radius:999px;
+      background:var(--blue); transition:width 300ms ease; }
+    .fvs-kachel--gut .fvs-balken span { background:#4ad991; }
+    .fvs-kachel--warn .fvs-balken span { background:#f0b429; }
+    .fvs-balken--gut span { background:#4ad991; }
+    .fvs-balken--warn span { background:#f0b429; }
+    .fvs-pz { display:block; margin-top:4px; font-size:11.5px; color:var(--muted); }
+    .fvs-mini { margin-left:6px; padding:2px 8px; border-radius:6px;
+      border:1px solid var(--line); background:transparent; color:var(--muted);
+      font:400 11.5px/1.3 inherit; cursor:pointer; }
+    .fvs-mini:hover { color:var(--text); border-color:var(--blue); }
+    .fvs-kachel__zusatz { margin-top:4px; font-size:12px; color:var(--muted); opacity:.8; }
+    .fvs-kachel--warn { border-color:rgba(240,180,41,.6); }
+    .fvs-kachel--warn .fvs-kachel__wert { color:#f0b429; }
+    .fvs-kachel--gut { border-color:rgba(74,217,145,.5); }
+    .fvs-kachel--gut .fvs-kachel__wert { color:#4ad991; }
+    h2.fvs-abschnitt { margin:30px 0 12px; font-size:18px; color:var(--blue-light); }
+    table.fvs-tabelle { width:100%; border-collapse:collapse; font-size:13.5px; }
+    table.fvs-tabelle th, table.fvs-tabelle td { padding:9px 10px; text-align:left; border-bottom:1px solid var(--line); }
+    table.fvs-tabelle th { font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:800; }
+    table.fvs-tabelle td.zahl { text-align:right; font-variant-numeric:tabular-nums; }
+    .fvs-leer { color:var(--muted); font-size:14px; }
+    .fvs-lage { display:inline-block; min-width:38px; padding:2px 7px; border-radius:6px; font-weight:800; font-size:12px; text-align:center; }
+    .fvs-lage--4 { background:rgba(240,180,41,.16); color:#f0b429; }
+    .fvs-lage--5 { background:rgba(200,60,80,.18); color:#ff8095; }
+    .fvs-balken { height:7px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; margin-top:8px; }
+    .fvs-balken i { display:block; height:100%; background:#4ad991; }
+    .fvs-balken i.voll { background:#f0b429; }
+    .status-knopf {
+      background:var(--blue); color:#fff; border:0; border-radius:9px;
+      padding:10px 20px; font:700 14px/1.2 inherit; cursor:pointer;
+    }
+    .status-knopf:hover { background:#4a90ff; }
+    .fvs-melde { margin-left:12px; font-size:13px; font-weight:700; }
+    .fvs-melde.schlecht { color:var(--red); }
+    .fvs-melde.gut { color:#4ad991; }
+    .fvs-zugang { max-width:460px; margin-top:14px; }
+    .fvs-zugang input { width:100%; margin-bottom:10px; padding:11px 13px; border-radius:10px;
+      border:1px solid var(--line); background:rgba(0,0,0,.34); color:var(--text); font:400 15px/1.3 inherit; }
+    /* Steckt das Feld in der Huelle des Sichtbarkeitsauges, traegt die Huelle
+       den Abstand - sonst sitzt er innerhalb des Rahmens und wirkt nicht. */
+    .fvs-zugang .fv-pw-huelle { margin-bottom:10px; }
+    .fvs-zugang .fv-pw-huelle > input { margin-bottom:0; }
+    .fvs-pin { margin-top:14px; padding:14px 16px; border-radius:10px;
+      border-left:3px solid #f0b429; background:rgba(240,180,41,.10); font-size:14px; line-height:1.6; }
+    .fvs-pin code { font-size:17px; font-weight:800; letter-spacing:.08em; color:#f0b429; }
+    @media (max-width:700px){
+      .status-seite{ padding-left:14px; padding-right:14px; }
+      /* Breite Tabellen lassen sich seitlich schieben, statt ueber den Rand zu laufen */
+      table.fvs-tabelle{ display:block; overflow-x:auto; white-space:nowrap; font-size:12.5px; }
+      table.fvs-tabelle td .fvs-balken{ min-width:60px; }
+    }
+  </style>
+</head>
+<body class="legal-body">
+  <header class="site-header">
+    <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
+      <img class="brand-logo" src="assets/images/finnvelo-plakette.webp" alt="Finnvelo Plakette">
+      <span class="brand-text">
+        <strong>Finnvelo</strong>
+        <small>Programmwelten</small>
+      </span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="/">Start</a>
+      <a href="/programme" aria-current="page">Programme</a>
+      <span class="nav-apps">
+        <a class="nav-apps__btn" href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" aria-haspopup="true" aria-expanded="false">Web-Apps</a>
+        <span class="nav-apps__menu" hidden>
+          <a href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" data-fv-nav-extra>Haus- und Gartenplaner</a>
+          <a href="/mischwald" target="_blank" rel="noopener" data-fv-nav-extra>Mischwaldrechner</a>
+          <a href="/einkaufsliste/" target="_blank" rel="noopener" data-fv-nav-extra>Einkaufsliste</a>
+        </span>
+      </span>
+      <a href="/kommentare">Kommentare</a>
+      <a href="/kontakt">Kontakt</a>
+    </nav>
+  </header>
+  <main class="main-canvas status-seite">
+    <div class="status-kopf">
+      <h1>Serverstatus</h1>
+      <span class="status-zeit" id="zeit"></span>
+    </div>
+    <p class="fvs-leer">Kennzahlen zu Auslastung und Fehlern. <strong>Es werden keine Inhalte angezeigt</strong> &ndash;
+      weder Aufgaben noch Nachrichten: Die liegen verschl&uuml;sselt auf dem Server und lassen sich gar nicht &ouml;ffnen.</p>
+
+    <script src="passwortauge.js" defer></script>
+
+    <div class="status-anmeldung" id="anmeldung">
+      <label style="display:block;margin-bottom:8px;font-size:12.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)">Admin-Passwort</label>
+      <input type="password" id="pw" autocomplete="current-password" placeholder="Passwort">
+      <p style="margin-top:12px">
+        <button type="button" class="status-knopf" id="rein">Anzeigen</button>
+        <button type="button" class="status-knopf" id="vergessen"
+          style="margin-left:10px;background:none;border:1px solid var(--line);color:var(--soft)">Passwort vergessen</button>
+        <span class="fvs-melde" id="melde"></span>
+      </p>
+    </div>
+
+    <div id="inhalt" hidden></div>
+  </main>
+  <footer>
+    <span>© 2026 Finnvelo Programmwelten</span>
+    <a href="/impressum">Impressum</a>
+    <a href="/datenschutz">Datenschutz</a>
+  </footer>
+  <script>
+  (function () {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+
+    function kb(n) {
+      n = Number(n) || 0;
+      if (n < 1024) return n + ' B';
+      if (n < 1024 * 1024) return Math.round(n / 1024) + ' KB';
+      return (n / 1024 / 1024).toFixed(1) + ' MB';
+    }
+    function datum(s) {
+      try { var d = new Date(s); return d.toLocaleString('de-DE'); } catch (e) { return s; }
+    }
+    function tageHer(s) {
+      try { return Math.floor((Date.now() - new Date(s).getTime()) / 86400000); } catch (e) { return '?'; }
+    }
+    function sicher(t) {
+      return String(t == null ? '' : t)
+        .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    /* Speicher als "belegt von verfuegbar" mit Balken. Wie viel insgesamt
+       zur Verfuegung steht, weiss der Server nicht - das haengt am Tarif.
+       Der Wert wird deshalb hier eingestellt und laesst sich jederzeit
+       aendern, wenn aufgestockt wird. */
+    function grenzeText(mb) {
+      return mb >= 1024
+        ? (Math.round(mb / 1024 * 10) / 10).toString().replace('.', ',') + ' GB'
+        : mb + ' MB';
+    }
+
+    function speicherKachel(belegt, grenzeMB, echt) {
+      var grenze = grenzeMB * 1024 * 1024;
+      var anteil = grenze > 0 ? Math.min(100, (belegt / grenze) * 100) : 0;
+      var art = anteil >= 90 ? 'warn' : (anteil >= 70 ? '' : 'gut');
+      var gText = grenzeText(grenzeMB);
+      var prozent = anteil < 0.1 ? '<0,1' : (Math.round(anteil * 10) / 10).toString().replace('.', ',');
+      return '<div class="fvs-kachel' + (art ? ' fvs-kachel--' + art : '') + '">'
+        + '<div class="fvs-kachel__wert">' + sicher(kb(belegt))
+        + ' <span class="fvs-von">von ' + sicher(gText) + '</span></div>'
+        + '<div class="fvs-kachel__name">Speicher belegt</div>'
+        + '<div class="fvs-balken"><span style="width:' + Math.max(1, anteil).toFixed(2) + '%"></span></div>'
+        + '<div class="fvs-kachel__zusatz">' + prozent + ' % \u2013 '
+        + (echt ? 'tatsächliche Datenbankgröße' : 'geschätzt') + ' '
+        + '<button type="button" id="grenzeAendern" class="fvs-mini">ändern</button></div>'
+        + '</div>';
+    }
+
+    function kachel(wert, name, zusatz, art) {
+      return '<div class="fvs-kachel' + (art ? ' fvs-kachel--' + art : '') + '">'
+        + '<div class="fvs-kachel__wert">' + sicher(wert) + '</div>'
+        + '<div class="fvs-kachel__name">' + sicher(name) + '</div>'
+        + (zusatz ? '<div class="fvs-kachel__zusatz">' + sicher(zusatz) + '</div>' : '')
+        + '</div>';
+    }
+
+    // Merkt sich den zuletzt gezeigten Stand, damit der Grenzwert-Knopf
+    // neu zeichnen kann, ohne alles noch einmal zu holen.
+    var letzterStand = null;
+
+    // Kurze Rueckmeldung im Meldefeld der Seite.
+    function sagWas(text, art) {
+      var m = document.getElementById('melde');
+      if (!m) return;
+      m.textContent = text || '';
+      m.className = 'fvs-melde' + (art ? ' ' + art : '');
+    }
+
+    function zeichnen(d) {
+      letzterStand = d;
+      var ziel = document.getElementById('inhalt');
+      var mA = document.getElementById('melde');
+      if (mA) { mA.textContent = ''; mA.className = 'fvs-melde'; }
+      document.getElementById('zeit').textContent = 'Stand: ' + datum(d.zeit);
+
+      var kanaele = d.kanaele || [];
+      var leitungen = 0, nachrichten = 0, mitglieder = 0, kanalBytes = 0, gewarnt = 0;
+      kanaele.forEach(function (k) {
+        leitungen += k.leitungen || 0;
+        nachrichten += k.nachrichten || 0;
+        mitglieder += k.mitglieder || 0;
+        kanalBytes += k.bytes || 0;
+        if (k.warnung) gewarnt++;
+      });
+
+      var fehler = d.fehler || [];
+      var schwer = fehler.filter(function (f) { return f.lage >= 500; }).length;
+      var gesamtBytes = (d.inhalteBytes || 0) + (d.bilderBytes || 0) + kanalBytes;
+
+      var html = '<div class="fvs-reihe">'
+        + kachel(kanaele.length, 'Kanäle', gewarnt ? (gewarnt + ' mit Löschwarnung') : 'alle aktiv', gewarnt ? 'warn' : '')
+        + kachel(leitungen, 'offene Chatleitungen', 'gerade verbunden', leitungen ? 'gut' : '')
+        + kachel(mitglieder, 'Geräte in Kanälen', '')
+        + kachel(nachrichten, 'Chatnachrichten', kb(kanalBytes) + ' gesamt')
+        + kachel(schwer, 'schwere Fehler', schwer ? 'siehe unten' : 'nichts Auffälliges', schwer ? 'warn' : 'gut')
+        + speicherKachel(d.dbBytes || gesamtBytes, d.speicherGrenzeMB || 1024, !!d.dbBytes)
+        + '</div>';
+
+      // --- Speicher je Objekt ---------------------------------------
+      /* Das Limit gilt bei Cloudflare PRO OBJEKT, nicht fuer die Summe.
+         Deshalb hier jedes Objekt einzeln mit eigener Fuellanzeige - eine
+         Gesamtzahl wuerde verschleiern, welches Objekt an seine Grenze
+         kommt. */
+      var grenzeB = (d.speicherGrenzeMB || 1024) * 1024 * 1024;
+      var objekte = [{ name: 'Webseite (Inhalte, Bilder, Zähler)',
+                       bytes: d.dbBytes || gesamtBytes }];
+      (d.kanaele || []).forEach(function (k) {
+        if (k.dbBytes) objekte.push({ name: 'Kanal ' + k.code, bytes: k.dbBytes });
+      });
+      html += '<h2 class="fvs-abschnitt">Speicher je Datenbank</h2>'
+        + '<p class="fvs-leer">Cloudflare begrenzt <strong>jede Datenbank einzeln</strong> \u2013 '
+        + 'nicht die Summe. Maßgeblich ist also die vollste, nicht das Gesamtbild.</p>'
+        + '<table class="fvs-tabelle"><thead><tr><th>Datenbank</th>'
+        + '<th style="text-align:right">Belegt</th><th style="width:38%">Füllstand</th>'
+        + '</tr></thead><tbody>';
+      objekte.forEach(function (o) {
+        var a = grenzeB > 0 ? Math.min(100, (o.bytes / grenzeB) * 100) : 0;
+        var f = a >= 90 ? 'warn' : (a >= 70 ? '' : 'gut');
+        var pz = a < 0.1 ? '<0,1' : (Math.round(a * 10) / 10).toString().replace('.', ',');
+        html += '<tr><th>' + sicher(o.name) + '</th>'
+             +  '<td class="zahl">' + kb(o.bytes) + '</td>'
+             +  '<td><div class="fvs-balken' + (f ? ' fvs-balken--' + f : '') + '">'
+             +  '<span style="width:' + Math.max(1, a).toFixed(2) + '%"></span></div>'
+             +  '<span class="fvs-pz">' + pz + ' % von ' + sicher(grenzeText(d.speicherGrenzeMB || 1024))
+             +  '</span></td></tr>';
+      });
+      html += '</tbody></table>';
+
+      // --- Webseite ---
+      html += '<h2 class="fvs-abschnitt">Webseite</h2><table class="fvs-tabelle"><tbody>'
+        + '<tr><th>Eingetragene Inhalte</th><td class="zahl">' + (d.inhalte || 0) + '</td><td class="zahl">' + kb(d.inhalteBytes) + '</td></tr>'
+        + '<tr><th>Hochgeladene Bilder</th><td class="zahl">' + (d.bilder || 0) + '</td><td class="zahl">' + kb(d.bilderBytes) + '</td></tr>'
+        + '<tr><th>Kommentare</th><td class="zahl">' + (d.kommentare || 0) + '</td><td></td></tr>'
+        + '</tbody></table>';
+
+      // --- Zähler ---
+      if ((d.zaehler || []).length) {
+        html += '<h2 class="fvs-abschnitt">Zähler</h2><table class="fvs-tabelle"><thead><tr><th>Zähler</th><th style="text-align:right">Stand</th></tr></thead><tbody>';
+        d.zaehler.forEach(function (z) {
+          html += '<tr><td>' + sicher(z.key) + '</td><td class="zahl">' + (z.value || 0) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+      }
+
+      // --- Kanäle ---
+      html += '<h2 class="fvs-abschnitt">Kanäle</h2>';
+      if (!kanaele.length) {
+        html += '<p class="fvs-leer">Noch keine Kanäle angelegt.</p>';
+      } else {
+        html += '<table class="fvs-tabelle"><thead><tr><th>Code</th><th>Zustand</th>'
+          + '<th style="text-align:right">Geräte</th><th style="text-align:right">Leitungen</th>'
+          + '<th style="text-align:right">Listen</th><th style="text-align:right">Nachrichten</th>'
+          + '<th style="text-align:right">Anhänge</th>'
+          + '<th style="text-align:right">Belegt</th><th>Letzter Zugriff</th></tr></thead><tbody>';
+        kanaele.forEach(function (k) {
+          var anteil = Math.min(100, Math.round((k.bytes || 0) / (2 * 1024 * 1024) * 100));
+          html += '<tr>'
+            + '<td><code>' + sicher(k.code) + '</code></td>'
+            + '<td>' + (k.warnung ? '<span class="fvs-lage fvs-lage--4">Löschwarnung</span>'
+                                  : (k.offen ? 'offen' : 'geschlossen')) + '</td>'
+            + '<td class="zahl">' + (k.mitglieder || 0) + '</td>'
+            + '<td class="zahl">' + (k.leitungen || 0) + '</td>'
+            + '<td class="zahl">' + (k.listen || 0) + '</td>'
+            + '<td class="zahl">' + (k.nachrichten || 0) + '</td>'
+            + '<td class="zahl">' + (k.anhaenge || 0)
+            + (k.anhaengeBytes ? '<div class="fvs-kachel__zusatz">' + kb(k.anhaengeBytes) + '</div>' : '')
+            + '</td>'
+            + '<td class="zahl">' + kb(k.bytes)
+            + '<div class="fvs-balken"><i class="' + (anteil > 80 ? 'voll' : '') + '" style="width:' + anteil + '%"></i></div></td>'
+            + '<td>' + datum(k.letzterZugriff) + '<br><span class="fvs-kachel__zusatz">vor ' + tageHer(k.letzterZugriff) + ' Tagen</span></td>'
+            + '</tr>';
+        });
+        html += '</tbody></table>';
+      }
+
+      // --- Fehler ---
+      html += '<h2 class="fvs-abschnitt">Letzte Fehlermeldungen'
+           +  (fehler.length ? ' <button type="button" id="fehlerLeeren" class="fvs-mini">'
+                             + 'Liste bereinigen</button>' : '')
+           +  '</h2>';
+      if (!fehler.length) {
+        html += '<p class="fvs-leer">Keine Fehler aufgezeichnet. Das ist der Normalzustand.</p>';
+      } else {
+        html += '<table class="fvs-tabelle"><thead><tr><th>Zeit</th><th>Lage</th><th>Weg</th><th>Meldung</th></tr></thead><tbody>';
+        fehler.forEach(function (f) {
+          html += '<tr><td>' + datum(f.zeit) + '</td>'
+            + '<td><span class="fvs-lage ' + (f.lage >= 500 ? 'fvs-lage--5' : 'fvs-lage--4') + '">' + f.lage + '</span></td>'
+            + '<td><code>' + sicher(f.weg) + '</code></td>'
+            + '<td>' + sicher(f.text) + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        html += '<p class="fvs-leer" style="margin-top:10px">Lagen ab 400 sind meist harmlos: falsches Passwort, '
+          + 'unbekannter Kanal, zu viele Anfragen. Erst Lagen ab 500 deuten auf ein Problem des Servers hin.</p>';
+      }
+
+      html += '<h2 class="fvs-abschnitt">Zugang</h2>'
+        + '<div class="fvs-zugang">'
+        + '  <p class="fvs-leer">Passwort für Admin-Modus und diese Seite ändern. '
+        + '    Die <strong>Notfall-PIN</strong> und die vollständige Verwaltung liegen unter '
+        + '    <a href="/admin" style="color:var(--blue-light)">/admin</a>.</p>'
+        + '  <input type="password" id="pwNeu" placeholder="Neues Passwort (mind. 8 Zeichen)">'
+        + '  <input type="password" id="pwNeu2" placeholder="Neues Passwort wiederholen">'
+        + '  <p><button type="button" class="status-knopf" id="pwSpeichern">Passwort ändern</button>'
+        + '  <span class="fvs-melde" id="pwMelde"></span></p>'
+        + '  <div id="pinZeigen"></div>'
+        + '</div>';
+
+      html += '<p style="margin-top:26px">'
+        + '<button type="button" class="status-knopf" id="neuladen">Neu abrufen</button>'
+        + '<button type="button" class="status-knopf" id="sperren" '
+        + 'style="margin-left:10px;background:none;border:1px solid var(--line);color:var(--soft)">Sperren</button>'
+        + '</p>';
+      ziel.innerHTML = html;
+
+      /* Grenzwert aendern. MUSS hier stehen - erst jetzt ist die Kachel im
+         Dokument. Weiter oben angebunden liefe es ins Leere. */
+      /* Fehlerbuch bereinigen. Behobene Fehler sollen nicht ewig stehen
+         bleiben - sonst uebersieht man zwischen zwanzig alten den einen
+         neuen. Geloescht wird bis zum jetzigen Zeitpunkt; was waehrenddessen
+         hereinkommt, bleibt erhalten. */
+      var fl = document.getElementById('fehlerLeeren');
+      if (fl) fl.addEventListener('click', function () {
+        var wieviele = (letzterStand && letzterStand.fehler ? letzterStand.fehler.length : 0);
+        if (!window.confirm('Die bisherigen ' + wieviele + ' Einträge im Fehlerbuch löschen?\n\n'
+            + 'Was danach passiert, wird weiterhin aufgezeichnet. '
+            + 'Rückgängig machen lässt sich das Löschen nicht.')) return;
+        fl.disabled = true;
+        sagWas('Wird bereinigt \u2026', '');
+        fetch('/api/fehler/leeren', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ password: pw, bis: Date.now() })
+        })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (a) {
+            if (!a || !a.ok) throw new Error('nein');
+            // Ab jetzt gelten die bisherigen als gesehen, damit auch der
+            // Hinweis in der Admin-Leiste zurueckgeht.
+            try { localStorage.setItem('fv_fehler_gesehen', String(Date.now())); } catch (e) {}
+            // Erst neu zeichnen, DANN melden - zeichnen() leert das Meldefeld,
+            // eine vorher gesetzte Meldung waere sofort wieder weg.
+            setTimeout(function () {
+              abrufen();
+              setTimeout(function () {
+                sagWas('\u2713 ' + a.geloescht + ' Einträge bereinigt.', 'gut');
+              }, 900);
+            }, 400);
+          })
+          .catch(function () {
+            fl.disabled = false;
+            sagWas('\u2717 Bereinigen fehlgeschlagen.', 'schlecht');
+          });
+      });
+
+      var gk = document.getElementById('grenzeAendern');
+      if (gk) gk.addEventListener('click', function () {
+        var jetzt = (letzterStand && letzterStand.speicherGrenzeMB) || 1024;
+        /* Cloudflare kennt genau zwei Groessen, und der Server kann nicht
+           erfragen, welche gilt - dafuer gibt es keine Schnittstelle.
+           Deshalb eine Auswahl statt einer MB-Eingabe: so muss niemand
+           1024 und 10240 im Kopf haben. */
+        var ein = window.prompt(
+          'Welcher Cloudflare-Tarif gilt?\n\n'
+          + '  1  =  Workers Free   \u2192  1 GB je Datenbank\n'
+          + '  2  =  Workers Paid   \u2192  10 GB je Datenbank\n\n'
+          + 'Oder eine eigene Zahl in MB eingeben.\n'
+          + 'Der Server kann den Tarif nicht selbst erkennen.',
+          jetzt >= 10240 ? '2' : '1');
+        if (ein === null) return;
+        var roh = String(ein).trim();
+        var n;
+        if (roh === '1') n = 1024;
+        else if (roh === '2') n = 10240;
+        else n = parseInt(roh.replace(/[^0-9]/g, ''), 10);
+        if (!isFinite(n) || n < 1) { sagWas('\u2717 Bitte 1, 2 oder eine Zahl in MB eingeben.', 'schlecht'); return; }
+        sagWas('Wird gespeichert \u2026', '');
+        fetch('/api/content', {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ page: 'system', block: 'q1', type: 'text',
+                                 value: String(n), password: pw })
+        })
+          .then(function (r) {
+            if (!r.ok) throw new Error('nein');
+            sagWas('\u2713 Gespeichert.', 'gut');
+            if (letzterStand) { letzterStand.speicherGrenzeMB = n; zeichnen(letzterStand); }
+          })
+          .catch(function () { sagWas('\u2717 Speichern fehlgeschlagen.', 'schlecht'); });
+      });
+      ziel.hidden = false;
+      document.getElementById('anmeldung').hidden = true;
+      var nl = document.getElementById('neuladen');
+      if (nl) nl.addEventListener('click', abrufen);
+      var pwsp = document.getElementById('pwSpeichern');
+      if (pwsp) pwsp.addEventListener('click', function () {
+        var m = document.getElementById('pwMelde');
+        var a = document.getElementById('pwNeu').value || '';
+        var bb = document.getElementById('pwNeu2').value || '';
+        if (a.length < 8) { m.textContent = '\u2717 Mindestens acht Zeichen.'; m.className = 'fvs-melde schlecht'; return; }
+        if (a !== bb) { m.textContent = '\u2717 Die beiden Eingaben sind verschieden.'; m.className = 'fvs-melde schlecht'; return; }
+        fetch('/api/zugang', { method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ password: pw, aktion: 'aendern', neu: a }) })
+          .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+          .then(function (res) {
+            if (!res.ok) { m.textContent = '\u2717 ' + (res.d.fehler || 'Ändern fehlgeschlagen.'); m.className = 'fvs-melde schlecht'; return; }
+            pw = a;
+            try { sessionStorage.setItem('fv_admin_pw', a); } catch (e) {}
+            m.textContent = '\u2713 Passwort geändert.'; m.className = 'fvs-melde gut';
+            document.getElementById('pwNeu').value = '';
+            document.getElementById('pwNeu2').value = '';
+            if (res.d.pin) {
+              document.getElementById('pinZeigen').innerHTML =
+                '<p class="fvs-pin"><strong>Notfall-PIN:</strong> <code>' + sicher(res.d.pin) + '</code><br>'
+                + 'Jetzt aufschreiben \u2013 sie wird nie wieder angezeigt.</p>';
+            }
+          }).catch(function () { m.textContent = '\u2717 Ändern fehlgeschlagen.'; m.className = 'fvs-melde schlecht'; });
+      });
+
+      var sp = document.getElementById('sperren');
+      if (sp) sp.addEventListener('click', function () {
+        pw = '';
+        try { sessionStorage.removeItem('fv_admin_pw'); } catch (e) {}
+        location.reload();
+      });
+    }
+
+    function abrufen() {
+      var melde = document.getElementById('melde');
+      if (melde) { melde.textContent = 'Wird abgerufen …'; melde.className = 'fvs-melde'; }
+      fetch('/api/serverstatus', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) {
+        if (r.status === 401) throw new Error('Passwort stimmt nicht.');
+        if (!r.ok) throw new Error('Der Server antwortet nicht wie erwartet (' + r.status + ').');
+        return r.json();
+      }).then(zeichnen).catch(function (e) {
+        var m = document.getElementById('melde');
+        if (m) { m.textContent = '✗ ' + e.message; m.className = 'fvs-melde schlecht'; }
+      });
+    }
+
+    document.getElementById('rein').addEventListener('click', function () {
+      var eingabe = document.getElementById('pw').value || '';
+      if (eingabe) pw = eingabe;
+      if (!pw) return;
+      try { sessionStorage.setItem('fv_admin_pw', pw); } catch (e) {}
+      abrufen();
+    });
+    document.getElementById('vergessen').addEventListener('click', function () {
+      var m = document.getElementById('melde');
+      // Der bequeme Weg mit ordentlichen Feldern liegt unter /admin.
+      // Hier bleibt der kurze Weg, falls jemand schon auf dieser Seite steht.
+      var pin = window.prompt('Notfall-PIN eingeben:', '');
+      if (!pin) return;
+      var neuPw = window.prompt('Neues Passwort (mindestens acht Zeichen):', '');
+      if (!neuPw) return;
+      fetch('/api/zugang', { method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ aktion: 'zuruecksetzen', pin: pin.trim(), neu: neuPw }) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (!res.ok) { m.textContent = '\u2717 ' + (res.d.fehler || 'Zurücksetzen fehlgeschlagen.'); m.className = 'fvs-melde schlecht'; return; }
+          pw = neuPw;
+          try { sessionStorage.setItem('fv_admin_pw', neuPw); } catch (e) {}
+          m.textContent = '\u2713 Passwort zurückgesetzt.'; m.className = 'fvs-melde gut';
+          abrufen();
+        }).catch(function () { m.textContent = '\u2717 Zurücksetzen fehlgeschlagen.'; m.className = 'fvs-melde schlecht'; });
+    });
+
+    document.getElementById('pw').addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') document.getElementById('rein').click();
+    });
+
+    // Bewusst KEIN automatisches Anzeigen. Auch wer schon als Admin angemeldet
+    // ist, muss einmal auf "Entsperren" klicken - so ist auf einen Blick zu
+    // sehen, dass die Seite geschuetzt ist.
+    //
+    // WICHTIG: Das Feld bleibt dabei LEER. Frueher standen hier acht Punkte
+    // als Zierde - beim Klick wurden die als Eingabe gelesen und haben das
+    // echte Passwort ueberschrieben. Die Seite hat sich damit selbst
+    // ausgesperrt ("Passwort stimmt nicht", obwohl es stimmte).
+    if (pw) {
+      var feldPw = document.getElementById('pw');
+      feldPw.value = '';
+      feldPw.placeholder = 'Aus der Anmeldung übernommen';
+      document.getElementById('rein').textContent = 'Entsperren';
+      var hinweis = document.createElement('p');
+      hinweis.className = 'fvs-leer';
+      hinweis.style.marginTop = '10px';
+      hinweis.textContent = 'Aus deiner Admin-Anmeldung übernommen – einmal auf Entsperren klicken. '
+                          + 'Ein anderes Passwort kannst du hier eintragen.';
+      document.getElementById('anmeldung').appendChild(hinweis);
+    }
+  })();
+  </script>
+</body>
+</html>
