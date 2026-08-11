@@ -382,6 +382,36 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4p. Die Übertragung nach Cloudflare fehlte (11.08.2026)
+
+**Symptom:** Push nach GitHub lief durch, die Webseite blieb trotzdem auf
+dem alten Stand - ohne Fehlermeldung irgendwo.
+
+**Ursache:** Es gab keinen `.github/workflows/`-Ordner. Weder im
+Arbeitsordner noch im Repo (`git ls-tree -r HEAD` geprüft). Ohne diese
+Datei überträgt niemand von GitHub nach Cloudflare.
+
+Neu angelegt: `.github/workflows/deploy.yml`. Läuft bei jedem Push auf
+`main`, lässt sich unter *Actions* auch von Hand auslösen.
+
+**Einmalig nötig** - zwei Geheimnisse im GitHub-Projekt unter
+*Settings → Secrets and variables → Actions*:
+
+| Name | Woher |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens, Vorlage „Edit Cloudflare Workers" |
+| `CLOUDFLARE_ACCOUNT_ID` | steht rechts in der Cloudflare-Übersicht |
+
+`.github` steht jetzt in `.assetsignore` - der Workflow gehört ins Repo,
+aber nicht ins öffentliche Hosting.
+
+**Zum Merken:** Fehlt der Workflow, ist das Ausbleiben der Wirkung das
+einzige Anzeichen. Bei „ich habe gepusht, aber nichts ändert sich" also
+zuerst im GitHub-Projekt unter *Actions* nachsehen: steht dort gar kein
+Lauf, fehlt die Datei.
+
+---
+
 ## 4o. version.json kam nie vom Worker (11.08.2026)
 
 Nach `ARBEITSANWEISUNG-Webseite.md`. **Der Kern des Problems:**

@@ -5,6 +5,7 @@
 
 # Versions-/Build-/Tool-Ordner
 .git
+.github
 .wrangler
 node_modules
 

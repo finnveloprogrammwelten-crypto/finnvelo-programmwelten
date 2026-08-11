@@ -1,0 +1,46 @@
+# Übertragung von GitHub nach Cloudflare
+# ---------------------------------------------------------------------
+# Diese Datei ist der Grund, warum ein "git push" auf der Webseite
+# ankommt. Fehlt sie, wird zwar nach GitHub hochgeladen, aber nichts
+# nach Cloudflare übertragen - die Seite bleibt auf dem alten Stand,
+# ohne dass irgendwo ein Fehler erscheint.
+#
+# EINMALIG nötig: zwei Geheimnisse im GitHub-Projekt hinterlegen unter
+#   Settings -> Secrets and variables -> Actions -> New repository secret
+#
+#   CLOUDFLARE_API_TOKEN    Cloudflare -> My Profile -> API Tokens
+#                           Vorlage "Edit Cloudflare Workers"
+#   CLOUDFLARE_ACCOUNT_ID   steht rechts in der Cloudflare-Übersicht
+#
+# Danach läuft die Übertragung bei jedem Push auf "main" von selbst.
+# Nachsehen kann man sie im GitHub-Projekt unter "Actions".
+
+name: Auf Cloudflare veröffentlichen
+
+on:
+  push:
+    branches: [main]
+  # Erlaubt das Auslösen von Hand im Reiter "Actions" - praktisch,
+  # wenn ein Lauf fehlgeschlagen ist und man ihn wiederholen will.
+  workflow_dispatch:
+
+jobs:
+  veroeffentlichen:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dateien holen
+        uses: actions/checkout@v4
+
+      - name: Node bereitstellen
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Nach Cloudflare übertragen
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # wrangler.jsonc im Wurzelverzeichnis wird von selbst gefunden.
+          # Die Durable-Object-Migrationen (v1 bis v4) laufen dabei mit.
+          command: deploy
