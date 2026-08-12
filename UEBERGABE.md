@@ -382,6 +382,30 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4q. Web-App-Knopf zeigte ins Leere (11.08.2026)
+
+**Gemeldet:** "Der Knopf lädt herunter, statt die Web-App zu öffnen."
+
+**Ursache:** Der Knopf "Web-Version öffnen" zeigte auf `/apps/` - diesen
+Ordner haben wir beim Bereinigen entfernt. Das Ziel gab also 404. Auf
+zehn Seiten stand dasselbe tote Ziel, weil der Block per Skript in alle
+Programmseiten eingefügt worden war.
+
+* `einkaufsliste.html` zeigt jetzt auf **`/einkaufsliste/`** - dort liegt
+  die Web-Fassung wirklich.
+* Auf den neun anderen Seiten wurde das tote Ziel auf `#` gesetzt; das
+  richtige lässt sich im Bearbeiten-Modus über die Ziel-Zeile eintragen.
+
+**Zum Download-Verhalten geprüft:** `Content-Disposition: attachment`
+steht in `_headers` nur bei `*.apk` - dort gehört es hin. Für
+`/einkaufsliste/` und `index.html` wird `text/html` ohne `disposition`
+ausgeliefert; die Seite öffnet also im Browser. Am Prüfstand gemessen.
+
+Die Regeln für `/apps/einkaufsliste/*` sind entfernt - der Ordner
+existiert nicht mehr, die Regeln waren wirkungslos.
+
+---
+
 ## 4p. Die Übertragung nach Cloudflare (11.08.2026)
 
 **Verlauf, damit der nächste es nicht wieder falsch herum aufrollt:**
