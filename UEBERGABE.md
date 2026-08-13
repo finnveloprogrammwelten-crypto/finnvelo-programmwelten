@@ -382,6 +382,44 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4w. Mehrfache Statuszeichen in einer Kachel (13.08.2026)
+
+**Gemeldet:** "Der Aufgabenplaner ist dutzendfach ueberlagert."
+
+Es waren nicht mehrere Programme, sondern **mehrere Statuszeichen in
+DERSELBEN Kachel**: "Web-App in Entwicklung" + "Desktopapp in
+Entwicklung" + weitere.
+
+**Ursache - und die liegt bei mir:** Solange
+`.program-button__status` `position: absolute` hatte, lagen alle exakt
+uebereinander; man sah immer nur das oberste, doppelte Eintraege fielen
+nie auf. Seit sie im Raster stehen (`grid-row: 3`, Abschnitt 4g), reihen
+sie sich **nebeneinander** - und auf schmalen Schirmen schieben sie sich
+ineinander.
+
+Die doppelten Eintraege waren also schon lange in der Datenbank, nur
+unsichtbar. Meine Aenderung hat sie ans Licht geholt.
+
+**Behoben** ueber zwei CSS-Regeln:
+
+```css
+.program-button__status ~ .program-button__status { display: none !important; }
+.program-button__description ~ .program-button__description { display: none !important; }
+```
+
+Nur das erste Element wird gezeigt - unabhaengig davon, wie viele in der
+Datenbank stehen. **Geloescht wird nichts**, die Eintraege bleiben
+erhalten und lassen sich ueber den Verlauf zurueckholen.
+
+Gemessen bei 330, 400 und 1500 px: drei Zeichen vorhanden, eines
+sichtbar, nichts laeuft ueber den Rand.
+
+**Merke:** Beim Umstellen von `absolute` auf Rasterfluss vorher pruefen,
+ob das Element mehrfach vorkommen kann. Was uebereinander lag, steht
+danach nebeneinander.
+
+---
+
 ## 4v. Verwaistes Kommentarende und graue Plaketten (13.08.2026)
 
 ### Das sichtbare "-->"

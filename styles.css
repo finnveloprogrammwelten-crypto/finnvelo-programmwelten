@@ -330,6 +330,16 @@ h1 {
 .program-button {
   grid-template-rows: auto 1fr auto;
 }
+/* Nur das ERSTE Statuszeichen zeigen.
+   Frueher lagen alle per "position: absolute" exakt uebereinander - man sah
+   immer nur das oberste, doppelte fielen nie auf. Seit sie im Raster stehen,
+   reihen sie sich nebeneinander, und aus einem Zeichen werden drei
+   ("Web-App in Entwicklung" + "Desktopapp in Entwicklung" + ...), die sich
+   auf schmalen Schirmen ineinander schieben.
+   Diese Regel blendet alles ab dem zweiten aus - unabhaengig davon, was in
+   der Datenbank steht. Geloescht wird nichts. */
+.program-button__status ~ .program-button__status { display: none !important; }
+
 .program-button__status {
   position: static;
   grid-row: 3;
@@ -362,6 +372,9 @@ h1 {
   border-color: rgba(45, 204, 112, 0.45);
   color: #d9ffe8;
 }
+
+/* Auch hier nur das erste - gegen doppelte Eintraege robust. */
+.program-button__description ~ .program-button__description { display: none !important; }
 
 .program-button__description {
   display: block;
