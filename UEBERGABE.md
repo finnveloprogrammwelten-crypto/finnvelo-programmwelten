@@ -382,6 +382,44 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4z. Die WURZEL: natives Ziehen der Kacheln (13.08.2026)
+
+**Gemeldet:** "Wenn ich ziehen moechte, um was zu markieren, verschiebt
+er es. Das bitte blockieren."
+
+Damit war endlich klar, wie das HTML in die Felder kam.
+
+**Die Kacheln sind `<a>`-Elemente - und Links sind im Browser von Haus
+aus ziehbar.** Wer Text markieren will und dabei etwas zu weit zieht,
+startet unversehens einen nativen Ziehvorgang. Laesst er ueber einem
+`contenteditable` los, fuegt der Browser die **komplette Kachel** dort
+als HTML ein:
+
+```
+W<a class="program-button" href=".../aufgabenplaner" style="...">
+```
+
+Genau der Eintrag aus dem Verlauf. Alles davor - mehrfache Kacheln,
+verstreute Statuszeichen, Ueberlagerungen - war Folge davon.
+
+**Behoben an drei Stellen:**
+
+1. `draggable="false"` auf Kacheln und ihren Bildern, dazu `dragstart`
+   abgefangen. Verschieben geht weiter, aber **nur ueber den Griff**
+   rechts oben.
+2. In bearbeitbaren Feldern: `drop` und `dragover` verhindert - dort
+   laesst sich gar nichts mehr fallen.
+3. `paste` fuegt nur noch **reinen Text** ein (`insertText`), kein HTML
+   aus der Zwischenablage.
+
+Dazu im CSS `-webkit-user-drag: none`, waehrend `user-select: text`
+das Markieren ausdruecklich erlaubt.
+
+**Damit sind es drei Schichten:** Ziehen unterbunden (4z), Einfuegen
+gefiltert (4x), und Altlasten aufraeumbar (4y).
+
+---
+
 ## 4y. Knopf "Felder saeubern" (13.08.2026)
 
 Die Reinigung beim Bearbeiten (4x) wirkt nur auf Felder, die man anfasst.

@@ -611,6 +611,18 @@
       if (el.matches('a') || el.closest('a')) {
         el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
       }
+      /* Fallenlassen ganz verbieten und Einfuegen nur als reinen Text.
+         Beides sind die Wege, auf denen fremdes HTML in ein Feld gelangt. */
+      el.addEventListener('drop', function (e) { e.preventDefault(); e.stopPropagation(); });
+      el.addEventListener('dragover', function (e) { e.preventDefault(); });
+      el.addEventListener('paste', function (e) {
+        try {
+          e.preventDefault();
+          var t = (e.clipboardData || window.clipboardData).getData('text/plain') || '';
+          document.execCommand('insertText', false, t);
+        } catch (_e) { /* aeltere Browser: dann eben ungefiltert, blur raeumt auf */ }
+      });
+
       var orig = el.innerHTML;
       el.addEventListener('blur', function () {
         var v = sauberesHtml(el);
@@ -635,6 +647,16 @@
         if (el.closest('a')) {
           el.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); });
         }
+        el.addEventListener('drop', function (e) { e.preventDefault(); e.stopPropagation(); });
+        el.addEventListener('dragover', function (e) { e.preventDefault(); });
+        el.addEventListener('paste', function (e) {
+          try {
+            e.preventDefault();
+            var t = (e.clipboardData || window.clipboardData).getData('text/plain') || '';
+            document.execCommand('insertText', false, t);
+          } catch (_e) {}
+        });
+
         var orig = el.innerHTML;
         el.addEventListener('focus', function () { el.classList.remove('fv-status-empty'); });
         el.addEventListener('blur', function () {
@@ -1080,6 +1102,21 @@
           card.classList.add('fv-sortable-item');
           // Im Bearbeiten-Modus nicht zur Programmseite navigieren (nur bearbeiten/ziehen).
           card.addEventListener('click', function (e) { e.preventDefault(); }, true);
+          /* Das native Ziehen des Browsers unterbinden.
+             Kacheln sind <a>-Elemente, und die sind von Haus aus ziehbar.
+             Wer Text markieren will und dabei etwas zu weit zieht, startet
+             unversehens einen Ziehvorgang - laesst er ueber einem
+             bearbeitbaren Feld los, fuegt der Browser die KOMPLETTE KACHEL
+             dort als HTML ein. Genau so geriet eine Kachel in ein
+             Statuszeichen. Verschieben geht weiterhin, aber nur ueber den
+             Griff rechts oben. */
+          card.setAttribute('draggable', 'false');
+          card.addEventListener('dragstart', function (e) {
+            e.preventDefault(); e.stopPropagation();
+          });
+          Array.prototype.forEach.call(card.querySelectorAll('img'), function (b) {
+            b.setAttribute('draggable', 'false');
+          });
           var h = document.createElement('div');
           h.className = 'fv-drag-handle';
           h.setAttribute('title', 'Ziehen zum Verschieben');
