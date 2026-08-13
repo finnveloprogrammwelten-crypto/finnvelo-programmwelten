@@ -382,6 +382,39 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4v. Verwaistes Kommentarende und graue Plaketten (13.08.2026)
+
+### Das sichtbare "-->"
+
+Beim Web-Ausbau habe ich in `tourenplaner.html` einen auskommentierten
+Block entfernt - der Anfang `<!--` ging mit, das `-->` blieb stehen und
+war als Text auf der Seite zu sehen.
+
+**Pruefung dafuer:** Kommentare paarweise per Regex entfernen; was an
+`<!--` oder `-->` uebrig bleibt, ist verwaist. Alle 22 Seiten geprueft,
+eine betroffen.
+
+Nach jedem Entfernen ganzer HTML-Bloecke diese Pruefung laufen lassen -
+`node --check` findet so etwas nicht, es ist ja gueltiges HTML.
+
+### Der graue Kasten um das Wappen
+
+`finnvelo-plakette.webp` ist **RGB ohne Alpha** (200x212, Ecke grau 71).
+In der Kopfzeile faellt das nicht auf, als grosse Plakette schon: ein
+grauer Kasten um das Wappen.
+
+Alle echten Plaketten sind **RGBA mit Transparenz**, 960x640.
+
+Neu erzeugt: `tourenplaner-label.webp` und `einkaufsliste-label.webp` -
+das Wappen mit weicher runder Maske auf transparentem Grund, im selben
+Format wie die uebrigen. Umgestellt auf beiden Programmseiten **und** in
+den Kacheln auf Start- und Programmseite (dort stand derselbe Fehler).
+
+**Fuer eigene Plaketten:** einfach die Datei unter demselben Namen
+ersetzen - 960x640, WebP mit Alphakanal.
+
+---
+
 ## 4u. Die "schwarzen Streifen" (13.08.2026)
 
 **Gemeldet** als "Ueberschattung, Ueberlagerung, Schwarzausbrueche" -
