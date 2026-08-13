@@ -382,6 +382,25 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5A. Zaehlerleiste verschiebbar (13.08.2026)
+
+Die Leiste "Besucher gesamt" lag fest bei `top:84px; right:20px` - je
+nach Fensterbreite mitten ueber "Kommentare" und "Kontakt".
+
+Jetzt: Im **Bearbeiten-Modus** anfassen und an eine freie Stelle ziehen.
+Fuer Besucher bleibt sie unberuehrbar (`pointer-events:none`), damit sie
+niemandem im Weg ist.
+
+* Die Lage merkt sich der **Browser** (`localStorage`, Schluessel
+  `fv_zaehler_lage`) - reine Ansichtssache, deshalb je Geraet und nicht
+  auf dem Server.
+* Beim Laden wird sie in den sichtbaren Bereich gezwungen: ein Fenster
+  kann seit dem Ablegen kleiner geworden sein, sonst waere die Leiste
+  unerreichbar.
+* **Doppelklick** setzt sie an den Ausgangsplatz zurueck.
+
+---
+
 ## 4z. Die WURZEL: natives Ziehen der Kacheln (13.08.2026)
 
 **Gemeldet:** "Wenn ich ziehen moechte, um was zu markieren, verschiebt

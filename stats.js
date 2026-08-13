@@ -58,6 +58,9 @@
       + 'border-radius:999px;padding:6px 12px;box-shadow:0 6px 18px rgba(0,0,0,.3);'
       + 'pointer-events:none;user-select:none;display:flex;gap:8px;align-items:center;white-space:nowrap;'
       + '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}'
+        + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;}'
+        + '.fv-edit-on .fv-stats-badge:hover{border-color:rgba(120,170,255,.7);}'
+        + '.fv-stats-badge.fv-zieht{cursor:grabbing;opacity:.85;}'
       + '.fv-stats-badge--home{top:84px;right:20px;left:auto;}'
       + '.fv-stats-badge--page{top:84px;right:20px;left:auto;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
@@ -79,7 +82,82 @@
     var el = document.createElement('div');
     el.className = 'fv-stats-badge fv-stats-badge--' + kind;
     (document.body || document.documentElement).appendChild(el);
+    lageAnwenden(el);
+    verschiebbarMachen(el);
     return el;
+  }
+
+  /* Die Zaehlerleiste lag fest oben rechts - und damit je nach Fensterbreite
+     mitten im Menue. Sie laesst sich jetzt im Bearbeiten-Modus an eine freie
+     Stelle ziehen. Die Lage merkt sich der Browser (localStorage, also je
+     Geraet): es ist reine Ansichtssache, Besucher sollen davon nichts
+     mitbekommen, und der Server bleibt aussen vor. */
+  var LAGE_SCHLUESSEL = 'fv_zaehler_lage';
+
+  function lageAnwenden(el) {
+    try {
+      var roh = localStorage.getItem(LAGE_SCHLUESSEL);
+      if (!roh) return;
+      var l = JSON.parse(roh);
+      if (typeof l.oben !== 'number' || typeof l.links !== 'number') return;
+      // Im sichtbaren Bereich halten - das Fenster kann seit dem Ablegen
+      // kleiner geworden sein, sonst waere die Leiste unerreichbar.
+      var maxL = Math.max(0, window.innerWidth - 140);
+      var maxO = Math.max(0, window.innerHeight - 40);
+      el.style.top = Math.min(l.oben, maxO) + 'px';
+      el.style.left = Math.min(l.links, maxL) + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+    } catch (_e) { /* dann bleibt die Vorgabe */ }
+  }
+
+  function verschiebbarMachen(el) {
+    var zieht = false, dx = 0, dy = 0;
+
+    el.addEventListener('pointerdown', function (e) {
+      if (!document.body.classList.contains('fv-edit-on')) return;
+      zieht = true;
+      var r = el.getBoundingClientRect();
+      dx = e.clientX - r.left;
+      dy = e.clientY - r.top;
+      el.classList.add('fv-zieht');
+      try { el.setPointerCapture(e.pointerId); } catch (_e) {}
+      e.preventDefault();
+    });
+
+    el.addEventListener('pointermove', function (e) {
+      if (!zieht) return;
+      var links = Math.max(4, Math.min(window.innerWidth - el.offsetWidth - 4, e.clientX - dx));
+      var oben = Math.max(4, Math.min(window.innerHeight - el.offsetHeight - 4, e.clientY - dy));
+      el.style.left = links + 'px';
+      el.style.top = oben + 'px';
+      el.style.right = 'auto';
+      el.style.bottom = 'auto';
+    });
+
+    function ende() {
+      if (!zieht) return;
+      zieht = false;
+      el.classList.remove('fv-zieht');
+      try {
+        localStorage.setItem(LAGE_SCHLUESSEL, JSON.stringify({
+          oben: parseInt(el.style.top, 10) || 0,
+          links: parseInt(el.style.left, 10) || 0
+        }));
+      } catch (_e) {}
+    }
+    el.addEventListener('pointerup', ende);
+    el.addEventListener('pointercancel', ende);
+
+    // Doppelklick setzt sie an ihren Ausgangsplatz zurueck.
+    el.addEventListener('dblclick', function () {
+      if (!document.body.classList.contains('fv-edit-on')) return;
+      try { localStorage.removeItem(LAGE_SCHLUESSEL); } catch (_e) {}
+      el.style.removeProperty('top');
+      el.style.removeProperty('left');
+      el.style.removeProperty('right');
+      el.style.removeProperty('bottom');
+    });
   }
 
   var key = pageKey();
