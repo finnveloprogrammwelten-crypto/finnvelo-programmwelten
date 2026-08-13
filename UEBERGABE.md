@@ -382,6 +382,79 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4s. Web-Apps vollstaendig ausgebaut (13.08.2026)
+
+Auf ausdrueckliche Entscheidung: **die Webseite bietet nur noch Android-
+Apps und PC-Programme an**, keine im Browser laufenden Fassungen.
+
+**Entfernt:**
+
+| Was | Umfang |
+|---|---|
+| Weboberflaechen | `/tourenplaner/`, `/planer/`, `mischwald.html`, `/einkaufsliste/` |
+| Menue "Web-Apps" | aus allen 21 Seiten |
+| Web-Download-Bereich | aus 10 Programmseiten |
+| "Sofort starten"-Kaesten | aus 3 Seiten |
+| Web-App-Upload | Knopf, `uploadApp`, Verwaltungsfenster, Block `w0` |
+| Worker-Wege | `POST /api/app`, `GET /api/app/<slug>` |
+
+Rund **12 MB** weniger im Deployment.
+
+**Was bewusst BLEIBT** - und das ist der Punkt, an dem ein blindes
+Loeschen Schaden angerichtet haette:
+
+* `tourenplaner/android.json` und `tourenplaner/pc.json` - die Programme
+  fragen genau diese Adressen ab. Sie kommen ohnehin vom **Worker**, der
+  Ordner ist nur Ablage. Vor dem Loeschen gemessen: beide antworten auch
+  ohne Weboberflaeche korrekt.
+* Der Ordner `/tourenplaner/` bleibt als **Ablage fuer APK und EXE** -
+  die Download-Adressen in `android.json` zeigen dorthin.
+
+**Offen:** APK und Installer liegen noch nicht im Ordner. Die Adressen
+in den Fassungsdateien zeigen auf
+`finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-6.4.apk` -
+solange dort nichts liegt, laeuft der Download ins Leere.
+
+**Stolperstein beim Ausbau:** Beim Herausschneiden des Web-Apps-Blocks
+ging `BEREICHE`/`bereichSchalter()` mit verloren - die Datei blieb
+syntaktisch gueltig, aber die Schalter erschienen nicht mehr
+("bereichSchalter is not defined"). Nur der Browsertest hat das gefunden.
+Nach jedem Herausschneiden groesserer Bloecke also nicht nur
+`node --check`, sondern auch im Browser nachsehen.
+
+---
+
+## 4r. Tourenplaner 6.4 eingebunden (13.08.2026)
+
+Nach `server/AUFTRAG-Aktualisierung.md`. **Zwei getrennte Dateien**, je
+eigener Schlüssel - die App liest die eine, das Windows-Programm die
+andere:
+
+| Adresse | Schlüssel | Kachel |
+|---|---|---|
+| `/tourenplaner/android.json` | `FINNVELO-TOURENPLANER-ANDROID` | Tourenplaner (Android) |
+| `/tourenplaner/pc.json` | `FINNVELO-TOURENPLANER-PC` | Tourenplaner (PC) |
+
+Beide kommen vom **Worker**, nicht als Datei - sonst derselbe Fehler wie
+bei der Einkaufsliste. `VERSION_ROUTEN` und die `endsWith`-Prüfung
+mussten dafür um `/android.json` und `/pc.json` erweitert werden; vorher
+kannte der Weg nur `/version.json`.
+
+**Nicht verwechseln:** `/tourenplaner/version.json` beschreibt die
+**Weboberfläche** und hat einen ganz anderen Aufbau
+(`version`/`datum`/`titel`/`hinweis`/`pflicht`). Sie bleibt **statisch**
+und darf **nicht** in `VERSION_ROUTEN` - sonst überschreibt die
+Fassungskachel sie mit dem falschen Format. Der Prüfstand kontrolliert
+das ausdrücklich.
+
+Das Feld heißt bei beiden `apk`, auch beim PC-Installer - so passt
+dasselbe Formular. `versionCode` muss eine **Zahl** sein, kein Text.
+
+Kopfzeilen für `/tourenplaner/*` ergänzt: `no-store` für die JSON-Dateien,
+`attachment` für `.apk` und `.exe`, `Service-Worker-Allowed` für `sw.js`.
+
+---
+
 ## 4q. Web-App-Knopf zeigte ins Leere (11.08.2026)
 
 **Gemeldet:** "Der Knopf lädt herunter, statt die Web-App zu öffnen."

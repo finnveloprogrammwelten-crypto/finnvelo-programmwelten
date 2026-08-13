@@ -973,7 +973,8 @@ export class Counter extends DurableObject {
       const leer = {
         aufgabenplaner: { schluessel: "FINNVELO-AUFGABENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         einkaufsliste: { schluessel: "FINNVELO-EINKAUFSPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
-        tourenplaner: { schluessel: "FINNVELO-TOURENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" }
+        "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" }
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
@@ -984,34 +985,6 @@ export class Counter extends DurableObject {
           "cache-control": "no-store, no-cache, must-revalidate",
           "access-control-allow-origin": "*"
         }
-      });
-    }
-
-    // --- Inline-Editor: HTML-App (Planer) hochladen + ausliefern ---
-    if (url.pathname === "/api/app" && method === "POST") {
-      let body = {};
-      try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
-      const slug = String(body.slug || "");
-      const html = String(body.html == null ? "" : body.html);
-      if (!APP_RE.test(slug)) return json({ error: "bad_slug" }, 400);
-      if (!html) return json({ error: "empty" }, 400);
-      if (html.length > MAX_APP) return json({ error: "too_large" }, 413);
-      this.sql.exec(
-        "INSERT INTO apps (slug, html, updated) VALUES (?, ?, ?) " +
-        "ON CONFLICT(slug) DO UPDATE SET html = excluded.html, updated = excluded.updated",
-        slug, html, Date.now()
-      );
-      return json({ ok: true, url: "/api/app/" + slug });
-    }
-
-    if (url.pathname.startsWith("/api/app/") && method === "GET") {
-      const slug = url.pathname.slice("/api/app/".length);
-      const rows = this.sql.exec("SELECT html FROM apps WHERE slug = ?", slug).toArray();
-      if (!rows.length) return new Response("Not found", { status: 404 });
-      return new Response(rows[0].html, {
-        status: 200,
-        headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" }
       });
     }
 
@@ -1634,12 +1607,19 @@ export default {
       // Kachel im Admin speicherte dann ins Leere: "Gespeichert" gemeldet,
       // ausgeliefert wurde weiter die alte Datei.
       "/einkaufsliste/version.json": "einkaufsliste",
-      // Der Tourenplaner - gleiches Muster, damit es dort gar nicht erst
-      // dazu kommt.
-      "/tourenplaner/version.json": "tourenplaner",
-      "/finnvelo/tourenplaner/version.json": "tourenplaner"
+      /* Tourenplaner: ZWEI getrennte Dateien mit je eigenem Schluessel -
+         die App liest android.json, das Windows-Programm pc.json. Beide
+         muessen vom Worker kommen, sonst verdeckt die statische Datei im
+         Ordner die Kachel-Eintraege (derselbe Fehler wie bei der
+         Einkaufsliste).
+         ACHTUNG: /tourenplaner/version.json gehoert NICHT hierher - die
+         Datei beschreibt die Weboberflaeche und hat einen anderen Aufbau
+         (version/datum/titel/hinweis/pflicht). Sie bleibt statisch. */
+      "/tourenplaner/android.json": "tourenplaner-android",
+      "/tourenplaner/pc.json": "tourenplaner-pc"
     };
-    if (versionPfad.endsWith("/version.json")) {
+    if (versionPfad.endsWith("/version.json") || versionPfad.endsWith("/android.json")
+        || versionPfad.endsWith("/pc.json")) {
       let ablage = VERSION_ROUTEN[versionPfad];
       if (!ablage) {
         // Selbst angelegte Adressen aus dem Verzeichnis

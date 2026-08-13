@@ -553,7 +553,6 @@
         // Web-Apps im Menue: global gespeichert, damit sie auf JEDER Seite
         // gleich aussehen. Muss auch fuer Besucher laufen, nicht nur im
         // Bearbeiten-Modus - sonst sehen sie noch die alten Eintraege.
-        parseWebApps(gmap['w0']); renderWebApps();
         // Download-Bereiche ein-/ausblenden. Muss auch fuer Besucher laufen -
         // sonst sehen sie einen Bereich, den der Admin abgeschaltet hat.
         parseBereiche(map['y0']); renderBereiche();
@@ -795,13 +794,10 @@
       + '</label>'
       + '<div class="fv-zielzeile__leiste">'
       + '  <button type="button" class="fv-zielzeile__speichern">Ziel speichern</button>'
-      + '  <button type="button" class="fv-zielzeile__app">\uD83C\uDF10 Web-App hochladen</button>'
       + '  <span class="fv-zielzeile__melde"></span>'
       + '</div>'
       + '<p class="fv-zielzeile__hilfe">Vollst\u00e4ndige Adresse (https://\u2026) oder ein Pfad '
-      + 'auf dieser Seite, der mit / beginnt. Leer lassen entfernt das Ziel.<br>'
-      + '<strong>Web-App hochladen:</strong> eine in sich geschlossene .html-Datei \u2013 '
-      + 'sie wird auf dem Server abgelegt, und der Knopf zeigt danach darauf.</p>';
+      + 'auf dieser Seite, der mit / beginnt. Leer lassen entfernt das Ziel.</p>';
 
       var feld  = zeile.querySelector('input');
       var melde = zeile.querySelector('.fv-zielzeile__melde');
@@ -848,64 +844,6 @@
        * Der Slug ist die Seite plus die Kennung des Knopfes: so kann eine
        * Seite mehrere Web-Apps tragen, ohne dass sie sich gegenseitig
        * ueberschreiben. */
-      var appKnopf = zeile.querySelector('.fv-zielzeile__app');
-      appKnopf.addEventListener('click', function (e) {
-        e.preventDefault(); e.stopPropagation();
-        var waehler = document.createElement('input');
-        waehler.type = 'file';
-        waehler.accept = '.html,.htm,text/html';
-        waehler.onchange = function () {
-          var datei = waehler.files && waehler.files[0];
-          if (!datei) return;
-          if (datei.size > 6 * 1024 * 1024) {
-            sagen('\u2717 Die Datei ist gr\u00f6\u00dfer als 6 MB. Bitte eine kleinere, '
-                + 'in sich geschlossene HTML-Datei w\u00e4hlen.', 'schlecht');
-            return;
-          }
-          var leser = new FileReader();
-          leser.onload = function () {
-            var html = String(leser.result || '');
-            if (!html.trim()) { sagen('\u2717 Die Datei ist leer.', 'schlecht'); return; }
-            appKnopf.disabled = true;
-            sagen('Wird hochgeladen \u2026');
-            var kennzeichen = (SLUG + '-' + (zielId(el) || 'app')).replace(/[^a-z0-9-]/gi, '-');
-            uploadApp(kennzeichen, html).then(function (res) {
-              appKnopf.disabled = false;
-              if (!res || !res.url) {
-                sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht');
-                return;
-              }
-              // Ziel gleich mitsetzen, sonst zeigt der Knopf noch aufs Alte.
-              feld.value = res.url;
-              el.setAttribute('href', res.url);
-              var schluessel = key || el.getAttribute('data-fvk');
-              if (typeof fertig === 'function') {
-                fertig(res.url, el);
-                sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App.', 'gut');
-                zielMelden(res.url, 'web', el);
-                return;
-              }
-              save(schluessel, 'link', res.url).then(function (gut) {
-                flash(el, gut);
-                if (gut) {
-                  sagen('\u2713 Hochgeladen \u2013 der Knopf \u00f6ffnet jetzt deine Web-App. '
-                      + 'Die Adresse steht in der App-Aktualisierung unter "Web-Version".', 'gut');
-                  zielMelden(res.url, 'web', el);
-                } else {
-                  sagen('\u2717 Hochgeladen, aber das Ziel lie\u00df sich nicht speichern. '
-                      + 'Adresse steht im Feld \u2013 bitte "Ziel speichern" dr\u00fccken.', 'schlecht');
-                }
-              });
-            }).catch(function () {
-              appKnopf.disabled = false;
-              sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht');
-            });
-          };
-          leser.onerror = function () { sagen('\u2717 Die Datei lie\u00df sich nicht lesen.', 'schlecht'); };
-          leser.readAsText(datei);
-        };
-        waehler.click();
-      });
       feld.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); speichern(); }
       });
@@ -1492,7 +1430,6 @@
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-seiten">+ Seite</button>'
-                + '<button type="button" class="fv-admin-btn fv-admin-webapps">\uD83C\uDF10 Web-Apps</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
       bar.innerHTML = '<div class="fv-admin-left">' + left + '</div>'
@@ -1513,7 +1450,6 @@
         location.reload();
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
-      bar.querySelector('.fv-admin-webapps').addEventListener('click', webAppsVerwalten);
       // Die Seitenverwaltung liegt in einem eigenen Block - per Ereignis rufen.
       bar.querySelector('.fv-admin-seiten').addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('fv:seiten-oeffnen'));
@@ -1553,297 +1489,18 @@
     }
 
     /* ================================================================
-     * Web-Apps im Menue "Web-Apps"
-     * ----------------------------------------------------------------
-     * Die Eintraege standen bisher fest im HTML jeder Seite. Aendern
-     * liess sich nur ihr Text - nicht das Ziel, und neue anlegen ging
-     * gar nicht.
-     *
-     * Jetzt stehen sie als Liste im Block "w0" auf der GLOBAL-Seite
-     * (Blocknamen duerfen nur EIN Buchstabe plus Ziffern sein - BLOCK_RE
-     * im Worker; "wa0" wurde stillschweigend abgewiesen):
-     * einmal gepflegt, ueberall gleich. Das Menue wird daraus neu
-     * gezeichnet, auch fuer Besucher.
-     *
-     * Der Ausgangsbestand kommt beim ersten Mal aus dem HTML - so bleibt
-     * alles stehen, was schon da ist, samt bereits umbenannter Namen
-     * (applyOverrides laeuft vorher).
-     * ================================================================ */
-    var webApps = null;          // null = noch nichts gespeichert
-
-    function parseWebApps(item) {
-      webApps = null;
-      if (item && item.type === 'text' && item.value) {
-        try {
-          var arr = JSON.parse(item.value);
-          if (Array.isArray(arr)) {
-            webApps = arr.filter(function (e) {
-              return e && typeof e.name === 'string' && typeof e.url === 'string';
-            }).slice(0, 12);
-          }
-        } catch (e) { webApps = null; }
-      }
-    }
-
-    function webAppMenue() {
-      return document.querySelector('.nav-apps__menu');
-    }
-
-    // Was steht gerade im Menue? Dient als Ausgangsbestand.
-    function webAppsAusHtml() {
-      var menue = webAppMenue();
-      if (!menue) return [];
-      return Array.prototype.slice.call(menue.querySelectorAll('a')).map(function (a) {
-        return { name: (a.textContent || '').trim(), url: a.getAttribute('href') || '' };
-      });
-    }
-
-    function renderWebApps() {
-      var menue = webAppMenue();
-      if (!menue) return;
-      if (!webApps) return;              // nichts gespeichert -> HTML bleibt stehen
-      var html = '';
-      webApps.forEach(function (e) {
-        if (!e.name || !e.url) return;
-        var extern = /^https?:\/\//i.test(e.url);
-        html += '<a href="' + sicherAttr(e.url) + '"'
-             +  (extern || e.url.charAt(0) === '/' ? ' target="_blank" rel="noopener"' : '')
-             +  ' data-fv-nav-extra>' + sicherText(e.name) + '</a>';
-      });
-      menue.innerHTML = html;
-      // Der Hauptknopf zeigt auf den ersten Eintrag - so wie zuvor auch.
-      var haupt = document.querySelector('.nav-apps__btn');
-      if (haupt && webApps.length && webApps[0].url) {
-        haupt.setAttribute('href', webApps[0].url);
-      }
-    }
-
-    function sicherText(t) {
-      return String(t == null ? '' : t)
-        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    }
-    function sicherAttr(t) {
-      return sicherText(t).replace(/"/g, '&quot;');
-    }
-
-    function saveWebApps() {
-      return save('w0', 'text', JSON.stringify(webApps || []), GLOBAL);
-    }
-
-    /* ---- Verwaltungsfenster ------------------------------------------
-     * Eigenes Fenster statt Bearbeiten im Menue selbst: das Dropdown
-     * klappt bei jeder Mausbewegung zu und ist zu schmal fuer Felder.  */
-    function webAppsVerwalten() {
-      var alt = document.querySelector('.fv-wa-huelle');
-      if (alt) { alt.parentNode.removeChild(alt); return; }
-
-      if (!webApps) webApps = webAppsAusHtml();
-
-      var huelle = document.createElement('div');
-      huelle.className = 'fv-verlauf-huelle fv-wa-huelle';
-      huelle.innerHTML =
-        '<div class="fv-verlauf fv-wa" role="dialog" aria-label="Web-Apps im Men\u00fc">'
-      + '  <div class="fv-verlauf__kopf">'
-      + '    <h2>Web-Apps im Men\u00fc</h2>'
-      + '    <button type="button" class="fv-verlauf__zu" aria-label="Schlie\u00dfen">\u2715</button>'
-      + '  </div>'
-      + '  <p class="fv-verlauf__hilfe">Diese Eintr\u00e4ge stehen auf <strong>allen</strong> Seiten '
-      + '    oben im Men\u00fc unter \u201eWeb-Apps\u201c. Name und Ziel lassen sich \u00e4ndern, '
-      + '    Eintr\u00e4ge hinzuf\u00fcgen, verschieben und entfernen. Mit '
-      + '    <strong>Web-App hochladen</strong> legst du eine in sich geschlossene '
-      + '    .html-Datei auf dem Server ab \u2013 das Ziel wird dann gleich mitgesetzt.</p>'
-      + '  <div class="fv-wa-liste"></div>'
-      + '  <div class="fv-wa-fuss">'
-      + '    <button type="button" class="fv-wa-neu">+ Eintrag hinzuf\u00fcgen</button>'
-      + '    <button type="button" class="fv-wa-speichern">Alles speichern</button>'
-      + '    <span class="fv-zielzeile__melde" id="fvWaMelde"></span>'
-      + '  </div>'
-      + '</div>';
-      document.body.appendChild(huelle);
-
-      var liste = huelle.querySelector('.fv-wa-liste');
-      var melde = huelle.querySelector('#fvWaMelde');
-
-      function sagen(text, art) {
-        melde.textContent = text || '';
-        melde.className = 'fv-zielzeile__melde' + (art ? ' ' + art : '');
-      }
-      function schliessen() {
-        if (huelle.parentNode) huelle.parentNode.removeChild(huelle);
-      }
-      huelle.querySelector('.fv-verlauf__zu').addEventListener('click', schliessen);
-      huelle.addEventListener('click', function (e) { if (e.target === huelle) schliessen(); });
-
-      function zeichnen() {
-        if (!webApps.length) {
-          liste.innerHTML = '<p class="fv-verlauf__leer">Noch kein Eintrag. '
-            + 'Mit \u201e+ Eintrag hinzuf\u00fcgen\u201c anfangen.</p>';
-          return;
-        }
-        var html = '';
-        webApps.forEach(function (e, i) {
-          html += '<div class="fv-wa-zeile" data-nr="' + i + '">'
-               +  '  <div class="fv-wa-felder">'
-               +  '    <label>Name im Men\u00fc'
-               +  '      <input type="text" class="fv-wa-name" value="' + sicherAttr(e.name) + '"></label>'
-               +  '    <label>Ziel'
-               +  '      <input type="text" class="fv-wa-url" spellcheck="false" '
-               +  '        value="' + sicherAttr(e.url) + '" '
-               +  '        placeholder="/mischwald oder https://\u2026"></label>'
-               +  '  </div>'
-               +  '  <div class="fv-wa-knoepfe">'
-               +  '    <button type="button" class="fv-wa-app">\uD83C\uDF10 Web-App hochladen</button>'
-               +  '    <button type="button" class="fv-wa-hoch" title="Nach oben" '
-               +  (i === 0 ? 'disabled' : '') + '>\u2191</button>'
-               +  '    <button type="button" class="fv-wa-runter" title="Nach unten" '
-               +  (i === webApps.length - 1 ? 'disabled' : '') + '>\u2193</button>'
-               +  '    <button type="button" class="fv-wa-weg" title="Entfernen">\u2715</button>'
-               +  '  </div>'
-               +  '</div>';
-        });
-        liste.innerHTML = html;
-        anbinden();
-      }
-
-      // Was in den Feldern steht, in die Liste uebernehmen
-      function einsammeln() {
-        Array.prototype.forEach.call(liste.querySelectorAll('.fv-wa-zeile'), function (z) {
-          var i = Number(z.getAttribute('data-nr'));
-          if (!webApps[i]) return;
-          webApps[i].name = z.querySelector('.fv-wa-name').value.trim();
-          webApps[i].url = z.querySelector('.fv-wa-url').value.trim();
-        });
-      }
-
-      function anbinden() {
-        Array.prototype.forEach.call(liste.querySelectorAll('.fv-wa-zeile'), function (z) {
-          var i = Number(z.getAttribute('data-nr'));
-          z.querySelector('.fv-wa-weg').addEventListener('click', function () {
-            einsammeln();
-            webApps.splice(i, 1);
-            zeichnen();
-            sagen('Entfernt \u2013 noch nicht gespeichert.', '');
-          });
-          z.querySelector('.fv-wa-hoch').addEventListener('click', function () {
-            einsammeln();
-            if (i > 0) {
-              var t = webApps[i - 1]; webApps[i - 1] = webApps[i]; webApps[i] = t;
-            }
-            zeichnen();
-          });
-          z.querySelector('.fv-wa-runter').addEventListener('click', function () {
-            einsammeln();
-            if (i < webApps.length - 1) {
-              var t = webApps[i + 1]; webApps[i + 1] = webApps[i]; webApps[i] = t;
-            }
-            zeichnen();
-          });
-          z.querySelector('.fv-wa-app').addEventListener('click', function () {
-            var knopf = this;
-            var waehler = document.createElement('input');
-            waehler.type = 'file';
-            waehler.accept = '.html,.htm,text/html';
-            waehler.onchange = function () {
-              var datei = waehler.files && waehler.files[0];
-              if (!datei) return;
-              if (datei.size > 6 * 1024 * 1024) {
-                sagen('\u2717 Die Datei ist gr\u00f6\u00dfer als 6 MB.', 'schlecht');
-                return;
-              }
-              var leser = new FileReader();
-              leser.onload = function () {
-                var inhalt = String(leser.result || '');
-                if (!inhalt.trim()) { sagen('\u2717 Die Datei ist leer.', 'schlecht'); return; }
-                knopf.disabled = true;
-                sagen('Wird hochgeladen \u2026');
-                // Eigener Platz je Eintrag, damit sich zwei Web-Apps nicht
-                // gegenseitig ueberschreiben.
-                var kennzeichen = ('webapp-' + (webApps[i].name || ('nr' + i)))
-                  .toLowerCase().replace(/[^a-z0-9-]/g, '-').slice(0, 40);
-                uploadApp(kennzeichen, inhalt).then(function (res) {
-                  knopf.disabled = false;
-                  if (!res || !res.url) { sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht'); return; }
-                  z.querySelector('.fv-wa-url').value = res.url;
-                  einsammeln();
-                  sagen('\u2713 Hochgeladen \u2013 jetzt noch \u201eAlles speichern\u201c dr\u00fccken.', 'gut');
-                }).catch(function () {
-                  knopf.disabled = false;
-                  sagen('\u2717 Hochladen fehlgeschlagen.', 'schlecht');
-                });
-              };
-              leser.onerror = function () { sagen('\u2717 Die Datei lie\u00df sich nicht lesen.', 'schlecht'); };
-              leser.readAsText(datei);
-            };
-            waehler.click();
-          });
-        });
-      }
-
-      huelle.querySelector('.fv-wa-neu').addEventListener('click', function () {
-        einsammeln();
-        webApps.push({ name: 'Neue Web-App', url: '' });
-        zeichnen();
-        var felder = liste.querySelectorAll('.fv-wa-name');
-        if (felder.length) { felder[felder.length - 1].focus(); felder[felder.length - 1].select(); }
-      });
-
-      huelle.querySelector('.fv-wa-speichern').addEventListener('click', function () {
-        einsammeln();
-        // Leere Zeilen fallen weg, sonst stehen unklickbare Eintraege im Menue.
-        var sauber = webApps.filter(function (e) { return e.name && e.url; });
-        var schlecht = webApps.filter(function (e) {
-          return e.url && !/^(https?:\/\/|\/)/i.test(e.url);
-        });
-        if (schlecht.length) {
-          sagen('\u2717 Ziel muss mit https:// oder mit / beginnen: '
-              + schlecht.map(function (e) { return e.name || '(ohne Namen)'; }).join(', '), 'schlecht');
-          return;
-        }
-        webApps = sauber;
-        var knopf = this;
-        knopf.disabled = true;
-        sagen('Wird gespeichert \u2026');
-        saveWebApps().then(function (gut) {
-          knopf.disabled = false;
-          if (!gut) { sagen('\u2717 Speichern fehlgeschlagen.', 'schlecht'); return; }
-          renderWebApps();
-          sagen('\u2713 Gespeichert \u2013 auf allen Seiten.', 'gut');
-          zeichnen();
-        }).catch(function () {
-          knopf.disabled = false;
-          sagen('\u2717 Speichern fehlgeschlagen.', 'schlecht');
-        });
-      });
-
-      zeichnen();
-    }
-
-    /* ================================================================
      * Download-Bereiche ein- und ausblenden
      * ----------------------------------------------------------------
      * Jede Programmseite hat zwei vollstaendige Bereiche: einen fuer die
      * App, einen fuer die PC-Fassung. Wer nur eines von beiden anbietet,
      * blendet den anderen als GANZES aus - samt Ueberschrift, Texten und
-     * Knoepfen.
-     *
-     * Gespeichert je Seite in Block "y0". Fehlt der Block, sind beide
-     * sichtbar - so bleibt alles, wie es war, bis jemand etwas abschaltet.
+     * Knoepfen. Gespeichert je Seite in Block "y0".
      * ================================================================ */
-    /* Drei eigenstaendige Bereiche, in dieser Reihenfolge auf der Seite.
-       Der App-Selektor muss BEIDE Sonderformen ausschliessen - sonst
-       greift er auch auf den Web- und den PC-Bereich zu. */
     var BEREICHE = [
-      /* Zur Web-Fassung gehoeren ZWEI Stellen auf der Seite: der
-         "Sofort starten"-Kasten weiter oben und der Download-Bereich.
-         Wer keine Web-App hat, will beide los - deshalb ein Schalter
-         fuer beide, statt an zwei Stellen daran denken zu muessen. */
-      { kennung: 'web', wahl: '.program-download-block--web, .program-launch',
-        titel: 'Web-Version' },
       { kennung: 'app',
-        wahl: '.program-download-block:not(.program-download-block--pc)'
-            + ':not(.program-download-block--web)',
+        wahl: '.program-download-block:not(.program-download-block--pc)',
         titel: 'App-Download' },
-      { kennung: 'pc',  wahl: '.program-download-block--pc', titel: 'PC-Download' }
+      { kennung: 'pc', wahl: '.program-download-block--pc', titel: 'PC-Download' }
     ];
     var bereichAus = {};       // { app: true } = ausgeblendet
 
@@ -1865,8 +1522,8 @@
         var aus = bereichAus[b.kennung] === true;
         Array.prototype.forEach.call(alle, function (el) {
           if (EDITING) {
-            // Im Bearbeiten-Modus bleibt der Bereich sichtbar, aber gedaempft -
-            // sonst koennte man ihn nicht wieder einschalten.
+            // Im Bearbeiten-Modus gedaempft sichtbar - sonst kaeme man
+            // nicht mehr an den Schalter, um ihn wieder einzuschalten.
             el.hidden = false;
             el.classList.toggle('fv-bereich-aus', aus);
           } else {
@@ -1884,11 +1541,6 @@
     function bereichSchalter() {
       if (!EDITING) return;
       BEREICHE.forEach(function (b) {
-        /* Ein Schalter je Bereich, auch wenn er mehrere Stellen umfasst.
-           ACHTUNG: b.wahl kann ein Komma-Selektor sein ("a, b"). Daran
-           einfach " .fv-bereich-schalter" anzuhaengen ergibt etwas ganz
-           anderes ("a" ODER "b .fv-bereich-schalter") - deshalb wird hier
-           ueber die Treffer gegangen statt Zeichenketten zu kleben. */
         var alle = document.querySelectorAll(b.wahl);
         if (!alle.length) return;
         var schonDa = false;
@@ -2188,21 +1840,47 @@
            Solange nichts eingetragen ist, antwortet der Worker mit
            versionCode 0 - die App meldet dann "kein Update" statt eines
            Fehlers. */
+        /* Tourenplaner, Android. Die App liest /tourenplaner/android.json.
+           PC hat eine EIGENE Datei mit eigenem Schluessel - siehe unten. */
         seite: 'tourenplaner',
-        ablage: 'tourenplaner',
-        pruef: '/tourenplaner/version.json',
-        titel: 'Tourenplaner',
+        ablage: 'tourenplaner-android',
+        pruef: '/tourenplaner/android.json',
+        titel: 'Tourenplaner (Android)',
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.0.0' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 10000' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 6.4' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 60400' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../FINNVELO-Tourenplaner-1.0.0.apk' },
+            ph: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-6.4.apk' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
-        fest: { schluessel: 'FINNVELO-TOURENPLANER' },
+        fest: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID' },
         vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER', versionCode: 0, versionName: '',
-          apk: '', hinweise: ''
+          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 60400, versionName: '6.4',
+          apk: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-6.4.apk',
+          hinweise: 'Wischen wechselt den Reiter. Nummern im Symbol der Tourenliste.'
+        }
+      },
+      {
+        /* Tourenplaner, Windows. Eigene Datei /tourenplaner/pc.json mit
+           eigenem Schluessel - ein falscher wird vom Programm abgelehnt.
+           Das Feld heisst auch hier "apk", damit dasselbe Formular passt;
+           gemeint ist der Installer. */
+        seite: 'tourenplaner',
+        ablage: 'tourenplaner-pc',
+        pruef: '/tourenplaner/pc.json',
+        titel: 'Tourenplaner (PC)',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 6.4' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 60400' },
+          { key: 'apk', label: 'Download-Adresse des Installers (EXE)', typ: 'url',
+            ph: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-Einrichtung-6.4.0.exe' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-TOURENPLANER-PC' },
+        vorgabe: {
+          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 60400, versionName: '6.4',
+          apk: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-Einrichtung-6.4.0.exe',
+          hinweise: 'Wischen wechselt den Reiter. Nummern im Symbol der Tourenliste.'
         }
       }
     ];
@@ -2381,11 +2059,6 @@
       { schluessel: 'pc',  titel: 'PC-Version', unten: 'EXE oder ZIP',
         hinweis: 'Eigener Block "pc" in derselben version.json. Die PC-Fassung fragt ihn ab; '
                + 'die Android-App uebersieht ihn.' },
-      { schluessel: 'web', titel: 'Web-Version', unten: 'HTML', nurAdresse: true,
-        hinweis: 'Die Web-Fassung braucht keine Versionsnummer - sie ist aktuell, sobald '
-               + 'die Datei getauscht ist. Zum Austauschen den Knopf oben anklicken und '
-               + '\u201eWeb-App hochladen\u201c w\u00e4hlen; die Adresse wird dann hier '
-               + 'eingetragen.' }
     ];
 
     // Felder einer Plattform: Android nutzt die gewohnten Schluessel,
@@ -2576,28 +2249,8 @@
          *    ueberschrieb dort die APK-Adresse - der Android-Download war weg.
          *  - Sonst in den offenen Reiter, wie beim Knopf "Ziel speichern". */
         var pfSchluessel;
-        if (art === 'web') {
-          pfSchluessel = 'web';
-        } else {
-          var offen = box.querySelector('.fv-update-reiter__k.an');
-          pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
-        }
-        var vorsatz = pfSchluessel ? (pfSchluessel + '.') : '';
-
-        // Die Web-Fassung hat keine Versionsnummer und keinen Code - dort
-        // nur die Adresse eintragen und den Reiter zeigen.
-        if (pfSchluessel === 'web') {
-          var wFeld = box.querySelector('[data-key="web.url"]');
-          if (wFeld) {
-            wFeld.value = url;
-            wFeld.classList.add('fv-uebernommen');
-            reiterZeigen('web');
-            melde.textContent = '\u2713 Adresse der Web-Fassung übernommen. '
-                              + 'Zum Festschreiben noch "Speichern" drücken.';
-            melde.className = 'fv-update-melde gut';
-          }
-          return;
-        }
+        var offen = box.querySelector('.fv-update-reiter__k.an');
+        var pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
 
         if (urlKey) {
           var uFeld = box.querySelector('[data-key="' + vorsatz
@@ -2905,20 +2558,17 @@
 
     function start() {
       ladeEinstellung().then(laden).then(function (daten) {
-        var web = document.querySelector('.program-download-block--web');
         var app = document.querySelector(
-          '.program-download-block:not(.program-download-block--pc)'
-          + ':not(.program-download-block--web)');
+          '.program-download-block:not(.program-download-block--pc)');
         var pc = document.querySelector('.program-download-block--pc');
         /* Jedes Fenster kennt NUR seine eigene Fassung - kein Umschalten,
            keine Reiter. Wer den App-Bereich anschaut, sieht Android-Sachen
            und sonst nichts. Die Web-Fassung hat kein Versionsfeld: sie ist
            aktuell, sobald die Datei getauscht ist. */
-        if (web) bauen(daten, ['web'], web);
         if (app) bauen(daten, [''], app);
         if (pc) bauen(daten, ['pc'], pc);
         // Seite ohne Download-Bereiche: eine Kachel mit allem.
-        if (!web && !app && !pc) bauen(daten, ['', 'pc', 'web'], null);
+        if (!app && !pc) bauen(daten, ['', 'pc'], null);
       });
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);

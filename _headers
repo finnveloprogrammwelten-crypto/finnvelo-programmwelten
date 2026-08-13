@@ -18,20 +18,32 @@
   Cache-Control: no-store
   Access-Control-Allow-Origin: *
 
-/einkaufsliste/sw.js
-  Content-Type: application/javascript; charset=utf-8
-  Cache-Control: no-store
-  Service-Worker-Allowed: /einkaufsliste
-
-/einkaufsliste/index.html
-  Content-Type: text/html; charset=utf-8
-  Cache-Control: no-store
-
-/einkaufsliste/*.png
-  Cache-Control: public, max-age=604800
-
-/einkaufsliste/hintergruende/*
-  Cache-Control: public, max-age=604800
-
 # Der Ordner apps/einkaufsliste/ wurde entfernt (die Fassungsdatei lag dort
 # und verdeckte den Worker). Regeln dafuer waeren wirkungslos.
+
+# --- Tourenplaner ----------------------------------------------------
+# android.json und pc.json kommen vom Worker; diese Regeln greifen nur,
+# falls doch einmal eine statische Datei ausgeliefert wird. no-store ist
+# Pflicht: sonst liefert der Zwischenspeicher die alte Fassung, und die
+# Programme merken kein Update.
+/tourenplaner/android.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+
+/tourenplaner/pc.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store
+  Access-Control-Allow-Origin: *
+
+# Beschreibt die Weboberflaeche, anderer Aufbau - bleibt statisch.
+/tourenplaner/*.apk
+  Content-Type: application/vnd.android.package-archive
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=31536000, immutable
+
+/tourenplaner/*.exe
+  Content-Type: application/octet-stream
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=31536000, immutable
+
