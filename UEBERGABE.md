@@ -382,6 +382,56 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4t. Web-Ausbau abgeschlossen + 500er am Draht (13.08.2026)
+
+### Nachgezogen beim Web-Ausbau
+
+Der erste Durchgang hatte Reste gelassen, die erst am Bildschirmfoto
+auffielen:
+
+* **Web-Kasten INNERHALB des App-Bereichs** ("Direkt im Browser" mit
+  Knopf "Auswertung jetzt oeffnen"). Er stand als `download-slot`
+  *innerhalb* von `program-download-block`, nicht als eigener Abschnitt -
+  deshalb griff das Entfernen des `--web`-Bereichs nicht.
+* **Hinweiskaesten** `webapp-note` auf Start- und Programmseite, die auf
+  das entfernte Menue verwiesen.
+* **Texte** wie "Web-App · zusaetzlich als Android-App", "Zwei Wege zur
+  Nutzung", Suchmaschinen-Beschreibungen.
+* **Tote CSS-Regeln** (`.webapp-note`, `.nav-apps`, `.program-launch`) und
+  `uploadApp()` in `stats.js`.
+
+**Ueberschriften vereinheitlicht:** Der erste Bereich heisst jetzt auf
+*jeder* Seite `Download (Android-App)`, der zweite `Download (PC-Version)`.
+Vorher stand dort mal "Download", mal "Nutzen und herunterladen", mal
+"Download (Windows-Programm)".
+
+### Die 500er bei /api/kanal/draht
+
+Fuenf am 13.08. im Abstand von rund zwei Minuten, Wortlaut
+`internal error; reference = ...`. Die Meldung kommt von Cloudflare und
+sagt nichts ueber die Ursache.
+
+**Gefunden:** Der Draht wurde **ohne try/catch** an das Kanal-Objekt
+weitergereicht. Jeder Fehler dort landete als nacktes "internal error" im
+Fehlerbuch.
+
+**Geaendert:**
+
+* Weiterleitung abgesichert. Scheitert sie, steht jetzt im Fehlerbuch,
+  **welcher Raum** betroffen war und was genau schiefging - und der Client
+  bekommt 503 mit verstaendlichem Text statt 500.
+* `NACHHOLEN` von **200 auf 50** gesenkt. Bei jedem Verbindungsaufbau
+  wurden bis zu 200 Zeilen gelesen und einzeln gesendet; bei einem Handy,
+  das unterwegs staendig neu verbindet, ist das genau die Last, die in die
+  Zeitueberschreitung fuehrt.
+
+**Ehrlich:** Ob das die 500er beseitigt, ist von hier aus nicht
+beweisbar. Sicher ist nur, dass die naechste Meldung brauchbar sein wird.
+Der Zwei-Minuten-Takt deutet auf ein Geraet, das nach jedem Fehlschlag
+neu verbindet.
+
+---
+
 ## 4s. Web-Apps vollstaendig ausgebaut (13.08.2026)
 
 Auf ausdrueckliche Entscheidung: **die Webseite bietet nur noch Android-

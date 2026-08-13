@@ -506,69 +506,14 @@ h1 {
 }
 
 /* Prominenter "Planer direkt oeffnen"-Bereich (Web-App-Programme). */
-.program-launch {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: clamp(24px, 4vw, 60px);
-  margin-top: clamp(36px, 4.4vw, 64px);
-  padding: clamp(24px, 2.6vw, 36px);
-  border: 1px solid rgba(45, 204, 112, 0.30);
-  border-radius: 22px;
-  background:
-    radial-gradient(120% 140% at 100% 0%, rgba(45, 204, 112, 0.10), transparent 60%),
-    var(--panel);
-  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.28);
-}
 
-.program-launch h2 {
-  margin: 8px 0 10px;
-  font-size: clamp(24px, 2vw, 34px);
-  letter-spacing: -0.025em;
-}
 
-.program-launch__text p:not(.section-kicker) {
-  margin: 0;
-  max-width: 560px;
-  color: var(--muted);
-  line-height: 1.6;
-}
 
-.program-launch__action {
-  display: grid;
-  justify-items: center;
-  gap: 10px;
-}
 
-.program-launch__btn {
-  min-height: 56px;
-  padding: 16px 34px;
-  font-size: clamp(16px, 1.05vw, 18px);
-  background: #22b56a;
-  box-shadow: 0 16px 40px rgba(34, 181, 106, 0.32);
-}
 
-.program-launch__btn:hover {
-  filter: brightness(1.06);
-}
 
-.program-launch__note {
-  color: var(--soft);
-  font-size: 13px;
-  text-align: center;
-}
 
 @media (max-width: 700px) {
-  .program-launch {
-    grid-template-columns: 1fr;
-    text-align: left;
-  }
-  .program-launch__action {
-    justify-items: stretch;
-  }
-  .program-launch__btn {
-    width: 100%;
-  }
 }
 
 .program-info-block {
@@ -1533,67 +1478,13 @@ body.fv-admin-on .site-header { top: 44px; }
 /* =====================================================================
    Schnellauswahl "Web-Apps" in der Hauptnavigation
    ===================================================================== */
-.nav-apps { position: relative; display: inline-flex; }
-.nav-apps__btn::after { content: "\25BE"; margin-left: 7px; font-size: 11px; opacity: .75; }
-.nav-apps--open .nav-apps__btn { background: rgba(255, 255, 255, 0.095); }
-.nav-apps__menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 40;
-  min-width: 236px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  background: rgba(8, 12, 20, 0.97);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.5);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
-}
-.nav-apps__menu[hidden] { display: none; }
-.nav-apps__menu a {
-  padding: 10px 12px;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.nav-apps__menu a:hover { background: rgba(255, 255, 255, 0.095); }
 
 @media (max-width: 760px) {
   /* Auf schmalen Bildschirmen spannt sich die Liste unter die ganze Kopfzeile,
      damit sie nie ueber den Bildschirmrand hinauslaeuft. */
-  .nav-apps { position: static; }
-  .nav-apps__menu { left: 0; right: 0; min-width: 0; }
 }
 
 /* Hinweisblock "Web-Apps" auf der Startseite (gruener Akzent = laeuft im Browser). */
-.webapp-note {
-  margin-top: clamp(18px, 2vw, 26px);
-  max-width: 560px;
-  padding: 16px 18px;
-  border-left: 3px solid #4ad991;
-  background: rgba(74, 217, 145, 0.055);
-  border-radius: 10px;
-}
-.webapp-note__label {
-  margin: 0 0 6px;
-  color: #8bf0bd;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 12px;
-  font-weight: 900;
-}
-.webapp-note__text {
-  margin: 0;
-  color: #d7e2f5;
-  font-size: clamp(15px, 1.05vw, 17px);
-  line-height: 1.6;
-}
-.webapp-note__text strong { color: #ffffff; }
 
 /* Bildraster fuer Hochformat-Aufnahmen (Handy-Bildschirmfotos). */
 .program-media-grid--hoch {
@@ -1915,18 +1806,6 @@ body.fv-admin-on .site-header { top: 44px; }
 .fv-zielzeile__speichern:hover { background: #4a90ff; }
 /* Web-App hochladen: bewusst zurueckhaltender als "Ziel speichern",
    weil es der seltenere Griff ist. */
-.fv-zielzeile__app {
-  background: rgba(120, 170, 255, 0.10);
-  border: 1px solid rgba(120, 170, 255, 0.5);
-  color: #eaf1ff;
-  border-radius: 9px;
-  padding: 8px 14px;
-  font: 700 13px/1.2 inherit;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.fv-zielzeile__app:hover { background: var(--blue); border-color: var(--blue); }
-.fv-zielzeile__app:disabled { opacity: 0.6; cursor: default; }
 .fv-zielzeile__melde { font-size: 13px; font-weight: 700; }
 .fv-zielzeile__melde.gut { color: #4ad991; }
 .fv-zielzeile__melde.schlecht { color: var(--red); }
@@ -2281,7 +2160,6 @@ body.fv-admin-on .site-header { top: 44px; }
      mit dem Finger die Zeile daneben. */
   .fv-edit-on .fv-editable { padding: 4px 6px; margin: -4px -6px; }
   .fv-zielzeile__speichern,
-  .fv-zielzeile__app { padding: 12px 18px; }
 }
 
 /* Sichtbarkeitsauge an Passwortfeldern (siehe passwortauge.js).
@@ -2483,6 +2361,3 @@ body.fv-admin-on .site-header { top: 44px; }
    fuer Besucher sichtbar, obwohl er als versteckt gilt. Steht bewusst
    ganz am Ende, damit es nicht seinerseits ueberschrieben wird.
    --------------------------------------------------------------------- */
-.program-launch[hidden],
-.program-download-block[hidden],
-.program-info-block[hidden] { display: none !important; }

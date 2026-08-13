@@ -1499,7 +1499,28 @@ export default {
         // Kanal-Objekt weder Raum noch Freigabe erkennen.
         const drahtZiel = new URL("https://kanal/draht");
         for (const [n, v] of url.searchParams) drahtZiel.searchParams.set(n, v);
-        return stub.fetch(new Request(drahtZiel.toString(), { headers: request.headers }));
+        /* Abgesichert weiterreichen. Ohne das landet jeder Fehler des
+           Kanal-Objekts als nacktes "internal error; reference = ..." im
+           Fehlerbuch - eine Meldung, mit der niemand etwas anfangen kann.
+           Jetzt steht wenigstens dabei, welcher Raum betroffen war. */
+        try {
+          return await stub.fetch(new Request(drahtZiel.toString(), { headers: request.headers }));
+        } catch (fehler) {
+          const raum = url.searchParams.get("raum") || "allgemein";
+          try {
+            const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
+            ctx.waitUntil(g.fetch(new Request("https://zaehler/api/kanalliste", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                aktion: "fehler", weg: "/api/kanal/draht", lage: 503,
+                text: "Leitung nicht aufgebaut, Raum \"" + raum + "\": " +
+                      String((fehler && fehler.message) || fehler).slice(0, 200)
+              })
+            })));
+          } catch (_e) { /* eine fehlende Notiz darf nichts weiter kaputtmachen */ }
+          return json({ fehler: "Die Leitung liess sich gerade nicht aufbauen. " +
+                                "Bitte in einem Moment erneut versuchen." }, 503);
+        }
       }
 
       /* --- Alles Uebrige an das Kanal-Objekt weiterreichen ----------- */
@@ -1791,7 +1812,12 @@ const AUFRAEUM_TAKT = 10 * 60 * 1000;              // hoechstens alle 10 Minuten
 const GERAET_VERWAIST = 30 * 24 * 60 * 60 * 1000;  // ein Monat ohne Abgleich
 const MAX_NACHRICHT = 4 * 1024;         // 4 KB je Chatnachricht
 const MAX_NACHRICHTEN = 2000;           // aeltere fallen hinten heraus
-const NACHHOLEN = 200;                  // beim Verbinden mitgeschickt
+/* Beim Verbinden mitgeschickte Nachrichten. Frueher 200 - das bedeutet bei
+   JEDEM Verbindungsaufbau 200 Datenbankzeilen lesen und einzeln senden.
+   Bei einem Handy, das unterwegs staendig neu verbindet, ist das genau die
+   Last, die das Objekt in die Zeitueberschreitung treibt. 50 reicht fuer
+   den Rueckblick im Chat voellig; wer mehr braucht, holt sie ueber "seit". */
+const NACHHOLEN = 50;
 const MAX_FEHLER = 5;                   // dann zehn Minuten Sperre
 const ANFRAGEN_MINUTE = 60;             // HTTP-Anfragen je Kanal und Minute
 const NACHRICHTEN_MINUTE = 20;          // Chatnachrichten je Leitung und Minute

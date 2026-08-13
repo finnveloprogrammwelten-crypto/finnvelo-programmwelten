@@ -885,12 +885,6 @@
      * dem Server gespeichert (/api/app/<slug>) und der Startknopf zeigt darauf.
      * Fuer ALLE Besucher oeffnet der Knopf dann diese Datei.
      * ------------------------------------------------------------------- */
-    function uploadApp(appSlug, html) {
-      return fetch(API + '/app', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: adminPw(), slug: appSlug, html: html })
-      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
-    }
     /* enableAppUpload() ist entfallen. Sie suchte einen Knopf
      * ".program-launch a.button" - den es auf KEINER Seite des Projekts gibt.
      * Die Leiste erschien deshalb nie, und der Web-App-Upload war fuer den
