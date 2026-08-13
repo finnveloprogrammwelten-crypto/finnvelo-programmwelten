@@ -1833,11 +1833,16 @@ body.fv-admin-on .site-header { top: 44px; }
    unten, was dazu gepflegt wird. Frueher wirkten beide wie zwei zufaellig
    untereinanderliegende Kaesten. */
 .fv-edit-on .program-download-block {
+  /* Nur ein zurueckhaltender Rahmen, KEIN Hintergrund. Ein flaechiger
+     Hintergrund legt sich ueber das Wappen im Seitenhintergrund und
+     erzeugt genau die dunklen Bahnen, die als "schwarze Streifen"
+     auffallen - in der Besucheransicht sieht dieselbe Stelle ruhig aus.
+     Die Zusammengehoerigkeit von Link und Aktualisierung zeigt der
+     Rahmen allein deutlich genug. */
   border: 1px solid rgba(120, 170, 255, 0.22);
   border-radius: 16px;
   padding: 18px 20px 20px;
   margin-bottom: 22px;
-  background: rgba(120, 170, 255, 0.035);
 }
 .fv-edit-on .program-download-block .fv-update-box {
   margin-top: 16px;

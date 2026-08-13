@@ -382,6 +382,35 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4u. Die "schwarzen Streifen" (13.08.2026)
+
+**Gemeldet** als "Ueberschattung, Ueberlagerung, Schwarzausbrueche" -
+ich hatte das zunaechst als Web-App-Reste gedeutet. Es war etwas anderes.
+
+**Ursache:** Meine Regel fuer die "ein Fenster"-Optik im Bearbeiten-Modus:
+
+```css
+.fv-edit-on .program-download-block { background: rgba(120,170,255,.035); }
+```
+
+Der flaechige Hintergrund legt sich ueber das Wappen im Seitenhintergrund
+(`opacity .20`, `brightness 1.65`) und erzeugt dunkle Bahnen genau dort,
+wo Bereiche liegen.
+
+**Nachgewiesen** durch Vergleich zweier Bildschirmfotos derselben Stelle:
+in der Besucheransicht ruhig, im Bearbeiten-Modus die Streifen. Damit war
+klar, dass es nicht am Hintergrundbild liegt.
+
+**Behoben:** Hintergrund entfernt, der Rahmen bleibt. Er zeigt die
+Zusammengehoerigkeit von Link und Aktualisierung deutlich genug.
+
+**Merke:** Flaechige Hintergruende sind auf dieser Webseite heikel - der
+Seitenhintergrund ist ein halbtransparentes Bild. Was auf einfarbigem
+Grund unauffaellig waere, wird hier als Streifen sichtbar. Im Zweifel
+Rahmen statt Flaeche.
+
+---
+
 ## 4t. Web-Ausbau abgeschlossen + 500er am Draht (13.08.2026)
 
 ### Nachgezogen beim Web-Ausbau
