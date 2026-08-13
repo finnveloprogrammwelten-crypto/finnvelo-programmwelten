@@ -382,6 +382,29 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4y. Knopf "Felder saeubern" (13.08.2026)
+
+Die Reinigung beim Bearbeiten (4x) wirkt nur auf Felder, die man anfasst.
+Was frueher schon verdorben gespeichert wurde, blieb liegen - und richtete
+weiter Unheil an, auch nach dem Einspielen des neuen Standes.
+
+Neuer Knopf in der Admin-Leiste: **"Felder saeubern"**. Er geht alle
+Textfelder der Seite (und der globalen Ablage) durch, schickt sie durch
+`sauberesHtml` und schreibt geaenderte zurueck.
+
+* Uebersprungen werden Listen und Einstellungen (Werte, die mit `[` oder
+  `{` beginnen) sowie Felder ganz ohne `<`.
+* Jedes geaenderte Feld wandert normal in den **Verlauf** - nichts geht
+  unwiederbringlich verloren.
+* Danach laedt die Seite neu.
+
+**Stolperstein beim Bauen:** `fetchContent(seite)` liefert eine
+**Zuordnung** `{ block: eintrag }`, kein `items`-Feld. Ich hatte
+`d.items.forEach` geschrieben - die Schleife lief ins Leere, der Knopf
+meldete Erfolg und tat nichts. Nur der Prueflauf hat das gefunden.
+
+---
+
 ## 4x. HTML geriet in bearbeitete Felder (13.08.2026)
 
 **Im Verlauf nachgewiesen** - Block `s3` der Startseite:

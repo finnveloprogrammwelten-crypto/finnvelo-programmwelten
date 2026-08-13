@@ -2379,3 +2379,6 @@ body.fv-admin-on .site-header { top: 44px; }
    fuer Besucher sichtbar, obwohl er als versteckt gilt. Steht bewusst
    ganz am Ende, damit es nicht seinerseits ueberschrieben wird.
    --------------------------------------------------------------------- */
+
+/* Rueckmeldung des Saeuberns in der Admin-Leiste */
+.fv-putz-melde { margin-left: 10px; font-size: 13px; font-weight: 700; color: #9fd9ff; }

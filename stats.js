@@ -1463,6 +1463,7 @@
         ? '<span class="fv-admin-hint">Texte anklicken \u00b7 Bilder klicken/ziehen \u00b7 Kacheln am Griff ziehen</span>'
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
+                + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-seiten">+ Seite</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
@@ -1484,6 +1485,7 @@
         location.reload();
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
+      bar.querySelector('.fv-admin-putzen').addEventListener('click', felderSaeubern);
       // Die Seitenverwaltung liegt in einem eigenen Block - per Ereignis rufen.
       bar.querySelector('.fv-admin-seiten').addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('fv:seiten-oeffnen'));
@@ -1614,6 +1616,83 @@
             setTimeout(function () { melde.textContent = ''; }, 3500);
           });
         });
+      });
+    }
+
+    /* Alle gespeicherten Felder dieser Seite auf einmal saeubern.
+     * ----------------------------------------------------------------
+     * Die Reinigung beim Bearbeiten (sauberesHtml) wirkt nur auf Felder,
+     * die man anfasst. Was frueher schon verdorben gespeichert wurde -
+     * etwa eine ganze Kachel in einem Statuszeichen - bleibt liegen und
+     * richtet weiter Unheil an. Dieser Knopf geht alle Felder der Seite
+     * durch und schreibt die gesaeuberte Fassung zurueck.
+     *
+     * Jedes geaenderte Feld wandert dabei normal in den Verlauf - es geht
+     * also nichts unwiederbringlich verloren. */
+    function felderSaeubern() {
+      var seiten = [SLUG, GLOBAL];
+      var geaendert = 0, geprueft = 0;
+
+      function melden(text) {
+        var bar = document.querySelector('.fv-admin-bar');
+        if (!bar) return;
+        var m = bar.querySelector('.fv-putz-melde');
+        if (!m) {
+          m = document.createElement('span');
+          m.className = 'fv-putz-melde';
+          bar.appendChild(m);
+        }
+        m.textContent = text;
+      }
+
+      if (!window.confirm('Alle Textfelder dieser Seite auf eingeschlepptes HTML pruefen '
+          + 'und bereinigen?\n\nGefunden wird zum Beispiel eine ganze Kachel, die beim '
+          + 'Bearbeiten versehentlich in ein Feld geraten ist. Der bisherige Stand bleibt '
+          + 'im Verlauf erhalten.')) return;
+
+      melden('Wird gepr\u00fcft \u2026');
+
+      var reihe = Promise.resolve();
+      seiten.forEach(function (seite) {
+        reihe = reihe.then(function () {
+          /* fetchContent liefert eine ZUORDNUNG { block: eintrag }, kein
+             items-Feld - das hatte ich zuerst falsch angenommen, und die
+             Schleife lief ins Leere. */
+          return fetchContent(seite).then(function (d) {
+            if (!d || typeof d !== 'object') return;
+            var kette = Promise.resolve();
+            Object.keys(d).forEach(function (schluessel) {
+              var it = d[schluessel];
+              if (it && !it.block) it.block = schluessel;
+              if (!it || it.type !== 'text' || typeof it.value !== 'string') return;
+              // Nur echte Textfelder - Listen und Einstellungen in Ruhe lassen
+              if (/^[a-z]\d*$/.test(it.block) === false) return;
+              if (it.value.charAt(0) === '[' || it.value.charAt(0) === '{') return;
+              if (it.value.indexOf('<') === -1) return;      // kein HTML drin
+              geprueft++;
+              var hilfe = document.createElement('div');
+              hilfe.innerHTML = it.value;
+              var sauber = sauberesHtml(hilfe);
+              if (sauber === it.value) return;
+              geaendert++;
+              kette = kette.then(function () {
+                return save(it.block, 'text', sauber, seite);
+              });
+            });
+            return kette;
+          });
+        });
+      });
+
+      reihe.then(function () {
+        if (!geaendert) {
+          melden('\u2713 Nichts zu s\u00e4ubern \u2013 alle ' + geprueft + ' Felder sind in Ordnung.');
+          return;
+        }
+        melden('\u2713 ' + geaendert + ' Feld(er) bereinigt \u2013 Seite wird neu geladen \u2026');
+        setTimeout(function () { location.reload(); }, 1400);
+      }).catch(function () {
+        melden('\u2717 Beim S\u00e4ubern ging etwas schief.');
       });
     }
 
