@@ -382,6 +382,42 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 4x. HTML geriet in bearbeitete Felder (13.08.2026)
+
+**Im Verlauf nachgewiesen** - Block `s3` der Startseite:
+
+```
+13.08. 16:24  Web-App in Entwicklung<br>Desktopapp in Entwicklung
+13.08. 19:13  W<a class="program-button fv-sortable-item"
+              href=".../aufgabenplaner" style="font-size: cl...
+```
+
+In einem **Statuszeichen** steckte eine komplette Kachel. Daher die
+mehrfachen Aufgabenplaner-Kacheln und die Ueberlagerungen - kein Fehler
+in der Anzeige, sondern der Inhalt der Datenbank.
+
+**Ursache:** `editableText` und `enableStatus` speicherten `el.innerHTML`
+ungefiltert. Ein `contenteditable` **innerhalb eines `<a>`** ist heikel:
+markiert man den Text und tippt darueber, zieht der Browser mitunter das
+umgebende Element mit hinein. Das passierte wiederholt, auch nach dem
+Zuruecksetzen ueber den Verlauf.
+
+**Behoben** durch `sauberesHtml(el)` vor jedem Speichern:
+
+* Erlaubt bleiben `b, strong, i, em, u, br, span` - alles fuer kurze
+  Auszeichnungen Noetige.
+* Alles andere wird durch seinen **Text** ersetzt; der Inhalt bleibt, die
+  Struktur verschwindet.
+* Auch bei erlaubten Elementen fallen alle Attribute weg (`style`,
+  `class`, `href`).
+* Weicht das Ergebnis vom Angezeigten ab, wird auch die Anzeige
+  berichtigt - sonst steht auf dem Schirm etwas anderes als gespeichert.
+
+Geprueft mit genau dem HTML aus dem Verlauf: Kachel raus, Text bleibt.
+Fett, kursiv und Umbruch ueberstehen die Reinigung.
+
+---
+
 ## 4w. Mehrfache Statuszeichen in einer Kachel (13.08.2026)
 
 **Gemeldet:** "Der Aufgabenplaner ist dutzendfach ueberlagert."

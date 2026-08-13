@@ -566,6 +566,42 @@
     }
 
     /* ---- Texte bearbeiten (Body + Navigation) ------------------------- */
+    /* Beim Bearbeiten hineingeratenes HTML herausfiltern.
+     * ----------------------------------------------------------------
+     * Ein contenteditable-Element innerhalb eines <a> ist heikel: markiert
+     * man den Text und tippt darueber, zieht der Browser mitunter das
+     * umgebende Element mit hinein. Beobachtet am Statuszeichen der
+     * Kacheln - dort landete eine komplette Kachel im Feld:
+     *     W<a class="program-button" href="/aufgabenplaner" ...>
+     * Danach erschien der Aufgabenplaner mehrfach und alles verrutschte.
+     *
+     * Erlaubt bleiben nur die Auszeichnungen, die hier Sinn ergeben:
+     * fett, kursiv, Zeilenumbruch. Alles andere wird auf seinen Text
+     * zurueckgefuehrt - der Inhalt bleibt, die Struktur verschwindet. */
+    var ERLAUBT = { B: 1, STRONG: 1, I: 1, EM: 1, BR: 1, U: 1, SPAN: 1 };
+
+    function sauberesHtml(el) {
+      var hilfe = document.createElement('div');
+      hilfe.innerHTML = el.innerHTML;
+      // Von innen nach aussen: was nicht erlaubt ist, durch seinen Text ersetzen
+      var gefunden = true, runden = 0;
+      while (gefunden && runden < 20) {
+        gefunden = false; runden++;
+        var alle = hilfe.querySelectorAll('*');
+        for (var i = alle.length - 1; i >= 0; i--) {
+          var k = alle[i];
+          if (!ERLAUBT[k.tagName]) {
+            k.parentNode.replaceChild(document.createTextNode(k.textContent || ''), k);
+            gefunden = true;
+          } else {
+            // Auch bei erlaubten Elementen: Attribute wegwerfen (style, class, href)
+            while (k.attributes.length) k.removeAttribute(k.attributes[0].name);
+          }
+        }
+      }
+      return hilfe.innerHTML;
+    }
+
     function editableText(el, page) {
       el.setAttribute('contenteditable', 'true');
       el.classList.add('fv-editable');
@@ -577,7 +613,10 @@
       }
       var orig = el.innerHTML;
       el.addEventListener('blur', function () {
-        var v = el.innerHTML;
+        var v = sauberesHtml(el);
+        // Wurde etwas herausgefiltert, auch die Anzeige berichtigen -
+        // sonst steht auf dem Schirm etwas anderes als in der Datenbank.
+        if (v !== el.innerHTML) el.innerHTML = v;
         if (v === orig) return;
         orig = v; el.classList.add('fv-saving');
         save(el.getAttribute('data-fvk'), 'text', v, page).then(function (ok) { flash(el, ok); });
@@ -599,7 +638,8 @@
         var orig = el.innerHTML;
         el.addEventListener('focus', function () { el.classList.remove('fv-status-empty'); });
         el.addEventListener('blur', function () {
-          var v = el.innerHTML;
+          var v = sauberesHtml(el);
+          if (v !== el.innerHTML) el.innerHTML = v;
           if (v === orig) { applyStatus(el); return; }
           orig = v;
           var store = el.textContent && el.textContent.trim() ? v : '';   // leer -> ausgeblendet
