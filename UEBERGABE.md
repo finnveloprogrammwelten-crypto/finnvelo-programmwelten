@@ -382,6 +382,68 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5B. Tourenplaner auf das bewaehrte Muster (13.08.2026)
+
+Die App meldete "alles aktuell - 8.7", obwohl 8.8 vorlag: `android.json`
+kam vom Worker mit dem gespeicherten Stand 6.4, im Ordner lag 8.8.
+
+**Entschieden: wie Aufgabenplaner und Einkaufsplaner.** Der Worker
+erzeugt die Dateien, gepflegt wird ueber die Kacheln im Bearbeiten-Modus.
+
+| Adresse | Schluessel | Kachel |
+|---|---|---|
+| `/tourenplaner/android.json` | `FINNVELO-TOURENPLANER-ANDROID` | Tourenplaner (Android) |
+| `/tourenplaner/pc.json` | `FINNVELO-TOURENPLANER-PC` | Tourenplaner (PC) |
+
+Vorgabe steht auf 80800 / 8.8.
+
+**Aus dem Ordner entfernt:** `android.json`, `pc.json`, `version.json`
+sowie die Weboberflaeche (`index.html`, `sw.js`, `manifest.webmanifest`,
+Symbole, Hintergruende) - konsequent zur Entscheidung, keine Web-Apps
+mehr anzubieten. Der Ordner `/tourenplaner/` bleibt als Ablage fuer APK
+und Installer.
+
+**Stolperstein:** `VERSION_ROUTEN` steht **zweimal** im worker.js - einmal
+im Kanal-Zweig, einmal im Auslieferungszweig. Meine erste Aenderung traf
+die falsche Liste, die Wege gaben weiter 404. Beim Ergaenzen also pruefen,
+welche Liste tatsaechlich gelesen wird (die bei `versionPfad.endsWith`).
+
+---
+
+
+Nach `AUFTRAG-Aktualisierung-Webseite.md`. Die App meldete "alles
+aktuell - 8.7", obwohl 8.8 vorlag.
+
+**Ursache:** `android.json` und `pc.json` kamen vom **Worker** aus
+gespeicherten Werten (6.4), waehrend im Ordner die Fassung 8.8 lag. Zwei
+Wahrheiten, und die Datei verlor - genau der umgekehrte Fall wie beim
+Einkaufsplaner, wo die Datei den Worker verdeckte.
+
+**Geaendert:** Die Worker-Routen fuer `/tourenplaner/android.json` und
+`/pc.json` sind **entfernt**. Die Dateien kommen jetzt aus dem Paket -
+so, wie der Entwickler sie liefert. Damit gibt es nur noch eine Quelle.
+
+Die beiden Kacheln "Tourenplaner (Android)" und "(PC)" sind ebenfalls
+raus: Sie haetten weiter in die Datenbank geschrieben, ohne dass es
+irgendetwas bewirkt - schlimmer als keine Kachel.
+
+**Kuenftiger Ablauf:** Paket hochladen, fertig. Kein Eintragen mehr.
+
+**Kopfzeilen geschaerft** auf `no-store, no-cache, must-revalidate` -
+ohne das liefert der Zwischenspeicher die alte Fassung weiter. Dazu
+`manifest.webmanifest` mit richtigem Typ.
+
+**Die Regel, jetzt in beide Richtungen belegt:** Fuer eine Fassungsdatei
+gilt *entweder* Admin-Kachel *oder* Datei im Ordner - nie beides. Wer
+gewinnt, haengt davon ab, ob eine Worker-Route existiert; erkennbar an
+`cache-control: no-store` (Worker) gegen `etag` (Datei).
+
+**Offen:** `FINNVELO-Tourenplaner-8.8.apk` und die Windows-Einrichtungs-
+datei sind **nicht im Paket**. Beide JSONs verweisen darauf, die Adressen
+laufen ins Leere. Punkt 2 der Abnahmepruefung bleibt daher rot.
+
+---
+
 ## 5A. Zaehlerleiste verschiebbar (13.08.2026)
 
 Die Leiste "Besucher gesamt" lag fest bei `top:84px; right:20px` - je

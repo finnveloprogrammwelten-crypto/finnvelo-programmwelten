@@ -974,7 +974,7 @@ export class Counter extends DurableObject {
         aufgabenplaner: { schluessel: "FINNVELO-AUFGABENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         einkaufsliste: { schluessel: "FINNVELO-EINKAUFSPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
-        "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" }
+        "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
@@ -1628,14 +1628,11 @@ export default {
       // Kachel im Admin speicherte dann ins Leere: "Gespeichert" gemeldet,
       // ausgeliefert wurde weiter die alte Datei.
       "/einkaufsliste/version.json": "einkaufsliste",
-      /* Tourenplaner: ZWEI getrennte Dateien mit je eigenem Schluessel -
-         die App liest android.json, das Windows-Programm pc.json. Beide
-         muessen vom Worker kommen, sonst verdeckt die statische Datei im
-         Ordner die Kachel-Eintraege (derselbe Fehler wie bei der
-         Einkaufsliste).
-         ACHTUNG: /tourenplaner/version.json gehoert NICHT hierher - die
-         Datei beschreibt die Weboberflaeche und hat einen anderen Aufbau
-         (version/datum/titel/hinweis/pflicht). Sie bleibt statisch. */
+      /* Tourenplaner: zwei getrennte Dateien mit je eigenem Schluessel.
+         Kommen vom WORKER, gepflegt ueber die Kacheln - wie beim
+         Aufgabenplaner. Im Ordner /tourenplaner/ darf keine gleichnamige
+         Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
+         dann still ins Leere. */
       "/tourenplaner/android.json": "tourenplaner-android",
       "/tourenplaner/pc.json": "tourenplaner-pc"
     };

@@ -2062,35 +2062,28 @@
         }
       },
       {
-        /* Tourenplaner - nach demselben Muster wie Aufgabenplaner und
-           Einkaufsplaner: version.json kommt vom Worker, Feldnamen "apk"
-           und "hinweise", eigener Schluessel gegen Verwechslung.
-           Solange nichts eingetragen ist, antwortet der Worker mit
-           versionCode 0 - die App meldet dann "kein Update" statt eines
-           Fehlers. */
-        /* Tourenplaner, Android. Die App liest /tourenplaner/android.json.
-           PC hat eine EIGENE Datei mit eigenem Schluessel - siehe unten. */
+        /* Tourenplaner, Android - die App liest /tourenplaner/android.json.
+           Kommt vom WORKER; im Ordner darf keine solche Datei liegen. */
         seite: 'tourenplaner',
         ablage: 'tourenplaner-android',
         pruef: '/tourenplaner/android.json',
         titel: 'Tourenplaner (Android)',
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 6.4' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 60400' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 8.9' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 80900' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-6.4.apk' },
+            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-8.9.apk' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID' },
         vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 60400, versionName: '6.4',
-          apk: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-6.4.apk',
-          hinweise: 'Wischen wechselt den Reiter. Nummern im Symbol der Tourenliste.'
+          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 80900, versionName: '8.9',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-8.9.apk',
+          hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
         }
       },
       {
-        /* Tourenplaner, Windows. Eigene Datei /tourenplaner/pc.json mit
-           eigenem Schluessel - ein falscher wird vom Programm abgelehnt.
+        /* Tourenplaner, Windows - eigene Datei, eigener Schluessel.
            Das Feld heisst auch hier "apk", damit dasselbe Formular passt;
            gemeint ist der Installer. */
         seite: 'tourenplaner',
@@ -2098,17 +2091,17 @@
         pruef: '/tourenplaner/pc.json',
         titel: 'Tourenplaner (PC)',
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 6.4' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 60400' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 8.9' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 80900' },
           { key: 'apk', label: 'Download-Adresse des Installers (EXE)', typ: 'url',
-            ph: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-Einrichtung-6.4.0.exe' },
+            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-8.9.0.exe' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-TOURENPLANER-PC' },
         vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 60400, versionName: '6.4',
-          apk: 'https://finnveloprogramme.com/tourenplaner/FINNVELO-Tourenplaner-Einrichtung-6.4.0.exe',
-          hinweise: 'Wischen wechselt den Reiter. Nummern im Symbol der Tourenliste.'
+          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 80900, versionName: '8.9',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-8.9.0.exe',
+          hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
         }
       }
     ];

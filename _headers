@@ -26,15 +26,23 @@
 # falls doch einmal eine statische Datei ausgeliefert wird. no-store ist
 # Pflicht: sonst liefert der Zwischenspeicher die alte Fassung, und die
 # Programme merken kein Update.
+# Diese drei kommen als DATEI aus dem Paket (nicht mehr vom Worker).
+# no-store ist deshalb Pflicht: sonst liefert der Zwischenspeicher die
+# alte Fassung weiter, und die App meldet "alles aktuell", obwohl langst
+# eine neue hochgeladen wurde. Genau daran hing die Fassung 6.4 fest.
 /tourenplaner/android.json
   Content-Type: application/json; charset=utf-8
-  Cache-Control: no-store
+  Cache-Control: no-store, no-cache, must-revalidate
   Access-Control-Allow-Origin: *
 
 /tourenplaner/pc.json
   Content-Type: application/json; charset=utf-8
-  Cache-Control: no-store
+  Cache-Control: no-store, no-cache, must-revalidate
   Access-Control-Allow-Origin: *
+
+/tourenplaner/manifest.webmanifest
+  Content-Type: application/manifest+json; charset=utf-8
+  Cache-Control: no-store
 
 # Beschreibt die Weboberflaeche, anderer Aufbau - bleibt statisch.
 /tourenplaner/*.apk
