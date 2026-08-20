@@ -382,6 +382,36 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5F. Hochgeladene Bilder verloren ihre Transparenz (20.08.2026)
+
+**Die Wurzel der schwarzen Plaketten-Rahmen.** Gefunden, nachdem der
+Nutzer die Grafikadresse geschickt hat: `/api/image/mt1wmfav0n6tjd` - es
+war also das hochgeladene Bild, nicht die Datei aus dem Paket.
+
+**Ursache in `downscale()`:**
+
+```js
+var mime = (file.type === 'image/png' && w * h < 360000) ? 'image/png' : 'image/jpeg';
+```
+
+Ein PNG wurde nur unter **360000 Bildpunkten** als PNG behalten. Die
+Plaketten haben 1536 x 1024 = **1572864** - sie gingen als **JPEG** raus.
+JPEG kennt keine Transparenz, der durchsichtige Rand wurde schwarz.
+
+**Jetzt entscheidet nicht die Groesse, sondern der Inhalt:** Das Bild
+wird abgetastet (jeder 40. Punkt), und sobald es durchsichtige Stellen
+hat, wird **WebP** gewaehlt - klein und mit Alphakanal. Kann der Browser
+kein WebP, faellt er auf PNG zurueck. Ohne Transparenz bleibt es bei
+JPEG, das ist fuer Fotos deutlich sparsamer.
+
+Gemessen: `Tourenplaner.png` (1536x1024, transparent) hochgeladen ->
+`image/webp`, 220 KB, Transparenz erhalten.
+
+**Merke:** Wer ein Format nach Dateigroesse waehlt statt nach Inhalt,
+verliert Eigenschaften, die am Inhalt haengen.
+
+---
+
 ## 5E. Bildtausch war blockiert (20.08.2026)
 
 **Gemeldet:** "Wenn ich Bilder tauschen will, kommt kein Dateiauswahl-

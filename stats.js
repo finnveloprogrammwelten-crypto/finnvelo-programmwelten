@@ -758,8 +758,34 @@
         var c = document.createElement('canvas'); c.width = w; c.height = h;
         c.getContext('2d').drawImage(img, 0, 0, w, h);
         URL.revokeObjectURL(url);
-        var mime = (file.type === 'image/png' && w * h < 360000) ? 'image/png' : 'image/jpeg';
-        try { cb(c.toDataURL(mime, 0.85), mime); } catch (e) { cb(null); }
+          /* Bildformat waehlen - hier hakte es:
+             Frueher wurde ein PNG nur bei unter 360000 Bildpunkten als PNG
+             behalten, alles Groessere ging als JPEG raus. JPEG kennt keine
+             Transparenz, also wurde der durchsichtige Rand SCHWARZ. Genau
+             so bekamen die Plaketten ihren Kasten (1536x1024 = 1572864).
+
+             Jetzt entscheidet nicht die Groesse, sondern ob das Bild
+             ueberhaupt durchsichtige Stellen hat. */
+          var durchsichtig = false;
+          try {
+            var pk = c.getContext('2d').getImageData(0, 0, w, h).data;
+            // Jeden 40. Bildpunkt pruefen - ein durchsichtiger Rand faellt
+            // dabei sicher auf, und es bleibt zuegig.
+            for (var pi = 3; pi < pk.length; pi += 160) {
+              if (pk[pi] < 250) { durchsichtig = true; break; }
+            }
+          } catch (_e) {
+            durchsichtig = /png|webp|gif/.test(file.type || '');
+          }
+          var mime = 'image/jpeg';
+          if (durchsichtig) {
+            // WebP kann Alpha und ist viel kleiner als PNG.
+            mime = 'image/webp';
+            try {
+              if (c.toDataURL('image/webp').indexOf('data:image/webp') !== 0) mime = 'image/png';
+            } catch (_e) { mime = 'image/png'; }
+          }
+          try { cb(c.toDataURL(mime, 0.9), mime); } catch (e) { cb(null); }
       };
       img.onerror = function () { URL.revokeObjectURL(url); cb(null); };
       img.src = url;
