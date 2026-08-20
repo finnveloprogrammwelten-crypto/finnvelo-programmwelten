@@ -382,6 +382,32 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5E. Bildtausch war blockiert (20.08.2026)
+
+**Gemeldet:** "Wenn ich Bilder tauschen will, kommt kein Dateiauswahl-
+fenster."
+
+**Ursache - meine Regel gegen das Ziehen (4z):**
+
+```css
+.fv-edit-on .fv-sortable-item img { -webkit-user-drag: none; pointer-events: none; }
+```
+
+`pointer-events: none` nahm nicht nur das Ziehen, sondern auch den
+**Klick**. In den Kacheln liess sich damit kein Bild mehr tauschen. Auf
+Programmseiten ging es weiter - die Plakette dort ist kein
+`fv-sortable-item`, deshalb fiel es nicht sofort auf.
+
+**Behoben:** `pointer-events` raus, `-webkit-user-drag: none` bleibt.
+Ziehen weiter unterbunden (`draggable="false"` und `dragstart`
+abgefangen), Klicken wieder moeglich. Beides gemessen.
+
+**Merke:** `pointer-events: none` ist ein grober Hebel - er nimmt jede
+Maus-Interaktion, nicht nur die unerwuenschte. Fuer Ziehen genuegen
+`draggable` und `-webkit-user-drag`.
+
+---
+
 ## 5D. Tourenplaner auf 2.0 / 1020000 (20.08.2026)
 
 Neue Zaehlung nach einem Rueckschritt: Fassung **2.0**, Code **1020000**.

@@ -2386,4 +2386,8 @@ body.fv-admin-on .site-header { top: 44px; }
 /* Im Bearbeiten-Modus: Kacheln nicht versehentlich ziehen.
    Verschieben geht ueber den Griff rechts oben, Texte bleiben markierbar. */
 .fv-edit-on .fv-sortable-item { -webkit-user-drag: none; user-select: text; }
-.fv-edit-on .fv-sortable-item img { -webkit-user-drag: none; pointer-events: none; }
+/* NUR das Ziehen unterbinden, nicht das Klicken.
+   "pointer-events: none" nahm auch den Klick weg - und damit die
+   Moeglichkeit, ein Kachelbild im Bearbeiten-Modus zu tauschen: die
+   Dateiauswahl ging gar nicht mehr auf. */
+.fv-edit-on .fv-sortable-item img { -webkit-user-drag: none; }
