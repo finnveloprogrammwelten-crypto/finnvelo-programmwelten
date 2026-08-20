@@ -1804,6 +1804,7 @@ function echteGroesse(sql) {
   } catch (_e) { return 0; }
 }
 
+const NACHRICHTEN_ALTER = 90 * 24 * 60 * 60 * 1000;   // Chat: nach 90 Tagen weg
 const STEMPEL_TAKT = 60 * 60 * 1000;               // Aktivitaetsstempel hoechstens stuendlich
 const AUFRAEUM_TAKT = 10 * 60 * 1000;              // hoechstens alle 10 Minuten aufraeumen
 const GERAET_VERWAIST = 30 * 24 * 60 * 60 * 1000;  // ein Monat ohne Abgleich
@@ -2239,6 +2240,18 @@ export class Kanal extends DurableObject {
         stand, kennung, paket, Date.now()
       );
     }
+
+    /* Alte Nachrichten wegraeumen - beim SCHREIBEN, nie beim Verbinden.
+       Dort zaehlt jede Millisekunde; hier stoert es niemanden. Gedrosselt,
+       damit nicht jede Nachricht einen Loeschlauf ausloest. */
+    try {
+      const jetzt = Date.now();
+      if (jetzt - (this._letztesAufraeumen || 0) > 60 * 60 * 1000) {
+        this._letztesAufraeumen = jetzt;
+        this.sql.exec("DELETE FROM nachrichten WHERE zeit < ?",
+                      jetzt - NACHRICHTEN_ALTER);
+      }
+    } catch (_e) { /* Aufraeumen darf das Senden nie kippen */ }
 
     // aelteste Nachrichten fallen hinten heraus
     const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
@@ -3115,26 +3128,51 @@ export class Kanal extends DurableObject {
 
     // Nachholen: ab dem spaeteren von Freigabezeitpunkt und Wunsch,
     // hoechstens NACHHOLEN Stueck.
+    /* Nachzustellung NACH dem Annehmen der Leitung.
+     * ----------------------------------------------------------------
+     * Frueher wurde hier zuerst gelesen und gesendet, und erst danach die
+     * 101-Antwort geschickt. Bei einem gewachsenen Kanal reichte das aus,
+     * um in die Zeitgrenze des Durable Object zu laufen: das Objekt wurde
+     * zurueckgesetzt, die Leitung kam nie zustande, und im Fehlerbuch
+     * stand "storage operation exceeded timeout" (am 12., 13., 14., 15.,
+     * 16. und 20. August).
+     *
+     * Jetzt geht die Antwort sofort raus. Das Lesen laeuft danach ueber
+     * waitUntil - dauert es zu lange, steht die Leitung trotzdem, und der
+     * Besucher bekommt die alten Nachrichten eben ein paar Hundertstel
+     * spaeter. */
     const ab = Math.max(erlaubt.seit || 0, seitWunsch);
-    let alt = [];
-    try {
-      alt = this.sql.exec(
-        "SELECT stand, paket, zeit FROM nachrichten WHERE raum = ? AND zeit > ? " +
-        "ORDER BY stand DESC LIMIT ?", raum, ab, NACHHOLEN
-      ).toArray().reverse();
-    } catch (_e) {
-      // Kanal von vor der Raum-Spalte: dann wie frueher, ohne Raumfilter.
-      alt = this.sql.exec(
-        "SELECT stand, paket, zeit FROM nachrichten ORDER BY stand DESC LIMIT ?", NACHHOLEN
-      ).toArray().reverse();
-    }
-    for (const n of alt) {
+    const nachreichen = async () => {
+      /* Erst die Antwort rausgehen lassen. Ohne dieses Warten laeuft die
+         Funktion synchron durch (sie hat sonst keinen Haltepunkt) und
+         blockiert die 101-Antwort genauso wie vorher - gemessen: 50
+         Nachrichten gingen vor der Antwort raus. */
+      await new Promise((f) => setTimeout(f, 0));
+      let alt = [];
       try {
-        meins.send(JSON.stringify({
-          art: "nachricht", paket: n.paket, stand: n.stand, raum: raum
-        }));
-      } catch (_e) {}
-    }
+        alt = this.sql.exec(
+          "SELECT stand, paket, zeit FROM nachrichten WHERE raum = ? AND zeit > ? " +
+          "ORDER BY stand DESC LIMIT ?", raum, ab, NACHHOLEN
+        ).toArray().reverse();
+      } catch (_e) {
+        // Kanal von vor der Raum-Spalte: dann wie frueher, ohne Raumfilter.
+        try {
+          alt = this.sql.exec(
+            "SELECT stand, paket, zeit FROM nachrichten ORDER BY stand DESC LIMIT ?", NACHHOLEN
+          ).toArray().reverse();
+        } catch (_e2) { alt = []; }
+      }
+      for (const n of alt) {
+        try {
+          meins.send(JSON.stringify({
+            art: "nachricht", paket: n.paket, stand: n.stand, raum: raum
+          }));
+        } catch (_e) { break; }   // Leitung schon zu: nicht weiter versuchen
+      }
+    };
+    try { this.ctx.waitUntil(nachreichen()); }
+    catch (_e) { nachreichen().catch(() => {}); }
+
     return new Response(null, { status: 101, webSocket: zumBesucher });
   }
 }

@@ -382,6 +382,73 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5D. Tourenplaner auf 2.0 / 1020000 (20.08.2026)
+
+Neue Zaehlung nach einem Rueckschritt: Fassung **2.0**, Code **1020000**.
+
+**Achtung, eigene Formel:** Der Tourenplaner rechnet **mit Versatz**:
+
+```
+1000000 + major x 10000 + minor x 100 + patch
+```
+
+2.0 ergibt damit 1020000 - nicht 20000. Die Beschriftung im Feld nennt
+jetzt diese Formel; bei Aufgabenplaner und Einkaufsplaner gilt weiterhin
+die einfache ohne Versatz.
+
+**Berichtigung meiner Warnung:** Ich hatte 20000 eingetragen und gewarnt,
+die Zahl sei kleiner als die bisherige 80900 - Apps wuerden kein Update
+mehr anbieten. Mit **1020000** ist das gegenstandslos: Die Zahl ist
+groesser, die Aktualisierung laeuft normal.
+
+Aus einer Sprachnachricht ("zehn zwanzigtausend") war das nicht sicher zu
+lesen; ein Bildschirmfoto der Kachel hat es geklaert. Bei Zahlen in
+Sprachform lieber nachfragen.
+
+---
+
+## 5C. Draht-Zeitgrenze und Tourenapi (20.08.2026)
+
+Nach `AUFTRAG-Chat-Durable-Object.md` und `AUFTRAG-Tourenapi.md`.
+
+### Die Leitung brach beim Verbinden ab
+
+Im Fehlerbuch am 12., 13., 14., 15., 16. und 20. August:
+`storage operation exceeded timeout which caused object to be reset`.
+
+**Ursache, wie im Auftrag vermutet:** Beim Verbinden wurden erst bis zu
+50 Nachrichten gelesen und gesendet - und **danach** die 101-Antwort
+geschickt. Bei einem gewachsenen Kanal reichte das fuer die Zeitgrenze.
+
+**Jetzt:** Die Antwort geht sofort raus, die Nachzustellung laeuft
+danach ueber `waitUntil`.
+
+**Stolperstein, nur durch Messen gefunden:** Die Auslagerung allein
+genuegte nicht. `nachreichen()` hatte keinen Haltepunkt und lief deshalb
+synchron durch - gemessen gingen weiter **50 Nachrichten vor der
+Antwort** raus. Erst ein `await new Promise(f => setTimeout(f, 0))` am
+Anfang gibt die Antwort wirklich frei. Gemessen mit 300 Nachrichten im
+Kanal: Antwort nach 1 ms, **0** Nachrichten davor.
+
+**Aufraeumen nach Alter** ergaenzt: Nachrichten aelter als 90 Tage fallen
+weg - beim **Schreiben**, hoechstens stuendlich, nie beim Verbinden.
+
+### Tourenapi: Kennungen wurden abgewiesen
+
+Der Dienst verlangte Hex (`[a-f0-9]`). Die App bildet den Abdruck aber
+als **base64url** (`A-Z a-z 0-9 - _`) - jede echte Kennung wurde mit 400
+abgewiesen.
+
+Jetzt `[A-Za-z0-9_-]{4,86}`: base64url und Hex, ab 4 Zeichen, damit auch
+die Abnahmepruefung mit `PROBE` durchgeht.
+
+**Zur KV-Anregung des Auftrags:** Nicht umgesetzt. Der Dienst laeuft auf
+Durable Objects und tut es zuverlaessig; ein Umbau waere ein eigener
+Schritt mit eigenem Risiko. Sollten dort Zeitgrenzen auftreten, ist KV
+der naechste Griff - der Auftrag beschreibt ihn vollstaendig.
+
+---
+
 ## 5B. Tourenplaner auf das bewaehrte Muster (13.08.2026)
 
 Die App meldete "alles aktuell - 8.7", obwohl 8.8 vorlag: `android.json`

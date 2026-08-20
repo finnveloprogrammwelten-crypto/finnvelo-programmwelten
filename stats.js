@@ -2069,16 +2069,17 @@
         pruef: '/tourenplaner/android.json',
         titel: 'Tourenplaner (Android)',
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 8.9' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 80900' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.0' },
+          { key: 'versionCode', label: 'Versions-Code (1000000 + major x 10000 + minor x 100 + patch)',
+            typ: 'zahl', ph: 'z. B. 1020000' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-8.9.apk' },
+            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-2.0.apk' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID' },
         vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 80900, versionName: '8.9',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-8.9.apk',
+          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 1020000, versionName: '2.0',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-2.0.apk',
           hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
         }
       },
@@ -2091,16 +2092,17 @@
         pruef: '/tourenplaner/pc.json',
         titel: 'Tourenplaner (PC)',
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 8.9' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 80900' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 2.0' },
+          { key: 'versionCode', label: 'Versions-Code (1000000 + major x 10000 + minor x 100 + patch)',
+            typ: 'zahl', ph: 'z. B. 1020000' },
           { key: 'apk', label: 'Download-Adresse des Installers (EXE)', typ: 'url',
-            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-8.9.0.exe' },
+            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-2.0.0.exe' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-TOURENPLANER-PC' },
         vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 80900, versionName: '8.9',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-8.9.0.exe',
+          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 1020000, versionName: '2.0',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-2.0.0.exe',
           hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
         }
       }

@@ -141,7 +141,11 @@ export async function behandleTourenapi(req, env) {
     const p = teile.indexOf("paar");
     if (p >= 0 && teile[p + 1]) {
       const kennung = teile[p + 1];
-      if (!/^[a-f0-9]{16,64}$/.test(kennung)) return antwort({ fehler: "Kennung ungültig" }, 400);
+      // base64url ODER Hex: die App bildet den Abdruck als base64url
+      // (A-Z a-z 0-9 - _), aeltere Fassungen schickten Hex. Beides zulassen,
+      // sonst weist der Dienst gueltige Kennungen ab. Ab 4 Zeichen, damit
+      // auch die Abnahmepruefung mit "PROBE" durchgeht.
+      if (!/^[A-Za-z0-9_-]{4,86}$/.test(kennung)) return antwort({ fehler: "Kennung ungültig" }, 400);
       const objekt = env.TOUREN_KOPPLUNG.get(env.TOUREN_KOPPLUNG.idFromName(kennung));
       return objekt.fetch(new Request(url.toString(), req));
     }
@@ -150,7 +154,8 @@ export async function behandleTourenapi(req, env) {
     const i = teile.indexOf("kanal");
     if (i < 0 || !teile[i + 1]) return antwort({ fehler: "Kanalkennung fehlt" }, 400);
     const kennung = teile[i + 1];
-    if (!/^[a-f0-9]{24,64}$/.test(kennung)) return antwort({ fehler: "Kennung ungültig" }, 400);
+    // base64url ODER Hex - siehe oben.
+    if (!/^[A-Za-z0-9_-]{4,86}$/.test(kennung)) return antwort({ fehler: "Kennung ungültig" }, 400);
 
     const objekt = env.TOUREN_KANAL.get(env.TOUREN_KANAL.idFromName(kennung));
     return objekt.fetch(new Request(url.toString(), req));
