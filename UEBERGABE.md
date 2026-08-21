@@ -382,6 +382,25 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5J. "Versions-Code fehlt" bei Lesezeit (21.08.2026)
+
+Die Kachel meldete beim Speichern **"Versions-Code der Android-App
+fehlt"**, obwohl 10500 im Feld stand.
+
+**Ursache:** Die Pruefung suchte fest nach `obj.versionCode`. Lesezeit
+nutzt aber `versionsCode` - **mit s**. Das Feld war gefuellt, hiess nur
+anders, und das Speichern brach ab.
+
+**Behoben:** Der Codename wird jetzt aus den **definierten Feldern** der
+App gelesen (`/^versions?Code$/i`), nicht geraten. Damit ist es
+gleichgueltig, wie die jeweilige App ihr Feld nennt.
+
+**Merke:** Wo Apps eigene Feldnamen mitbringen, darf die Pruefung keine
+festen Namen annehmen - sonst blockiert sie genau die App, die vom
+Schema abweicht.
+
+---
+
 ## 5I. Lesezeit 1.5.0 (21.08.2026)
 
 Fassung **1.5.0 / 10500**.

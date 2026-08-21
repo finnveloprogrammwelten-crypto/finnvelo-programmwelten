@@ -2791,8 +2791,17 @@
         // Der Android-Pflichtcheck gilt nur dort, wo Android auch gepflegt
         // wird - sonst blockiert er die PC-Kachel grundlos.
         if (welche.indexOf('') !== -1) {
-          if (!obj.versionCode || obj.versionCode < 1) {
-            sagen('\u2717 Versions-Code der Android-App fehlt.', false); return;
+          /* Den Codenamen aus den DEFINIERTEN Feldern holen, nicht raten.
+             Die meisten Apps nutzen "versionCode", Lesezeit aber
+             "versionsCode" (mit s) - fest verdrahtet meldete die Pruefung
+             dort "Versions-Code fehlt", obwohl er eingetragen war, und das
+             Speichern brach ab. */
+          var codeFeld = 'versionCode';
+          cfg.felder.forEach(function (f) {
+            if (/^versions?Code$/i.test(f.key)) codeFeld = f.key;
+          });
+          if (!obj[codeFeld] || obj[codeFeld] < 1) {
+            sagen('\u2717 Versions-Code fehlt.', false); return;
           }
           var urlWert = obj.apk || obj.download || obj.url || '';
           if (urlWert && !/^https?:\/\//i.test(urlWert)) {
