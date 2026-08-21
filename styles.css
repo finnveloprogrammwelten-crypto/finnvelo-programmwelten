@@ -2391,3 +2391,34 @@ body.fv-admin-on .site-header { top: 44px; }
    Moeglichkeit, ein Kachelbild im Bearbeiten-Modus zu tauschen: die
    Dateiauswahl ging gar nicht mehr auf. */
 .fv-edit-on .fv-sortable-item img { -webkit-user-drag: none; }
+
+/* ---------------------------------------------------------------------
+   Statusschilder gegen verirrte Block-Elemente sichern.
+   Geraet beim Bearbeiten ein <p> oder <div> hinein - was leicht passiert,
+   wenn man den Text markiert und ueberschreibt - waechst die Hoehe von 31
+   auf 57 px, und aus dem schmalen Schild wird eine Blase.
+   Steht bewusst am Dateiende, damit es keine Media-Regel ueberholt.
+   --------------------------------------------------------------------- */
+.status > *,
+.status > * > *,
+.program-button__status > *,
+.program-button__status > * > * {
+  display: inline !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font: inherit !important;
+  color: inherit !important;
+  background: none !important;
+  border: 0 !important;
+}
+.status {
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Ein <br> im Schild kaeme durch "white-space: nowrap" ohnehin nicht zur
+   Wirkung - hier wird es ausdruecklich unwirksam gemacht, damit die Hoehe
+   auch dann stimmt, wenn eine andere Regel den Umbruch wieder erlaubt. */
+.status br,
+.program-button__status br { display: none !important; }

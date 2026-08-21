@@ -382,6 +382,28 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5G. Gruene Statusschilder vereinheitlicht (21.08.2026)
+
+Haus- und Gartenplaner, Mischwaldrechner und Aufgabenplaner trugen im
+HTML die Klasse `--live` bzw. `--download`:
+
+```css
+.status--download, .status--live { background: rgba(45,204,112,.16); color:#d9ffe8; }
+```
+
+Das faerbt gruen, waehrend alle uebrigen blau sind. Die Klassen sind aus
+allen Seiten entfernt - jetzt einheitlich blau. Die CSS-Regel bleibt
+stehen, falls spaeter jemand bewusst gruen setzen will.
+
+Gemessen: 9 Schilder, **eine** Farbe.
+
+**Nicht gefunden:** das "sehr grosse Feld" beim Aufgabenplaner. Gemessen
+ist sein Statuszeichen 103 px breit - **schmaler** als das des
+Tourenplaners (116 px). Was der Nutzer sieht, muss also aus der Datenbank
+kommen (haendisch eingetragener Inhalt), nicht aus dem HTML.
+
+---
+
 ## 5F. Hochgeladene Bilder verloren ihre Transparenz (20.08.2026)
 
 **Die Wurzel der schwarzen Plaketten-Rahmen.** Gefunden, nachdem der
