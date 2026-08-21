@@ -59,7 +59,9 @@ const RESERVIERT = [
   "apps",          // /apps/einkaufsliste/ - die Web-Fassung samt APK
   "tourenapi",     // Kopplungsdienst des Tourenplaners
   "einkaufsliste", // Programmseite der Einkaufsliste
-  "tourenplaner"   // Programmseite des Tourenplaners (liegt als Datei vor)
+  "tourenplaner",  // Programmseite des Tourenplaners
+  "lesezeit",      // Programmseite Lesezeit
+  "lesezeit"       // Ordner mit APK und Fassungsdatei
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
@@ -975,6 +977,17 @@ export class Counter extends DurableObject {
         einkaufsliste: { schluessel: "FINNVELO-EINKAUFSPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        /* Vorbelegt mit der gelieferten Fassung, damit die App sofort etwas
+           Sinnvolles bekommt - auch bevor jemand die Kachel angefasst hat. */
+        lesezeit: { programm: "FINNVELO-LESEZEIT", version: "1.5.0", versionsCode: 10500,
+                    adresse: "https://finnveloprogramme.com/lesezeit/",
+                    apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk",
+                    datei: "FINNVELO-Lesezeit-1.5.0.apk",
+                    /* Paketname bleibt bewusst "lesetagebuch": Android erkennt eine App
+                       an ihm. Wuerde er wechseln, gaebe es kein Update mehr, sondern
+                       eine zweite App daneben - mit leeren Daten. Nur der ANZEIGENAME
+                       heisst jetzt Lesezeit. */
+                    paket: "de.finnvelo.lesetagebuch" },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
@@ -1634,7 +1647,9 @@ export default {
          Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
          dann still ins Leere. */
       "/tourenplaner/android.json": "tourenplaner-android",
-      "/tourenplaner/pc.json": "tourenplaner-pc"
+      "/tourenplaner/pc.json": "tourenplaner-pc",
+      // Lesezeit: die App fragt /lesezeit/version.json ab.
+      "/lesezeit/version.json": "lesezeit"
     };
     if (versionPfad.endsWith("/version.json") || versionPfad.endsWith("/android.json")
         || versionPfad.endsWith("/pc.json")) {

@@ -11,7 +11,7 @@
   'use strict';
 
   var API = '/api';
-  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'tester'];
+  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'lesezeit', 'tester'];
 
   function pageKey() {
     var path = (location.pathname || '').toLowerCase();
@@ -2085,6 +2085,33 @@
           schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 101, versionName: '7.31',
           apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-7.31.apk',
           hinweise: 'Die Masken fuer Anlegen, Beitreten und Koppeln behalten ihre Eingaben. Kanal verlassen statt loeschen.'
+        }
+      },
+      {
+        /* Lesezeit. Die App fragt /lesezeit/version.json ab.
+           Ordner, Programmname und Paketname heissen einheitlich "Lesezeit".
+           ACHTUNG: eigenes Format - "programm", "version", "versionsCode"
+           statt schluessel/versionName/versionCode. Deshalb eigene Felder. */
+        seite: 'lesezeit',
+        ablage: 'lesezeit',
+        pruef: '/lesezeit/version.json',
+        titel: 'Lesezeit',
+        felder: [
+          { key: 'version', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.5.0' },
+          { key: 'versionsCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)',
+            typ: 'zahl', ph: 'z. B. 10500' },
+          { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
+            ph: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk' },
+          { key: 'datei', label: 'Dateiname der APK', typ: 'text', ph: 'FINNVELO-Lesezeit-1.5.0.apk' }
+        ],
+        fest: { programm: 'FINNVELO-LESEZEIT', paket: 'de.finnvelo.lesetagebuch',
+                adresse: 'https://finnveloprogramme.com/lesezeit/' },
+        vorgabe: {
+          programm: 'FINNVELO-LESEZEIT', version: '1.5.0', versionsCode: 10500,
+          adresse: 'https://finnveloprogramme.com/lesezeit/',
+          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk',
+          datei: 'FINNVELO-Lesezeit-1.5.0.apk',
+          paket: 'de.finnvelo.lesetagebuch'
         }
       },
       {

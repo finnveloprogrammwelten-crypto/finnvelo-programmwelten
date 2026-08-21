@@ -382,6 +382,66 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5I. Lesezeit 1.5.0 (21.08.2026)
+
+Fassung **1.5.0 / 10500**.
+
+**Die APK liegt NICHT im Paket** - sie kommt ueber GitHub Releases, wie
+beim Aufgabenplaner. Alle Adressen zeigen auf
+`releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk`. Das spart 3,1 MB
+bei jedem Deploy; der Ordner `/lesezeit/` entfaellt damit ganz.
+
+**Berichtigung meiner Umbenennung:** Ich hatte den Paketnamen auf
+`de.finnvelo.lesezeit` mitgeaendert. Das gelieferte Paket behaelt
+bewusst **`de.finnvelo.lesetagebuch`** - und das ist richtig:
+
+> Android erkennt eine App an ihrem Paketnamen. Wuerde er wechseln, gaebe
+> es kein Update mehr, sondern eine **zweite App** daneben, mit leeren
+> Daten. Nur der Anzeigename heisst jetzt Lesezeit.
+
+Zurueckgesetzt und im Worker kommentiert, damit es niemand erneut
+"aufraeumt".
+
+Umbenannt wurden also: Ordner, Adresse, Programmkennung, Dateiname.
+**Nicht** der Paketname.
+
+---
+
+## 5H. Neue Seite: Lesezeit (21.08.2026)
+
+Programmseite `/lesezeit` angelegt - Plakette aus `Lesezeit.png`
+(transparent, 960x640), Kachel auf Startseite und in der Uebersicht,
+Sitemap, Zaehler, Reservierungen.
+
+**Durchgaengig "Lesezeit":** Das gelieferte Paket hiess ueberall
+"Lesetagebuch" (`/lesetagebuch/`, `FINNVELO-LESETAGEBUCH`,
+`de.finnvelo.lesetagebuch`). Auf Wunsch alles umgetragen - die App wird
+entsprechend angepasst:
+
+| | vorher | jetzt |
+|---|---|---|
+| Ordner | `/lesetagebuch/` | `/lesezeit/` |
+| Fassungsdatei | `/lesetagebuch/version.json` | `/lesezeit/version.json` |
+| Programmkennung | `FINNVELO-LESETAGEBUCH` | `FINNVELO-LESEZEIT` |
+| Paketname | `de.finnvelo.lesetagebuch` | `de.finnvelo.lesezeit` |
+| APK | `FINNVELO-Lesetagebuch-1.3.1.apk` | `FINNVELO-Lesezeit-1.3.1.apk` |
+
+**Eigenes Fassungsformat:** Das Lesezeit-Paket nutzt
+`programm / version / versionsCode / adresse / apk / datei / paket`
+statt `schluessel / versionName / versionCode / apk / hinweise`. Die
+Update-Kachel hat deshalb eigene Felder; die uebrigen Apps bleiben
+unberuehrt.
+
+Der Worker liefert die Datei, vorbelegt mit 1.3.1 / 10301 - so bekommt
+die App auch dann etwas Sinnvolles, wenn die Kachel noch nie angefasst
+wurde.
+
+**Wie bei /einkaufsliste:** `/lesezeit` ist die Programmseite,
+`/lesezeit/` der Ordner. Beides laeuft nebeneinander, im Pruefstand
+belegt.
+
+---
+
 ## 5G. Gruene Statusschilder vereinheitlicht (21.08.2026)
 
 Haus- und Gartenplaner, Mischwaldrechner und Aufgabenplaner trugen im
