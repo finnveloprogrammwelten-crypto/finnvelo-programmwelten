@@ -382,6 +382,31 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5K. Der listen-Weg war zu teuer (22.08.2026)
+
+**Fehlerbuch 22.08., 16:36:** `Internal error in Durable Object storage
+caused object to be reset` bei `/api/kanal/listen`. Dazu am 19. und 20.
+dutzende 429er auf `listen/holen` - **22 Aufrufe in 8 Sekunden**.
+
+`teil === "listen"` ist der meistgerufene Weg ueberhaupt, und er hatte
+zwei Schwachstellen:
+
+1. **`SELECT * FROM listen`** holte auch die Spalte `daten` mit - die
+   verschluesselten Listeninhalte, teils sehr gross, hier aber gar nicht
+   gebraucht. Jetzt nur die neun benoetigten Spalten.
+2. **Eine Freigabe-Abfrage je Liste.** Bei 20 Listen also 21 Abfragen
+   (klassisches N+1). Jetzt eine einzige vorab, in eine Zuordnung.
+
+Gemessen mit 20 Listen zu je 50 KB: **30 Abfragen -> 10**, und in der
+Antwort steckt kein Datenpaket mehr.
+
+**Zu den 429ern:** Die Bremse arbeitet richtig - 22 Aufrufe in 8 Sekunden
+sind zu viel. Das gehoert auf der **App-Seite** entschaerft; der Server
+kann nur abweisen. Die entlastete Abfrage senkt aber die Last je Aufruf
+deutlich.
+
+---
+
 ## 5J. "Versions-Code fehlt" bei Lesezeit (21.08.2026)
 
 Die Kachel meldete beim Speichern **"Versions-Code der Android-App

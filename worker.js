@@ -2817,13 +2817,28 @@ export class Kanal extends DurableObject {
 
     /* --- Listen ansehen ---------------------------------------------- */
     if (teil === "listen" && method === "GET") {
-      const alle = this.sql.exec("SELECT * FROM listen").toArray();
+      /* Zwei Dinge machten diesen Weg teuer - er ist der meistgerufene
+         ueberhaupt (im Fehlerbuch 22 Aufrufe in 8 Sekunden):
+         1. "SELECT *" holte auch die Spalte "daten" mit - die
+            verschluesselten Listeninhalte, teils sehr gross, hier aber gar
+            nicht gebraucht.
+         2. Fuer JEDE Liste folgte eine eigene Freigabe-Abfrage. Bei 20
+            Listen also 21 Abfragen. Jetzt eine einzige vorab.
+         Genau diese Last hat das Objekt in die Zeitgrenze getrieben. */
+      const alle = this.sql.exec(
+        "SELECT liste, name, sicht, zugang, stand, offen, ersteller, salz_l, paket_l FROM listen"
+      ).toArray();
+      const meineFreigaben = {};
+      try {
+        for (const f of this.sql.exec(
+          "SELECT liste, paket FROM freigaben WHERE kennung = ?", kennung
+        ).toArray()) meineFreigaben[f.liste] = f.paket;
+      } catch (_e) { /* ohne Freigaben gilt nur "offen" */ }
+
       const raus = [];
       for (const l of alle) {
-        const frei = this.sql.exec(
-          "SELECT paket FROM freigaben WHERE liste = ? AND kennung = ?", l.liste, kennung
-        ).toArray();
-        const berechtigt = !!l.offen || frei.length > 0;
+        const meinPaket = meineFreigaben[l.liste];
+        const berechtigt = !!l.offen || meinPaket !== undefined;
         // Unsichtbare Listen tauchen gar nicht erst auf
         if (l.sicht === "berechtigte" && !berechtigt) continue;
         const eintrag = {
@@ -2831,7 +2846,7 @@ export class Kanal extends DurableObject {
           stand: l.stand, offen: !!l.offen,
           meins: gleich(l.ersteller, kennung)
         };
-        if (berechtigt && frei.length) eintrag.paket = frei[0].paket;
+        if (berechtigt && meinPaket !== undefined) eintrag.paket = meinPaket;
         if (!berechtigt && (l.zugang === "berechtigte_oder_passwort" || l.zugang === "passwort")) {
           // Zugang ueber das Listenpasswort moeglich - Salz und Paket mitgeben
           if (l.salz_l) { eintrag.salzL = l.salz_l; eintrag.paketL = l.paket_l; }
