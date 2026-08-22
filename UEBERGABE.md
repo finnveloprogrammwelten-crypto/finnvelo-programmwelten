@@ -382,6 +382,48 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5L. Konstruktor entlastet - die Wurzel der Abbrueche (22.08.2026)
+
+Nach `AUFTRAG-Durable-Object-Speicher.md`.
+
+**Zuerst der geforderte Nachweis:** Zeile 1875 liegt tatsaechlich im
+**Konstruktor** von `class Kanal`, mitten in der Tabellenanlage. Die
+Vermutung des Auftrags war richtig.
+
+**Der Befund:** 16 Anweisungen liefen bei **jedem Aufwachen** - elf
+CREATE TABLE, zwei CREATE INDEX, drei ALTER TABLE. Die drei ALTER warfen
+dabei jedes Mal eine Ausnahme, die verschluckt wurde: die Spalten gibt es
+laengst. Ein Durable Object wird nicht dauerhaft gehalten; nach jeder
+Ruhephase lief das alles erneut, **bevor die Anfrage ueberhaupt begann**.
+
+**Behoben ueber `PRAGMA user_version`:**
+
+```js
+const KANAL_STAND = 1;   // bei Aenderung an tabellenAnlegen() erhoehen
+```
+
+Der Konstruktor liest nur noch den Stand. Liegt er zurueck, laeuft
+`tabellenAnlegen()` einmal - sonst gar nichts.
+
+**Gemessen:**
+
+| | vorher | jetzt |
+|---|---|---|
+| Erstes Aufwachen | 16+ | 19 (Einrichtung) |
+| Jedes weitere | 16+ | **1** |
+
+**Abnahmepruefung des Auftrags, alle Punkte:**
+
+* Liste loeschen -> nach Neustart nicht zurueck ✓
+* 200 Nachrichten: Verbinden in **2 ms** (verlangt: unter 1 s) ✓
+* 20 Listen: Speichern in **13 ms**, Holen in **2 ms** ✓
+
+**WICHTIG fuer spaeter:** Wer `tabellenAnlegen()` erweitert, muss
+`KANAL_STAND` erhoehen - sonst laeuft die Erweiterung bei bestehenden
+Kanaelen nie.
+
+---
+
 ## 5K. Der listen-Weg war zu teuer (22.08.2026)
 
 **Fehlerbuch 22.08., 16:36:** `Internal error in Durable Object storage

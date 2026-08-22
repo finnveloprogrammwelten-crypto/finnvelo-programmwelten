@@ -1819,6 +1819,7 @@ function echteGroesse(sql) {
   } catch (_e) { return 0; }
 }
 
+const KANAL_STAND = 1;   // bei jeder Aenderung an tabellenAnlegen() erhoehen
 const NACHRICHTEN_ALTER = 90 * 24 * 60 * 60 * 1000;   // Chat: nach 90 Tagen weg
 const STEMPEL_TAKT = 60 * 60 * 1000;               // Aktivitaetsstempel hoechstens stuendlich
 const AUFRAEUM_TAKT = 10 * 60 * 1000;              // hoechstens alle 10 Minuten aufraeumen
@@ -1869,6 +1870,38 @@ export class Kanal extends DurableObject {
     this.ctx = ctx;
     this.env = env;
     this.sql = ctx.storage.sql;
+
+    /* Tabellen NUR anlegen, wenn noetig.
+       ------------------------------------------------------------------
+       Frueher liefen hier bei JEDEM Aufwachen 16 Anweisungen - elf
+       CREATE TABLE, zwei CREATE INDEX und drei ALTER TABLE. Die drei
+       ALTER warfen dabei jedes Mal eine Ausnahme, die verschluckt wurde:
+       die Spalten gibt es laengst.
+
+       Ein Durable Object wird nicht dauerhaft gehalten. Nach jeder
+       Ruhephase lief das alles erneut, bevor die eigentliche Anfrage
+       ueberhaupt begann - und trieb den Speicher in die Zeitgrenze
+       ("Internal error in Durable Object storage", zuletzt 22.8. 16:36
+       genau an dieser Stelle).
+
+       PRAGMA user_version merkt sich, was schon angelegt ist. Ein
+       Aufwachen kostet jetzt eine einzige Abfrage. */
+    let stand = 0;
+    try {
+      const r = this.sql.exec("PRAGMA user_version").toArray()[0];
+      stand = Number(r && (r.user_version !== undefined ? r.user_version : Object.values(r)[0])) || 0;
+    } catch (_e) { stand = 0; }
+
+    if (stand < KANAL_STAND) {
+      this.tabellenAnlegen();
+      try { this.sql.exec("PRAGMA user_version = " + KANAL_STAND); } catch (_e) {}
+    }
+  }
+
+  /* Einmalige Einrichtung. Laeuft nur, wenn user_version zurueckliegt -
+     also beim allerersten Mal und nach einer Erweiterung. Bei einer
+     Aenderung hier KANAL_STAND erhoehen, sonst greift sie nie. */
+  tabellenAnlegen() {
 
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS kanal (" +
