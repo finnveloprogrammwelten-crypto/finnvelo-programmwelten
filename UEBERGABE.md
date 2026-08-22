@@ -382,6 +382,21 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5M. Zaehlerleiste auf der Startseite verschlankt (22.08.2026)
+
+Die Leiste zeigte "Besucher gesamt · Planer · Mischwald". Die beiden
+letzten zaehlten Aufrufe der **Web-Fassungen** - die gibt es seit dem
+Ausbau nicht mehr, sie standen dauerhaft auf "-".
+
+Jetzt nur noch **Besucher gesamt**. Die Zaehler selbst bleiben im Server
+erhalten, nur die Anzeige ist fort - falls die Zahlen spaeter wieder
+gebraucht werden.
+
+Auf den **Programmseiten** bleibt die Leiste unveraendert: Besucher,
+Video-Klicks, Downloads.
+
+---
+
 ## 5L. Konstruktor entlastet - die Wurzel der Abbrueche (22.08.2026)
 
 Nach `AUFTRAG-Durable-Object-Speicher.md`.

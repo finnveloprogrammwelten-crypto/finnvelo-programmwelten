@@ -172,12 +172,11 @@
   function renderBadge() {
     if (!badgeEl) return;
     if (isHome) {
+      /* Nur noch die Besucherzahl. "Planer" und "Mischwald" zaehlten Aufrufe
+         der Web-Fassungen - die gibt es nicht mehr, sie standen dauerhaft auf
+         "-". Die Zaehler bleiben im Server erhalten, nur die Anzeige ist fort. */
       badgeEl.innerHTML =
-        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>'
-        + '<span class="fv-sep">\u00b7</span>'
-        + '<span>\uD83C\uDFE1 Planer: <b>' + fmt(counts['open:planer']) + '</b></span>'
-        + '<span class="fv-sep">\u00b7</span>'
-        + '<span>\uD83C\uDF32 Mischwald: <b>' + fmt(counts['open:mischwald']) + '</b></span>';
+        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>';
     } else if (isProgram) {
       badgeEl.innerHTML =
         '<span>\uD83D\uDC41\uFE0F Besucher: <b>' + fmt(counts['views:' + key]) + '</b></span>'
@@ -256,7 +255,8 @@
     if (isHome) {
       badgeEl = makeBadge('home');
       badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
-      keysToShow = ['views:site', 'open:planer', 'open:mischwald'];
+      // Nur noch der eine Zaehler wird angezeigt - die anderen nicht mehr holen.
+      keysToShow = ['views:site'];
     } else if (isProgram) {
       badgeEl = makeBadge('page');
       badgeEl.innerHTML = '<span>Lädt…</span>';
