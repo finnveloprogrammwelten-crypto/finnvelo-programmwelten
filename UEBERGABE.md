@@ -382,6 +382,41 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5O. Eine Datei je Fassung - erledigt (22.08.2026)
+
+**Gemeldet:** App und PC-Fassung ueberschrieben sich gegenseitig.
+
+**Ursache:** Beide lagen in **einer** Datei - die App-Felder oben, die
+PC-Angaben als Block `pc` darin.
+
+**Geloest ohne Umbau der Kacheln:** Getrennt wird beim **Speichern**.
+
+```
+<ablage>       ->  nur die App-Felder   (Aufbau UNVERAENDERT)
+<ablage>-pc    ->  nur der PC-Teil, mit eigenem Schluessel "...-PC"
+```
+
+Beim **Laden** werden beide Dateien wieder zu einem Objekt
+zusammengefuehrt, damit die Kachel mit ihren Reitern unveraendert
+weiterarbeitet.
+
+**Die App-Dateien bleiben, wie sie sind** - kein Programm muss angepasst
+werden. Sie verlieren nur den `pc`-Block, den nie eine App gelesen hat.
+
+**Ein schwerer Fehler unterwegs:** Ich hatte zusaetzliche
+PC-Definitionen in `APPS` eingefuegt - und bei Lesezeit stand die
+PC-Definition **vor** der App-Definition. Da die Schleife die erste
+passende nimmt (`break`), fragte die Android-Kachel `/lesezeit/pc.json`
+ab und haette dorthin geschrieben. Die vier ueberzaehligen Definitionen
+sind entfernt.
+
+**Merke:** In `APPS` gewinnt die **erste** Definition, deren `seite` im
+Pfad vorkommt. Zwei Definitionen fuer dieselbe Seite sind eine Falle -
+ausser bei getrennten Adressen wie beim Tourenplaner, wo beide
+ausdruecklich gebraucht werden.
+
+---
+
 ## 5O. Je Fassung eine eigene Datei (22.08.2026)
 
 **Gemeldet:** "Wenn ich im Computerprogramm etwas aendere, wird es auch
