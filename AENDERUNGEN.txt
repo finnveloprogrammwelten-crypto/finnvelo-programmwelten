@@ -45,3 +45,137 @@ Geänderte Dateien gegenüber Worker/Editor-System:
 - stats.js  : Galerie-Modul + Editor-Selektoren ignorieren Galerie-Bilder.
 - styles.css: Galerie-Styles (.fv-gallery ...).
 - 5 Programmseiten: Galerie-Container eingefügt.
+
+
+=======================================================================
+23.08.2026 - APP UND PC VOLLSTAENDIG GETRENNT
+=======================================================================
+stats.js, Abschnitt "Aktualisierung pflegen" komplett neu gebaut.
+
+Vorher: EINE Kachel-Logik mit Reitern und EINEM gemeinsamen Objekt.
+Gespeichert wurde getrennt, geladen zusammengefuehrt - deshalb landeten
+PC-Eintraege in der App-Datei und PC-Werte verschwanden wieder.
+
+Jetzt: je Fassung eine eigene Definition, eine eigene Kachel, eine
+eigene Datei, ein eigener Speicherweg. Die Kacheln kennen einander
+nicht.
+
+  Aufgabenplaner   /FinnVelo/Aufgabenplaner/version.json | .../pc.json
+  Einkaufsplaner   /einkaufsliste/version.json           | /einkaufsliste/pc.json
+  Mischwaldrechner /mischwaldrechner/version.json        | /mischwaldrechner/pc.json
+  Lesezeit         /lesezeit/version.json                | /lesezeit/pc.json
+  Tourenplaner     /tourenplaner/android.json            | /tourenplaner/pc.json
+
+Standard jeder PC-Datei (fuenf Felder, ueberall gleich):
+  { "schluessel": "...-PC", "versionCode": 0, "versionName": "",
+    "apk": "", "hinweise": "" }
+
+Einmalige Umstellung beim ersten Aufruf einer PC-Kachel:
+  - alter Block "pc" in der App-Datei wird uebernommen und dort entfernt
+  - "url" wird zu "apk", "hinweis" zu "hinweise"
+
+Nebenbei behoben: In der alten Kachel wurde an drei Stellen eine nirgends
+deklarierte Variable "vorsatz" benutzt. Unter 'use strict' warf das jedes
+Mal einen Fehler, den ein catch verschluckt hat - die Uebernahme des
+Download-Ziels lief deshalb nie. Jetzt ohne Vorsatz und geprueft.
+
+Selbst angelegte Programmseiten bekommen ebenfalls BEIDE Kacheln, jede
+einzeln scharfzuschalten.
+
+Entfernt: PLATTFORMEN, plattformFelder(), reiterZeigen(), die
+Zusammenfuehrung in laden(), die Aufteilung in speichern(), das Ereignis
+fv:version-gespeichert und das zugehoerige Reiter-CSS.
+
+Geprueft: 51 Pruefungen in einem echten DOM (jsdom) gegen einen
+nachgebauten Server - alle bestanden.
+
+
+-----------------------------------------------------------------------
+23.08.2026 (2) - SICHERUNG ALS ZIP
+-----------------------------------------------------------------------
+Neuer Knopf "Sicherung" in der Admin-Leiste, neben "Felder saeubern".
+Wirkt auf JEDER Seite. Ein Klick laedt den gesamten Datenbestand als
+ZIP herunter:
+
+  LIESMICH.md      was drin ist, wie man es zurueckspielt, Seitenliste
+  sicherung.json   die Sicherung selbst - genau das nimmt "einspielen"
+                   wieder an
+  seiten/*.md      dieselben Inhalte zum LESEN, je Seite ein Blatt mit
+                   Block, Art, Zeitpunkt und Text
+  bilder/*         die hochgeladenen Bilder als echte Dateien
+
+Der Sinn der Blaetter unter seiten/: In den HTML-Dateien steht nur der
+Ursprungstext. Alles, was im Bearbeiten-Modus geaendert wurde, liegt in
+der Datenbank. Wer das ZIP hat, sieht ohne Werkzeug, welche Texte von
+Hand geaendert wurden - und setzt sie beim naechsten Update nicht
+versehentlich zurueck.
+
+worker.js:
+  /api/export nimmt jetzt die BILDER mit (Fassung 2). Vorher enthielt
+  eine Sicherung nur Texte und Bildverweise - nach dem Zurueckspielen
+  waeren alle Bilder weg gewesen.
+  /api/import spielt Bilder wieder ein. Vorhandene bleiben unberuehrt.
+
+Das ZIP wird ohne fremde Bibliothek geschrieben (ohne Verdichtung).
+Geprueft mit "unzip -t" und durch Entpacken: 18 Pruefungen bestanden.
+
+
+-----------------------------------------------------------------------
+23.08.2026 (3) - EINHEITLICHER SEITENAUFBAU
+-----------------------------------------------------------------------
+Befund: Die zehn bestehenden Produktseiten und _vorlage-programm.html
+waren untereinander schon einheitlich. Ausreisser war programmSeite()
+im Worker - der Bauplan fuer NEU ANGELEGTE Seiten.
+
+worker.js, programmSeite():
+  - Block "Web-Version" entfernt. Die Web-Apps sind ausgebaut, der Knopf
+    zeigte auf /apps/ und damit ins Leere. Keine bestehende Seite hat
+    diesen Block.
+  - Ueberschriften angeglichen:
+      "Download (Android)"  ->  "Download (Android-App)"
+      "Download (PC)"       ->  "Download (PC-Version)"
+  - Galerie-Abschnitt bekommt data-fv-gallery-section wie alle anderen
+  - zweiter Platzhalter im Android-Bereich wie in der Vorlage
+
+Vier Seiten fehlte der Marker data-fv-gallery-section (aufgabenplaner,
+mischwaldrechner, command-control, archivar) - ergaenzt. Nur das
+Attribut; kein Text angefasst.
+
+Damit ist jede Produktseite gleich aufgebaut, und eine neu angelegte
+Seite entsteht in genau dieser Form - mit App-Teil UND PC-Teil, jeder
+einzeln scharfzuschalten.
+
+Geprueft: 21 Pruefungen ueber alle elf Dateien plus die vom Worker
+erzeugte Seite - alle bestanden.
+
+
+-----------------------------------------------------------------------
+23.08.2026 (4) - ALTLASTEN IN DEN APP-DATEIEN
+-----------------------------------------------------------------------
+Beide APKs wurden zerlegt und gelesen, statt die Feldnamen zu raten.
+
+EINKAUFSPLANER 2.11.0, versionCode 21100 (com.finnvelo.einkaufsliste)
+  Aktualisierung.java, Zeile 141/142:
+    apkAdresse = optString("apk", optString("url", ""));
+    hinweise   = optString("hinweise", optString("hinweis", ""));
+  "apk" und "hinweise" gewinnen, "url" und "hinweis" sind nur
+  Rueckfalltueren. Die version.json trug beide Saetze: url zeigte auf
+  2.2.0, apk auf 2.11.0. Die alten Felder werden jetzt entfernt.
+
+LESEZEIT 2.9.1, versionCode 20901 (de.finnvelo.lesetagebuch)
+  index.html der App:
+    const fremdCode = Number(daten.versionsCode != null
+                             ? daten.versionsCode : daten.versionCode);
+  "versionsCode" (mit s) gewinnt. Das zusaetzliche "versionCode": 10500
+  wurde nie gelesen - kein Fehler, aber Altlast. Wird entfernt.
+  Gelesen werden ausserdem: programm, apk, adresse, datei.
+
+Umgesetzt: Definitionen mit sauber:true werden beim Laden entruempelt -
+alle Felder ausser den bekannten fallen weg, Werte umbenannter Felder
+wandern mit (url -> apk, hinweis -> hinweise, versionCode ->
+versionsCode). Die Kachel meldet, was entfernt wurde.
+
+sauber:true haben NUR Einkaufsplaner und Lesezeit - dort ist der Aufbau
+am Quelltext geprueft. Ueberall sonst bleibt jedes Feld stehen.
+
+Vorgaben der Lesezeit-Kachel auf 2.9.1 / 20901 gesetzt.

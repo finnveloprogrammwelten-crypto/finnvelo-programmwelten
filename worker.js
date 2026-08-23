@@ -753,12 +753,23 @@ export class Counter extends DurableObject {
       const rows = this.sql.exec(
         "SELECT page, block, type, value, updated FROM content ORDER BY page, block"
       ).toArray();
+      /* Bilder liegen in einer EIGENEN Tabelle, nicht im Inhalt. Wer sie
+         weglaesst, hat nach dem Zurueckspielen zwar alle Texte, aber nur
+         noch tote Bildverweise. Deshalb gehoeren sie dazu.
+         Sie koennen gross sein - wer nur die Texte will, schickt
+         {bilder:false}. */
+      let bilder = [];
+      if (body.bilder !== false) {
+        bilder = this.sql.exec("SELECT id, mime, data, created FROM images ORDER BY created").toArray();
+      }
       return new Response(JSON.stringify({
         art: "finnvelo-sicherung",
-        fassung: 1,
+        fassung: 2,
         erstellt: new Date().toISOString(),
         anzahl: rows.length,
-        inhalte: rows
+        anzahlBilder: bilder.length,
+        inhalte: rows,
+        bilder: bilder
       }, null, 2), {
         status: 200,
         headers: {
@@ -794,7 +805,27 @@ export class Counter extends DurableObject {
         );
         uebernommen++;
       }
-      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen });
+      /* Bilder zurueckspielen (Sicherungen ab Fassung 2). Vorhandene
+         bleiben, wie sie sind - eine Kennung wird nie neu vergeben, also
+         ist gleiche Kennung auch gleiches Bild. */
+      let bilder = 0;
+      if (Array.isArray(daten.bilder)) {
+        for (const b of daten.bilder) {
+          const id = String(b && b.id || "");
+          const mime = String(b && b.mime || "");
+          const dat = String(b && b.data || "").replace(/\s+/g, "");
+          if (!id || !/^[a-z0-9]{1,40}$/i.test(id)) continue;
+          if (!/^image\/(png|jpeg|webp|gif)$/.test(mime)) continue;
+          if (!dat || !/^[A-Za-z0-9+/=]+$/.test(dat)) continue;
+          if (dat.length * 0.75 > MAX_IMG_BYTES) continue;
+          const da = this.sql.exec("SELECT id FROM images WHERE id = ?", id).toArray();
+          if (da.length) continue;
+          this.sql.exec("INSERT INTO images (id, mime, data, created) VALUES (?, ?, ?, ?)",
+                        id, mime, dat, Number(b.created) || Date.now());
+          bilder++;
+        }
+      }
+      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen, bilder: bilder });
     }
 
     // --- Verzeichnis der Update-Adressen (oeffentlich) -----------------
@@ -1147,7 +1178,7 @@ ${KOPFZEILE}
           <p>Hier steht die ausf&uuml;hrliche Beschreibung. Im Bearbeiten-Modus anklicken und &auml;ndern.</p>
         </section>
 
-        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title">
+        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfl&auml;che</h2>
           <p>Bildschirmfotos werden hier erg&auml;nzt.</p>
           <div class="fv-gallery" data-fv-gallery></div>
@@ -1172,26 +1203,21 @@ ${KOPFZEILE}
           <p>F&uuml;r wen ist das Programm gedacht?</p>
         </section>
 
-        <section class="program-info-block program-download-block program-download-block--web" aria-labelledby="download-web-title">
-          <h2 id="download-web-title">Web-Version</h2>
-          <div class="download-slot">
-            <h3>Im Browser &ouml;ffnen</h3>
-            <p>L&auml;uft ohne Installation direkt im Browser. Immer die neueste Fassung &ndash; es gibt nichts zu aktualisieren.</p>
-            <a class="button" href="/apps/" target="_blank" rel="noopener">Web-Version &ouml;ffnen</a>
-          </div>
-        </section>
-
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
-          <h2 id="download-title">Download (Android)</h2>
+          <h2 id="download-title">Download (Android-App)</h2>
           <div class="download-slot">
-            <h3>App herunterladen</h3>
+            <h3>Hauptdatei</h3>
             <p>Sobald es eine Datei gibt, hier den Knopf anklicken und die Adresse eintragen.</p>
             <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">Download starten</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Weitere Versionen und Patches</h3>
+            <p>Platzhalter f&uuml;r sp&auml;tere Updates, Patchdateien und &auml;ltere Versionen.</p>
           </div>
         </section>
 
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
-          <h2 id="download-pc-title">Download (PC)</h2>
+          <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
             <h3>Programm herunterladen</h3>
             <p>Die Fassung f&uuml;r Windows. Sie l&auml;uft eigenst&auml;ndig, eine Installation ist nicht n&ouml;tig.</p>

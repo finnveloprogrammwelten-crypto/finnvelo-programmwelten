@@ -1607,6 +1607,8 @@
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-sichern" '
+                + 'title="Den gesamten Datenbestand als ZIP herunterladen">\uD83D\uDCBE Sicherung</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-seiten">+ Seite</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
@@ -1629,6 +1631,10 @@
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
       bar.querySelector('.fv-admin-putzen').addEventListener('click', felderSaeubern);
+      // Die Sicherung liegt in einem eigenen Block - per Ereignis rufen.
+      bar.querySelector('.fv-admin-sichern').addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:sicherung-laden'));
+      });
       // Die Seitenverwaltung liegt in einem eigenen Block - per Ereignis rufen.
       bar.querySelector('.fv-admin-seiten').addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('fv:seiten-oeffnen'));
@@ -2151,148 +2157,213 @@
 })();
 
 /* =====================================================================
- * App-Aktualisierung im Bearbeiten-Modus pflegen (mehrere Apps)
- * Die Android-Apps fragen beim Start ihre version.json ab. Dieses Feld
- * schreibt genau diese Datei - ohne die Webseite neu zu veroeffentlichen.
- * Erscheint nur als Admin mit Bearbeiten: AN, auf der jeweiligen
- * Programmseite. Eigenstaendig gekapselt: faellt aus, ohne die Seite zu
- * stoeren.
+ * Aktualisierung pflegen - EINE KACHEL JE FASSUNG, EINE DATEI JE KACHEL
+ * ---------------------------------------------------------------------
+ * Android-App und PC-Programm sind zwei eigenstaendige Programme. Sie
+ * teilen sich nichts: nicht die Datei, nicht die Felder, nicht das
+ * Objekt im Speicher. Jede Kachel kennt genau EINE Definition aus APPS
+ * und schreibt genau EINE Ablage. Die andere Fassung kann sie gar nicht
+ * beruehren - nicht weil etwas abgefangen wird, sondern weil sie sie
+ * nicht kennt.
+ *
+ * Frueher gab es eine Kachel mit Reitern und ein gemeinsames Objekt.
+ * Beim Speichern wurde es aufgeteilt, beim Laden wieder zusammengefuehrt.
+ * Ergebnis: Eintraege im PC-Reiter landeten in der App-Datei, und
+ * PC-Werte verschwanden wieder. Reiter, Zusammenfuehrung und Aufteilung
+ * sind ersatzlos entfallen.
+ *
+ * Der Standard fuer PC-Fassungen (ANWEISUNG-PC-Aktualisierung.md):
+ *   { schluessel: "...-PC", versionCode, versionName, apk, hinweise }
+ * "apk" heisst auch beim PC so - dieselbe Eingabemaske fuer beide.
  * ===================================================================== */
 (function () {
   'use strict';
   try {
-    // Pro App: wo das Feld erscheint (seite), wo gespeichert wird (ablage),
-    // welche Adresse die App abfragt (pruef), welche Felder es gibt und welche
-    // festen Werte immer mitgeschrieben werden (fest).
+
+    /* Die vier Felder jeder PC-Fassung. Ueberall gleich - genau das ist
+       der Sinn des Standards. "rechenweg" steht nur im Beschriftungstext,
+       weil der Tourenplaner mit einem Versatz von 1 000 000 zaehlt. */
+    function pcFelder(rechenweg, beispielCode, beispielDatei) {
+      return [
+        { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 3.0' },
+        { key: 'versionCode', label: 'Versions-Code (' + rechenweg + ')',
+          typ: 'zahl', ph: 'z. B. ' + beispielCode },
+        { key: 'apk', label: 'Download-Adresse des Installers (EXE oder ZIP)',
+          typ: 'url', ph: beispielDatei },
+        { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+      ];
+    }
+
+    var GH = 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/';
+
+    var HINWEIS_APP = 'Diese Felder liest die Android-App. Das PC-Programm hat eine '
+                    + 'eigene Kachel mit einer eigenen Datei - hier ist es nicht zu finden.';
+    var HINWEIS_PC  = 'Diese Felder liest das PC-Programm. Sie stehen in einer eigenen '
+                    + 'Datei; mit der App-Fassung haben sie nichts zu tun.';
+
+    /* Je Fassung eine Definition:
+         seite      - kommt im Pfad der Programmseite vor
+         art        - 'app' oder 'pc' (bestimmt, in welchen Bereich die Kachel kommt)
+         ablage     - Schluessel in der Datenbank, Block u0
+         appAblage  - nur bei art 'pc': woher ein alter "pc"-Block uebernommen wird
+         pruef      - Adresse, die das Programm abfragt
+         felder     - Eingabefelder dieser Fassung
+         fest       - Werte, die immer mitgeschrieben werden (Erkennungsmerkmal)
+         vorgabe    - Stand, solange nichts gespeichert ist                        */
     var APPS = [
+      /* ---- Einkaufsplaner ------------------------------------------- */
       {
-        /* Der Einkaufsplaner fragt /einkaufsliste/version.json ab. Diese
-           Datei wird vom WORKER erzeugt, nicht aus dem Ordner geliefert -
-           lag dort eine echte Datei, gewann sie immer, und das Speichern
-           hier lief still ins Leere.
-           Feldnamen wie beim Aufgabenplaner: "apk" und "hinweise". */
-        seite: 'einkaufsliste',
+        seite: 'einkaufsliste', art: 'app', sauber: true,
         ablage: 'einkaufsliste',
         pruef: '/einkaufsliste/version.json',
-        titel: 'Einkaufsplaner',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.2.0' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 20200' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.11.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 21100' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../FINNVELO-Einkaufsplaner-2.2.0.apk' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Rubriken sortieren richtig' }
+            ph: 'https://github.com/.../FINNVELO-Einkaufsplaner-2.11.0.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
-        // Schuetzt davor, dass eine andere App diese Datei liest.
         fest: { schluessel: 'FINNVELO-EINKAUFSPLANER' },
-        vorgabe: {
-          schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 20200, versionName: '2.2.0',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Einkaufsplaner/FINNVELO-Einkaufsplaner-2.2.0.apk',
-          hinweise: 'Rubriken sortieren jetzt richtig, eigene Rubriken anlegbar, Löschknopf in der Datenbank.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 21100, versionName: '2.11.0',
+                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-2.11.0.apk', hinweise: '' }
       },
       {
-        seite: 'mischwaldrechner',
+        seite: 'einkaufsliste', art: 'pc',
+        ablage: 'einkaufsliste-pc', appAblage: 'einkaufsliste',
+        pruef: '/einkaufsliste/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                         'https://github.com/.../FINNVELO-Einkaufsplaner-Setup-1.0.exe'),
+        fest: { schluessel: 'FINNVELO-EINKAUFSPLANER-PC' },
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Mischwaldrechner ----------------------------------------- */
+      {
+        seite: 'mischwaldrechner', art: 'app',
         ablage: 'mischwald',
         pruef: '/mischwaldrechner/version.json',
-        titel: 'Mischwaldrechner',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.0.2', auch: ['version'] },
+          { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.8', auch: ['version'] },
           { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 2' },
           { key: 'download', label: 'Download-Adresse der APK', typ: 'url', ph: 'https://github.com/.../Mischwald.apk' },
-          { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Kartenerkennung verbessert' }
+          { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: {},
-        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloMischwaldrechner/Mischwald.apk', hinweis: '' }
+        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0',
+                   download: GH + 'FinnveloMischwaldrechner/Mischwald.apk', hinweis: '' }
       },
       {
-        seite: 'aufgabenplaner',
+        seite: 'mischwaldrechner', art: 'pc',
+        ablage: 'mischwald-pc', appAblage: 'mischwald',
+        pruef: '/mischwaldrechner/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                         'https://github.com/.../FINNVELO-Mischwaldrechner-Setup-1.0.exe'),
+        fest: { schluessel: 'FINNVELO-MISCHWALD-PC' },
+        vorgabe: { schluessel: 'FINNVELO-MISCHWALD-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Aufgabenplaner ------------------------------------------- */
+      {
+        seite: 'aufgabenplaner', art: 'app',
         ablage: 'aufgabenplaner',
         pruef: '/FinnVelo/Aufgabenplaner/version.json',
-        titel: 'Aufgabenplaner',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 3.2' },
-          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 32' },
-          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url', ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-3.2.apk' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Erinnerungen verbessert' }
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 8.28' },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 198' },
+          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url',
+            ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-8.28.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-AUFGABENPLANER' },
-        vorgabe: {
-          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 101, versionName: '7.31',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-7.31.apk',
-          hinweise: 'Die Masken fuer Anlegen, Beitreten und Koppeln behalten ihre Eingaben. Kanal verlassen statt loeschen.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 198, versionName: '8.28',
+                   apk: GH + 'FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-8.28.apk', hinweise: '' }
       },
       {
-        /* Lesezeit. Die App fragt /lesezeit/version.json ab.
-           Ordner, Programmname und Paketname heissen einheitlich "Lesezeit".
-           ACHTUNG: eigenes Format - "programm", "version", "versionsCode"
-           statt schluessel/versionName/versionCode. Deshalb eigene Felder. */
-        seite: 'lesezeit',
+        /* Das PC-Programm liest /FinnVelo/Aufgabenplaner/pc.json und
+           verlangt schluessel FINNVELO-AUFGABENPLANER-PC. Geprueft am
+           Quelltext (quelle/aktualisierung.js). */
+        seite: 'aufgabenplaner', art: 'pc',
+        ablage: 'aufgabenplaner-pc', appAblage: 'aufgabenplaner',
+        pruef: '/FinnVelo/Aufgabenplaner/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '30000',
+                         'https://github.com/.../FINNVELO-Aufgabenplaner-Setup-3.0.exe'),
+        fest: { schluessel: 'FINNVELO-AUFGABENPLANER-PC' },
+        vorgabe: { schluessel: 'FINNVELO-AUFGABENPLANER-PC', versionCode: 30000, versionName: '3.0',
+                   apk: GH + 'FinnveloAufgabenplaner/FINNVELO.Aufgabenplaner.Setup.3.0.0.exe',
+                   hinweise: 'Beim Anmelden starten, Logo in der Kopfzeile, Wetterzeichen passt zum Regenrisiko.' }
+      },
+
+      /* ---- Lesezeit -------------------------------------------------- */
+      {
+        /* ACHTUNG: eigenes Format der App - "programm", "version",
+           "versionsCode" statt schluessel/versionName/versionCode. */
+        seite: 'lesezeit', art: 'app', sauber: true,
         ablage: 'lesezeit',
         pruef: '/lesezeit/version.json',
-        titel: 'Lesezeit',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'version', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.5.0' },
+          { key: 'version', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.9.1' },
           { key: 'versionsCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)',
-            typ: 'zahl', ph: 'z. B. 10500' },
+            typ: 'zahl', ph: 'z. B. 20901' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk' },
-          { key: 'datei', label: 'Dateiname der APK', typ: 'text', ph: 'FINNVELO-Lesezeit-1.5.0.apk' }
+            ph: 'https://github.com/.../FINNVELO-Lesezeit-2.9.1.apk' },
+          { key: 'datei', label: 'Dateiname der APK', typ: 'text', ph: 'FINNVELO-Lesezeit-2.9.1.apk' }
         ],
         fest: { programm: 'FINNVELO-LESEZEIT', paket: 'de.finnvelo.lesetagebuch',
                 adresse: 'https://finnveloprogramme.com/lesezeit/' },
-        vorgabe: {
-          programm: 'FINNVELO-LESEZEIT', version: '1.5.0', versionsCode: 10500,
-          adresse: 'https://finnveloprogramme.com/lesezeit/',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk',
-          datei: 'FINNVELO-Lesezeit-1.5.0.apk',
-          paket: 'de.finnvelo.lesetagebuch'
-        }
+        vorgabe: { programm: 'FINNVELO-LESEZEIT', version: '2.9.1', versionsCode: 20901,
+                   adresse: 'https://finnveloprogramme.com/lesezeit/',
+                   apk: GH + 'Lesezeit/FINNVELO-Lesezeit-2.9.1.apk',
+                   datei: 'FINNVELO-Lesezeit-2.9.1.apk', paket: 'de.finnvelo.lesetagebuch' }
       },
       {
-        /* Tourenplaner, Android - die App liest /tourenplaner/android.json.
-           Kommt vom WORKER; im Ordner darf keine solche Datei liegen. */
-        seite: 'tourenplaner',
+        seite: 'lesezeit', art: 'pc',
+        ablage: 'lesezeit-pc', appAblage: 'lesezeit',
+        pruef: '/lesezeit/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                         'https://github.com/.../FINNVELO-Lesezeit-Setup-1.0.exe'),
+        fest: { schluessel: 'FINNVELO-LESEZEIT-PC' },
+        vorgabe: { schluessel: 'FINNVELO-LESEZEIT-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Tourenplaner --------------------------------------------- */
+      {
+        seite: 'tourenplaner', art: 'app',
         ablage: 'tourenplaner-android',
         pruef: '/tourenplaner/android.json',
-        titel: 'Tourenplaner (Android)',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.0' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 3.1' },
           { key: 'versionCode', label: 'Versions-Code (1000000 + major x 10000 + minor x 100 + patch)',
-            typ: 'zahl', ph: 'z. B. 1020000' },
+            typ: 'zahl', ph: 'z. B. 1030100' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-2.0.apk' },
+            ph: 'https://github.com/.../FINNVELO-Tourenplaner-3.1.apk' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID' },
-        vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 1020000, versionName: '2.0',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-2.0.apk',
-          hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 1030100, versionName: '3.1',
+                   apk: GH + 'Tourenplaner/FINNVELO-Tourenplaner-3.1.apk', hinweise: '' }
       },
       {
-        /* Tourenplaner, Windows - eigene Datei, eigener Schluessel.
-           Das Feld heisst auch hier "apk", damit dasselbe Formular passt;
-           gemeint ist der Installer. */
-        seite: 'tourenplaner',
-        ablage: 'tourenplaner-pc',
+        /* Das PC-Programm liest /tourenplaner/pc.json, verlangt
+           schluessel FINNVELO-TOURENPLANER-PC und nimmt die Adresse aus
+           "apk" (ersatzweise "datei"). Geprueft am Quelltext
+           (pc/haupt.js). Eigene Fassung dort: 1.4 / 1010400. */
+        seite: 'tourenplaner', art: 'pc',
+        ablage: 'tourenplaner-pc', appAblage: 'tourenplaner-android',
         pruef: '/tourenplaner/pc.json',
-        titel: 'Tourenplaner (PC)',
-        felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 2.0' },
-          { key: 'versionCode', label: 'Versions-Code (1000000 + major x 10000 + minor x 100 + patch)',
-            typ: 'zahl', ph: 'z. B. 1020000' },
-          { key: 'apk', label: 'Download-Adresse des Installers (EXE)', typ: 'url',
-            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-2.0.0.exe' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
-        ],
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('1000000 + major x 10000 + minor x 100 + patch', '1020500',
+                         'https://github.com/.../FINNVELO-Tourenplaner-Einrichtung-2.5.0.exe'),
         fest: { schluessel: 'FINNVELO-TOURENPLANER-PC' },
-        vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 1020000, versionName: '2.0',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-2.0.0.exe',
-          hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
       }
     ];
 
@@ -2304,14 +2375,19 @@
 
     var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
     var slug = pfad.replace(/^\//, '') || 'start';
-    var cfg = null;
-    for (var i = 0; i < APPS.length; i++) {
-      if (pfad.indexOf(APPS[i].seite) !== -1) { cfg = APPS[i]; break; }
-    }
-    var festeApp = !!cfg;   // die zwei eingebauten Apps haben feste Adressen
 
-    /* Bauplaene fuer selbst angelegte Update-Pruefungen.
-       Welche Feldnamen die App liest, haengt davon ab, wie sie gebaut wurde. */
+    /* ALLE passenden Definitionen sammeln, nicht nur die erste. Frueher
+       stand hier ein "break" - dadurch bekam eine Seite immer nur eine
+       Kachel, und welche das war, hing an der Reihenfolge im Feld. Bei
+       Lesezeit fragte die Android-Kachel deshalb einmal die PC-Datei ab. */
+    var cfgs = [];
+    for (var i = 0; i < APPS.length; i++) {
+      if (pfad.indexOf(APPS[i].seite) !== -1) cfgs.push(APPS[i]);
+    }
+    var festeApp = cfgs.length > 0;
+
+    /* Bauplaene fuer selbst angelegte Seiten: welche Feldnamen die eigene
+       App liest, haengt davon ab, wie sie gebaut wurde. */
     var BAUPLAENE = {
       mischwald: {
         name: 'Wie Mischwaldrechner',
@@ -2337,71 +2413,91 @@
       }
     };
 
+    /* Selbst angelegte Programmseite: auch sie bekommt BEIDE Fassungen -
+       eine App-Kachel und eine PC-Kachel, jede einzeln scharfzuschalten.
+       Damit ist jede Produktseite gleich aufgebaut. */
+    if (!festeApp) {
+      if (!document.querySelector('.program-download-block')) return;
+      cfgs = [
+        { seite: slug, art: 'app', frei: true,
+          ablage: slug, pruef: '/' + slug + '/version.json',
+          titel: 'Android-App', hinweis: HINWEIS_APP,
+          felder: BAUPLAENE.mischwald.felder, fest: {}, vorgabe: BAUPLAENE.mischwald.vorgabe },
+        { seite: slug, art: 'pc', frei: true,
+          ablage: slug + '-pc', appAblage: slug, pruef: '/' + slug + '/pc.json',
+          titel: 'PC-Version', hinweis: HINWEIS_PC,
+          felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                           'https://github.com/.../Setup-1.0.exe'),
+          fest: {}, vorgabe: { versionCode: 0, versionName: '', apk: '', hinweise: '' } }
+      ];
+    }
+
+    function copy(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
+
     /* Liest die Versionsnummer aus dem Dateinamen einer Adresse.
-     *   ".../FINNVELO-Aufgabenplaner-7.41.apk"  ->  "7.41"
-     *   ".../App_v2.3.1.apk"                    ->  "2.3.1"
-     *   ".../Mischwald.apk"                     ->  ""   (keine drin)
-     *
-     * Bewusst streng: verlangt wird eine durch Punkt getrennte Zahlenfolge,
-     * die direkt vor ".apk" steht und durch -, _ oder Leerzeichen vom Namen
-     * getrennt ist. Ein "v" davor ist erlaubt. Lieber nichts erkennen, als
-     * eine falsche Nummer eintragen - eine falsche Version waere schlimmer
-     * als gar keine, weil die App dann ein Update meldet, das keines ist. */
+       Bewusst streng: lieber nichts erkennen als eine falsche Nummer. */
     function versionAusName(adresse) {
       if (!adresse) return '';
-      var s = String(adresse);
-      // Anker und Abfragezusatz abschneiden (".../App-7.41.apk?raw=true")
-      s = s.split('#')[0].split('?')[0];
+      var s = String(adresse).split('#')[0].split('?')[0];
       var name = s.substring(s.lastIndexOf('/') + 1);
-      var treffer = /[-_ ]v?(\d+(?:\.\d+)+)\.apk$/i.exec(name);
+      var treffer = /[-_ .]v?(\d+(?:\.\d+)+)\.(apk|exe|zip)$/i.exec(name);
       return treffer ? treffer[1] : '';
     }
 
-    var einstellung = { aktiv: false, pfad: '/' + slug + '/version.json', bauplan: 'mischwald', merkmal: '' };
-
-    if (!cfg) {
-      // Nur auf Programmseiten anbieten (dort, wo es einen Download-Bereich gibt)
-      if (!document.querySelector('.program-download-block')) return;
-      cfg = { seite: slug, ablage: slug, pruef: einstellung.pfad, titel: 'diese App',
-              felder: BAUPLAENE.mischwald.felder, fest: {}, vorgabe: BAUPLAENE.mischwald.vorgabe };
-    }
-
-    function ladeEinstellung() {
-      return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
+    /* ---- Datenbank: genau ein Block je Ablage ---------------------- */
+    function holen(ablage) {
+      return fetch('/api/content?page=' + encodeURIComponent(ablage), { method: 'GET' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
-          if (res && res.items) {
-            res.items.forEach(function (it) {
-              if (it.block !== 'u1' || !it.value) return;
-              try {
-                var e = JSON.parse(it.value);
-                if (e && typeof e === 'object') {
-                  einstellung.aktiv = !!e.aktiv;
-                  if (e.pfad) einstellung.pfad = e.pfad;
-                  if (e.bauplan && BAUPLAENE[e.bauplan]) einstellung.bauplan = e.bauplan;
-                  if (typeof e.merkmal === 'string') einstellung.merkmal = e.merkmal;
-                }
-              } catch (er) {}
-            });
-          }
-          if (!festeApp) {
-            var bp = BAUPLAENE[einstellung.bauplan];
-            cfg.felder = bp.felder; cfg.vorgabe = bp.vorgabe; cfg.pruef = einstellung.pfad;
-            cfg.fest = einstellung.merkmal ? { schluessel: einstellung.merkmal } : {};
-          }
-        }).catch(function () {});
+          var roh = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
+          if (!roh) return null;
+          try { return JSON.parse(roh); } catch (e) { return null; }
+        }).catch(function () { return null; });
     }
-
-    function speichereEinstellung() {
+    function legen(ablage, wert) {
       return fetch('/api/content', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ page: cfg.ablage, block: 'u1', type: 'text',
-                               value: JSON.stringify(einstellung), password: pw })
+        body: JSON.stringify({ page: ablage, block: 'u0', type: 'text',
+                               value: JSON.stringify(wert, null, 2), password: pw })
       }).then(function (r) { return r.ok; }).catch(function () { return false; });
     }
 
-    /* Verzeichnis der Adressen pflegen, damit der Server sie ausliefert */
-    function verzeichnisPflegen(anlegen) {
+    /* ---- Einstellungen selbst angelegter Fassungen (Block u1) ------- */
+    function ladeEinstellung(c) {
+      c.einst = { aktiv: false, pfad: c.pruef, bauplan: 'mischwald', merkmal: '' };
+      if (!c.frei) return Promise.resolve();
+      return fetch('/api/content?page=' + encodeURIComponent(c.ablage), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          if (res && res.items) res.items.forEach(function (it) {
+            if (it.block !== 'u1' || !it.value) return;
+            try {
+              var e = JSON.parse(it.value);
+              if (e && typeof e === 'object') {
+                c.einst.aktiv = !!e.aktiv;
+                if (e.pfad) c.einst.pfad = e.pfad;
+                if (e.bauplan && BAUPLAENE[e.bauplan]) c.einst.bauplan = e.bauplan;
+                if (typeof e.merkmal === 'string') c.einst.merkmal = e.merkmal;
+              }
+            } catch (er) {}
+          });
+          c.pruef = c.einst.pfad;
+          if (c.art === 'app') {
+            var bp = BAUPLAENE[c.einst.bauplan];
+            c.felder = bp.felder; c.vorgabe = bp.vorgabe;
+          }
+          c.fest = c.einst.merkmal ? { schluessel: c.einst.merkmal } : {};
+        }).catch(function () {});
+    }
+    function speichereEinstellung(c) {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: c.ablage, block: 'u1', type: 'text',
+                               value: JSON.stringify(c.einst), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+    function verzeichnisPflegen(c, anlegen) {
       return fetch('/api/content?page=system', { method: 'GET' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
@@ -2409,11 +2505,10 @@
           if (res && res.items) res.items.forEach(function (it) {
             if (it.block === 'v0' && it.value) { try { routen = JSON.parse(it.value) || {}; } catch (e) {} }
           });
-          // alte Adresse dieser Seite entfernen
           for (var p in routen) {
-            if (routen.hasOwnProperty(p) && routen[p] === cfg.ablage) delete routen[p];
+            if (routen.hasOwnProperty(p) && routen[p] === c.ablage) delete routen[p];
           }
-          if (anlegen) routen[einstellung.pfad.toLowerCase()] = cfg.ablage;
+          if (anlegen) routen[c.einst.pfad.toLowerCase()] = c.ablage;
           return fetch('/api/content', {
             method: 'POST', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ page: 'system', block: 'v0', type: 'text',
@@ -2422,244 +2517,251 @@
         }).catch(function () { return false; });
     }
 
-    function laden() {
-      return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (res) {
-          var roh = '';
-          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
-          if (!roh) return copy(cfg.vorgabe);
-          try { return JSON.parse(roh); } catch (e) { return copy(cfg.vorgabe); }
-        })
-        .catch(function () { return copy(cfg.vorgabe); });
+    /* ---- Altbestand uebernehmen ------------------------------------
+       Eine PC-Fassung lag frueher als Block "pc" IN der App-Datei, und
+       die Feldnamen hiessen dort "url"/"hinweis". Beides wird einmalig
+       geradegezogen:
+         - ist die eigene Datei leer, aber in der App-Datei steht ein
+           "pc"-Block, wird er uebernommen und dort entfernt
+         - "url" wird zu "apk", "hinweis" zu "hinweise"
+       Danach kennt die PC-Kachel nur noch ihre eigene Datei.          */
+    function normieren(c, o) {
+      var r = {};
+      var f = c.fest || {};
+      for (var fk in f) if (f.hasOwnProperty(fk)) r[fk] = f[fk];
+      o = o || {};
+      r.versionCode = parseInt(o.versionCode || o.versionsCode || 0, 10) || 0;
+      r.versionName = String(o.versionName || o.version || '');
+      r.apk = String(o.apk || o.url || o.download || '');
+      r.hinweise = String(o.hinweise || o.hinweis || '');
+      return r;
     }
-    function copy(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
+    function gleich(a, b) {
+      try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; }
+    }
+    /* @return {stand, umgezogen} */
+    function pcStandHolen(c) {
+      return holen(c.ablage).then(function (eigen) {
+        var hatEigen = eigen && (parseInt(eigen.versionCode, 10) > 0 || eigen.apk || eigen.url);
+        if (hatEigen) {
+          var sauber = normieren(c, eigen);
+          if (gleich(sauber, eigen)) return { stand: sauber, umgezogen: false };
+          return legen(c.ablage, sauber).then(function () {
+            return { stand: sauber, umgezogen: 'Feldnamen auf den Standard gebracht' };
+          });
+        }
+        if (!c.appAblage) return { stand: eigen || copy(c.vorgabe), umgezogen: false };
+        return holen(c.appAblage).then(function (app) {
+          if (!app || !app.pc || typeof app.pc !== 'object') {
+            return { stand: eigen || copy(c.vorgabe), umgezogen: false };
+          }
+          var uebernommen = normieren(c, app.pc);
+          var ohne = {};
+          for (var k in app) if (app.hasOwnProperty(k) && k !== 'pc') ohne[k] = app[k];
+          return legen(c.ablage, uebernommen)
+            .then(function () { return legen(c.appAblage, ohne); })
+            .then(function () {
+              return { stand: uebernommen,
+                       umgezogen: 'Alte PC-Angaben aus der App-Datei übernommen' };
+            });
+        });
+      });
+    }
 
-    /* ================================================================
-     * Mehrere Fassungen je Programm: Android, PC, Web
-     * ----------------------------------------------------------------
-     * Frueher gab es genau EINEN Satz Felder - also nur eine Fassung.
-     * Wer eine PC-Fassung nachschob, musste sich entscheiden, welche
-     * Nummer in der version.json steht.
-     *
-     * Ablage, und das ist der Punkt: Die Android-Fassung bleibt dort,
-     * wo sie immer war - GANZ OBEN in der version.json. Alle Apps, die
-     * heute draussen sind, lesen genau diese Felder. Weitere Fassungen
-     * kommen als eigener Block darunter ("pc": {...}). Aeltere Apps
-     * uebersehen ihn einfach, und nichts bricht.
-     *
-     * Die Web-Fassung braucht keine Nummer - sie ist immer aktuell,
-     * sobald die Datei ausgetauscht ist. Fuer sie wird nur die Adresse
-     * gepflegt.
-     * ================================================================ */
-    /* Alle Kacheln dieser Seite speichern NACHEINANDER. Ohne Reihung wuerde
-       bei drei Fenstern jede ihren Stand von vorhin zurueckschreiben und die
-       Aenderungen der anderen ueberbuegeln - ein Wettlauf, der genau dann
-       zuschlaegt, wenn man kurz hintereinander klickt. */
+    /* ---- App-Datei entrümpeln --------------------------------------
+       Manche App-Dateien tragen noch Felder aus früheren Bauformen mit
+       sich herum - beim Einkaufsplaner "url" (2.2.0) neben "apk"
+       (2.11.0), bei Lesezeit ein "versionCode" neben "versionsCode".
+       Gelesen wird jeweils nur das Erste; das Zweite ist Altlast, die
+       beim Nachsehen in die Irre führt.
+
+       Nur Definitionen mit sauber:true werden entrümpelt - dort ist der
+       vollständige Aufbau der Datei bekannt und am Quelltext der App
+       geprüft. Wo das nicht der Fall ist, bleibt jedes Feld stehen. */
+    function appSauber(c, o) {
+      var r = {};
+      var f = c.fest || {};
+      for (var fk in f) if (f.hasOwnProperty(fk)) r[fk] = f[fk];
+      c.felder.forEach(function (fd) {
+        var w = o[fd.key];
+        if (w === undefined || w === null || w === '') {
+          // Ersatzquellen für umbenannte Felder - nichts geht verloren
+          if (fd.key === 'apk') w = o.url || o.download || '';
+          else if (fd.key === 'hinweise') w = o.hinweis || '';
+          else if (fd.key === 'versionsCode') w = o.versionCode || 0;
+          else if (fd.key === 'versionName') w = o.version || '';
+          else w = (fd.typ === 'zahl') ? 0 : '';
+        }
+        if (fd.typ === 'zahl') w = parseInt(w, 10) || 0;
+        r[fd.key] = w;
+        if (fd.auch) fd.auch.forEach(function (k2) { r[k2] = w; });
+      });
+      return r;
+    }
+    function appStandHolen(c) {
+      return holen(c.ablage).then(function (o) {
+        if (!o) return { stand: copy(c.vorgabe), umgezogen: false };
+        if (!c.sauber) return { stand: o, umgezogen: false };
+        var sauber = appSauber(c, o);
+        if (gleich(sauber, o)) return { stand: sauber, umgezogen: false };
+        var weg = [];
+        for (var k in o) if (o.hasOwnProperty(k) && !(k in sauber)) weg.push(k);
+        return legen(c.ablage, sauber).then(function () {
+          return { stand: sauber,
+                   umgezogen: weg.length ? ('Veraltete Felder entfernt: ' + weg.join(', ')) : 'Datei aufgeräumt' };
+        });
+      });
+    }
+
+    /* Alle Kacheln speichern NACHEINANDER - sonst schreibt die zuletzt
+       klickende ihren alten Stand ueber die frischen der anderen. */
     var speicherReihe = Promise.resolve();
     function anstellen(tat) {
       speicherReihe = speicherReihe.then(tat, tat);
       return speicherReihe;
     }
 
-    var PLATTFORMEN = [
-      { schluessel: '',    titel: 'Android-App', unten: 'APK',
-        hinweis: 'Diese Felder liest die Android-App. Sie stehen oben in der version.json - '
-               + 'daran darf sich nichts aendern, sonst merken bereits verteilte Apps '
-               + 'keine Aktualisierung mehr.' },
-      { schluessel: 'pc',  titel: 'PC-Version', unten: 'EXE oder ZIP',
-          hinweis: 'ACHTUNG: schreibt derzeit noch einen Block "pc" in DIESELBE '
-                 + 'version.json. Der Umbau auf eine eigene Datei je Fassung ist '
-                 + 'begonnen (Routen und Kachel-Definitionen stehen), aber die '
-                 + 'Kachel-Erzeugung nimmt bisher nur EINE Definition je Seite '
-                 + '(APPS-Schleife mit break). Bis das umgebaut ist, gilt: nach '
-                 + 'dem Aendern einer Fassung die andere pruefen.' },
-    ];
-
-    // Felder einer Plattform: Android nutzt die gewohnten Schluessel,
-    // die anderen bekommen einheitliche.
-    function plattformFelder(pf) {
-      if (!pf.schluessel) return cfg.felder;               // Android: unveraendert
-      if (pf.nurAdresse) {
-        return [{ key: 'url', label: 'Adresse der Web-Fassung', typ: 'url',
-                  ph: '/apps/... oder https://\u2026' }];
-      }
-      return [
-        { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.3.0' },
-        { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)',
-          typ: 'zahl', ph: 'z. B. 10300' },
-        { key: 'url', label: 'Download-Adresse (' + pf.unten + ')', typ: 'url',
-          ph: 'https://\u2026' },
-        { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
-      ];
-    }
-
-      /* Beim Speichern die Fassungen TRENNEN.
-         Frueher landete alles in einer Datei: App-Felder oben, PC-Angaben
-         als Block "pc" darin. Wer eine Fassung aenderte, verstellte die
-         andere.
-           <ablage>      -> nur die App-Felder (die verteilten Apps lesen
-                            genau diese Datei - Aufbau unveraendert)
-           <ablage>-pc   -> nur der PC-Teil, mit eigenem Schluessel
-         Die App-Datei verliert dabei ihren "pc"-Block. Das stoert keine
-         App: sie hat ihn noch nie gelesen. */
-      function ablegen(seite, wert) {
-        return fetch('/api/content', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ page: seite, block: 'u0', type: 'text',
-                                 value: JSON.stringify(wert, null, 2), password: pw })
-        }).then(function (r) { return r.ok; }).catch(function () { return false; });
-      }
-
-      function speichern(obj) {
-        var app = {}, pcTeil = null;
-        for (var k in obj) {
-          if (!obj.hasOwnProperty(k)) continue;
-          if (k === 'pc') { pcTeil = obj[k]; continue; }
-          app[k] = obj[k];
-        }
-        var wege = [ablegen(cfg.ablage, app)];
-        if (pcTeil && typeof pcTeil === 'object') {
-          var pcDatei = {};
-          for (var q in pcTeil) if (pcTeil.hasOwnProperty(q)) pcDatei[q] = pcTeil[q];
-          if (app.schluessel && !pcDatei.schluessel) pcDatei.schluessel = app.schluessel + '-PC';
-          wege.push(ablegen(cfg.ablage + '-pc', pcDatei));
-        }
-        return Promise.all(wege).then(function (r) {
-          return r.every(function (x) { return x; });
-        });
-      }
-
-    /* Baut eine Aktualisierungs-Kachel.
-     *   daten   - der geladene Stand der version.json (vollstaendig)
-     *   welche  - Schluessel der Fassungen, die diese Kachel zeigt
-     *   wohin   - Abschnitt, unter den sie gehaengt wird
-     *
-     * Es gibt ZWEI Kacheln: eine unter dem App-Bereich, eine unter dem
-     * PC-Bereich. Beide schreiben in dieselbe version.json.
-     *
-     * Der heikle Punkt dabei: Wenn die App-Kachel speichert, kennt sie die
-     * PC-Felder gar nicht. Wuerde sie ihr Objekt aus dem Nichts bauen, waere
-     * der PC-Block danach weg. Deshalb setzt jede Kachel auf dem zuletzt
-     * geladenen Stand auf und ueberschreibt nur ihre eigenen Fassungen
-     * (siehe "grundstand" in ausFeldern). */
-    function bauen(daten, welche, wohin) {
-      var ziel = wohin || document.querySelector('.program-download-block')
-                       || document.querySelector('main');
+    /* =================================================================
+     * Eine Kachel fuer GENAU EINE Fassung
+     * ================================================================= */
+    function bauen(c, daten, ziel, umzugsmeldung) {
       if (!ziel) return;
-      var meine = PLATTFORMEN.filter(function (p) {
-        return welche.indexOf(p.schluessel) !== -1;
-      });
-      if (!meine.length) return;
       if (ziel.querySelector('.fv-update-box')) return;
 
-      // Gemeinsamer Stand: was zuletzt geladen wurde. Beide Kacheln lesen
-      // und schreiben ihn, damit keine der anderen etwas wegnimmt.
-      var grundstand = daten;
+      var stand = daten || copy(c.vorgabe);
 
       var box = document.createElement('div');
-      box.className = 'fv-update-box';
-      // Reiter fuer die Fassungen. data-pf traegt den Schluessel; leer = Android.
-      var reiterHtml = '<div class="fv-update-reiter"'
-                     + (meine.length < 2 ? ' hidden' : '') + '>';
-      meine.forEach(function (pf, i) {
-        reiterHtml += '<button type="button" class="fv-update-reiter__k' + (i === 0 ? ' an' : '')
-                    + '" data-pf="' + pf.schluessel + '">' + pf.titel + '</button>';
-      });
-      reiterHtml += '</div>';
+      box.className = 'fv-update-box fv-update-box--' + c.art;
 
-      var felderHtml = '';
-      meine.forEach(function (pf, i) {
-        felderHtml += '<div class="fv-update-fach" data-fach="' + pf.schluessel + '"'
-                    + (i === 0 ? '' : ' hidden') + '>'
-                    + '<p class="fv-update-pfhinweis">' + pf.hinweis + '</p>';
-        plattformFelder(pf).forEach(function (f) {
-          var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
-          var extra = (f.typ === 'zahl') ? ' min="1" step="1"' : '';
-          // Der Schluessel traegt die Plattform mit, damit sich die Felder
-          // nicht gegenseitig ueberschreiben.
-          var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
-          felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
-                      + ' data-key="' + kennung + '" placeholder="' + f.ph + '"></label>';
-        });
-        felderHtml += '</div>';
+      var felderHtml = '<p class="fv-update-pfhinweis">' + c.hinweis + '</p>';
+      c.felder.forEach(function (f) {
+        var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
+        var extra = (f.typ === 'zahl') ? ' min="0" step="1"' : '';
+        felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
+                    + ' data-key="' + f.key + '" placeholder="' + f.ph + '"></label>';
       });
-      felderHtml = reiterHtml + felderHtml;
 
       var einstellHtml = '';
-      if (!festeApp) {
+      if (c.frei) {
         var planOpt = '';
-        for (var bp in BAUPLAENE) {
-          if (!BAUPLAENE.hasOwnProperty(bp)) continue;
-          planOpt += '<option value="' + bp + '"' + (einstellung.bauplan === bp ? ' selected' : '') + '>'
-                   + BAUPLAENE[bp].name + '</option>';
+        if (c.art === 'app') {
+          for (var bp in BAUPLAENE) {
+            if (!BAUPLAENE.hasOwnProperty(bp)) continue;
+            planOpt += '<option value="' + bp + '"' + (c.einst.bauplan === bp ? ' selected' : '') + '>'
+                     + BAUPLAENE[bp].name + '</option>';
+          }
         }
         einstellHtml =
           '<div class="fv-update-schalter">'
-        + '  <button type="button" class="fv-schalter' + (einstellung.aktiv ? ' an' : '') + '" data-a="schalter">'
+        + '  <button type="button" class="fv-schalter' + (c.einst.aktiv ? ' an' : '') + '" data-a="schalter">'
         + '    <span class="fv-schalter__punkt"></span>'
-        + '    <span class="fv-schalter__text">' + (einstellung.aktiv ? 'Aktiv' : 'Nicht aktiv') + '</span>'
+        + '    <span class="fv-schalter__text">' + (c.einst.aktiv ? 'Aktiv' : 'Nicht aktiv') + '</span>'
         + '  </button>'
-        + '  <span class="fv-schalter__hinweis">Erst wenn dies aktiv ist, beantwortet die Webseite die Update-Anfragen deiner App.</span>'
+        + '  <span class="fv-schalter__hinweis">Erst wenn dies aktiv ist, beantwortet die Webseite '
+        + 'die Update-Anfragen dieser Fassung.</span>'
         + '</div>'
-        + '<div class="fv-update-einstell" data-a="einstell"' + (einstellung.aktiv ? '' : ' hidden') + '>'
-        + '  <label>Adresse, die deine App abfragt'
-        + '    <input type="text" data-a="pfad" value="' + einstellung.pfad + '" placeholder="/meinapp/version.json"></label>'
-        + '  <label>Aufbau der Versionsdatei'
-        + '    <select data-a="bauplan">' + planOpt + '</select></label>'
-        + '  <label>Erkennungsmerkmal (nur falls deine App eines pr\u00fcft \u2013 sonst leer lassen)'
-        + '    <input type="text" data-a="merkmal" value="' + (einstellung.merkmal || '') + '" placeholder="z. B. FINNVELO-MEINEAPP"></label>'
+        + '<div class="fv-update-einstell" data-a="einstell"' + (c.einst.aktiv ? '' : ' hidden') + '>'
+        + '  <label>Adresse, die dieses Programm abfragt'
+        + '    <input type="text" data-a="pfad" value="' + c.einst.pfad + '" placeholder="'
+        + (c.art === 'pc' ? '/meinprogramm/pc.json' : '/meineapp/version.json') + '"></label>'
+        + (c.art === 'app'
+            ? '  <label>Aufbau der Versionsdatei<select data-a="bauplan">' + planOpt + '</select></label>'
+            : '')
+        + '  <label>Erkennungsmerkmal (nur falls das Programm eines pr\u00fcft \u2013 sonst leer lassen)'
+        + '    <input type="text" data-a="merkmal" value="' + (c.einst.merkmal || '') + '" placeholder="z. B. FINNVELO-MEINPROGRAMM-PC"></label>'
         + '</div>';
       }
 
       box.innerHTML =
-        '<h3 class="fv-update-titel">\u2699\uFE0F Aktualisierung \u2013 '
-      + (meine.length === 1 ? meine[0].titel : cfg.titel)
+        '<h3 class="fv-update-titel">\u2699\uFE0F Aktualisierung \u2013 ' + c.titel
       + ' <span>(nur f\u00fcr dich sichtbar)</span></h3>'
-      + '<p class="fv-update-hilfe">' + (festeApp
-          ? ('Die App fragt beim Start <code>' + cfg.pruef + '</code> ab. ')
-          : ('Damit kann eine eigene Android-App auf dieser Webseite nach Updates suchen. '
-             + 'Du legst die Adresse fest, deine App fragt sie ab. '))
-      + 'Trage hier die neue Fassung ein \u2013 die App bietet das Update dann an. '
+      + '<p class="fv-update-hilfe">' + (c.frei
+          ? ('Damit kann ein eigenes Programm auf dieser Webseite nach Updates suchen. '
+             + 'Du legst die Adresse fest, das Programm fragt sie ab. ')
+          : ((c.art === 'pc' ? 'Das PC-Programm' : 'Die App') + ' fragt beim Start '
+             + '<code class="fv-update-adresse">' + c.pruef + '</code> ab. '))
+      + 'Trage hier die neue Fassung ein \u2013 sie wird dann angeboten. '
       + 'Die Webseite muss daf\u00fcr <strong>nicht</strong> neu ver\u00f6ffentlicht werden.</p>'
       + einstellHtml
-      + '<div class="fv-update-felder"' + ((!festeApp && !einstellung.aktiv) ? ' hidden' : '') + ' data-a="felderbox">' + felderHtml + '</div>'
+      + '<div class="fv-update-felder"' + ((c.frei && !c.einst.aktiv) ? ' hidden' : '')
+      + ' data-a="felderbox">' + felderHtml + '</div>'
       + '<div class="fv-update-zeile">'
       + '  <button type="button" class="fv-update-btn" data-a="save">Speichern</button>'
-      + '  <a class="fv-update-link" href="' + cfg.pruef + '" target="_blank" rel="noopener">Datei ansehen</a>'
+      + '  <a class="fv-update-link" href="' + c.pruef + '" target="_blank" rel="noopener">Datei ansehen</a>'
       + '  <button type="button" class="fv-update-mehr" data-a="mehr">JSON direkt bearbeiten</button>'
       + '  <span class="fv-update-melde" data-a="melde"></span>'
       + '</div>'
       + '<textarea class="fv-update-roh" data-a="roh" spellcheck="false" hidden></textarea>'
-      + '<p class="fv-update-warn">Wichtig: Der <strong>Versions-Code</strong> muss bei jeder neuen Fassung '
-      + 'gr\u00f6\u00dfer sein als vorher \u2013 daran erkennt die App, dass es etwas Neues gibt.</p>';
+      + '<p class="fv-update-warn">Wichtig: Der <strong>Versions-Code</strong> muss bei jeder neuen '
+      + 'Fassung gr\u00f6\u00dfer sein als vorher \u2013 daran allein erkennt das Programm, dass es '
+      + 'etwas Neues gibt.</p>';
       ziel.appendChild(box);
 
       var roh = box.querySelector('[data-a="roh"]');
       var melde = box.querySelector('[data-a="melde"]');
 
-      /* ---- Automatik: Ziel des Download-Knopfes uebernehmen -------------
-       * Setzt der Admin oben das Ziel des Download-Knopfes, wandert die
-       * Adresse hier ins Feld - und die Versionsnummer wird aus dem
-       * Dateinamen gelesen (z. B. "...-7.41.apk" -> "7.41").
-       * Der Versions-Code bleibt unangetastet: er steht im Manifest der App
-       * und laesst sich aus dem Namen nicht ableiten. Er wird nur auffaellig
-       * markiert, damit er nicht vergessen wird.
-       * Gespeichert wird NICHT von selbst - erst "Speichern" schreibt die
-       * version.json. So bleibt die letzte Entscheidung beim Menschen.
-       * ------------------------------------------------------------------ */
+      function sagen(text, gut) {
+        melde.textContent = text;
+        melde.className = 'fv-update-melde ' + (gut ? 'gut' : 'schlecht');
+        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 6000);
+      }
+
+      /* ---- Felder <-> Datei ---------------------------------------- */
+      function ausFeldern() {
+        /* PC-Fassung: die Datei hat einen festen, kleinen Aufbau - sie
+           wird sauber neu gebaut. App-Fassung: auf dem geladenen Stand
+           aufsetzen, damit Felder erhalten bleiben, die nur die App
+           kennt (bei Lesezeit z. B. "paket"). Ein alter "pc"-Block
+           faellt dabei immer weg. */
+        var o = (c.art === 'pc') ? {} : copy(stand || {});
+        delete o.pc;
+        var f = c.fest || {};
+        for (var fk in f) if (f.hasOwnProperty(fk)) o[fk] = f[fk];
+        c.felder.forEach(function (fd) {
+          var el = box.querySelector('[data-key="' + fd.key + '"]');
+          if (!el) return;
+          var v = (el.value || '').trim();
+          if (fd.typ === 'zahl') v = parseInt(v, 10) || 0;
+          o[fd.key] = v;
+          if (fd.auch) fd.auch.forEach(function (k2) { o[k2] = v; });
+        });
+        return o;
+      }
+      function inFelder(o) {
+        c.felder.forEach(function (fd) {
+          var el = box.querySelector('[data-key="' + fd.key + '"]');
+          if (!el) return;
+          var w = o ? o[fd.key] : '';
+          el.value = (w === undefined || w === null) ? '' : w;
+        });
+        roh.value = JSON.stringify(ausFeldern(), null, 2);
+      }
+      inFelder(stand);
+      if (umzugsmeldung) sagen('\u2713 ' + umzugsmeldung + '.', true);
+
+      /* ---- Ziel des Download-Knopfes uebernehmen -------------------
+         Frueher stand hier eine Variable "vorsatz", die nirgends
+         deklariert war. Unter 'use strict' warf das jedes Mal einen
+         Fehler, den ein catch verschluckt hat - die Automatik lief
+         also nie. Jetzt ohne Vorsatz: jede Kachel hat eigene Felder. */
       function urlFeldName() {
-        for (var i = 0; i < cfg.felder.length; i++) {
-          if (cfg.felder[i].typ === 'url') return cfg.felder[i].key;
+        for (var i = 0; i < c.felder.length; i++) {
+          if (c.felder[i].typ === 'url') return c.felder[i].key;
         }
         return null;
       }
-
-      /* Der Versions-Code steht im Manifest der App und laesst sich aus dem
-       * Dateinamen nicht ableiten (7.31 gehoert zu Code 101, 1.8 zu Code 9 -
-       * kein Zusammenhang). Deshalb wird er nie von selbst gesetzt. Angeboten
-       * wird nur das Hochzaehlen um eins: das ist der uebliche Fall und bleibt
-       * ein bewusster Klick. */
+      function versionFeldName() {
+        for (var i = 0; i < c.felder.length; i++) {
+          if (/^version(Name)?$/i.test(c.felder[i].key)) return c.felder[i].key;
+        }
+        return null;
+      }
+      function codeFeldName() {
+        for (var i = 0; i < c.felder.length; i++) {
+          if (/^versions?Code$/i.test(c.felder[i].key)) return c.felder[i].key;
+        }
+        return 'versionCode';
+      }
       function codePlusAnbieten(cFeld) {
         var label = cFeld.parentNode;
         if (!label || label.querySelector('.fv-code-plus')) return;
@@ -2669,7 +2771,7 @@
         knopf.type = 'button';
         knopf.className = 'fv-code-plus';
         knopf.textContent = 'auf ' + (jetzt + 1) + ' setzen';
-        knopf.title = 'Zaehlt den Versions-Code um eins hoch \u2013 pruefe, ob das zur App passt';
+        knopf.title = 'Z\u00e4hlt den Versions-Code um eins hoch \u2013 pr\u00fcfe, ob das passt';
         knopf.addEventListener('click', function (e) {
           e.preventDefault();
           var n = parseInt(cFeld.value, 10);
@@ -2681,43 +2783,23 @@
         });
         label.appendChild(knopf);
       }
-
-      function uebernehmen(url, art) {
+      function uebernehmen(url) {
         if (!url) return;
-        var urlKey = urlFeldName();
         var geaendert = [];
-
-        /* In welche Fassung soll die Adresse?
-         *  - Kommt sie vom Web-App-Upload ("web"), gehoert sie IMMER in die
-         *    Web-Fassung. Frueher landete sie im gerade offenen Reiter und
-         *    ueberschrieb dort die APK-Adresse - der Android-Download war weg.
-         *  - Sonst in den offenen Reiter, wie beim Knopf "Ziel speichern". */
-        var pfSchluessel;
-        var offen = box.querySelector('.fv-update-reiter__k.an');
-        var pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
-
-        if (urlKey) {
-          var uFeld = box.querySelector('[data-key="' + vorsatz
-                    + (pfSchluessel ? 'url' : urlKey) + '"]');
+        var uKey = urlFeldName();
+        if (uKey) {
+          var uFeld = box.querySelector('[data-key="' + uKey + '"]');
           if (uFeld && uFeld.value !== url) {
             uFeld.value = url;
             uFeld.classList.add('fv-uebernommen');
             geaendert.push('Adresse');
           }
         }
-
-        /* Versionsnummer aus dem Dateinamen - aber NUR, wenn das Feld leer
-           ist. Frueher wurde eine eingetragene Nummer stillschweigend
-           ueberschrieben: wer 1.9 eintrug und danach ein Ziel speicherte,
-           das noch auf "...-1.7.0.apk" zeigte, bekam wieder 1.7 - und
-           musste es von Hand in der version.json geradebiegen.
-           Was der Mensch selbst eingetragen hat, hat Vorrang. Bei einer
-           Unstimmigkeit gibt es einen Hinweis statt einer stillen
-           Aenderung. */
         var ver = versionAusName(url);
         var streit = '';
-        if (ver) {
-          var vFeld = box.querySelector('[data-key="' + vorsatz + 'versionName"]');
+        var vKey = versionFeldName();
+        if (ver && vKey) {
+          var vFeld = box.querySelector('[data-key="' + vKey + '"]');
           if (vFeld) {
             var drin = (vFeld.value || '').trim();
             if (!drin) {
@@ -2731,50 +2813,30 @@
             }
           }
         }
-
         if (!geaendert.length) {
-          if (streit) {
-            melde.textContent = streit.replace(/^\s*/, '');
-            melde.className = 'fv-update-melde';
-          }
+          if (streit) { melde.textContent = streit.replace(/^\s*/, ''); melde.className = 'fv-update-melde'; }
           return;
         }
-
-        // Versions-Code auffaellig machen - der muss von Hand hoch.
-        var cFeld = box.querySelector('[data-key="' + vorsatz + 'versionCode"]');
-        if (cFeld) {
-          cFeld.classList.add('fv-pruefen');
-          codePlusAnbieten(cFeld);
-        }
-
+        var cFeld = box.querySelector('[data-key="' + codeFeldName() + '"]');
+        if (cFeld) { cFeld.classList.add('fv-pruefen'); codePlusAnbieten(cFeld); }
         melde.textContent = '\u2713 \u00dcbernommen: ' + geaendert.join(', ')
                           + (ver ? '' : ' \u2013 Version nicht im Dateinamen gefunden')
                           + '. Versions-Code pr\u00fcfen, dann Speichern.' + streit;
         melde.className = 'fv-update-melde gut';
       }
-
       document.addEventListener('fv:ziel-gesetzt', function (e) {
         try {
           var d = (e && e.detail) || {};
-          /* Seit es zwei Kacheln gibt, muss geklaert sein, WELCHE zustaendig
-             ist. Sonst uebernimmt jede die Adresse in ihren eigenen aktiven
-             Reiter - ein PC-Download landete dann auch in der Android-Fassung.
-             Zustaendig ist die Kachel, in deren Download-Bereich der Knopf
-             steht. Eine Web-Meldung nimmt nur die Kachel an, die die
-             Web-Fassung fuehrt. */
-          if (d.art === 'web') {
-            if (welche.indexOf('web') === -1) return;
-          }
+          if (d.art === 'web') return;          // Web-Fassung hat keine Nummer
           if (d.knopf) {
             var bereich = d.knopf.closest && d.knopf.closest('.program-download-block');
-            var meinBereich = box.closest && box.closest('.program-download-block');
-            if (bereich && meinBereich && bereich !== meinBereich) return;
+            var meiner = box.closest && box.closest('.program-download-block');
+            if (bereich && meiner && bereich !== meiner) return;
           }
-          uebernehmen(d.url || '', d.art || '');
-        } catch (_x) { /* nie stoeren */ }
+          uebernehmen(d.url || '');
+        } catch (_x) {}
       });
 
-      // Beim Tippen die Markierung wieder wegnehmen
       box.addEventListener('input', function (e) {
         if (e.target && e.target.classList) {
           e.target.classList.remove('fv-uebernommen');
@@ -2782,248 +2844,134 @@
         }
       });
 
-      if (!festeApp) {
+      /* ---- Schalter selbst angelegter Fassungen -------------------- */
+      if (c.frei) {
         var schalter = box.querySelector('[data-a="schalter"]');
         var einstellBox = box.querySelector('[data-a="einstell"]');
         var felderBox = box.querySelector('[data-a="felderbox"]');
         var zeileBox = box.querySelector('.fv-update-zeile');
-
-        function ansichtSetzen() {
-          schalter.classList.toggle('an', einstellung.aktiv);
-          schalter.querySelector('.fv-schalter__text').textContent = einstellung.aktiv ? 'Aktiv' : 'Nicht aktiv';
-          einstellBox.hidden = !einstellung.aktiv;
-          felderBox.hidden = !einstellung.aktiv;
-          if (zeileBox) zeileBox.hidden = !einstellung.aktiv;
-        }
+        var ansichtSetzen = function () {
+          schalter.classList.toggle('an', c.einst.aktiv);
+          schalter.querySelector('.fv-schalter__text').textContent = c.einst.aktiv ? 'Aktiv' : 'Nicht aktiv';
+          einstellBox.hidden = !c.einst.aktiv;
+          felderBox.hidden = !c.einst.aktiv;
+          if (zeileBox) zeileBox.hidden = !c.einst.aktiv;
+        };
         ansichtSetzen();
-
         schalter.addEventListener('click', function () {
-          einstellung.aktiv = !einstellung.aktiv;
+          c.einst.aktiv = !c.einst.aktiv;
           ansichtSetzen();
-          Promise.all([speichereEinstellung(), verzeichnisPflegen(einstellung.aktiv)]).then(function () {
-            melde.textContent = einstellung.aktiv
-              ? '\u2713 Scharfgeschaltet \u2013 die Adresse antwortet jetzt.'
-              : '\u2713 Abgeschaltet \u2013 die Adresse antwortet nicht mehr.';
-            melde.className = 'fv-update-melde gut';
-            setTimeout(function () { melde.textContent = ''; }, 5000);
+          Promise.all([speichereEinstellung(c), verzeichnisPflegen(c, c.einst.aktiv)]).then(function () {
+            sagen(c.einst.aktiv ? '\u2713 Scharfgeschaltet \u2013 die Adresse antwortet jetzt.'
+                                : '\u2713 Abgeschaltet \u2013 die Adresse antwortet nicht mehr.', true);
           });
         });
-
         box.querySelector('[data-a="pfad"]').addEventListener('change', function (e) {
           var v = (e.target.value || '').trim().toLowerCase();
-          if (!/^\/[a-z0-9\/_-]*version\.json$/.test(v)) {
-            melde.textContent = '\u2717 Die Adresse muss mit / beginnen und auf version.json enden.';
-            melde.className = 'fv-update-melde schlecht';
-            e.target.value = einstellung.pfad;
+          if (!/^\/[a-z0-9\/_-]*(version|pc|android)\.json$/.test(v)) {
+            sagen('\u2717 Die Adresse muss mit / beginnen und auf version.json, pc.json oder android.json enden.', false);
+            e.target.value = c.einst.pfad;
             return;
           }
-          einstellung.pfad = v; cfg.pruef = v;
+          c.einst.pfad = v; c.pruef = v;
           var link = box.querySelector('.fv-update-link');
           if (link) link.setAttribute('href', v);
-          Promise.all([speichereEinstellung(), verzeichnisPflegen(einstellung.aktiv)]).then(function () {
-            melde.textContent = '\u2713 Adresse gespeichert.';
-            melde.className = 'fv-update-melde gut';
-            setTimeout(function () { melde.textContent = ''; }, 4000);
+          Promise.all([speichereEinstellung(c), verzeichnisPflegen(c, c.einst.aktiv)]).then(function () {
+            sagen('\u2713 Adresse gespeichert.', true);
           });
         });
-
-        box.querySelector('[data-a="bauplan"]').addEventListener('change', function (e) {
-          einstellung.bauplan = e.target.value;
-          speichereEinstellung().then(function () { location.reload(); });
+        var bauplanWahl = box.querySelector('[data-a="bauplan"]');
+        if (bauplanWahl) bauplanWahl.addEventListener('change', function (e) {
+          c.einst.bauplan = e.target.value;
+          speichereEinstellung(c).then(function () { location.reload(); });
         });
-
         box.querySelector('[data-a="merkmal"]').addEventListener('change', function (e) {
-          einstellung.merkmal = (e.target.value || '').trim();
-          cfg.fest = einstellung.merkmal ? { schluessel: einstellung.merkmal } : {};
-          speichereEinstellung().then(function () {
-            melde.textContent = '\u2713 Erkennungsmerkmal gespeichert.';
-            melde.className = 'fv-update-melde gut';
-            setTimeout(function () { melde.textContent = ''; }, 4000);
-          });
+          c.einst.merkmal = (e.target.value || '').trim();
+          c.fest = c.einst.merkmal ? { schluessel: c.einst.merkmal } : {};
+          speichereEinstellung(c).then(function () { sagen('\u2713 Erkennungsmerkmal gespeichert.', true); });
         });
       }
 
-      function ausFeldern() {
-        // AUF dem geladenen Stand aufsetzen, nicht bei null anfangen -
-        // sonst loescht diese Kachel die Fassungen der anderen.
-        var o = copy(grundstand || {});
-        var f = copy(cfg.fest);
-        for (var fk in f) if (f.hasOwnProperty(fk)) o[fk] = f[fk];
-        meine.forEach(function (pf) {
-          var unter = {};
-          var leer = true;
-          plattformFelder(pf).forEach(function (f) {
-            var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
-            var el = box.querySelector('[data-key="' + kennung + '"]');
-            if (!el) return;
-            var v = (el.value || '').trim();
-            if (f.typ === 'zahl') v = parseInt(v, 10) || 0;
-            if (v !== '' && v !== 0) leer = false;
-            if (pf.schluessel) {
-              unter[f.key] = v;
-            } else {
-              o[f.key] = v;
-              if (f.auch) f.auch.forEach(function (k2) { o[k2] = v; });
-            }
-          });
-          // Leere Zusatzfassungen gar nicht erst schreiben - sonst stehen
-          // leere Bloecke in der version.json, die niemand braucht.
-          if (pf.schluessel) {
-            if (leer) delete o[pf.schluessel];
-            else o[pf.schluessel] = unter;
-          }
-        });
-        return o;
-      }
-      function inFelder(o) {
-        meine.forEach(function (pf) {
-          var quelle = pf.schluessel ? (o[pf.schluessel] || {}) : o;
-          plattformFelder(pf).forEach(function (f) {
-            var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
-            var el = box.querySelector('[data-key="' + kennung + '"]');
-            if (!el) return;
-            var w = quelle[f.key];
-            el.value = (w === undefined || w === null) ? '' : w;
-          });
-        });
-        roh.value = JSON.stringify(mischKomplett(o), null, 2);
-      }
-      function mischKomplett(o) {
-        // sichert, dass feste Felder immer enthalten sind
-        var r = copy(cfg.fest);
-        for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k];
-        return r;
-      }
-      inFelder(daten);
-
-      // Zwischen den Fassungen umschalten
-      function reiterZeigen(wahl) {
-        Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (a) {
-          a.classList.toggle('an', (a.getAttribute('data-pf') || '') === wahl);
-        });
-        Array.prototype.forEach.call(box.querySelectorAll('.fv-update-fach'), function (f) {
-          f.hidden = ((f.getAttribute('data-fach') || '') !== wahl);
-        });
-      }
-      Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (k) {
-        k.addEventListener('click', function () {
-          reiterZeigen(k.getAttribute('data-pf') || '');
-        });
-      });
-
-      function sagen(text, gut) {
-        melde.textContent = text;
-        melde.className = 'fv-update-melde ' + (gut ? 'gut' : 'schlecht');
-        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 4500);
-      }
-
+      /* ---- Rohansicht: zeigt GENAU die eigene Datei ---------------- */
       box.querySelector('[data-a="mehr"]').addEventListener('click', function () {
         if (roh.hidden) { roh.value = JSON.stringify(ausFeldern(), null, 2); roh.hidden = false; }
         else { roh.hidden = true; }
       });
 
-      // Wenn die andere Kachel gespeichert hat, den eigenen Grundstand
-      // nachziehen - sonst schriebe man ihren frischen Stand wieder zurueck.
-      document.addEventListener('fv:version-gespeichert', function (e) {
-        try {
-          if (!e || !e.detail || e.detail.quelle === box) return;
-          grundstand = e.detail.stand;
-          inFelder(grundstand);
-        } catch (_x) {}
-      });
-
+      /* ---- Speichern ---------------------------------------------- */
       box.querySelector('[data-a="save"]').addEventListener('click', function () {
-        /* Erst den FRISCHEN Stand holen, dann zusammenbauen. Sonst geht bei
-           drei Fenstern Folgendes schief: alle drei lesen beim Klicken ihren
-           Grundstand von vorhin, und die zuletzt speichernde Kachel schreibt
-           ihn zurueck - die Aenderungen der anderen sind weg. */
         anstellen(function () {
-          return laden()
-            .then(function (frisch) {
-              if (frisch && typeof frisch === 'object') grundstand = frisch;
-            })
+          return holen(c.ablage)
+            .then(function (frisch) { if (frisch && typeof frisch === 'object') stand = frisch; })
             .catch(function () {})
-            .then(zusammenbauenUndSpeichern);
+            .then(pruefenUndSpeichern);
         });
       });
 
-      function zusammenbauenUndSpeichern() {
+      function pruefenUndSpeichern() {
         var obj;
         if (!roh.hidden) {
           try { obj = JSON.parse(roh.value); }
           catch (e) { sagen('\u2717 Das ist kein g\u00fcltiges JSON.', false); return; }
-          obj = mischKomplett(obj);
+          var f = c.fest || {};
+          for (var fk in f) if (f.hasOwnProperty(fk)) obj[fk] = f[fk];
+          delete obj.pc;
         } else {
           obj = ausFeldern();
         }
-        // Der Android-Pflichtcheck gilt nur dort, wo Android auch gepflegt
-        // wird - sonst blockiert er die PC-Kachel grundlos.
-        if (welche.indexOf('') !== -1) {
-          /* Den Codenamen aus den DEFINIERTEN Feldern holen, nicht raten.
-             Die meisten Apps nutzen "versionCode", Lesezeit aber
-             "versionsCode" (mit s) - fest verdrahtet meldete die Pruefung
-             dort "Versions-Code fehlt", obwohl er eingetragen war, und das
-             Speichern brach ab. */
-          var codeFeld = 'versionCode';
-          cfg.felder.forEach(function (f) {
-            if (/^versions?Code$/i.test(f.key)) codeFeld = f.key;
-          });
-          if (!obj[codeFeld] || obj[codeFeld] < 1) {
-            sagen('\u2717 Versions-Code fehlt.', false); return;
-          }
-          var urlWert = obj.apk || obj.download || obj.url || '';
-          if (urlWert && !/^https?:\/\//i.test(urlWert)) {
+        var codeFeld = codeFeldName();
+        var code = parseInt(obj[codeFeld], 10) || 0;
+        var uKey = urlFeldName();
+        var adresse = uKey ? String(obj[uKey] || '') : '';
+
+        /* Eine noch nicht gepflegte PC-Fassung darf leer bleiben - der
+           Server liefert dann versionCode 0, und das Programm meldet
+           schlicht "alles aktuell". Erst wenn etwas drinsteht, muss es
+           stimmen. */
+        var leer = !code && !adresse;
+        if (!leer) {
+          if (code < 1) { sagen('\u2717 Versions-Code fehlt.', false); return; }
+          if (adresse && !/^https?:\/\//i.test(adresse)) {
             sagen('\u2717 Die Download-Adresse muss mit https:// beginnen.', false); return;
           }
         }
-        // Zusatzfassungen ebenso pruefen - eine krumme Adresse dort faellt
-        // sonst erst auf, wenn jemand vergeblich klickt.
-        var meckern = '';
-        meine.forEach(function (pf) {
-          if (!pf.schluessel) return;
-          var u = obj[pf.schluessel];
-          if (!u || !u.url) return;
-          var erlaubt = pf.nurAdresse ? /^(https?:\/\/|\/)/i : /^https?:\/\//i;
-          if (!erlaubt.test(u.url)) {
-            meckern = pf.titel + ': die Adresse muss mit '
-                    + (pf.nurAdresse ? 'https:// oder / ' : 'https:// ') + 'beginnen.';
-          }
-          if (!pf.nurAdresse && u.versionCode && u.versionCode < 1) {
-            meckern = pf.titel + ': der Versions-Code muss groesser als 0 sein.';
-          }
-        });
-        if (meckern) { sagen('\u2717 ' + meckern, false); return; }
-        return speichern(obj).then(function (ok) {
-          if (ok) {
-            grundstand = obj;
-            inFelder(obj);
-            sagen('\u2713 Gespeichert \u2013 die App sieht die neue Fassung sofort.', true);
-            // Die andere Kachel mitziehen, damit sie nicht mit einem
-            // veralteten Stand weiterarbeitet.
-            try {
-              document.dispatchEvent(new CustomEvent('fv:version-gespeichert',
-                { detail: { stand: obj, quelle: box } }));
-            } catch (_x) {}
-          } else { sagen('\u2717 Speichern fehlgeschlagen.', false); }
+        return legen(c.ablage, obj).then(function (ok) {
+          if (!ok) { sagen('\u2717 Speichern fehlgeschlagen.', false); return; }
+          stand = obj;
+          inFelder(obj);
+          sagen('\u2713 Gespeichert in ' + c.pruef + ' \u2013 sofort wirksam.', true);
         });
       }
     }
 
+    /* =================================================================
+     * Start: je Definition eine Kachel im passenden Bereich
+     * ================================================================= */
+    function zielFuer(art) {
+      if (art === 'pc') return document.querySelector('.program-download-block--pc');
+      return document.querySelector(
+        '.program-download-block:not(.program-download-block--pc):not(.program-download-block--web)');
+    }
+
     function start() {
-      ladeEinstellung().then(laden).then(function (daten) {
-        var app = document.querySelector(
-          '.program-download-block:not(.program-download-block--pc)');
-        var pc = document.querySelector('.program-download-block--pc');
-        /* Jedes Fenster kennt NUR seine eigene Fassung - kein Umschalten,
-           keine Reiter. Wer den App-Bereich anschaut, sieht Android-Sachen
-           und sonst nichts. Die Web-Fassung hat kein Versionsfeld: sie ist
-           aktuell, sobald die Datei getauscht ist. */
-        if (app) bauen(daten, [''], app);
-        if (pc) bauen(daten, ['pc'], pc);
-        // Seite ohne Download-Bereiche: eine Kachel mit allem.
-        if (!app && !pc) bauen(daten, ['', 'pc'], null);
+      var haupt = document.querySelector('main');
+      var reihe = Promise.resolve();
+      cfgs.forEach(function (c) {
+        reihe = reihe.then(function () {
+          return ladeEinstellung(c).then(function () {
+            if (c.art === 'pc') return pcStandHolen(c);
+            return appStandHolen(c);
+          }).then(function (erg) {
+            var ziel = zielFuer(c.art);
+            /* Seite ohne eigene Download-Bereiche: alle Kacheln unter
+               den Hauptteil, damit nichts unsichtbar bleibt. */
+            if (!ziel && !document.querySelector('.program-download-block')) ziel = haupt;
+            bauen(c, erg.stand, ziel, erg.umgezogen);
+          });
+        }).catch(function () {});
       });
     }
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }
@@ -3534,9 +3482,22 @@
 })();
 
 /* =====================================================================
- * Sicherung: alle Inhalte herunterladen und wieder einspielen
- * Schuetzt alles, was ueber den Bearbeiten-Modus eingetragen wurde -
- * das steht sonst nur in der Datenbank und nirgends sonst.
+ * Sicherung: alles herunterladen (als ZIP) und wieder einspielen
+ * ---------------------------------------------------------------------
+ * Alles, was im Bearbeiten-Modus eingetragen wird, steht NUR in der
+ * Datenbank auf dem Server - in den Dateien steht der Ursprungstext.
+ * Ohne Sicherung gibt es davon keine zweite Kopie.
+ *
+ * Das ZIP hat zwei Gesichter:
+ *   sicherung.json  - fuer die Maschine. Genau das, was "einspielen"
+ *                     wieder annimmt. Nicht von Hand aendern.
+ *   seiten/*.md     - fuer Menschen. Je Seite eine Liste: welcher Block,
+ *                     welche Art, welcher Text. Damit laesst sich ohne
+ *                     Werkzeug nachlesen, welche Texte geaendert wurden.
+ *   bilder/*        - die hochgeladenen Bilder als echte Dateien.
+ *   LIESMICH.md     - was drin ist und wie man es zurueckspielt.
+ *
+ * Der Knopf sitzt in der Admin-Leiste und wirkt auf JEDER Seite.
  * ===================================================================== */
 (function () {
   'use strict';
@@ -3545,97 +3506,308 @@
     try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
     if (!pw) return;
 
-    function bauen() {
+    /* ---- ZIP schreiben, ohne fremde Bibliothek --------------------
+       Gespeichert wird ohne Verdichtung ("store"). Bilder sind ohnehin
+       schon verdichtet, und Text faellt kaum ins Gewicht - dafuer ist
+       der Schreiber kurz genug, um ihn zu ueberblicken. */
+    var crcTabelle = (function () {
+      var t = new Uint32Array(256);
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        t[n] = c >>> 0;
+      }
+      return t;
+    })();
+    function crc32(bytes) {
+      var c = 0xFFFFFFFF;
+      for (var i = 0; i < bytes.length; i++) c = crcTabelle[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+      return (c ^ 0xFFFFFFFF) >>> 0;
+    }
+    function textBytes(s) {
+      if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(s);
+      var aus = [];
+      for (var i = 0; i < s.length; i++) {
+        var c = s.charCodeAt(i);
+        if (c < 128) aus.push(c);
+        else if (c < 2048) aus.push(192 | (c >> 6), 128 | (c & 63));
+        else aus.push(224 | (c >> 12), 128 | ((c >> 6) & 63), 128 | (c & 63));
+      }
+      return new Uint8Array(aus);
+    }
+    function b64Bytes(b64) {
+      var roh = atob(String(b64).replace(/\s+/g, ''));
+      var a = new Uint8Array(roh.length);
+      for (var i = 0; i < roh.length; i++) a[i] = roh.charCodeAt(i);
+      return a;
+    }
+    function zipBauen(dateien) {
+      var stuecke = [], verzeichnis = [], versatz = 0, jetzt = new Date();
+      var zeit = ((jetzt.getHours() << 11) | (jetzt.getMinutes() << 5) | (jetzt.getSeconds() >> 1)) & 0xFFFF;
+      var datum = (((jetzt.getFullYear() - 1980) << 9) | ((jetzt.getMonth() + 1) << 5) | jetzt.getDate()) & 0xFFFF;
+
+      function schreibe(ziel, p, wert, breite) {
+        for (var i = 0; i < breite; i++) ziel[p + i] = (wert >>> (i * 8)) & 0xFF;
+      }
+
+      dateien.forEach(function (d) {
+        var name = textBytes(d.name);
+        var inhalt = (d.daten instanceof Uint8Array) ? d.daten : textBytes(String(d.daten));
+        var pruef = crc32(inhalt);
+
+        var kopf = new Uint8Array(30 + name.length);
+        schreibe(kopf, 0, 0x04034b50, 4);
+        schreibe(kopf, 4, 20, 2);
+        schreibe(kopf, 6, 0x0800, 2);     // Namen sind UTF-8
+        schreibe(kopf, 8, 0, 2);          // ohne Verdichtung
+        schreibe(kopf, 10, zeit, 2);
+        schreibe(kopf, 12, datum, 2);
+        schreibe(kopf, 14, pruef, 4);
+        schreibe(kopf, 18, inhalt.length, 4);
+        schreibe(kopf, 22, inhalt.length, 4);
+        schreibe(kopf, 26, name.length, 2);
+        schreibe(kopf, 28, 0, 2);
+        kopf.set(name, 30);
+        stuecke.push(kopf, inhalt);
+
+        var eintrag = new Uint8Array(46 + name.length);
+        schreibe(eintrag, 0, 0x02014b50, 4);
+        schreibe(eintrag, 4, 20, 2);
+        schreibe(eintrag, 6, 20, 2);
+        schreibe(eintrag, 8, 0x0800, 2);
+        schreibe(eintrag, 10, 0, 2);
+        schreibe(eintrag, 12, zeit, 2);
+        schreibe(eintrag, 14, datum, 2);
+        schreibe(eintrag, 16, pruef, 4);
+        schreibe(eintrag, 20, inhalt.length, 4);
+        schreibe(eintrag, 24, inhalt.length, 4);
+        schreibe(eintrag, 28, name.length, 2);
+        schreibe(eintrag, 42, versatz, 4);
+        eintrag.set(name, 46);
+        verzeichnis.push(eintrag);
+
+        versatz += kopf.length + inhalt.length;
+      });
+
+      var vLaenge = 0;
+      verzeichnis.forEach(function (e) { vLaenge += e.length; });
+      var schluss = new Uint8Array(22);
+      schreibe(schluss, 0, 0x06054b50, 4);
+      schreibe(schluss, 8, dateien.length, 2);
+      schreibe(schluss, 10, dateien.length, 2);
+      schreibe(schluss, 12, vLaenge, 4);
+      schreibe(schluss, 16, versatz, 4);
+
+      var gesamt = versatz + vLaenge + 22;
+      var aus = new Uint8Array(gesamt), p = 0;
+      stuecke.forEach(function (s) { aus.set(s, p); p += s.length; });
+      verzeichnis.forEach(function (s) { aus.set(s, p); p += s.length; });
+      aus.set(schluss, p);
+      return aus;
+    }
+
+    /* ---- Lesbare Fassung je Seite ------------------------------- */
+    function sicherName(s) { return String(s).replace(/[^a-z0-9_-]/gi, '_') || 'ohne-namen'; }
+    function zeitText(ms) {
+      var n = Number(ms);
+      if (!isFinite(n) || n <= 0) return '';
+      try { return new Date(n).toISOString().slice(0, 16).replace('T', ' '); } catch (e) { return ''; }
+    }
+    function seitenBlatt(seite, eintraege) {
+      var t = '# Seite: ' + seite + '\n\n'
+            + eintraege.length + ' Eintr' + (eintraege.length === 1 ? 'ag' : 'äge') + '.\n\n'
+            + 'Jeder Abschnitt ist ein Feld auf der Seite. `block` ist seine Kennung,\n'
+            + '`art` sagt, was es ist. Der Inhalt steht darunter, unverändert.\n';
+      eintraege.forEach(function (e) {
+        var wann = zeitText(e.updated);
+        t += '\n---\n\n## ' + e.block + '  (' + (e.type || 'text') + ')'
+           + (wann ? '  ·  zuletzt ' + wann : '') + '\n\n';
+        var wert = String(e.value == null ? '' : e.value);
+        if (e.type === 'image' || e.type === 'link') t += wert + '\n';
+        else t += '```\n' + wert.replace(/```/g, '` ` `') + '\n```\n';
+      });
+      return t;
+    }
+    function endung(mime) {
+      if (/png/.test(mime)) return 'png';
+      if (/webp/.test(mime)) return 'webp';
+      if (/gif/.test(mime)) return 'gif';
+      return 'jpg';
+    }
+
+    function melden(text, gut) {
+      var bar = document.querySelector('.fv-admin-bar');
+      var ziel = document.querySelector('.fv-sich-melde');
+      if (!ziel && bar) {
+        ziel = document.createElement('span');
+        ziel.className = 'fv-sich-melde';
+        bar.querySelector('.fv-admin-right').appendChild(ziel);
+      }
+      var kasten = document.querySelector('#fvSMelde');
+      [ziel, kasten].forEach(function (m) {
+        if (!m) return;
+        m.textContent = text;
+        m.className = (m === kasten ? 'fv-prog-melde ' : 'fv-sich-melde ') + (gut ? 'gut' : 'schlecht');
+      });
+      if (gut) setTimeout(function () {
+        [ziel, kasten].forEach(function (m) { if (m) m.textContent = ''; });
+      }, 12000);
+    }
+
+    var laeuft = false;
+    function sicherungLaden() {
+      if (laeuft) return;
+      laeuft = true;
+      melden('Sicherung wird erstellt \u2026', true);
+      fetch('/api/export', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (txt) {
+          if (!txt) throw new Error('leer');
+          var daten = JSON.parse(txt);
+          var inhalte = daten.inhalte || [];
+          var bilder = daten.bilder || [];
+
+          /* nach Seiten ordnen */
+          var nachSeite = {}, reihenfolge = [];
+          inhalte.forEach(function (e) {
+            var s = String(e.page || 'ohne-seite');
+            if (!nachSeite[s]) { nachSeite[s] = []; reihenfolge.push(s); }
+            nachSeite[s].push(e);
+          });
+          reihenfolge.sort();
+
+          var d = new Date();
+          var stempel = d.getFullYear() + '-'
+                      + String(d.getMonth() + 1).padStart(2, '0') + '-'
+                      + String(d.getDate()).padStart(2, '0');
+
+          var liesmich =
+            '# FINNVELO Programmwelten \u2013 Sicherung\n\n'
+          + 'Erstellt: ' + (daten.erstellt || d.toISOString()) + '\n\n'
+          + '- Eintr\u00e4ge: ' + inhalte.length + '\n'
+          + '- Seiten: ' + reihenfolge.length + '\n'
+          + '- Bilder: ' + bilder.length + '\n\n'
+          + '## Was hier drin ist\n\n'
+          + '| Datei | Wof\u00fcr |\n|---|---|\n'
+          + '| `sicherung.json` | Die Sicherung selbst. Genau diese Datei nimmt '
+          + '\u201eSicherung einspielen\u201c wieder an. Nicht von Hand \u00e4ndern. |\n'
+          + '| `seiten/*.md` | Dasselbe zum Lesen \u2013 je Seite ein Blatt mit allen Feldern. |\n'
+          + '| `bilder/*` | Die hochgeladenen Bilder als echte Dateien. |\n\n'
+          + '## Zur\u00fcckspielen\n\n'
+          + 'Auf `/programme` anmelden, **Bearbeiten: AN**, Kasten \u201eSicherung\u201c \u2192 '
+          + '**Sicherung einspielen** \u2192 `sicherung.json` w\u00e4hlen.\n\n'
+          + 'Vorhandene Bilder bleiben unber\u00fchrt; fehlende werden erg\u00e4nzt. '
+          + 'Texte werden \u00fcberschrieben.\n\n'
+          + '## Wozu die Blätter unter `seiten/`\n\n'
+          + 'In den HTML-Dateien des Projekts steht nur der Ursprungstext. Alles, was '
+          + '\u00fcber den Bearbeiten-Modus ge\u00e4ndert wurde, liegt in der Datenbank \u2013 '
+          + 'und damit hier. Wer wissen will, welche Texte von Hand ge\u00e4ndert wurden, '
+          + 'vergleicht das Blatt der Seite mit der zugeh\u00f6rigen HTML-Datei.\n\n'
+          + '## Seiten in dieser Sicherung\n\n'
+          + reihenfolge.map(function (s) {
+              return '- `' + s + '` \u2013 ' + nachSeite[s].length + ' Eintr\u00e4ge';
+            }).join('\n') + '\n';
+
+          var dateien = [
+            { name: 'LIESMICH.md', daten: liesmich },
+            { name: 'sicherung.json', daten: txt }
+          ];
+          reihenfolge.forEach(function (s) {
+            dateien.push({ name: 'seiten/' + sicherName(s) + '.md',
+                           daten: seitenBlatt(s, nachSeite[s]) });
+          });
+          bilder.forEach(function (b) {
+            try {
+              dateien.push({ name: 'bilder/' + sicherName(b.id) + '.' + endung(b.mime || ''),
+                             daten: b64Bytes(b.data) });
+            } catch (e) {}
+          });
+
+          var roh = zipBauen(dateien);
+          var blob = new Blob([roh], { type: 'application/zip' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'finnvelo-sicherung-' + stempel + '.zip';
+          document.body.appendChild(a); a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+          melden('\u2713 ' + a.download + ' \u2013 ' + inhalte.length + ' Eintr\u00e4ge, '
+               + reihenfolge.length + ' Seiten, ' + bilder.length + ' Bilder.', true);
+        })
+        .catch(function () { melden('\u2717 Sicherung fehlgeschlagen.', false); })
+        .then(function () { laeuft = false; });
+    }
+
+    function sicherungEinspielen() {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = function () {
+        var f = inp.files && inp.files[0]; if (!f) return;
+        var leser = new FileReader();
+        leser.onload = function () {
+          var daten;
+          try { daten = JSON.parse(String(leser.result)); }
+          catch (e) { melden('\u2717 Das ist keine g\u00fcltige Sicherungsdatei.', false); return; }
+          if (!daten || daten.art !== 'finnvelo-sicherung') {
+            melden('\u2717 Das ist keine Finnvelo-Sicherung.', false); return;
+          }
+          if (!window.confirm('Sicherung vom ' + (daten.erstellt || '?').slice(0, 10)
+              + ' einspielen?\n\nAlle Texte werden mit dem Stand aus der Datei \u00fcberschrieben.')) return;
+          melden('Wird eingespielt \u2026', true);
+          fetch('/api/import', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ password: pw, daten: daten })
+          }).then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (a) {
+              if (!a || !a.ok) { melden('\u2717 Einspielen fehlgeschlagen.', false); return; }
+              melden('\u2713 ' + a.uebernommen + ' Eintr\u00e4ge'
+                   + (a.bilder ? ' und ' + a.bilder + ' Bilder' : '')
+                   + ' eingespielt. Seite neu laden.', true);
+            })
+            .catch(function () { melden('\u2717 Einspielen fehlgeschlagen.', false); });
+        };
+        leser.readAsText(f);
+      };
+      inp.click();
+    }
+
+    /* Der Knopf in der Admin-Leiste meldet sich hierher. */
+    document.addEventListener('fv:sicherung-laden', sicherungLaden);
+
+    /* Zusaetzlich der ausfuehrliche Kasten auf /programme - dort steht
+       auch das Einspielen, das man selten und bewusst braucht. */
+    function kastenBauen() {
       var ziel = document.querySelector('main');
       if (!ziel || document.querySelector('.fv-sich-box')) return;
       var editAn = false;
       try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
       if (!editAn) return;
       var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
-      if (pfad !== '/programme') return;   // ein fester Ort genuegt
+      if (pfad !== '/programme') return;
 
       var box = document.createElement('section');
       box.className = 'fv-prog-box fv-sich-box';
       box.innerHTML =
         '<h3 class="fv-prog-titel">\uD83D\uDCBE Sicherung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
       + '<p class="fv-prog-hilfe">Alles, was du im Bearbeiten-Modus eintr\u00e4gst \u2013 Texte, Bilder, '
-      + 'Zusatzfelder, ausgeblendete Elemente, App-Versionen, angelegte Programme \u2013 liegt nur in der '
+      + 'Zusatzfelder, ausgeblendete Elemente, Fassungsangaben, angelegte Programme \u2013 liegt nur in der '
       + 'Datenbank auf dem Server. In den Dateien steht nur der Ursprungstext. '
-      + '<strong>Lade dir ab und zu eine Sicherung herunter</strong>, am besten nach gr\u00f6\u00dferen \u00c4nderungen.</p>'
+      + '<strong>Lade dir ab und zu eine Sicherung herunter</strong>, am besten nach gr\u00f6\u00dferen '
+      + '\u00c4nderungen. Du bekommst ein ZIP: die Sicherung selbst, dieselben Inhalte zum Lesen '
+      + 'je Seite, und alle Bilder als Dateien.</p>'
       + '<div class="fv-prog-zeile">'
       + '  <button type="button" class="fv-prog-btn" id="fvSDown">Sicherung herunterladen</button>'
       + '  <button type="button" class="fv-prog-weg" id="fvSUp" style="margin-left:0">Sicherung einspielen</button>'
       + '  <span class="fv-prog-melde" id="fvSMelde"></span>'
       + '</div>';
       ziel.appendChild(box);
-
-      var melde = box.querySelector('#fvSMelde');
-      function sagen(t, gut) {
-        melde.textContent = t;
-        melde.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
-        if (gut) setTimeout(function () { melde.textContent = ''; }, 8000);
-      }
-
-      box.querySelector('#fvSDown').addEventListener('click', function () {
-        sagen('Wird erstellt \u2026', true);
-        fetch('/api/export', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ password: pw })
-        }).then(function (r) { return r.ok ? r.text() : null; })
-          .then(function (txt) {
-            if (!txt) { sagen('\u2717 Sicherung fehlgeschlagen.', false); return; }
-            var d = new Date();
-            var name = 'finnvelo-sicherung-'
-              + d.getFullYear() + '-'
-              + String(d.getMonth() + 1).padStart(2, '0') + '-'
-              + String(d.getDate()).padStart(2, '0') + '.json';
-            var blob = new Blob([txt], { type: 'application/json' });
-            var a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = name;
-            document.body.appendChild(a); a.click();
-            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-            var anzahl = 0;
-            try { anzahl = (JSON.parse(txt).anzahl) || 0; } catch (e) {}
-            sagen('\u2713 Heruntergeladen: ' + name + ' (' + anzahl + ' Eintr\u00e4ge)', true);
-          }).catch(function () { sagen('\u2717 Sicherung fehlgeschlagen.', false); });
-      });
-
-      box.querySelector('#fvSUp').addEventListener('click', function () {
-        var inp = document.createElement('input');
-        inp.type = 'file'; inp.accept = '.json,application/json';
-        inp.onchange = function () {
-          var f = inp.files && inp.files[0]; if (!f) return;
-          var leser = new FileReader();
-          leser.onload = function () {
-            var daten;
-            try { daten = JSON.parse(String(leser.result || '')); }
-            catch (e) { sagen('\u2717 Das ist keine g\u00fcltige Sicherungsdatei.', false); return; }
-            if (!daten || daten.art !== 'finnvelo-sicherung') {
-              sagen('\u2717 Das ist keine Finnvelo-Sicherung.', false); return;
-            }
-            if (!window.confirm('Sicherung vom ' + (daten.erstellt || '?').slice(0, 10)
-              + ' mit ' + (daten.anzahl || 0) + ' Eintr\u00e4gen einspielen?\n\n'
-              + 'Vorhandene Inhalte mit denselben Feldern werden dabei \u00fcberschrieben.')) return;
-            sagen('Wird eingespielt \u2026', true);
-            fetch('/api/import', {
-              method: 'POST', headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ password: pw, daten: daten })
-            }).then(function (r) { return r.ok ? r.json() : null; })
-              .then(function (res) {
-                if (res && res.ok) {
-                  sagen('\u2713 ' + res.uebernommen + ' Eintr\u00e4ge eingespielt. Seite neu laden.', true);
-                } else sagen('\u2717 Einspielen fehlgeschlagen.', false);
-              }).catch(function () { sagen('\u2717 Einspielen fehlgeschlagen.', false); });
-          };
-          leser.readAsText(f);
-        };
-        inp.click();
-      });
+      box.querySelector('#fvSDown').addEventListener('click', sicherungLaden);
+      box.querySelector('#fvSUp').addEventListener('click', sicherungEinspielen);
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
-    else bauen();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kastenBauen);
+    else kastenBauen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
 

@@ -382,6 +382,28 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5Q. Vorschau zeigte beide Fassungen (22.08.2026)
+
+**Die Dateien auf dem Server waren bereits richtig getrennt** - vom
+Nutzer hochgeladene `version.json` und `pc.json` belegen es. Verwirrend
+war nur die **Vorschau** in der Kachel: sie zeigte
+`ausFeldern()` - die Arbeitsform der Kachel mit App-Feldern **und**
+Block `pc`. Das ist nicht, was auf dem Server liegt.
+
+**Geaendert:** Die Rohansicht zeigt jetzt nur noch die Datei, die zur
+gewaehlten Fassung gehoert - beim PC-Reiter also nur den PC-Teil, mit
+eigenem Schluessel.
+
+Der veraltete Warntext in der PC-Kachel ("schreibt derzeit noch einen
+Block pc in DIESELBE version.json") ist ersetzt.
+
+**Merke:** Die Kachel arbeitet intern mit **einem** Objekt, damit die
+Reiter funktionieren. Gespeichert und angezeigt wird getrennt. Wer die
+Vorschau aendert, muss beide Stellen anfassen: beim Aufklappen und beim
+Reiterwechsel.
+
+---
+
 ## 5P. Einheitliches Verfahren fuer PC-Aktualisierungen (22.08.2026)
 
 Alle fuenf PC-Fassungsdateien liefern jetzt **denselben Aufbau**:
