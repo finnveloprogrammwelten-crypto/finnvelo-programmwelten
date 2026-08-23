@@ -382,6 +382,49 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5O. Je Fassung eine eigene Datei (22.08.2026)
+
+**Gemeldet:** "Wenn ich im Computerprogramm etwas aendere, wird es auch
+in der App geaendert - und umgekehrt."
+
+**Ursache:** App und PC-Fassung teilten sich **dieselbe version.json**.
+Die PC-Angaben lagen als Block `pc` darin. Beim Speichern ueberschrieb
+eine Fassung die andere.
+
+**Behoben - zwei getrennte Dateien**, wie beim Tourenplaner:
+
+| Fassung | Adresse | Schluessel |
+|---|---|---|
+| App | `/FinnVelo/Aufgabenplaner/version.json` | `FINNVELO-AUFGABENPLANER` |
+| PC | `/FinnVelo/Aufgabenplaner/pc.json` | `FINNVELO-AUFGABENPLANER-PC` |
+
+**Die App-Adresse bleibt unveraendert** - die verteilten Apps fragen
+genau sie ab.
+
+**Stolperstein:** Der Routenvergleich laeuft ueber
+`url.pathname.toLowerCase()`. Ein Schluessel mit Grossbuchstaben
+(`/FinnVelo/...`) trifft deshalb nie. Alle Schluessel in
+`VERSION_ROUTEN` muessen **klein** geschrieben sein.
+
+**Fuer ALLE Programme umgesetzt.** Jede Fassung hat jetzt ihre eigene
+Datei:
+
+| Programm | App | PC |
+|---|---|---|
+| Aufgabenplaner | `/FinnVelo/Aufgabenplaner/version.json` | `.../pc.json` |
+| Einkaufsplaner | `/einkaufsliste/version.json` | `/einkaufsliste/pc.json` |
+| Mischwaldrechner | `/mischwaldrechner/version.json` | `/mischwaldrechner/pc.json` |
+| Lesezeit | `/lesezeit/version.json` | `/lesezeit/pc.json` |
+| Tourenplaner | `/tourenplaner/android.json` | `/tourenplaner/pc.json` |
+
+**Alle App-Adressen sind unveraendert** - die verteilten Apps fragen
+genau sie ab.
+
+**Regel fuer neue Programme:** Kommt eine zweite Fassung dazu, bekommt
+sie eine **eigene Datei** - niemals einen Block in der bestehenden.
+
+---
+
 ## 5N-a. FALLE: Blockschluessel n0 gehoert der Navigation (22.08.2026)
 
 **Ein schwerer Fehler von mir.** Ich hatte `n0` fuer die Statusliste

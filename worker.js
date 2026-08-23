@@ -975,6 +975,10 @@ export class Counter extends DurableObject {
       const leer = {
         aufgabenplaner: { schluessel: "FINNVELO-AUFGABENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         einkaufsliste: { schluessel: "FINNVELO-EINKAUFSPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "aufgabenplaner-pc": { schluessel: "FINNVELO-AUFGABENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "einkaufsliste-pc": { schluessel: "FINNVELO-EINKAUFSPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "mischwald-pc": { schluessel: "FINNVELO-MISCHWALD-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "lesezeit-pc": { schluessel: "FINNVELO-LESEZEIT-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         /* Vorbelegt mit der gelieferten Fassung, damit die App sofort etwas
@@ -1646,6 +1650,14 @@ export default {
          Aufgabenplaner. Im Ordner /tourenplaner/ darf keine gleichnamige
          Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
          dann still ins Leere. */
+      // Aufgabenplaner PC - eigene Datei, damit App und PC-Programm sich
+      // nicht mehr gegenseitig ueberschreiben.
+      "/finnvelo/aufgabenplaner/pc.json": "aufgabenplaner-pc",
+      // Je Fassung eine eigene Datei - sonst ueberschreiben sich App und
+      // PC-Programm gegenseitig. Schluessel IMMER klein schreiben!
+      "/einkaufsliste/pc.json": "einkaufsliste-pc",
+      "/mischwaldrechner/pc.json": "mischwald-pc",
+      "/lesezeit/pc.json": "lesezeit-pc",   // klein! der Vergleich nutzt toLowerCase()
       "/tourenplaner/android.json": "tourenplaner-android",
       "/tourenplaner/pc.json": "tourenplaner-pc",
       // Lesezeit: die App fragt /lesezeit/version.json ab.

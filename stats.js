@@ -2223,6 +2223,83 @@
         }
       },
       {
+        /* Einkaufsplaner, PC-Fassung - EIGENE Datei.
+           Damit ueberschreiben sich App und PC-Programm nicht mehr
+           gegenseitig (siehe 5O). Die App-Adresse bleibt unberuehrt. */
+        seite: 'einkaufsliste',
+        ablage: 'einkaufsliste-pc',
+        pruef: '/einkaufsliste/pc.json',
+        titel: 'Einkaufsplaner (PC)',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 1.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 10000' },
+          { key: 'apk', label: 'Download-Adresse (EXE oder ZIP)', typ: 'url', ph: 'https://github.com/.../...exe' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-EINKAUFSPLANER-PC' },
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+      {
+        /* Mischwaldrechner, PC-Fassung - EIGENE Datei.
+           Damit ueberschreiben sich App und PC-Programm nicht mehr
+           gegenseitig (siehe 5O). Die App-Adresse bleibt unberuehrt. */
+        seite: 'mischwaldrechner',
+        ablage: 'mischwald-pc',
+        pruef: '/mischwaldrechner/pc.json',
+        titel: 'Mischwaldrechner (PC)',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 1.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 10000' },
+          { key: 'apk', label: 'Download-Adresse (EXE oder ZIP)', typ: 'url', ph: 'https://github.com/.../...exe' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-MISCHWALD-PC' },
+        vorgabe: { schluessel: 'FINNVELO-MISCHWALD-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+      {
+        /* Lesezeit, PC-Fassung - EIGENE Datei.
+           Damit ueberschreiben sich App und PC-Programm nicht mehr
+           gegenseitig (siehe 5O). Die App-Adresse bleibt unberuehrt. */
+        seite: 'lesezeit',
+        ablage: 'lesezeit-pc',
+        pruef: '/lesezeit/pc.json',
+        titel: 'Lesezeit (PC)',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 1.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 10000' },
+          { key: 'apk', label: 'Download-Adresse (EXE oder ZIP)', typ: 'url', ph: 'https://github.com/.../...exe' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-LESEZEIT-PC' },
+        vorgabe: { schluessel: 'FINNVELO-LESEZEIT-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+      {
+        /* Aufgabenplaner, PC-Fassung - EIGENE Datei.
+           Vorher teilten sich App und PC-Programm dieselbe version.json:
+           die PC-Fassung lag als Block "pc" darin. Beim Speichern
+           ueberschrieb eine Fassung die andere - wer am PC-Teil etwas
+           aenderte, verstellte die App-Angaben und umgekehrt.
+           Jetzt zwei getrennte Dateien, wie beim Tourenplaner.
+           ACHTUNG: /FinnVelo/Aufgabenplaner/version.json bleibt
+           unveraendert - die verteilten Apps fragen genau sie ab. */
+        seite: 'aufgabenplaner',
+        ablage: 'aufgabenplaner-pc',
+        pruef: '/FinnVelo/Aufgabenplaner/pc.json',
+        titel: 'Aufgabenplaner (PC)',
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 2.3' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 20300' },
+          { key: 'apk', label: 'Download-Adresse (EXE oder ZIP)', typ: 'url',
+            ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-Einrichtung-2.3.exe' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-AUFGABENPLANER-PC' },
+        vorgabe: {
+          schluessel: 'FINNVELO-AUFGABENPLANER-PC', versionCode: 0, versionName: '',
+          apk: '', hinweise: ''
+        }
+      },
+      {
         /* Lesezeit. Die App fragt /lesezeit/version.json ab.
            Ordner, Programmname und Paketname heissen einheitlich "Lesezeit".
            ACHTUNG: eigenes Format - "programm", "version", "versionsCode"
