@@ -382,6 +382,34 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5N. Statuszeichen: Auswahlliste und einmal pflegen (22.08.2026)
+
+Dasselbe Zeichen ("Vollversion", "In Entwicklung" ...) stand an **drei
+Stellen**: Programmseite, Kachel der Startseite, Zeile der Uebersicht.
+Es musste dreimal einzeln gepflegt werden - und lief regelmaessig
+auseinander.
+
+**Jetzt liegt es einmal** in der globalen Ablage, Block **`n0`**, als
+Zuordnung `{ programm: zeichen }`. Alle drei Stellen lesen daraus, auch
+fuer Besucher.
+
+**Auswahlliste:** kleiner Pfeil rechts am Zeichen (nur im
+Bearbeiten-Modus) mit *In Entwicklung* / *Vollversion* / *Vollversion
+Weiterentwicklung*. Freies Tippen bleibt moeglich und wirkt ebenso
+ueberall.
+
+**Wie das Programm erkannt wird:**
+
+* Auf einer Programmseite: die Seite selbst (`SLUG`).
+* In Kachel oder Zeile: das Ziel des umgebenden Links (`href="/xyz"`).
+
+Damit braucht es keine Zuordnungstabelle, die man pflegen muesste.
+
+Geprueft: setzen -> Startseite und Uebersicht uebernehmen es, andere
+Programme bleiben unberuehrt, Besucher sehen den Wert ohne Pfeil.
+
+---
+
 ## 5M. Zaehlerleiste auf der Startseite verschlankt (22.08.2026)
 
 Die Leiste zeigte "Besucher gesamt · Planer · Mischwald". Die beiden

@@ -2422,3 +2422,48 @@ body.fv-admin-on .site-header { top: 44px; }
    auch dann stimmt, wenn eine andere Regel den Umbruch wieder erlaubt. */
 .status br,
 .program-button__status br { display: none !important; }
+
+/* ---------------------------------------------------------------------
+   Auswahlliste am Statuszeichen (nur im Bearbeiten-Modus)
+   --------------------------------------------------------------------- */
+.fv-status-pfeil {
+  margin-left: 6px;
+  padding: 2px 7px;
+  border-radius: 7px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background: rgba(120, 170, 255, 0.12);
+  color: #cfe2ff;
+  font: 700 11px/1 inherit;
+  cursor: pointer;
+  vertical-align: middle;
+}
+.fv-status-pfeil:hover { background: var(--blue); border-color: var(--blue); color: #fff; }
+.fv-status-liste {
+  position: absolute;
+  z-index: 1200;
+  min-width: 210px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #0b1120;
+  border: 1px solid rgba(120, 170, 255, 0.45);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.fv-status-wahl {
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--text);
+  font: 400 13.5px/1.3 inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.fv-status-wahl:hover { background: rgba(120, 170, 255, 0.18); }
+.fv-status-wahl.an { background: var(--blue); color: #fff; font-weight: 700; }
+@media (pointer: coarse) {
+  .fv-status-pfeil { padding: 8px 12px; }
+  .fv-status-wahl { padding: 12px 14px; }
+}

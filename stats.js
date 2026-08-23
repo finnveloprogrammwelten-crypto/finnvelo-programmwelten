@@ -634,6 +634,8 @@
         // Download-Bereiche ein-/ausblenden. Muss auch fuer Besucher laufen -
         // sonst sehen sie einen Bereich, den der Admin abgeschaltet hat.
         parseBereiche(map['y0']); renderBereiche();
+        // Statuszeichen aus der gemeinsamen Ablage - auch fuer Besucher.
+        parseStatusListe(gmap['n0']); renderStatusListe();
       }).catch(function () {});
     }
 
@@ -1666,6 +1668,126 @@
     }
 
     /* ================================================================
+     * Statuszeichen je Programm - einmal setzen, ueberall wirksam
+     * ----------------------------------------------------------------
+     * Dasselbe Zeichen ("Vollversion", "In Entwicklung" ...) steht an drei
+     * Stellen: auf der Programmseite, in der Kachel der Startseite und in
+     * der Zeile der Uebersicht. Bisher musste es dreimal einzeln gepflegt
+     * werden - und lief regelmaessig auseinander.
+     *
+     * Jetzt liegt es EINMAL in der globalen Ablage (Block "n0"), als
+     * Zuordnung { programm: zeichen }. Alle drei Stellen lesen daraus,
+     * auch fuer Besucher.
+     * ================================================================ */
+    var STATUS_VORSCHLAEGE = ['In Entwicklung', 'Vollversion', 'Vollversion Weiterentwicklung'];
+    var statusListe = {};
+
+    function parseStatusListe(item) {
+      statusListe = {};
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var o = JSON.parse(item.value);
+          if (o && typeof o === 'object') statusListe = o;
+        } catch (e) { statusListe = {}; }
+      }
+    }
+
+    /* Zu welchem Programm gehoert dieses Statusfeld?
+       - Auf einer Programmseite: die Seite selbst.
+       - In einer Kachel oder Zeile: das Ziel des umgebenden Links. */
+    function programmVonStatus(el) {
+      var a = el.closest && el.closest('a[href^="/"]');
+      if (a) {
+        var z = (a.getAttribute('href') || '').replace(/^\/+|\/+$/g, '');
+        if (z && z.indexOf('/') === -1) return z;
+      }
+      if (document.querySelector('article.program-detail')) return SLUG;
+      return null;
+    }
+
+    function alleStatusFelder() {
+      return Array.prototype.slice.call(
+        document.querySelectorAll('.program-button__status, .program-detail__summary .status, .program-row .status'));
+    }
+
+    function renderStatusListe() {
+      alleStatusFelder().forEach(function (el) {
+        var p = programmVonStatus(el);
+        if (!p) return;
+        var wert = statusListe[p];
+        if (typeof wert === 'string' && wert !== '' && el.innerHTML !== wert) {
+          el.innerHTML = wert;
+        }
+      });
+    }
+
+    function statusSetzen(programm, wert) {
+      if (!programm) return Promise.resolve(false);
+      statusListe[programm] = wert;
+      renderStatusListe();
+      return save('n0', 'text', JSON.stringify(statusListe), GLOBAL);
+    }
+
+    /* Auswahlliste an ein Statusfeld haengen - kleiner Pfeil rechts.
+       Der Text bleibt frei beschreibbar; die Liste ist nur eine Abkuerzung. */
+    function statusAuswahl(el) {
+      if (!EDITING) return;
+      var programm = programmVonStatus(el);
+      if (!programm) return;
+      if (el.parentNode && el.parentNode.querySelector(':scope > .fv-status-pfeil')) return;
+
+      var pfeil = document.createElement('button');
+      pfeil.type = 'button';
+      pfeil.className = 'fv-status-pfeil';
+      pfeil.title = 'Aus der Liste waehlen';
+      pfeil.textContent = '\u25BE';
+      if (el.parentNode) el.parentNode.insertBefore(pfeil, el.nextSibling);
+
+      pfeil.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var offen = document.querySelector('.fv-status-liste');
+        if (offen) { offen.parentNode.removeChild(offen); return; }
+
+        var liste = document.createElement('div');
+        liste.className = 'fv-status-liste';
+        STATUS_VORSCHLAEGE.forEach(function (t) {
+          var k = document.createElement('button');
+          k.type = 'button';
+          k.className = 'fv-status-wahl' + (el.textContent.trim() === t ? ' an' : '');
+          k.textContent = t;
+          k.addEventListener('click', function () {
+            liste.parentNode.removeChild(liste);
+            statusSetzen(programm, t).then(function (gut) {
+              flash(el, gut !== false);
+            });
+          });
+          liste.appendChild(k);
+        });
+        var r = pfeil.getBoundingClientRect();
+        liste.style.top = (window.scrollY + r.bottom + 6) + 'px';
+        liste.style.left = (window.scrollX + r.left - 60) + 'px';
+        document.body.appendChild(liste);
+
+        setTimeout(function () {
+          document.addEventListener('click', function zu(ev) {
+            if (liste.contains(ev.target) || ev.target === pfeil) return;
+            if (liste.parentNode) liste.parentNode.removeChild(liste);
+            document.removeEventListener('click', zu);
+          });
+        }, 0);
+      });
+
+      /* Auch das freie Tippen wandert in die gemeinsame Ablage - sonst
+         waere der Wert nur auf dieser einen Seite geaendert. */
+      el.addEventListener('blur', function () {
+        var wert = sauberesHtml(el);
+        if (wert !== el.innerHTML) el.innerHTML = wert;
+        if (statusListe[programm] === wert) return;
+        statusSetzen(programm, wert);
+      });
+    }
+
+    /* ================================================================
      * Download-Bereiche ein- und ausblenden
      * ----------------------------------------------------------------
      * Jede Programmseite hat zwei vollstaendige Bereiche: einen fuer die
@@ -1947,6 +2069,7 @@
           enableStatus(k.s);
           enableLinks(k.d);   // bringt die Ziel-Zeile samt Web-App-Upload mit
           bereichSchalter();  // Ein-/Ausblenden der beiden Download-Bereiche
+          alleStatusFelder().forEach(statusAuswahl);   // Auswahlliste am Statuszeichen
           enableVideo();
           enableSortable();
           // renderCustom() lief bereits in applyOverrides (inkl. Bearbeiten-Affordances)
