@@ -382,6 +382,34 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5P. Einheitliches Verfahren fuer PC-Aktualisierungen (22.08.2026)
+
+Alle fuenf PC-Fassungsdateien liefern jetzt **denselben Aufbau**:
+
+```json
+{ "schluessel": "...-PC", "versionCode": 0, "versionName": "",
+  "apk": "", "hinweise": "" }
+```
+
+| Programm | Adresse |
+|---|---|
+| Aufgabenplaner | `/FinnVelo/Aufgabenplaner/pc.json` |
+| Einkaufsplaner | `/einkaufsliste/pc.json` |
+| Mischwaldrechner | `/mischwaldrechner/pc.json` |
+| Lesezeit | `/lesezeit/pc.json` |
+| Tourenplaner | `/tourenplaner/pc.json` |
+
+Alle mit `no-store`, ohne `etag`, `access-control-allow-origin: *`.
+Auch ohne Eintrag kommt gueltiges JSON (`versionCode: 0`) - nie ein 404.
+
+Die vollstaendige Beschreibung fuer die Entwickler-Chats liegt als
+`ANWEISUNG-PC-Aktualisierung.md` im Ausgabeordner.
+
+**Das Feld heisst `apk`, auch beim PC.** Grund: dieselbe Eingabemaske
+fuer beide Fassungen. Nicht umbenennen.
+
+---
+
 ## 5O. Eine Datei je Fassung - erledigt (22.08.2026)
 
 **Gemeldet:** App und PC-Fassung ueberschrieben sich gegenseitig.
