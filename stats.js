@@ -635,7 +635,7 @@
         // sonst sehen sie einen Bereich, den der Admin abgeschaltet hat.
         parseBereiche(map['y0']); renderBereiche();
         // Statuszeichen aus der gemeinsamen Ablage - auch fuer Besucher.
-        parseStatusListe(gmap['n0']); renderStatusListe();
+        parseStatusListe(gmap['z0']); renderStatusListe();
       }).catch(function () {});
     }
 
@@ -1675,7 +1675,7 @@
      * der Zeile der Uebersicht. Bisher musste es dreimal einzeln gepflegt
      * werden - und lief regelmaessig auseinander.
      *
-     * Jetzt liegt es EINMAL in der globalen Ablage (Block "n0"), als
+     * Jetzt liegt es EINMAL in der globalen Ablage (Block "z0"), als
      * Zuordnung { programm: zeichen }. Alle drei Stellen lesen daraus,
      * auch fuer Besucher.
      * ================================================================ */
@@ -1725,7 +1725,7 @@
       if (!programm) return Promise.resolve(false);
       statusListe[programm] = wert;
       renderStatusListe();
-      return save('n0', 'text', JSON.stringify(statusListe), GLOBAL);
+      return save('z0', 'text', JSON.stringify(statusListe), GLOBAL);
     }
 
     /* Auswahlliste an ein Statusfeld haengen - kleiner Pfeil rechts.
@@ -1763,10 +1763,22 @@
           });
           liste.appendChild(k);
         });
-        var r = pfeil.getBoundingClientRect();
+        /* Direkt UNTER dem Zeichen aufklappen, linksbuendig dazu - nicht
+           versetzt ueber die Plakette daneben. Passt die Liste nach unten
+           nicht mehr aufs Bild, klappt sie nach oben auf. */
+        var r = el.getBoundingClientRect();
+        liste.style.left = (window.scrollX + r.left) + 'px';
         liste.style.top = (window.scrollY + r.bottom + 6) + 'px';
-        liste.style.left = (window.scrollX + r.left - 60) + 'px';
         document.body.appendChild(liste);
+        var lh = liste.getBoundingClientRect().height;
+        if (r.bottom + 6 + lh > window.innerHeight && r.top - lh - 6 > 0) {
+          liste.style.top = (window.scrollY + r.top - lh - 6) + 'px';
+        }
+        // Nicht ueber den rechten Rand hinaus
+        var lb = liste.getBoundingClientRect();
+        if (lb.right > window.innerWidth - 8) {
+          liste.style.left = Math.max(8, window.scrollX + window.innerWidth - lb.width - 8) + 'px';
+        }
 
         setTimeout(function () {
           document.addEventListener('click', function zu(ev) {

@@ -382,6 +382,32 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5N-a. FALLE: Blockschluessel n0 gehoert der Navigation (22.08.2026)
+
+**Ein schwerer Fehler von mir.** Ich hatte `n0` fuer die Statusliste
+gewaehlt und vorher geprueft, ob der Schluessel in `stats.js` und
+`worker.js` vorkommt - er kam nicht vor.
+
+**Das war die falsche Pruefung.** Die Schluessel werden **laufend
+vergeben**:
+
+```js
+t.forEach(... 't' + idx);   i.forEach(... 'i' + idx);
+s.forEach(... 's' + idx);   d.forEach(... 'd' + idx);
+n.forEach(... 'n' + idx);   // <- NAVIGATION
+```
+
+`n0` ist damit der **erste Menuepunkt**. Mein JSON landete im
+Kopfbereich der Seite und war dort in Grossbuchstaben zu lesen.
+
+Umgestellt auf **`z0`**. Die Warnung steht jetzt direkt an `keyed()`.
+
+**Merke:** Die Buchstaben **t i s d n b** sind fuer laufende Schluessel
+reserviert. Ein eigener Block darf keinen davon nutzen. Frei sind:
+**a c e f j k l m o p r u z**.
+
+---
+
 ## 5N. Statuszeichen: Auswahlliste und einmal pflegen (22.08.2026)
 
 Dasselbe Zeichen ("Vollversion", "In Entwicklung" ...) stand an **drei
@@ -389,7 +415,7 @@ Stellen**: Programmseite, Kachel der Startseite, Zeile der Uebersicht.
 Es musste dreimal einzeln gepflegt werden - und lief regelmaessig
 auseinander.
 
-**Jetzt liegt es einmal** in der globalen Ablage, Block **`n0`**, als
+**Jetzt liegt es einmal** in der globalen Ablage, Block **`z0`**, als
 Zuordnung `{ programm: zeichen }`. Alle drei Stellen lesen daraus, auch
 fuer Besucher.
 
