@@ -2467,3 +2467,8 @@ body.fv-admin-on .site-header { top: 44px; }
   .fv-status-pfeil { padding: 8px 12px; }
   .fv-status-wahl { padding: 12px 14px; }
 }
+
+/* Reiterleiste nur zeigen, wenn es wirklich mehrere Fassungen gibt.
+   Seit jede Fassung ihre eigene Datei und eigene Kachel hat, bleibt je
+   Kachel genau eine - ein einzelner Reiter ist dann nur Beiwerk. */
+.fv-update-reiter:has(> .fv-update-reiter__k:only-child) { display: none; }

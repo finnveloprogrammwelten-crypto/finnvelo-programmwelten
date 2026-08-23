@@ -2545,8 +2545,12 @@
                + 'daran darf sich nichts aendern, sonst merken bereits verteilte Apps '
                + 'keine Aktualisierung mehr.' },
       { schluessel: 'pc',  titel: 'PC-Version', unten: 'EXE oder ZIP',
-        hinweis: 'Eigener Block "pc" in derselben version.json. Die PC-Fassung fragt ihn ab; '
-               + 'die Android-App uebersieht ihn.' },
+          hinweis: 'ACHTUNG: schreibt derzeit noch einen Block "pc" in DIESELBE '
+                 + 'version.json. Der Umbau auf eine eigene Datei je Fassung ist '
+                 + 'begonnen (Routen und Kachel-Definitionen stehen), aber die '
+                 + 'Kachel-Erzeugung nimmt bisher nur EINE Definition je Seite '
+                 + '(APPS-Schleife mit break). Bis das umgebaut ist, gilt: nach '
+                 + 'dem Aendern einer Fassung die andere pruefen.' },
     ];
 
     // Felder einer Plattform: Android nutzt die gewohnten Schluessel,
