@@ -3628,6 +3628,61 @@
       });
       return t;
     }
+    /* Lesbare Blaetter fuer die uebrigen Tabellen. Nicht alles ist zum
+       Lesen gedacht - Nachrichten und Listen sind verschluesselt. Dann
+       steht hier nur, WIE VIEL da ist, damit man erkennt, ob eine
+       Sicherung vollstaendig aussieht. */
+    function tabellenBlatt(tab) {
+      var t = '# Weitere Tabellen\n\nNeben den Seiteninhalten gesichert:\n\n'
+            + '| Tabelle | Zeilen | Was es ist |\n|---|---|---|\n';
+      var erklaerung = {
+        counter_values: 'Zählerstände der Seitenaufrufe',
+        comments: 'Kommentare der Besucher',
+        apps: 'hinterlegte Seiten-Bauplaene',
+        kanalliste: 'welche Kanäle es gibt',
+        verlauf: 'Änderungshistorie hinter „↺ Verlauf"',
+        marken: 'Einladungsmarken',
+        zugang: 'Passwort und Notfall-PIN — steht im Klartext in sicherung.json'
+      };
+      var namen = Object.keys(erklaerung);
+      namen.forEach(function (n) {
+        var z = (tab && tab[n]) || [];
+        t += '| `' + n + '` | ' + z.length + ' | ' + erklaerung[n] + ' |\n';
+      });
+
+      var k = (tab && tab.comments) || [];
+      if (k.length) {
+        t += '\n---\n\n## Kommentare\n';
+        k.forEach(function (c) {
+          t += '\n**' + (c.name || 'ohne Namen') + '**'
+             + (c.created ? '  ·  ' + zeitText(c.created) : '')
+             + (Number(c.removed) ? '  ·  ENTFERNT' + (c.reason ? ' (' + c.reason + ')' : '') : '')
+             + '\n\n```\n' + String(c.body || '').replace(/```/g, '` ` `') + '\n```\n';
+        });
+      }
+      var v = (tab && tab.counter_values) || [];
+      if (v.length) {
+        t += '\n---\n\n## Zählerstände\n\n| Schlüssel | Stand |\n|---|---|\n';
+        v.forEach(function (z) { t += '| `' + z.key + '` | ' + z.value + ' |\n'; });
+      }
+      return t;
+    }
+    function kanalBlatt(kanaele) {
+      var t = '# Kanäle\n\n' + kanaele.length + ' Kanal/Kanäle gesichert.\n\n'
+            + 'Nachrichten, Listen und Anhänge sind **verschlüsselt** — sie stehen in der\n'
+            + 'Sicherung, lassen sich hier aber nicht lesen. Die Zahlen zeigen, dass sie da sind.\n';
+      kanaele.forEach(function (k) {
+        t += '\n---\n\n## Kanal `' + k.code + '`\n\n';
+        if (k.fehler) { t += 'NICHT ERREICHBAR: ' + k.fehler + '\n'; return; }
+        var tb = k.tabellen || {};
+        t += '| Tabelle | Zeilen |\n|---|---|\n';
+        Object.keys(tb).forEach(function (n) {
+          t += '| `' + n + '` | ' + ((tb[n] && tb[n].length) || 0) + ' |\n';
+        });
+      });
+      return t;
+    }
+
     function endung(mime) {
       if (/png/.test(mime)) return 'png';
       if (/webp/.test(mime)) return 'webp';
@@ -3668,6 +3723,13 @@
           var daten = JSON.parse(txt);
           var inhalte = daten.inhalte || [];
           var bilder = daten.bilder || [];
+          var kanaele = daten.kanaele || [];
+          var tabZeilen = 0;
+          if (daten.tabellen) {
+            for (var tn in daten.tabellen) {
+              if (daten.tabellen.hasOwnProperty(tn)) tabZeilen += (daten.tabellen[tn] || []).length;
+            }
+          }
 
           /* nach Seiten ordnen */
           var nachSeite = {}, reihenfolge = [];
@@ -3686,20 +3748,37 @@
           var liesmich =
             '# FINNVELO Programmwelten \u2013 Sicherung\n\n'
           + 'Erstellt: ' + (daten.erstellt || d.toISOString()) + '\n\n'
-          + '- Eintr\u00e4ge: ' + inhalte.length + '\n'
-          + '- Seiten: ' + reihenfolge.length + '\n'
-          + '- Bilder: ' + bilder.length + '\n\n'
+          + '- Seiteneintr\u00e4ge: ' + inhalte.length + ' auf ' + reihenfolge.length + ' Seiten\n'
+          + '- Bilder: ' + bilder.length + '\n'
+          + '- Zeilen in weiteren Tabellen: ' + tabZeilen + '\n'
+          + '- Kan\u00e4le: ' + kanaele.length + '\n\n'
+          + '> **Diese Sicherung enth\u00e4lt dein Admin-Passwort und die Notfall-PIN im\n'
+          + '> Klartext** (in `sicherung.json`, Abschnitt `tabellen.zugang`). Ohne sie w\u00e4re\n'
+          + '> ein Wiederanlauf auf einer leeren Datenbank nicht m\u00f6glich. Bewahre die\n'
+          + '> Datei entsprechend auf und lege sie nicht offen ab.\n\n'
           + '## Was hier drin ist\n\n'
           + '| Datei | Wof\u00fcr |\n|---|---|\n'
           + '| `sicherung.json` | Die Sicherung selbst. Genau diese Datei nimmt '
           + '\u201eSicherung einspielen\u201c wieder an. Nicht von Hand \u00e4ndern. |\n'
-          + '| `seiten/*.md` | Dasselbe zum Lesen \u2013 je Seite ein Blatt mit allen Feldern. |\n'
+          + '| `seiten/*.md` | Die Seiteninhalte zum Lesen \u2013 je Seite ein Blatt. |\n'
+          + '| `tabellen.md` | Kommentare, Z\u00e4hlerst\u00e4nde, Verlauf, Zugang \u2013 zum Lesen. |\n'
+          + '| `kanaele.md` | Umfang der Kan\u00e4le. Inhalte sind verschl\u00fcsselt. |\n'
           + '| `bilder/*` | Die hochgeladenen Bilder als echte Dateien. |\n\n'
           + '## Zur\u00fcckspielen\n\n'
           + 'Auf `/programme` anmelden, **Bearbeiten: AN**, Kasten \u201eSicherung\u201c \u2192 '
           + '**Sicherung einspielen** \u2192 `sicherung.json` w\u00e4hlen.\n\n'
-          + 'Vorhandene Bilder bleiben unber\u00fchrt; fehlende werden erg\u00e4nzt. '
-          + 'Texte werden \u00fcberschrieben.\n\n'
+          + 'Was dabei passiert:\n\n'
+          + '- Seitentexte werden **\u00fcberschrieben**.\n'
+          + '- Bilder: vorhandene bleiben, fehlende werden erg\u00e4nzt.\n'
+          + '- Kommentare, Z\u00e4hlerst\u00e4nde, Verlauf, Marken: eingespielt; was seither\n'
+          + '  dazukam, bleibt stehen.\n'
+          + '- Kan\u00e4le: jeder in sein eigenes Objekt zur\u00fcck.\n'
+          + '- **Zugang: nur wenn noch keiner eingerichtet ist.** Ein bestehendes Passwort\n'
+          + '  wird nie \u00fcberschrieben \u2013 sonst k\u00f6nnte eine alte Sicherung dich aussperren.\n\n'
+          + '## Was NICHT drin ist\n\n'
+          + 'Sperrzeiten (`bremse`) und das Fehlerbuch (`fehler`). Beides ist nach einem\n'
+          + 'Wiederanlauf wertlos. Ebenso die Dateien des Projekts selbst \u2013 die liegen\n'
+          + 'in deinem Quellordner, nicht in der Datenbank.\n\n'
           + '## Wozu die Blätter unter `seiten/`\n\n'
           + 'In den HTML-Dateien des Projekts steht nur der Ursprungstext. Alles, was '
           + '\u00fcber den Bearbeiten-Modus ge\u00e4ndert wurde, liegt in der Datenbank \u2013 '
@@ -3718,6 +3797,8 @@
             dateien.push({ name: 'seiten/' + sicherName(s) + '.md',
                            daten: seitenBlatt(s, nachSeite[s]) });
           });
+          if (daten.tabellen) dateien.push({ name: 'tabellen.md', daten: tabellenBlatt(daten.tabellen) });
+          if (kanaele.length) dateien.push({ name: 'kanaele.md', daten: kanalBlatt(kanaele) });
           bilder.forEach(function (b) {
             try {
               dateien.push({ name: 'bilder/' + sicherName(b.id) + '.' + endung(b.mime || ''),
@@ -3733,7 +3814,8 @@
           document.body.appendChild(a); a.click();
           setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
           melden('\u2713 ' + a.download + ' \u2013 ' + inhalte.length + ' Eintr\u00e4ge, '
-               + reihenfolge.length + ' Seiten, ' + bilder.length + ' Bilder.', true);
+               + reihenfolge.length + ' Seiten, ' + bilder.length + ' Bilder, '
+               + tabZeilen + ' Tabellenzeilen, ' + kanaele.length + ' Kan\u00e4le.', true);
         })
         .catch(function () { melden('\u2717 Sicherung fehlgeschlagen.', false); })
         .then(function () { laeuft = false; });
@@ -3762,8 +3844,11 @@
             .then(function (a) {
               if (!a || !a.ok) { melden('\u2717 Einspielen fehlgeschlagen.', false); return; }
               melden('\u2713 ' + a.uebernommen + ' Eintr\u00e4ge'
-                   + (a.bilder ? ' und ' + a.bilder + ' Bilder' : '')
-                   + ' eingespielt. Seite neu laden.', true);
+                   + (a.bilder ? ', ' + a.bilder + ' Bilder' : '')
+                   + (a.zeilen ? ', ' + a.zeilen + ' Tabellenzeilen' : '')
+                   + (a.kanaele ? ', ' + a.kanaele + ' Kan\u00e4le' : '')
+                   + ' eingespielt. Zugang: ' + (a.zugang || '?')
+                   + '. Seite neu laden.', true);
             })
             .catch(function () { melden('\u2717 Einspielen fehlgeschlagen.', false); });
         };

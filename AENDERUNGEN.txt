@@ -179,3 +179,42 @@ sauber:true haben NUR Einkaufsplaner und Lesezeit - dort ist der Aufbau
 am Quelltext geprueft. Ueberall sonst bleibt jedes Feld stehen.
 
 Vorgaben der Lesezeit-Kachel auf 2.9.1 / 20901 gesetzt.
+
+
+-----------------------------------------------------------------------
+23.08.2026 (5) - AUS DER SICHERUNG WIRD EINE VOLLSICHERUNG
+-----------------------------------------------------------------------
+Befund an einer echten Sicherung: sie enthielt content und images -
+also 2 von 20 Tabellen. Kommentare, Zaehlerstaende, Verlauf, Marken,
+Zugang und ALLE Kanaele (Chat, Listen, Anhaenge) waeren im Ernstfall
+verloren gewesen.
+
+worker.js, /api/export (jetzt Fassung 3):
+  + counter_values, comments, apps, kanalliste, verlauf, marken, zugang
+  + alle Kanaele. Die liegen in EIGENEN Durable Objects und sind vom
+    Zaehler aus nicht direkt lesbar - er fragt jeden Kanal ueber
+    env.KANAELE nach seinen Tabellen (neue Route /kanal-sicherung).
+  - bremse und fehler bleiben draussen: Sperrzeiten und Fehlermeldungen
+    sind nach einem Wiederanlauf wertlos.
+
+worker.js, /api/import:
+  + spielt alle Tabellen zurueck (INSERT OR REPLACE: was in der
+    Sicherung steht gewinnt, was seither dazukam bleibt stehen)
+  + Kanaele gehen ueber /kanal-einspielen in ihr eigenes Objekt zurueck
+  + ZUGANG nur, wenn noch keiner eingerichtet ist. Ein bestehendes
+    Passwort wird NIE ueberschrieben - eine alte Sicherung koennte
+    einen sonst aussperren. Auf einer leeren Datenbank ist genau das
+    der Wiederanlauf.
+
+stats.js, ZIP:
+  + tabellen.md - Kommentare im Klartext, Zaehlerstaende, Umfang der
+    uebrigen Tabellen. Das Passwort steht dort NICHT (nur in
+    sicherung.json).
+  + kanaele.md - Umfang je Kanal. Nachrichten und Listen sind
+    verschluesselt und werden nicht zu lesen versucht.
+  + LIESMICH warnt ausdruecklich: Passwort und Notfall-PIN stehen im
+    Klartext in sicherung.json.
+
+Geprueft: 34 Pruefungen, darunter dass das Passwort NICHT in den
+lesbaren Blaettern landet und dass Nachrichteninhalte nicht ausgegeben
+werden.

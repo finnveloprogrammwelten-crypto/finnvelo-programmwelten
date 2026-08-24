@@ -762,14 +762,56 @@ export class Counter extends DurableObject {
       if (body.bilder !== false) {
         bilder = this.sql.exec("SELECT id, mime, data, created FROM images ORDER BY created").toArray();
       }
+
+      /* Vollsicherung: alle uebrigen Tabellen dieses Objekts. Vorher
+         enthielt eine Sicherung nur Texte und Bilder - Kommentare,
+         Zaehlerstaende, Verlauf und Zugang waeren im Ernstfall verloren
+         gewesen.
+         "bremse" und "fehler" bleiben draussen: Sperrzeiten und
+         Fehlermeldungen sind nach dem Zurueckspielen wertlos.       */
+      const tabellen = {};
+      const mit = ["counter_values", "comments", "apps", "kanalliste", "verlauf", "marken", "zugang"];
+      for (const t of mit) {
+        try { tabellen[t] = this.sql.exec("SELECT * FROM " + t).toArray(); }
+        catch (_e) { tabellen[t] = []; }
+      }
+
+      /* Kanaele liegen in EIGENEN Objekten - der Zaehler kann sie nicht
+         direkt lesen, aber ueber die Bindung fragen. Jeder Kanal liefert
+         seine Tabellen selbst. Ohne das waeren Chat und Listen weg. */
+      const kanaele = [];
+      if (body.kanaele !== false && env && env.KANAELE) {
+        const liste = tabellen.kanalliste || [];
+        for (const k of liste) {
+          const code = String(k && k.code || "");
+          if (!code) continue;
+          try {
+            const stub = env.KANAELE.get(env.KANAELE.idFromName(code));
+            const a = await stub.fetch("https://kanal/kanal-sicherung");
+            if (!a.ok) { kanaele.push({ code: code, fehler: "nicht erreichbar" }); continue; }
+            const erg = await a.json();
+            kanaele.push({ code: code, angelegt: k.angelegt, tabellen: (erg && erg.tabellen) || {} });
+          } catch (_e) {
+            kanaele.push({ code: code, fehler: "nicht erreichbar" });
+          }
+        }
+      }
+
+      let zeilen = 0;
+      for (const t in tabellen) zeilen += tabellen[t].length;
+
       return new Response(JSON.stringify({
         art: "finnvelo-sicherung",
-        fassung: 2,
+        fassung: 3,
         erstellt: new Date().toISOString(),
         anzahl: rows.length,
         anzahlBilder: bilder.length,
+        anzahlTabellenzeilen: zeilen,
+        anzahlKanaele: kanaele.length,
         inhalte: rows,
-        bilder: bilder
+        bilder: bilder,
+        tabellen: tabellen,
+        kanaele: kanaele
       }, null, 2), {
         status: 200,
         headers: {
@@ -825,7 +867,71 @@ export class Counter extends DurableObject {
           bilder++;
         }
       }
-      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen, bilder: bilder });
+      /* Uebrige Tabellen zurueckspielen (Sicherungen ab Fassung 3).
+         INSERT OR REPLACE: was in der Sicherung steht, gewinnt; was
+         seither dazukam, bleibt stehen. */
+      let zeilen = 0;
+      const erlaubt = ["counter_values", "comments", "apps", "kanalliste", "verlauf", "marken"];
+      const tab = (daten && daten.tabellen) || {};
+      for (const name of erlaubt) {
+        const liste = Array.isArray(tab[name]) ? tab[name] : [];
+        for (const z of liste) {
+          if (!z || typeof z !== "object") continue;
+          const spalten = Object.keys(z).filter((c) => /^[a-z_0-9]{1,30}$/.test(c));
+          if (!spalten.length) continue;
+          try {
+            this.sql.exec(
+              "INSERT OR REPLACE INTO " + name + " (" + spalten.join(", ") + ") VALUES (" +
+              spalten.map(() => "?").join(", ") + ")",
+              ...spalten.map((c) => z[c])
+            );
+            zeilen++;
+          } catch (_e) { /* Spalte kennt diese Fassung nicht - weiter */ }
+        }
+      }
+
+      /* Zugang: NUR wenn noch keiner eingerichtet ist. Ein altes Passwort
+         ueber ein neueres zu schreiben wuerde aussperren, wer es seither
+         geaendert hat. Auf einer leeren Datenbank ist es genau das, was
+         den Wiederanlauf moeglich macht. */
+      let zugang = "unberuehrt";
+      const zTeil = Array.isArray(tab.zugang) ? tab.zugang[0] : null;
+      if (zTeil && zTeil.passwort && !this.gesetztesPasswort()) {
+        try {
+          this.sql.exec(
+            "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
+            "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
+            "pin = excluded.pin, geaendert = excluded.geaendert",
+            String(zTeil.passwort), String(zTeil.pin || ""), Number(zTeil.geaendert) || Date.now()
+          );
+          zugang = "aus der Sicherung gesetzt";
+        } catch (_e) { zugang = "fehlgeschlagen"; }
+      }
+
+      /* Kanaele: jeder in sein eigenes Objekt zurueck. */
+      let kanaele = 0, kanalZeilen = 0;
+      if (Array.isArray(daten.kanaele) && env && env.KANAELE) {
+        for (const k of daten.kanaele) {
+          const code = String(k && k.code || "");
+          if (!code || !k.tabellen) continue;
+          try {
+            const stub = env.KANAELE.get(env.KANAELE.idFromName(code));
+            const a = await stub.fetch("https://kanal/kanal-einspielen", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ tabellen: k.tabellen })
+            });
+            if (a.ok) {
+              const erg = await a.json();
+              kanaele++; kanalZeilen += Number(erg && erg.zeilen) || 0;
+            }
+          } catch (_e) { /* Kanal nicht erreichbar - weiter */ }
+        }
+      }
+
+      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen,
+                    bilder: bilder, zeilen: zeilen, zugang: zugang,
+                    kanaele: kanaele, kanalZeilen: kanalZeilen });
     }
 
     // --- Verzeichnis der Update-Adressen (oeffentlich) -----------------
@@ -2398,6 +2504,47 @@ export class Kanal extends DurableObject {
     const url = new URL(request.url);
     // Die offene Leitung fuer den Chat hat einen eigenen Weg
     if (url.pathname === "/draht") return this.draht(request);
+
+    /* Sicherung eines Kanals. Erreichbar nur ueber diesen Pfad, den der
+       Zaehler ausschliesslich nach Admin-Pruefung setzt - oeffentliche
+       Anfragen landen auf /dv und koennen ihn nicht treffen. */
+    if (url.pathname === "/kanal-sicherung") {
+      const tabellen = ["kanal", "mitglieder", "nachrichten", "listen", "freigaben",
+                        "einladungen", "takt", "anhaenge", "anhang_geholt", "marken"];
+      const aus = {};
+      for (const t of tabellen) {
+        try { aus[t] = this.sql.exec("SELECT * FROM " + t).toArray(); }
+        catch (_e) { aus[t] = []; }   // Tabelle gibt es in diesem Kanal nicht
+      }
+      // "bremse" bleibt bewusst draussen: reine Sperrzeiten, nach dem
+      // Zurueckspielen falsch und ohne Wert.
+      return jsonAntwort({ ok: true, tabellen: aus });
+    }
+
+    if (url.pathname === "/kanal-einspielen") {
+      let rumpf = {};
+      try { rumpf = await request.json(); } catch (_e) { rumpf = {}; }
+      const tab = (rumpf && rumpf.tabellen) || {};
+      let zeilen = 0;
+      for (const name of Object.keys(tab)) {
+        if (!/^[a-z_]{3,20}$/.test(name)) continue;
+        const liste = Array.isArray(tab[name]) ? tab[name] : [];
+        for (const z of liste) {
+          if (!z || typeof z !== "object") continue;
+          const spalten = Object.keys(z).filter((s) => /^[a-z_0-9]{1,30}$/.test(s));
+          if (!spalten.length) continue;
+          const platz = spalten.map(() => "?").join(", ");
+          try {
+            this.sql.exec(
+              "INSERT OR REPLACE INTO " + name + " (" + spalten.join(", ") + ") VALUES (" + platz + ")",
+              ...spalten.map((s) => z[s])
+            );
+            zeilen++;
+          } catch (_e) { /* Spalte kennt diese Fassung nicht - weiter */ }
+        }
+      }
+      return jsonAntwort({ ok: true, zeilen: zeilen });
+    }
     // Kennzahlen fuer die Aufsicht. Erreichbar nur ueber diesen Pfad, den der
     // Worker ausschliesslich nach Admin-Pruefung setzt - oeffentliche Anfragen
     // landen immer auf /dv und koennen ihn nicht treffen.
