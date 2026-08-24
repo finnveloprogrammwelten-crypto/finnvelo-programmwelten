@@ -1131,7 +1131,51 @@
         } catch (e) {}
       }
     }
-    function saveGallery() { return save('g0', 'text', JSON.stringify(galleryUrls)); }
+    /* Galerie sichern - MIT Nachweis.
+       Vorher wurde das Ergebnis nie angesehen. Schlug das Speichern fehl,
+       blieben die Bilder trotzdem auf dem Bildschirm stehen (sie lagen ja
+       im Speicher) und waren nach dem Neuladen weg. Genau so entstehen
+       hochgeladene Bilder, die in keiner Galerie stehen.
+       Jetzt wird zurueckgelesen und verglichen. Stimmt es nicht, gibt es
+       eine Meldung statt Stille. */
+    function galerieMelden(text, gut) {
+      galleryConts().forEach(function (cont) {
+        var alt2 = cont.parentNode && cont.parentNode.querySelector('.fv-gallery__melde');
+        if (alt2) alt2.parentNode.removeChild(alt2);
+        var m = document.createElement('p');
+        m.className = 'fv-gallery__melde' + (gut ? ' gut' : ' schlecht');
+        m.textContent = text;
+        if (cont.parentNode) cont.parentNode.insertBefore(m, cont.nextSibling);
+        if (gut) setTimeout(function () { if (m.parentNode) m.parentNode.removeChild(m); }, 6000);
+      });
+    }
+    function saveGallery() {
+      var sollen = JSON.stringify(galleryUrls);
+      return save('g0', 'text', sollen).then(function (ok) {
+        if (!ok) {
+          galerieMelden('\u2717 Die Galerie konnte NICHT gespeichert werden. '
+                      + 'Die Bilder sind nach dem Neuladen wieder weg.', false);
+          return false;
+        }
+        // nachlesen statt glauben
+        return fetch(API + '/content?page=' + encodeURIComponent(SLUG))
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (res) {
+            var steht = null;
+            if (res && res.items) res.items.forEach(function (it) {
+              if (it.block === 'g0') steht = it.value;
+            });
+            if (steht === sollen) {
+              galerieMelden('\u2713 Galerie gespeichert (' + galleryUrls.length + ' Bilder).', true);
+              return true;
+            }
+            galerieMelden('\u2717 Gespeichert, aber der Server hat etwas anderes zur\u00fcckgegeben. '
+                        + 'Bitte die Seite neu laden und nachsehen.', false);
+            return false;
+          })
+          .catch(function () { return true; });   // Nachlesen misslungen: nicht falsch alarmieren
+      });
+    }
     function moveImg(idx, dir) {
       var j = idx + dir;
       if (j < 0 || j >= galleryUrls.length) return;
@@ -1165,6 +1209,55 @@
         });
       })();
     }
+    /* Auswahlfenster fuer bereits hochgeladene Bilder. */
+    function vorhandeneWaehlen(cont) {
+      if (document.querySelector('.fv-wahl')) return;
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-wahl';
+      huelle.innerHTML =
+        '<div class="fv-wahl__kasten">'
+      + '  <div class="fv-wahl__kopf"><strong>Bereits hochgeladene Bilder</strong>'
+      + '    <span class="fv-wahl__zahl" data-a="zahl"></span>'
+      + '    <button type="button" class="fv-wahl__zu" data-a="zu" aria-label="Schlie\u00dfen">\u2715</button>'
+      + '  </div>'
+      + '  <p class="fv-wahl__hilfe">Anklicken f\u00fcgt das Bild dieser Galerie hinzu. '
+      + 'Bilder, die schon in dieser Galerie stehen, sind ausgegraut.</p>'
+      + '  <div class="fv-wahl__netz" data-a="netz">Wird geladen \u2026</div>'
+      + '</div>';
+      document.body.appendChild(huelle);
+      function zu() { if (huelle.parentNode) huelle.parentNode.removeChild(huelle); }
+      huelle.querySelector('[data-a="zu"]').addEventListener('click', zu);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) zu(); });
+
+      var netz = huelle.querySelector('[data-a="netz"]');
+      fetch(API + '/images', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw() })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (a) {
+          var bilder = (a && a.bilder) || [];
+          huelle.querySelector('[data-a="zahl"]').textContent = bilder.length + ' vorhanden';
+          if (!bilder.length) { netz.textContent = 'Keine Bilder in der Datenbank.'; return; }
+          netz.innerHTML = '';
+          bilder.forEach(function (b) {
+            var url = '/api/image/' + b.id;
+            var drin = galleryUrls.indexOf(url) !== -1;
+            var k = document.createElement('button');
+            k.type = 'button';
+            k.className = 'fv-wahl__bild' + (drin ? ' fv-wahl__bild--drin' : '');
+            k.innerHTML = '<img src="' + url + '" alt="" loading="lazy">'
+                        + '<span>' + (drin ? 'schon drin' : Math.round(b.groesse / 1024) + ' KB') + '</span>';
+            if (!drin) k.addEventListener('click', function () {
+              galleryUrls.push(url);
+              renderGallery(); saveGallery();
+              zu();
+            });
+            netz.appendChild(k);
+          });
+        })
+        .catch(function () { netz.textContent = 'Die Liste konnte nicht geladen werden.'; });
+    }
+
     function pickImages() {
       var inp = document.createElement('input');
       inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
@@ -1201,6 +1294,19 @@
           add.innerHTML = '<span class="fv-gallery__plus" aria-hidden="true">+</span><span>Bild hinzuf\u00fcgen</span>';
           add.addEventListener('click', pickImages);
           cont.appendChild(add);
+
+          /* Zweiter Weg: Bilder, die schon in der Datenbank liegen, wieder
+             einhaengen. Ohne den kommt man an bereits hochgeladene Bilder
+             nicht mehr heran - man kann sie nur neu hochladen und hat sie
+             dann doppelt. Genau das ist passiert: 34 Bilder in der
+             Datenbank, aber nur drei in einer Galerie. */
+          var vorhanden = document.createElement('button');
+          vorhanden.type = 'button';
+          vorhanden.className = 'fv-gallery__add fv-gallery__add--alt';
+          vorhanden.innerHTML = '<span class="fv-gallery__plus" aria-hidden="true">\u21BA</span>'
+                              + '<span>Bereits hochgeladenes w\u00e4hlen</span>';
+          vorhanden.addEventListener('click', function () { vorhandeneWaehlen(cont); });
+          cont.appendChild(vorhanden);
           if (!cont.getAttribute('data-fv-drop')) {
             cont.setAttribute('data-fv-drop', '1');
             cont.addEventListener('dragover', function (e) { e.preventDefault(); cont.classList.add('fv-gallery--drop'); });
@@ -5418,7 +5524,9 @@
  * ausblenden ging nur Feld fuer Feld. Ein Bereich mit eigener
  * Ueberschrift war ohne Aenderung der HTML-Datei nicht moeglich.
  *
- *   Block y0 (je Seite)  eigene Abschnitte  [{id, titel}]
+ *   Block w0 (je Seite)  eigene Abschnitte  [{id, titel}]
+ *                        (NICHT y0 - das gehoert den Ein-/Ausschaltern
+ *                         der Download-Bereiche, siehe renderBereiche)
  *   Block h1 (je Seite)  ausgeblendete Abschnitte  ["kennung", ...]
  *
  * Die Ueberschrift eines eigenen Abschnitts wird NICHT ueber die
@@ -5563,7 +5671,7 @@
                 + '\n\nDas l\u00e4sst sich nicht \u00fcber \u201ewieder einblenden\u201c zur\u00fcckholen.\n'
                 + 'Felder, die darin liegen, wandern ans Seitenende.')) return;
             eigene = eigene.filter(function (x) { return x.id !== id; });
-            legen('y0', eigene).then(function () { location.reload(); });
+            legen('w0', eigene).then(function () { location.reload(); });
           }, 'fv-sek-k--weg');
         }
 
@@ -5585,7 +5693,7 @@
               alt = neu;
               var id = sec.getAttribute('data-fv-sektion');
               eigene.forEach(function (x) { if (x.id === id) x.titel = neu; });
-              legen('y0', eigene);
+              legen('w0', eigene);
             });
           }
         }
@@ -5615,7 +5723,7 @@
         if (eigene.length >= 20) { window.alert('Mehr als zwanzig eigene Abschnitte sind zu viel.'); return; }
         eigene.push({ id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
                       titel: titel });
-        legen('y0', eigene).then(function () { location.reload(); });
+        legen('w0', eigene).then(function () { location.reload(); });
       });
       box.appendChild(b);
       var hinweis = document.createElement('span');
@@ -5626,7 +5734,7 @@
     }
 
     function start() {
-      Promise.all([holen('y0'), holen('h1')]).then(function (a) {
+      Promise.all([holen('w0'), holen('h1')]).then(function (a) {
         eigene = a[0].filter(function (x) { return x && typeof x.id === 'string'; });
         verborgen = a[1].filter(function (x) { return typeof x === 'string'; });
         eigeneBauen();

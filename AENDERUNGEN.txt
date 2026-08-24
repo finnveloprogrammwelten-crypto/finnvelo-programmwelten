@@ -766,3 +766,54 @@ Bilder-Kasten gibt und dass die alte Route in stats.js UND worker.js
 verschwunden ist.
 
 Gesamtstand: 429 Pruefungen in zwoelf Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (13) - GALERIEBILDER VERSCHWANDEN BEIM VEROEFFENTLICHEN
+-----------------------------------------------------------------------
+Gemeldet: Im Bearbeiten-Modus sind die Bilder unter "Oberflaeche" da,
+veroeffentlicht sind sie weg.
+
+BEFUND aus der Sicherung vom 24.08.:
+  archivar        g0 = []
+  aufgabenplaner  g0 = []
+  lesezeit        g0 fehlt ganz
+  command-control g0 = 3 Bilder
+34 Bilder liegen in der Datenbank, aber nur DREI stehen in einer
+Galerieliste. Die 23 "unbenutzten" aus dem Bilder-Verwalter sind also
+keine Karteileichen - es sind Bilder, die beim Hochladen nicht in der
+Liste angekommen sind.
+
+DIE STELLE: saveGallery() gab ein Versprechen zurueck, das NIEMAND
+angesehen hat.
+    renderGallery(); saveGallery();
+Schlug das Speichern fehl, blieben die Bilder trotzdem auf dem
+Bildschirm - sie lagen ja im Arbeitsspeicher. Erst beim Neuladen waren
+sie weg, ohne dass je eine Meldung kam. Genau das beschriebene
+Verhalten.
+
+BEHOBEN:
+  - saveGallery() prueft das Ergebnis UND liest zurueck. Stimmt der
+    gespeicherte Stand nicht mit dem gewollten ueberein, gibt es eine
+    Meldung statt Stille. Auch der Fall "Server nimmt an, legt aber
+    etwas anderes ab" wird erkannt.
+  - Neuer Knopf in jeder Galerie: "Bereits hochgeladenes waehlen".
+    Zeigt alle Bilder aus der Datenbank; ein Klick haengt eines wieder
+    ein. Ohne den kam man an bereits hochgeladene Bilder gar nicht mehr
+    heran - man konnte sie nur neu hochladen und hatte sie doppelt.
+    Damit sind die 23 Bilder wieder erreichbar.
+
+ZWEITER FUND - EIN FEHLER VON MIR:
+Mein Abschnitte-Modul (24.08. Punkt 4/6) schrieb Block y0. Der ist seit
+langem von den Ein-/Ausschaltern der Download-Bereiche belegt
+(renderBereiche, z. B. {"app":true,"web":true}). Wer einen eigenen
+Abschnitt angelegt haette, haette damit seine Download-Schalter
+ueberschrieben. Eigene Abschnitte liegen jetzt in w0.
+Eine Pruefung legt einen Abschnitt an und erwartet, dass y0 unversehrt
+bleibt.
+
+Geprueft: 25 neue Pruefungen. Darunter ausdruecklich, dass BESUCHER
+dieselben Galeriebilder sehen wie der Admin - das war die eigentliche
+Beschwerde.
+
+Gesamtstand: 454 Pruefungen in dreizehn Sammlungen.
