@@ -7,6 +7,38 @@
  * "schon gezaehlt"-Merker liegt anonym im localStorage des Browsers.
  * Faellt die Server-Komponente aus, bricht nichts - es wird nur "-" angezeigt.
  */
+/* =====================================================================
+ * Handy-Vorschau: Besuchersicht erzwingen
+ * ---------------------------------------------------------------------
+ * Die Vorschau laedt die Seite in einem schmalen Rahmen. Nur so greifen
+ * die Media Queries wirklich - eine schmal gerechnete Seite wuerde sie
+ * NICHT ausloesen, weil sie an der Fensterbreite haengen.
+ *
+ * Der Rahmen liegt auf derselben Herkunft und teilt sich deshalb den
+ * sessionStorage - er saehe also das Admin-Passwort und wuerde die
+ * Werkzeugleiste zeigen. Zehn Bausteine fragen unabhaengig voneinander
+ * danach. Statt zehn Stellen zu aendern (und die elfte zu vergessen),
+ * werden die beiden Schluessel im Vorschau-Rahmen an EINER Stelle
+ * verdeckt. Gilt nur im Rahmen; das echte Fenster ist unberuehrt.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    if (!/[?&]fv-vorschau=1(&|$)/.test(location.search || '')) return;
+    /* NICHT sessionStorage.getItem = ... schreiben: bei Storage-Objekten
+       legt eine Zuweisung einen EINTRAG namens "getItem" an, statt die
+       Methode zu ersetzen. Der Weg geht ueber den Prototyp - und nur
+       fuer sessionStorage, damit localStorage unberuehrt bleibt. */
+    var proto = (window.Storage && window.Storage.prototype) || null;
+    if (!proto || typeof proto.getItem !== 'function') return;
+    var echt = proto.getItem;
+    proto.getItem = function (k) {
+      if (this === window.sessionStorage && (k === 'fv_admin_pw' || k === 'fv_edit')) return null;
+      return echt.call(this, k);
+    };
+  } catch (e) {}
+})();
+
 (function () {
   'use strict';
 
@@ -303,7 +335,12 @@
 
     function adminPw() { try { return sessionStorage.getItem(PW_KEY) || ''; } catch (e) { return ''; } }
     function editOn() { try { return sessionStorage.getItem(EDIT_KEY) === '1'; } catch (e) { return false; } }
-    var ADMIN = !!adminPw();
+    /* Handy-Vorschau: die Seite laeuft in einem Rahmen und soll dort
+       aussehen wie fuer Besucher. Ohne das saehe man im Rahmen die
+       eigene Werkzeugleiste und die Bearbeiten-Kaesten - also alles
+       ausser dem, was man pruefen wollte. */
+    var VORSCHAU = /[?&]fv-vorschau=1(&|$)/.test(location.search || '');
+    var ADMIN = !VORSCHAU && !!adminPw();
     var EDITING = ADMIN && editOn();
 
     function slug() {
@@ -335,6 +372,12 @@
       qsa(root, TEXT_SEL).forEach(function (el) {
         if (el.closest('.fv-gallery')) return;
         if (el.closest('.fv-extra-zone')) return;               // Zusatztexte -> eigene Logik (x0)
+        /* Ueberschrift eines selbst angelegten Abschnitts: gehoert dem
+           Abschnitt selbst (Block y0), nicht der t-Nummerierung. Sonst
+           haetten neu angelegte Abschnitte alle Nummern dahinter
+           verschoben - und jeder gespeicherte Text saesse falsch. */
+        if (el.matches('h2') && el.parentNode && el.parentNode.hasAttribute
+            && el.parentNode.hasAttribute('data-fv-sektion')) return;
         if (el.querySelector(TEXT_SEL)) return;                 // Container -> ueberspringen
         if (el.querySelector('img')) return;                    // enthaelt Bild -> separat
         if (!el.textContent || !el.textContent.trim()) return;  // leer
@@ -1924,6 +1967,12 @@
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-zurueck" '
+                + 'title="Alle verschobenen Felder dieser Seite wieder an ihren Platz stellen">'
+                + '\u21BA Verschiebungen</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-vorschau" '
+                + 'title="Die Seite in Handy- oder Tabletbreite ansehen">'
+                + '\uD83D\uDCF1 Vorschau</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-raster" '
                 + 'title="Raster und Feldrahmen einblenden \u2013 zeigt, wo Felder sitzen und was sich \u00fcberlagert">'
                 + '\u25A6 Raster</button>'
@@ -1955,6 +2004,16 @@
       /* Raster: legt ein Gitter ueber die Seite und rahmt JEDES Feld ein -
          mit seinem Schluessel. Ueberlagerungen und leere Felder fallen
          damit sofort auf; ohne das sucht man sie mit dem Mauszeiger. */
+      var zurueckKnopf = bar.querySelector('.fv-admin-zurueck');
+      if (zurueckKnopf) zurueckKnopf.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:zuege-zuruecksetzen'));
+      });
+
+      var vorschauKnopf = bar.querySelector('.fv-admin-vorschau');
+      if (vorschauKnopf) vorschauKnopf.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:vorschau-oeffnen'));
+      });
+
       var rasterKnopf = bar.querySelector('.fv-admin-raster');
       if (rasterKnopf) rasterKnopf.addEventListener('click', function () {
         var an = document.body.classList.toggle('fv-raster-an');
@@ -2406,10 +2465,75 @@
         .catch(function () { liste.textContent = 'Konnte nicht geladen werden.'; });
     }
 
+    /* ---- Selbst angelegte Programme in die Listen einreihen -------------
+       Die Kacheln auf der Startseite und die Zeilen auf /programme stehen
+       fest in den HTML-Dateien. Eine ueber "+ Seite" angelegte Seite kam
+       darin nicht vor - sie existierte, aber nichts fuehrte hin.
+
+       Die neuen Kacheln bekommen data-fv-text-extra. Das ist wichtig:
+       die Nummerierung (t0, i0, s0 ...) folgt der Reihenfolge im Dokument.
+       Ohne die Kennzeichnung wuerden eingeschobene Kacheln alle Nummern
+       dahinter verschieben - und jeder gespeicherte Text saesse danach
+       auf dem falschen Feld. Mit ihr landen sie am ENDE der Nummerierung,
+       und der Altbestand bleibt, wo er ist. */
+    function eigeneEinreihen() {
+      var gitter = document.querySelector('.program-button-grid');
+      var liste = document.querySelector('.program-row-list');
+      var ziel = gitter || liste;
+      if (!ziel) return Promise.resolve();
+
+      return fetch('/api/programme', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var progs = (res && res.programme) || [];
+          if (!progs.length) return;
+          progs.forEach(function (p) {
+            if (!p || !p.slug) return;
+            if (p.art === 'info') return;                 // Infoseiten nicht als Programm
+            var pfad = '/' + p.slug;
+            if (ziel.querySelector('a[href="' + pfad + '"]')) return;   // steht schon drin
+
+            var a = document.createElement('a');
+            a.setAttribute('href', pfad);
+            a.setAttribute('aria-label', (p.name || p.slug) + ' \u00f6ffnen');
+            a.setAttribute('data-fv-text-extra', '');
+            a.setAttribute('data-fv-prog', p.slug);
+
+            if (gitter) {
+              a.className = 'program-button';
+              a.innerHTML =
+                '<span class="program-button__status" data-fv-added hidden></span>'
+              + (p.bild
+                  ? '<img src="' + p.bild + '" alt="' + (p.name || p.slug) + '">'
+                  : '<span class="program-button__name">' + (p.name || p.slug) + '</span>')
+              + '<span class="program-button__description">'
+              + (p.kurz || 'Kurzbeschreibung \u2013 im Bearbeiten-Modus \u00e4nderbar.')
+              + '</span>';
+            } else {
+              a.className = 'program-row';
+              a.innerHTML =
+                '<span class="program-row__image">'
+              + (p.bild ? '<img src="' + p.bild + '" alt="' + (p.name || p.slug) + '">' : '')
+              + '</span>'
+              + '<span class="program-row__content">'
+              + '<strong>' + (p.name || p.slug) + '</strong>'
+              + '<span>' + (p.kurz || 'Kurzbeschreibung \u2013 im Bearbeiten-Modus \u00e4nderbar.') + '</span>'
+              + '</span>';
+            }
+            ziel.appendChild(a);
+          });
+        })
+        .catch(function () { /* ohne Verzeichnis bleibt alles wie bisher */ });
+    }
+
     /* ---- Ablauf -------------------------------------------------------- */
     function run() {
       var k = keyed();
       applyOverrides(k).then(function () {
+        /* Die Schluessel stehen jetzt fest. Ab hier darf umgestellt
+           werden, ohne dass sich etwas verschiebt - das Verschieben von
+           Feldern haengt sich hier ein. */
+        try { document.dispatchEvent(new CustomEvent('fv:felder-bereit')); } catch (_e) {}
         if (ADMIN) toolbar();
         if (EDITING) {
           enableText(k.t, SLUG);
@@ -2426,8 +2550,9 @@
       });
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
-    else run();
+    function los() { eigeneEinreihen().then(run, run); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', los);
+    else los();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
 
@@ -4410,5 +4535,1437 @@
     function start() { holen().then(bauen); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Hauptmenue verwalten
+ * ---------------------------------------------------------------------
+ * Start / Programme / Kommentare / Kontakt standen fest in jeder
+ * HTML-Datei. Beschriften liess sich ein Eintrag, mehr nicht - kein
+ * Hinzufuegen, kein Entfernen, kein Umsortieren, kein anderes Ziel.
+ * Eine selbst angelegte Seite tauchte deshalb nie im Menue auf.
+ *
+ * Jetzt liegt die Menuefolge in der Datenbank (system / Block h2).
+ * Solange dort nichts steht, bleibt das Menue aus der HTML-Datei
+ * unveraendert stehen - eine leere Datenbank aendert also nichts.
+ *
+ * WICHTIG fuer die Nummerierung: Die Eintraege des Hauptmenues sind
+ * Teil der n-Reihe (NAV_TEXT_SEL). Wer hier Eintraege einfuegt oder
+ * entfernt, verschiebt gespeicherte Beschriftungen. Deshalb wird die
+ * Beschriftung NICHT mehr ueber n-Schluessel gefuehrt, sondern steht
+ * im Menueeintrag selbst - genau dort, wo sie hingehoert.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    var nav = document.querySelector('.site-header nav[aria-label="Hauptnavigation"]')
+           || document.querySelector('.site-header nav');
+    if (!nav) return;
+
+    var eintraege = [];
+
+    function ausHtml() {
+      return Array.prototype.slice.call(nav.querySelectorAll('a')).map(function (a) {
+        return { name: (a.textContent || '').trim(), url: a.getAttribute('href') || '/' };
+      }).filter(function (e) { return e.name; });
+    }
+
+    function laden() {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var roh = '';
+          if (res && res.items) res.items.forEach(function (it) {
+            if (it.block === 'h2') roh = it.value || '';
+          });
+          if (!roh) return null;
+          try {
+            var a = JSON.parse(roh);
+            if (!Array.isArray(a)) return null;
+            return a.filter(function (e) { return e && e.name && e.url; });
+          } catch (e) { return null; }
+        }).catch(function () { return null; });
+    }
+    function speichern() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: 'system', block: 'h2', type: 'text',
+                               value: JSON.stringify(eintraege), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* Menue neu zeichnen. Der aktuelle Pfad bekommt aria-current, damit
+       die Hervorhebung stimmt wie vorher aus der HTML-Datei. */
+    function zeichnen() {
+      var hier = (location.pathname || '/').replace(/\.html?$/, '').replace(/\/+$/, '') || '/';
+      nav.innerHTML = '';
+      eintraege.forEach(function (e) {
+        var a = document.createElement('a');
+        a.setAttribute('href', e.url);
+        a.textContent = e.name;
+        var ziel = String(e.url).replace(/\/+$/, '') || '/';
+        if (ziel === hier) a.setAttribute('aria-current', 'page');
+        if (/^https?:/i.test(e.url)) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); }
+        nav.appendChild(a);
+      });
+    }
+
+    function sagen(box, text, gut) {
+      var m = box.querySelector('.fv-prog-melde');
+      if (!m) return;
+      m.textContent = text;
+      m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+      if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 6000);
+    }
+
+    function verwaltung() {
+      if (!pw || !editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;              // ein Ort reicht
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-menue2-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-menue2-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83E\uDDED Hauptmen\u00fc <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Die Eintr\u00e4ge oben in der Kopfzeile. Reihenfolge, Beschriftung und '
+      + 'Ziel bestimmst du hier. Adressen der eigenen Seiten beginnen mit einem Schr\u00e4gstrich, '
+      + 'z.\u00a0B. <code>/mischwaldrechner</code>. Volle Adressen mit <code>https://</code> \u00f6ffnen '
+      + 'in einem neuen Fenster.</p>'
+      + '<div class="fv-menue2-liste"></div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <input type="text" class="fv-prog-feld" id="fvM2Name" placeholder="Beschriftung" maxlength="40">'
+      + '  <input type="text" class="fv-prog-feld" id="fvM2Url" placeholder="/adresse" maxlength="200">'
+      + '  <button type="button" class="fv-prog-btn" id="fvM2Neu">Hinzuf\u00fcgen</button>'
+      + '  <button type="button" class="fv-prog-weg" id="fvM2Reset">Auf Ursprung zur\u00fccksetzen</button>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>';
+      ziel.appendChild(box);
+
+      var listeEl = box.querySelector('.fv-menue2-liste');
+
+      function zeigen() {
+        listeEl.innerHTML = '';
+        eintraege.forEach(function (e, i) {
+          var zeile = document.createElement('div');
+          zeile.className = 'fv-menue2-zeile';
+
+          var nEl = document.createElement('input');
+          nEl.type = 'text'; nEl.className = 'fv-prog-feld'; nEl.value = e.name; nEl.maxLength = 40;
+          nEl.addEventListener('change', function () {
+            var v = (nEl.value || '').trim();
+            if (!v) { nEl.value = e.name; return; }
+            eintraege[i].name = v;
+            speichern().then(function () { zeichnen(); sagen(box, '\u2713 Gespeichert.', true); });
+          });
+
+          var uEl = document.createElement('input');
+          uEl.type = 'text'; uEl.className = 'fv-prog-feld'; uEl.value = e.url; uEl.maxLength = 200;
+          uEl.addEventListener('change', function () {
+            var v = (uEl.value || '').trim();
+            if (!/^(\/|https?:\/\/)/.test(v)) {
+              uEl.value = e.url;
+              sagen(box, '\u2717 Die Adresse muss mit / oder https:// beginnen.', false);
+              return;
+            }
+            eintraege[i].url = v;
+            speichern().then(function () { zeichnen(); sagen(box, '\u2713 Gespeichert.', true); });
+          });
+
+          function knopf(zeichen, titel, tun, aus) {
+            var k = document.createElement('button');
+            k.type = 'button'; k.className = 'fv-menue2-k';
+            k.innerHTML = zeichen; k.setAttribute('title', titel);
+            if (aus) k.disabled = true;
+            k.addEventListener('click', tun);
+            zeile.appendChild(k);
+            return k;
+          }
+
+          zeile.appendChild(nEl);
+          zeile.appendChild(uEl);
+          knopf('\u2191', 'Nach vorn', function () {
+            var t = eintraege[i - 1]; eintraege[i - 1] = eintraege[i]; eintraege[i] = t;
+            speichern().then(function () { zeigen(); zeichnen(); });
+          }, i === 0);
+          knopf('\u2193', 'Nach hinten', function () {
+            var t = eintraege[i + 1]; eintraege[i + 1] = eintraege[i]; eintraege[i] = t;
+            speichern().then(function () { zeigen(); zeichnen(); });
+          }, i === eintraege.length - 1);
+          var weg = knopf('\u2715', 'Eintrag entfernen', function () {
+            if (!window.confirm('Men\u00fceintrag wirklich entfernen?\n\n' + e.name)) return;
+            eintraege.splice(i, 1);
+            speichern().then(function () { zeigen(); zeichnen(); sagen(box, '\u2713 Entfernt.', true); });
+          });
+          weg.classList.add('fv-menue2-k--weg');
+
+          listeEl.appendChild(zeile);
+        });
+      }
+
+      box.querySelector('#fvM2Neu').addEventListener('click', function () {
+        var n = (box.querySelector('#fvM2Name').value || '').trim();
+        var u = (box.querySelector('#fvM2Url').value || '').trim();
+        if (!n) { sagen(box, '\u2717 Beschriftung fehlt.', false); return; }
+        if (!/^(\/|https?:\/\/)/.test(u)) {
+          sagen(box, '\u2717 Die Adresse muss mit / oder https:// beginnen.', false); return;
+        }
+        if (eintraege.length >= 12) { sagen(box, '\u2717 Mehr als zw\u00f6lf passen nicht in die Kopfzeile.', false); return; }
+        eintraege.push({ name: n, url: u });
+        speichern().then(function (ok) {
+          if (!ok) { sagen(box, '\u2717 Speichern fehlgeschlagen.', false); return; }
+          box.querySelector('#fvM2Name').value = '';
+          box.querySelector('#fvM2Url').value = '';
+          zeigen(); zeichnen(); sagen(box, '\u2713 Hinzugef\u00fcgt.', true);
+        });
+      });
+
+      box.querySelector('#fvM2Reset').addEventListener('click', function () {
+        if (!window.confirm('Men\u00fc auf den Ursprung der HTML-Datei zur\u00fccksetzen?\n\n'
+            + 'Deine \u00c4nderungen am Men\u00fc gehen dabei verloren.')) return;
+        eintraege = ausHtml();
+        speichern().then(function () { zeigen(); zeichnen(); sagen(box, '\u2713 Zur\u00fcckgesetzt.', true); });
+      });
+
+      zeigen();
+    }
+
+    /* Beim Start: was in der Datenbank steht, gewinnt. Steht dort nichts,
+       bleibt das Menue der HTML-Datei stehen - und dient zugleich als
+       Ausgangsstand fuer die Verwaltung. */
+    function start() {
+      var ausgang = ausHtml();
+      laden().then(function (gespeichert) {
+        eintraege = (gespeichert && gespeichert.length) ? gespeichert : ausgang;
+        if (gespeichert && gespeichert.length) zeichnen();
+        verwaltung();
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Gestaltung: Farben und Schrift
+ * ---------------------------------------------------------------------
+ * Das Aussehen haengt an Variablen in :root (styles.css). Abweichungen
+ * liegen in der Datenbank (system / Block c0) und werden als <style> in
+ * den Kopf gelegt.
+ *
+ * JEDE Farbe hat einen eigenen Waehler mit Farbflaeche, Farbton-Regler
+ * und Durchsichtigkeit. Frueher gab es fuer Flaechen und Linien nur
+ * einen gemeinsamen Staerke-Regler - damit liessen sich die Farben
+ * selbst nicht anfassen.
+ *
+ * Gespeichert wird als #rrggbbaa (acht Stellen, letzte zwei sind die
+ * Deckkraft). Ein einziges, leicht pruefbares Format - und CSS versteht
+ * es direkt.
+ *
+ * Laeuft fuer ALLE Besucher, nicht nur im Bearbeiten-Modus.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var SPEICHER = 'fv_gestaltung';
+
+    /* key = CSS-Variable ohne die zwei Striche */
+    var FARBEN = [
+      { key: 'blue',         name: 'Akzent (Kn\u00f6pfe, Links)', vorgabe: '#317cffff' },
+      { key: 'blue-light',   name: 'Akzent hell',                 vorgabe: '#bdd7ffff' },
+      { key: 'knopf-text',   name: 'Schrift auf Kn\u00f6pfen',    vorgabe: '#ffffffff' },
+      { key: 'bg',           name: 'Hintergrund',                 vorgabe: '#03050aff' },
+      { key: 'bg-soft',      name: 'Hintergrund der Fl\u00e4chen', vorgabe: '#070b13ff' },
+      { key: 'kopf-bg',      name: 'Kopfzeile',                   vorgabe: '#060910e0' },
+      { key: 'panel',        name: 'Fl\u00e4chen',                vorgabe: '#ffffff0e' },
+      { key: 'panel-strong', name: 'Fl\u00e4chen (kr\u00e4ftig)', vorgabe: '#ffffff18' },
+      { key: 'line',         name: 'Linien und R\u00e4nder',      vorgabe: '#ffffff1b' },
+      { key: 'text',         name: 'Text',                        vorgabe: '#f4f7fbff' },
+      { key: 'muted',        name: 'Nebentext',                   vorgabe: '#c7d3e7ff' },
+      { key: 'soft',         name: 'Schwacher Text',              vorgabe: '#95a6bfff' },
+      { key: 'red',          name: 'Warnfarbe',                   vorgabe: '#ff4964ff' }
+    ];
+
+    var SCHRIFTEN = [
+      { id: 'arial',     name: 'Arial (Vorgabe)',  wert: 'Arial, Helvetica, sans-serif' },
+      { id: 'system',    name: 'System-Schrift',   wert: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
+      { id: 'verdana',   name: 'Verdana',          wert: 'Verdana, Geneva, sans-serif' },
+      { id: 'trebuchet', name: 'Trebuchet',        wert: '"Trebuchet MS", Tahoma, sans-serif' },
+      { id: 'georgia',   name: 'Georgia (Serife)', wert: 'Georgia, "Times New Roman", serif' },
+      { id: 'mono',      name: 'Schreibmaschine',  wert: 'ui-monospace, "Courier New", monospace' }
+    ];
+
+    /* ---- Farbe umrechnen ------------------------------------------- */
+    function zwei(n) { var s = Math.round(n).toString(16); return s.length < 2 ? '0' + s : s; }
+    function hsvNachHex(h, s, v, a) {
+      h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(1, s)); v = Math.max(0, Math.min(1, v));
+      var c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+      var r = 0, g = 0, b = 0;
+      if (h < 60) { r = c; g = x; }
+      else if (h < 120) { r = x; g = c; }
+      else if (h < 180) { g = c; b = x; }
+      else if (h < 240) { g = x; b = c; }
+      else if (h < 300) { r = x; b = c; }
+      else { r = c; b = x; }
+      return '#' + zwei((r + m) * 255) + zwei((g + m) * 255) + zwei((b + m) * 255)
+           + zwei(Math.max(0, Math.min(1, a)) * 255);
+    }
+    function hexNachHsv(hex) {
+      var m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/i.exec(hex || '');
+      if (!m) return { h: 0, s: 0, v: 0, a: 1 };
+      var r = parseInt(m[1], 16) / 255, g = parseInt(m[2], 16) / 255, b = parseInt(m[3], 16) / 255;
+      var a = m[4] === undefined ? 1 : parseInt(m[4], 16) / 255;
+      var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+      var h = 0;
+      if (d) {
+        if (max === r) h = 60 * (((g - b) / d) % 6);
+        else if (max === g) h = 60 * ((b - r) / d + 2);
+        else h = 60 * ((r - g) / d + 4);
+      }
+      if (h < 0) h += 360;
+      return { h: h, s: max ? d / max : 0, v: max, a: a };
+    }
+    function istFarbe(w) { return typeof w === 'string' && /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(w); }
+    function achtStellig(w) {
+      w = String(w).toLowerCase();
+      return w.length === 7 ? w + 'ff' : w;
+    }
+
+    function vorgabeStand() {
+      var f = {};
+      FARBEN.forEach(function (x) { f[x.key] = x.vorgabe; });
+      return { farben: f, schrift: 'arial', groesse: 100 };
+    }
+    function norm(s) {
+      var v = vorgabeStand();
+      if (!s || typeof s !== 'object') return v;
+      if (s.farben && typeof s.farben === 'object') {
+        FARBEN.forEach(function (x) {
+          var w = s.farben[x.key];
+          if (istFarbe(w)) v.farben[x.key] = achtStellig(w);
+        });
+      }
+      /* Alter Stand: ein gemeinsamer Regler "staerke" statt eigener
+         Farben fuer Flaechen und Linien. Wird einmalig umgerechnet,
+         damit nichts verlorengeht. */
+      var st = parseInt(s.staerke, 10);
+      if (isFinite(st) && st >= 20 && st <= 260) {
+        [['panel', 0.055], ['panel-strong', 0.095], ['line', 0.105]].forEach(function (p) {
+          if (s.farben && istFarbe(s.farben[p[0]])) return;   // schon eigene Farbe
+          v.farben[p[0]] = '#ffffff' + zwei(Math.min(255, p[1] * (st / 100) * 255));
+        });
+      }
+      var gefunden = false;
+      SCHRIFTEN.forEach(function (x) { if (x.id === s.schrift) gefunden = true; });
+      if (gefunden) v.schrift = s.schrift;
+      var gr = parseInt(s.groesse, 10);
+      if (isFinite(gr) && gr >= 85 && gr <= 130) v.groesse = gr;
+      return v;
+    }
+    function schriftWert(id) {
+      var w = SCHRIFTEN[0].wert;
+      SCHRIFTEN.forEach(function (x) { if (x.id === id) w = x.wert; });
+      return w;
+    }
+
+    function bauStil(s) {
+      var z = [];
+      FARBEN.forEach(function (x) { z.push('  --' + x.key + ': ' + s.farben[x.key] + ';'); });
+      z.push('  font-family: ' + schriftWert(s.schrift) + ';');
+      var stil = ':root {\n' + z.join('\n') + '\n}\n';
+      stil += 'body { font-family: ' + schriftWert(s.schrift) + '; }\n';
+      if (s.groesse !== 100) stil += 'html { font-size: ' + (16 * s.groesse / 100).toFixed(2) + 'px; }\n';
+      return stil;
+    }
+    function anwenden(s) {
+      var el = document.getElementById('fv-gestaltung');
+      if (!el) {
+        el = document.createElement('style');
+        el.id = 'fv-gestaltung';
+        (document.head || document.documentElement).appendChild(el);
+      }
+      el.textContent = bauStil(s);
+    }
+
+    var stand = vorgabeStand();
+    try {
+      var roh = sessionStorage.getItem(SPEICHER);
+      if (roh) { stand = norm(JSON.parse(roh)); anwenden(stand); }
+    } catch (e) {}
+
+    function laden() {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var w = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'c0') w = it.value || ''; });
+          if (!w) return null;
+          try { return norm(JSON.parse(w)); } catch (e) { return null; }
+        }).catch(function () { return null; });
+    }
+    function speichern(pw) {
+      try { sessionStorage.setItem(SPEICHER, JSON.stringify(stand)); } catch (e) {}
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: 'system', block: 'c0', type: 'text',
+                               value: JSON.stringify(stand), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* ---- Farbwaehler ------------------------------------------------
+       Farbflaeche (S/V), Farbton-Regler, Durchsichtigkeit, Hex-Feld.
+       Alles vier haengt am selben Wert und schreibt zurueck ueber den
+       Rueckruf. */
+    function farbwaehlerBauen(startHex, aendern) {
+      var f = hexNachHsv(startHex);
+
+      var wurzel = document.createElement('div');
+      wurzel.className = 'fv-cp';
+      wurzel.innerHTML =
+        '<div class="fv-cp__flaeche" data-a="flaeche"><span class="fv-cp__punkt" data-a="punkt"></span></div>'
+      + '<div class="fv-cp__regler">'
+      + '  <input type="range" min="0" max="360" step="1" class="fv-cp__ton" data-a="ton" aria-label="Farbton">'
+      + '  <div class="fv-cp__klarbahn" data-a="klarbahn">'
+      + '    <input type="range" min="0" max="100" step="1" class="fv-cp__klar" data-a="klar" aria-label="Deckkraft">'
+      + '  </div>'
+      + '</div>'
+      + '<div class="fv-cp__fuss">'
+      + '  <span class="fv-cp__probe" data-a="probe"></span>'
+      + '  <input type="text" class="fv-cp__hex" data-a="hex" maxlength="9" spellcheck="false">'
+      + '  <span class="fv-cp__deck" data-a="deck"></span>'
+      + '</div>';
+
+      var flaeche = wurzel.querySelector('[data-a="flaeche"]');
+      var punkt = wurzel.querySelector('[data-a="punkt"]');
+      var ton = wurzel.querySelector('[data-a="ton"]');
+      var klar = wurzel.querySelector('[data-a="klar"]');
+      var klarbahn = wurzel.querySelector('[data-a="klarbahn"]');
+      var probe = wurzel.querySelector('[data-a="probe"]');
+      var hexFeld = wurzel.querySelector('[data-a="hex"]');
+      var deck = wurzel.querySelector('[data-a="deck"]');
+
+      function jetzt() { return hsvNachHex(f.h, f.s, f.v, f.a); }
+      function zeichnen(auchHex) {
+        var voll = hsvNachHex(f.h, 1, 1, 1).slice(0, 7);
+        flaeche.style.background =
+          'linear-gradient(to top, #000, rgba(0,0,0,0)), '
+        + 'linear-gradient(to right, #fff, ' + voll + ')';
+        punkt.style.left = (f.s * 100) + '%';
+        punkt.style.top = ((1 - f.v) * 100) + '%';
+        punkt.style.background = jetzt().slice(0, 7);
+        ton.value = String(Math.round(f.h));
+        klar.value = String(Math.round(f.a * 100));
+        klarbahn.style.background =
+          'linear-gradient(to right, rgba(0,0,0,0), ' + jetzt().slice(0, 7) + ')';
+        probe.style.background = jetzt();
+        deck.textContent = Math.round(f.a * 100) + '\u2009%';
+        if (auchHex !== false) hexFeld.value = jetzt();
+      }
+      function melden() { zeichnen(); aendern(jetzt()); }
+
+      function ausFlaeche(x, y) {
+        var r = flaeche.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        f.s = Math.max(0, Math.min(1, (x - r.left) / r.width));
+        f.v = Math.max(0, Math.min(1, 1 - (y - r.top) / r.height));
+        melden();
+      }
+      function ziehen(startX, startY) {
+        ausFlaeche(startX, startY);
+        function mv(ev) {
+          ev.preventDefault();
+          var p = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+          ausFlaeche(p.clientX, p.clientY);
+        }
+        function up() {
+          document.removeEventListener('mousemove', mv);
+          document.removeEventListener('mouseup', up);
+          document.removeEventListener('touchmove', mv);
+          document.removeEventListener('touchend', up);
+        }
+        document.addEventListener('mousemove', mv);
+        document.addEventListener('mouseup', up);
+        document.addEventListener('touchmove', mv, { passive: false });
+        document.addEventListener('touchend', up);
+      }
+      flaeche.addEventListener('mousedown', function (e) { e.preventDefault(); ziehen(e.clientX, e.clientY); });
+      flaeche.addEventListener('touchstart', function (e) {
+        if (!e.touches || !e.touches[0]) return;
+        e.preventDefault(); ziehen(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: false });
+
+      ton.addEventListener('input', function () { f.h = parseInt(ton.value, 10) || 0; melden(); });
+      klar.addEventListener('input', function () { f.a = (parseInt(klar.value, 10) || 0) / 100; melden(); });
+      hexFeld.addEventListener('change', function () {
+        var w = (hexFeld.value || '').trim();
+        if (w && w.charAt(0) !== '#') w = '#' + w;
+        if (!istFarbe(w)) { zeichnen(); return; }      // Unsinn -> zurueck auf den Wert
+        f = hexNachHsv(achtStellig(w));
+        melden();
+      });
+
+      zeichnen();
+      return { el: wurzel, setzen: function (hex) { f = hexNachHsv(achtStellig(hex)); zeichnen(); } };
+    }
+
+    function verwaltung() {
+      var pw = '';
+      try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+      var editAn = false;
+      try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+      if (!pw || !editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-gest-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-gest-box';
+      var schriftHtml = '';
+      SCHRIFTEN.forEach(function (x) {
+        schriftHtml += '<option value="' + x.id + '"' + (stand.schrift === x.id ? ' selected' : '') + '>'
+                    + x.name + '</option>';
+      });
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83C\uDFA8 Gestaltung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Jede Farbe der Webseite mit eigenem W\u00e4hler: Farbfl\u00e4che f\u00fcr '
+      + 'S\u00e4ttigung und Helligkeit, Regler f\u00fcr den Farbton, und darunter die Deckkraft. '
+      + '\u00c4nderungen siehst du <strong>sofort</strong>, gespeichert werden sie erst mit '
+      + '\u201eSpeichern\u201c \u2013 bis dahin kannst du gefahrlos ausprobieren.</p>'
+      + '<div class="fv-gest-netz"></div>'
+      + '<div class="fv-gest-regler">'
+      + '  <label>Schriftart<select data-a="schrift">' + schriftHtml + '</select></label>'
+      + '  <label>Schriftgr\u00f6\u00dfe <b data-a="groesseWert">' + stand.groesse + '\u2009%</b>'
+      + '    <input type="range" min="85" max="130" step="5" value="' + stand.groesse + '" data-a="groesse"></label>'
+      + '</div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" data-a="save">Speichern</button>'
+      + '  <button type="button" class="fv-prog-weg" data-a="undo" style="margin-left:0">Verwerfen</button>'
+      + '  <button type="button" class="fv-prog-weg" data-a="reset" style="margin-left:0">Auf Vorgabe zur\u00fccksetzen</button>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>';
+      ziel.appendChild(box);
+
+      var netz = box.querySelector('.fv-gest-netz');
+      var waehler = {};
+      FARBEN.forEach(function (x) {
+        var karte = document.createElement('div');
+        karte.className = 'fv-gest-karte';
+        karte.setAttribute('data-farbe', x.key);
+        var titel = document.createElement('div');
+        titel.className = 'fv-gest-karte__name';
+        titel.textContent = x.name;
+        karte.appendChild(titel);
+        var w = farbwaehlerBauen(stand.farben[x.key], function (hex) {
+          stand.farben[x.key] = hex;
+          anwenden(stand);
+        });
+        waehler[x.key] = w;
+        karte.appendChild(w.el);
+        netz.appendChild(karte);
+      });
+
+      var gespeichert = JSON.parse(JSON.stringify(stand));
+      function sagen(t, gut) {
+        var m = box.querySelector('.fv-prog-melde');
+        m.textContent = t;
+        m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 6000);
+      }
+      function felderSetzen() {
+        FARBEN.forEach(function (x) { waehler[x.key].setzen(stand.farben[x.key]); });
+        box.querySelector('[data-a="schrift"]').value = stand.schrift;
+        box.querySelector('[data-a="groesse"]').value = stand.groesse;
+        box.querySelector('[data-a="groesseWert"]').textContent = stand.groesse + '\u2009%';
+      }
+
+      box.querySelector('[data-a="groesse"]').addEventListener('input', function (e) {
+        stand.groesse = parseInt(e.target.value, 10) || 100;
+        box.querySelector('[data-a="groesseWert"]').textContent = stand.groesse + '\u2009%';
+        anwenden(stand);
+      });
+      box.querySelector('[data-a="schrift"]').addEventListener('change', function (e) {
+        stand.schrift = e.target.value;
+        anwenden(stand);
+      });
+      box.querySelector('[data-a="save"]').addEventListener('click', function () {
+        speichern(pw).then(function (ok) {
+          if (!ok) { sagen('\u2717 Speichern fehlgeschlagen.', false); return; }
+          gespeichert = JSON.parse(JSON.stringify(stand));
+          sagen('\u2713 Gespeichert \u2013 gilt ab sofort f\u00fcr alle Besucher.', true);
+        });
+      });
+      box.querySelector('[data-a="undo"]').addEventListener('click', function () {
+        stand = norm(JSON.parse(JSON.stringify(gespeichert)));
+        anwenden(stand); felderSetzen();
+        sagen('\u2713 Verworfen \u2013 zur\u00fcck auf den gespeicherten Stand.', true);
+      });
+      box.querySelector('[data-a="reset"]').addEventListener('click', function () {
+        if (!window.confirm('Farben und Schrift auf die Vorgabe zur\u00fccksetzen?\n\n'
+            + 'Das wirkt sofort f\u00fcr alle Besucher.')) return;
+        stand = vorgabeStand();
+        anwenden(stand); felderSetzen();
+        speichern(pw).then(function () { sagen('\u2713 Auf Vorgabe zur\u00fcckgesetzt.', true); });
+      });
+    }
+
+    function start() {
+      laden().then(function (s) {
+        if (s) {
+          stand = s; anwenden(stand);
+          try { sessionStorage.setItem(SPEICHER, JSON.stringify(stand)); } catch (e) {}
+        }
+        verwaltung();
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Bilder verwalten
+ * ---------------------------------------------------------------------
+ * Hochgeladene Bilder liegen in einer eigenen Tabelle und waren bisher
+ * nirgends sichtbar. Man konnte weder nachsehen, was da liegt, noch
+ * etwas entfernen - unbenutzte Bilder sammelten sich still an.
+ *
+ * Welches Bild wo benutzt wird, sagt der Server (/api/images). Er sucht
+ * dafuer im gesamten Inhalt nach /api/image/<kennung> und findet damit
+ * auch Bilder in Sammellisten wie der Galerie.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    if (pfad !== '/programme') return;
+
+    var bilder = [];
+    var nurFreie = false;
+
+    function kb(n) {
+      if (n > 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+      return Math.round(n / 1024) + ' KB';
+    }
+    function datum(ms) {
+      var d = new Date(Number(ms) || 0);
+      if (!isFinite(d.getTime()) || !ms) return '';
+      return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
+    }
+
+    function laden() {
+      return fetch('/api/images', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (a) { return (a && a.bilder) || []; })
+        .catch(function () { return []; });
+    }
+
+    function bauen() {
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-bild-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-bild-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83D\uDDBC\uFE0F Bilder <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Alle hochgeladenen Bilder. Unter jedem steht, auf welcher Seite '
+      + 'und in welchem Feld es benutzt wird. Bilder ohne Verwendung stehen nur noch in der '
+      + 'Datenbank und vergr\u00f6\u00dfern jede Sicherung.</p>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" data-a="neu">Neu laden</button>'
+      + '  <label class="fv-bild-filter"><input type="checkbox" data-a="filter"> nur unbenutzte zeigen</label>'
+      + '  <span class="fv-bild-summe" data-a="summe"></span>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>'
+      + '<div class="fv-bild-netz" data-a="netz"></div>';
+      ziel.appendChild(box);
+
+      var netz = box.querySelector('[data-a="netz"]');
+      function sagen(t, gut) {
+        var m = box.querySelector('.fv-prog-melde');
+        m.textContent = t;
+        m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 8000);
+      }
+
+      function zeigen() {
+        var zeigeListe = nurFreie
+          ? bilder.filter(function (b) { return !b.benutzt.length; })
+          : bilder;
+        var frei = bilder.filter(function (b) { return !b.benutzt.length; });
+        var freiByte = 0;
+        frei.forEach(function (b) { freiByte += b.groesse; });
+        var alleByte = 0;
+        bilder.forEach(function (b) { alleByte += b.groesse; });
+        box.querySelector('[data-a="summe"]').textContent =
+          bilder.length + ' Bilder, ' + kb(alleByte) + ' \u2013 davon ' + frei.length
+          + ' unbenutzt (' + kb(freiByte) + ')';
+
+        netz.innerHTML = '';
+        if (!zeigeListe.length) {
+          netz.innerHTML = '<p class="fv-prog-hilfe">Keine Bilder in dieser Ansicht.</p>';
+          return;
+        }
+        zeigeListe.forEach(function (b) {
+          var karte = document.createElement('figure');
+          karte.className = 'fv-bild-karte' + (b.benutzt.length ? '' : ' fv-bild-karte--frei');
+          karte.setAttribute('data-bild', b.id);
+
+          var wo = b.benutzt.length
+            ? b.benutzt.map(function (v) { return v.page + ' / ' + v.block; }).join('<br>')
+            : 'wird nirgends verwendet';
+
+          karte.innerHTML =
+            '<div class="fv-bild-vorschau"><img src="/api/image/' + b.id + '" alt="" loading="lazy"></div>'
+          + '<figcaption>'
+          + '  <code>' + b.id + '</code>'
+          + '  <div class="fv-bild-fakt">' + kb(b.groesse) + ' \u00b7 ' + b.mime.split('/')[1]
+          + (datum(b.created) ? ' \u00b7 ' + datum(b.created) : '') + '</div>'
+          + '  <div class="fv-bild-wo' + (b.benutzt.length ? '' : ' frei') + '">' + wo + '</div>'
+          + '  <button type="button" class="fv-bild-weg" data-a="weg">Entfernen</button>'
+          + '</figcaption>';
+
+          karte.querySelector('[data-a="weg"]').addEventListener('click', function () {
+            /* Zwei verschiedene Rueckfragen: ein unbenutztes Bild
+               wegzunehmen ist harmlos, ein benutztes reisst ein Loch in
+               die Seite. Das muss man vorher wissen. */
+            var frage = b.benutzt.length
+              ? ('Dieses Bild wird noch BENUTZT:\n\n'
+                 + b.benutzt.map(function (v) { return '\u2022 ' + v.page + ' / ' + v.block; }).join('\n')
+                 + '\n\nWird es entfernt, bleiben dort leere Stellen.\nTrotzdem entfernen?')
+              : ('Dieses Bild wirklich entfernen?\n\n' + b.id + ' \u00b7 ' + kb(b.groesse)
+                 + '\n\nEs wird nirgends verwendet. Zur\u00fcckholen l\u00e4sst es sich nur\n'
+                 + 'aus einer Sicherung, die es noch enth\u00e4lt.');
+            if (!window.confirm(frage)) return;
+            fetch('/api/images/entfernen', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ password: pw, ids: [b.id] })
+            }).then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (a) {
+                if (!a || !a.ok) { sagen('\u2717 Entfernen fehlgeschlagen.', false); return; }
+                bilder = bilder.filter(function (x) { return x.id !== b.id; });
+                zeigen();
+                sagen('\u2713 Entfernt.', true);
+              })
+              .catch(function () { sagen('\u2717 Entfernen fehlgeschlagen.', false); });
+          });
+
+          netz.appendChild(karte);
+        });
+      }
+
+      box.querySelector('[data-a="filter"]').addEventListener('change', function (e) {
+        nurFreie = !!e.target.checked;
+        zeigen();
+      });
+      box.querySelector('[data-a="neu"]').addEventListener('click', function () {
+        laden().then(function (a) { bilder = a; zeigen(); sagen('\u2713 Neu geladen.', true); });
+      });
+
+      laden().then(function (a) { bilder = a; zeigen(); });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
+    else bauen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Handy-Vorschau
+ * ---------------------------------------------------------------------
+ * Zeigt die aktuelle Seite in einem schmalen Rahmen. Wichtig: ein
+ * RAHMEN, keine schmal gerechnete Seite. Media Queries haengen an der
+ * Fensterbreite - eine per CSS verkleinerte Seite wuerde sie NICHT
+ * ausloesen, und die Vorschau zeigte etwas, das es so nie gibt.
+ *
+ * Im Rahmen laeuft die Seite als Besuchersicht (siehe Sperre ganz oben
+ * in dieser Datei), sonst saehe man die eigene Werkzeugleiste.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    if (!pw) return;
+    if (/[?&]fv-vorschau=1(&|$)/.test(location.search || '')) return;   // nie im Rahmen selbst
+
+    var BREITEN = [
+      { id: 'handy',  name: '\uD83D\uDCF1 Handy',  breit: 390,  hoch: 760 },
+      { id: 'tablet', name: '\uD83D\uDCDF Tablet', breit: 768,  hoch: 900 },
+      { id: 'klein',  name: '\uD83D\uDDA5\uFE0F Schmal', breit: 1024, hoch: 760 }
+    ];
+
+    function adresse() {
+      var p = location.pathname + (location.search || '');
+      return p + (location.search ? '&' : '?') + 'fv-vorschau=1';
+    }
+
+    function oeffnen() {
+      if (document.querySelector('.fv-vorschau')) return;
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-vorschau';
+
+      var knoepfe = '';
+      BREITEN.forEach(function (b, i) {
+        knoepfe += '<button type="button" class="fv-vorschau__mass' + (i === 0 ? ' an' : '') + '" '
+                +  'data-breit="' + b.breit + '" data-hoch="' + b.hoch + '">' + b.name + '</button>';
+      });
+
+      huelle.innerHTML =
+        '<div class="fv-vorschau__kasten">'
+      + '  <div class="fv-vorschau__kopf">'
+      + '    <span class="fv-vorschau__titel">Vorschau</span>'
+      + knoepfe
+      + '    <span class="fv-vorschau__mass-anzeige" data-a="anzeige"></span>'
+      + '    <button type="button" class="fv-vorschau__zu" data-a="zu" aria-label="Schlie\u00dfen">\u2715</button>'
+      + '  </div>'
+      + '  <div class="fv-vorschau__buehne">'
+      + '    <iframe class="fv-vorschau__rahmen" data-a="rahmen" title="Vorschau"></iframe>'
+      + '  </div>'
+      + '  <p class="fv-vorschau__hinweis">So sehen Besucher die Seite bei dieser Breite. '
+      + 'Deine Werkzeuge sind hier bewusst ausgeblendet.</p>'
+      + '</div>';
+      document.body.appendChild(huelle);
+
+      var rahmen = huelle.querySelector('[data-a="rahmen"]');
+      var anzeige = huelle.querySelector('[data-a="anzeige"]');
+      rahmen.setAttribute('src', adresse());
+
+      function setzen(breit, hoch) {
+        rahmen.style.width = breit + 'px';
+        rahmen.style.height = hoch + 'px';
+        anzeige.textContent = breit + ' \u00d7 ' + hoch + ' px';
+      }
+      setzen(BREITEN[0].breit, BREITEN[0].hoch);
+
+      huelle.querySelectorAll('.fv-vorschau__mass').forEach(function (k) {
+        k.addEventListener('click', function () {
+          huelle.querySelectorAll('.fv-vorschau__mass').forEach(function (x) { x.classList.remove('an'); });
+          k.classList.add('an');
+          setzen(parseInt(k.getAttribute('data-breit'), 10), parseInt(k.getAttribute('data-hoch'), 10));
+        });
+      });
+
+      function zu() {
+        if (huelle.parentNode) huelle.parentNode.removeChild(huelle);
+        document.removeEventListener('keydown', beiTaste);
+      }
+      function beiTaste(e) { if (e.key === 'Escape') zu(); }
+      huelle.querySelector('[data-a="zu"]').addEventListener('click', zu);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) zu(); });
+      document.addEventListener('keydown', beiTaste);
+    }
+
+    document.addEventListener('fv:vorschau-oeffnen', oeffnen);
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Abschnitte: eigene anlegen und ganze ausblenden
+ * ---------------------------------------------------------------------
+ * Bisher liess sich nur IN vorhandene Abschnitte etwas einsetzen, und
+ * ausblenden ging nur Feld fuer Feld. Ein Bereich mit eigener
+ * Ueberschrift war ohne Aenderung der HTML-Datei nicht moeglich.
+ *
+ *   Block y0 (je Seite)  eigene Abschnitte  [{id, titel}]
+ *   Block h1 (je Seite)  ausgeblendete Abschnitte  ["kennung", ...]
+ *
+ * Die Ueberschrift eines eigenen Abschnitts wird NICHT ueber die
+ * t-Nummerierung gefuehrt, sondern liegt im Abschnitt selbst. Sonst
+ * haette jeder neue Abschnitt alle Textnummern dahinter verschoben und
+ * gespeicherte Texte waeren auf falsche Felder gerutscht.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    function seite() {
+      var p = (location.pathname || '').toLowerCase();
+      var datei = p.substring(p.lastIndexOf('/') + 1) || 'index.html';
+      var name = datei.replace(/\.html?$/, '');
+      if (!name || name === 'index') name = 'start';
+      return name;
+    }
+    var SLUG = seite();
+
+    /* Wo die Abschnitte haengen: auf Programmseiten im eigenen Traeger,
+       sonst direkt im Hauptteil. */
+    function traeger() {
+      var haupt = document.querySelector('main');
+      if (!haupt) return null;
+      return haupt.querySelector('.program-detail__body') || haupt;
+    }
+    function alleAbschnitte() {
+      var t = traeger(); if (!t) return [];
+      return Array.prototype.slice.call(t.children).filter(function (el) {
+        return el.nodeType === 1 && el.matches && el.matches('section[aria-labelledby]');
+      });
+    }
+    function kennung(sec) {
+      var eigen = sec.getAttribute('data-fv-sektion');
+      return eigen ? ('eigen:' + eigen) : (sec.getAttribute('aria-labelledby') || '');
+    }
+    function titelVon(sec) {
+      var id = sec.getAttribute('aria-labelledby');
+      var h = id ? document.getElementById(id) : null;
+      return h ? (h.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    var eigene = [], verborgen = [];
+
+    function holen(block) {
+      return fetch('/api/content?page=' + encodeURIComponent(SLUG), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var w = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === block) w = it.value || ''; });
+          if (!w) return [];
+          try { var a = JSON.parse(w); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+    function legen(block, wert) {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: SLUG, block: block, type: 'text',
+                               value: JSON.stringify(wert), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* ---- Eigene Abschnitte in die Seite setzen --------------------- */
+    function eigeneBauen() {
+      var t = traeger(); if (!t) return;
+      eigene.forEach(function (e) {
+        if (!e || !e.id) return;
+        if (t.querySelector('[data-fv-sektion="' + e.id + '"]')) return;
+        var sec = document.createElement('section');
+        sec.className = 'program-info-block fv-sektion-eigen';
+        sec.setAttribute('data-fv-sektion', e.id);
+        sec.setAttribute('data-fv-text-extra', '');
+        var hid = 'fvsek-' + e.id;
+        sec.setAttribute('aria-labelledby', hid);
+        var h = document.createElement('h2');
+        h.id = hid;
+        h.textContent = e.titel || 'Neuer Abschnitt';
+        sec.appendChild(h);
+        t.appendChild(sec);
+      });
+    }
+
+    /* ---- Ausblenden ------------------------------------------------ */
+    function istWeg(k) { return verborgen.indexOf(k) !== -1; }
+    function ausblendenAnwenden() {
+      alleAbschnitte().forEach(function (sec) {
+        var k = kennung(sec);
+        var weg = istWeg(k);
+        sec.classList.toggle('fv-sektion-weg', weg && editAn);
+        if (weg && !editAn) sec.style.display = 'none';
+        else sec.style.display = '';
+      });
+    }
+
+    /* ---- Bedienung im Bearbeiten-Modus ----------------------------- */
+    function werkzeugBauen() {
+      alleAbschnitte().forEach(function (sec) {
+        if (sec.querySelector(':scope > .fv-sek-leiste')) return;
+        var k = kennung(sec);
+        var eigen = !!sec.getAttribute('data-fv-sektion');
+
+        var leiste = document.createElement('div');
+        leiste.className = 'fv-sek-leiste';
+
+        function knopf(zeichen, titel, tun, klasse) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'fv-sek-k' + (klasse ? ' ' + klasse : '');
+          b.innerHTML = zeichen;
+          b.setAttribute('title', titel);
+          b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); tun(); });
+          leiste.appendChild(b);
+          return b;
+        }
+
+        if (istWeg(k)) {
+          knopf('\u21BA wieder einblenden', 'Diesen Abschnitt wieder zeigen', function () {
+            verborgen = verborgen.filter(function (x) { return x !== k; });
+            legen('h1', verborgen).then(function () { ausblendenAnwenden(); werkzeugNeu(); });
+          }, 'fv-sek-k--zurueck');
+        } else {
+          knopf('\u2715 Abschnitt ausblenden', 'Den ganzen Abschnitt f\u00fcr Besucher verbergen', function () {
+            var name = titelVon(sec) || 'dieser Abschnitt';
+            if (!window.confirm('Ganzen Abschnitt ausblenden?\n\n' + name
+                + '\n\nBesucher sehen ihn dann nicht mehr. Du kannst ihn hier\n'
+                + 'jederzeit wieder einblenden.')) return;
+            verborgen.push(k);
+            legen('h1', verborgen).then(function () { ausblendenAnwenden(); werkzeugNeu(); });
+          });
+        }
+
+        if (eigen) {
+          knopf('\u2715 Abschnitt l\u00f6schen', 'Diesen selbst angelegten Abschnitt entfernen', function () {
+            var id = sec.getAttribute('data-fv-sektion');
+            var name = titelVon(sec) || 'dieser Abschnitt';
+            if (!window.confirm('Selbst angelegten Abschnitt l\u00f6schen?\n\n' + name
+                + '\n\nDas l\u00e4sst sich nicht \u00fcber \u201ewieder einblenden\u201c zur\u00fcckholen.\n'
+                + 'Felder, die darin liegen, wandern ans Seitenende.')) return;
+            eigene = eigene.filter(function (x) { return x.id !== id; });
+            legen('y0', eigene).then(function () { location.reload(); });
+          }, 'fv-sek-k--weg');
+        }
+
+        sec.insertBefore(leiste, sec.firstChild);
+
+        /* Ueberschrift eigener Abschnitte bearbeitbar machen - der Text
+           landet im Abschnitt selbst, nicht in der t-Nummerierung. */
+        if (eigen) {
+          var h = sec.querySelector(':scope > h2');
+          if (h && !h.hasAttribute('contenteditable')) {
+            h.setAttribute('contenteditable', 'true');
+            h.setAttribute('spellcheck', 'false');
+            h.classList.add('fv-editable');
+            var alt = h.textContent;
+            h.addEventListener('blur', function () {
+              var neu = (h.textContent || '').replace(/\s+/g, ' ').trim();
+              if (!neu) { h.textContent = alt; return; }
+              if (neu === alt) return;
+              alt = neu;
+              var id = sec.getAttribute('data-fv-sektion');
+              eigene.forEach(function (x) { if (x.id === id) x.titel = neu; });
+              legen('y0', eigene);
+            });
+          }
+        }
+      });
+    }
+    function werkzeugNeu() {
+      Array.prototype.slice.call(document.querySelectorAll('.fv-sek-leiste'))
+        .forEach(function (l) { if (l.parentNode) l.parentNode.removeChild(l); });
+      werkzeugBauen();
+    }
+
+    function anlegenKnopf() {
+      var t = traeger(); if (!t) return;
+      if (document.querySelector('.fv-sek-neu')) return;
+      var box = document.createElement('div');
+      box.className = 'fv-sek-neu';
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fv-extra-add';
+      b.innerHTML = '<span aria-hidden="true">+</span> Abschnitt';
+      b.setAttribute('title', 'Einen neuen Bereich mit eigener \u00dcberschrift anlegen');
+      b.addEventListener('click', function () {
+        var titel = window.prompt('\u00dcberschrift des neuen Abschnitts:', 'Neuer Abschnitt');
+        if (titel === null) return;
+        titel = String(titel).replace(/\s+/g, ' ').trim();
+        if (!titel) return;
+        if (eigene.length >= 20) { window.alert('Mehr als zwanzig eigene Abschnitte sind zu viel.'); return; }
+        eigene.push({ id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+                      titel: titel });
+        legen('y0', eigene).then(function () { location.reload(); });
+      });
+      box.appendChild(b);
+      var hinweis = document.createElement('span');
+      hinweis.className = 'fv-extra-add__wo';
+      hinweis.textContent = 'am Seitenende \u2013 danach l\u00e4sst sich alles hineinsetzen';
+      box.appendChild(hinweis);
+      t.appendChild(box);
+    }
+
+    function start() {
+      Promise.all([holen('y0'), holen('h1')]).then(function (a) {
+        eigene = a[0].filter(function (x) { return x && typeof x.id === 'string'; });
+        verborgen = a[1].filter(function (x) { return typeof x === 'string'; });
+        eigeneBauen();
+        ausblendenAnwenden();
+        if (pw && editAn) { werkzeugBauen(); anlegenKnopf(); }
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Vorhandene Felder verschieben
+ * ---------------------------------------------------------------------
+ * Bisher liessen sich nur selbst angelegte Felder bewegen. Die Felder
+ * aus der HTML-Datei standen fest.
+ *
+ * WARUM DAS HEIKEL IST: Die Schluessel (t0, i0, s0 ...) werden nach der
+ * Reihenfolge im Dokument vergeben. Wuerde man ein Feld verschieben und
+ * DANACH nummerieren, bekaemen alle Felder dahinter neue Nummern - und
+ * jeder gespeicherte Text saesse auf einem fremden Feld.
+ *
+ * DER AUSWEG: Die HTML-Datei aendert sich nie. Also erst nummerieren,
+ * dann umstellen. Dieses Modul wartet auf "fv:felder-bereit" - das
+ * Zeichen, dass alle Schluessel vergeben und alle Texte eingesetzt
+ * sind. Was danach passiert, kann die Nummerierung nicht mehr stoeren.
+ *
+ * Gespeichert wird je Seite in Block z0:
+ *   [{ feld: "t5", anker: "t9", wo: "vor" }, ...]
+ * "anker" ist der Schluessel des Feldes, neben das es soll. Also keine
+ * Pixel und keine Indizes, sondern eine Beziehung - die haelt auch,
+ * wenn sich sonst etwas aendert.
+ *
+ * Die Umstellung gilt fuer ALLE Besucher, nicht nur im Bearbeiten-Modus.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    function seite() {
+      var p = (location.pathname || '').toLowerCase();
+      var datei = p.substring(p.lastIndexOf('/') + 1) || 'index.html';
+      var name = datei.replace(/\.html?$/, '');
+      if (!name || name === 'index') name = 'start';
+      return name;
+    }
+    var SLUG = seite();
+    var zuege = [];
+
+    function haupt() { return document.querySelector('main'); }
+    function feldVon(k) {
+      var h = haupt(); if (!h || !k) return null;
+      return h.querySelector('[data-fvk="' + k + '"]');
+    }
+
+    function holen() {
+      return fetch('/api/content?page=' + encodeURIComponent(SLUG), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var w = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'z0') w = it.value || ''; });
+          if (!w) return [];
+          try { var a = JSON.parse(w); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+    function legen() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: SLUG, block: 'z0', type: 'text',
+                               value: JSON.stringify(zuege), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* Umstellen. Reihenfolge der Eintraege wird eingehalten - so lassen
+       sich auch mehrere Felder hintereinander an dieselbe Stelle legen. */
+    function anwenden() {
+      zuege.forEach(function (z) {
+        if (!z || !z.feld || !z.anker) return;
+        var el = feldVon(z.feld), an = feldVon(z.anker);
+        if (!el || !an || el === an) return;
+        if (el.contains(an)) return;               // sich selbst nicht verschlucken
+        if (!an.parentNode) return;
+        el.setAttribute('data-fv-verschoben', '');
+        if (z.wo === 'vor') an.parentNode.insertBefore(el, an);
+        else an.parentNode.insertBefore(el, an.nextSibling);
+      });
+    }
+
+    /* ---- Bedienung -------------------------------------------------- */
+    function bedienung() {
+      if (!pw || !editAn) return;
+      var h = haupt(); if (!h) return;
+      if (document.querySelector('.fv-zieh-feld')) return;
+
+      var griff = document.createElement('button');
+      griff.type = 'button';
+      griff.className = 'fv-zieh-feld';
+      griff.innerHTML = '\u2807\u2807';
+      griff.setAttribute('title', 'Dieses Feld an eine andere Stelle ziehen');
+      griff.style.display = 'none';
+      document.body.appendChild(griff);
+
+      var linie = document.createElement('div');
+      linie.className = 'fv-zieh-linie';
+      linie.style.display = 'none';
+      document.body.appendChild(linie);
+
+      var ziel = null, weg = null, zieht = null;
+
+      function zeigen(el) {
+        if (!el) { verstecken(); return; }
+        var r = el.getBoundingClientRect();
+        if (r.width < 12 || r.height < 10) { verstecken(); return; }
+        ziel = el;
+        griff.style.display = 'block';
+        griff.style.top = (r.top + window.scrollY - 10) + 'px';
+        griff.style.left = Math.max(4, r.left + window.scrollX - 26) + 'px';
+      }
+      function verstecken() {
+        clearTimeout(weg);
+        weg = setTimeout(function () {
+          if (!zieht) { griff.style.display = 'none'; ziel = null; }
+        }, 260);
+      }
+      document.addEventListener('mouseover', function (e) {
+        if (zieht) return;
+        if (!e.target || !e.target.closest) return;
+        if (e.target.closest('.fv-zieh-feld') || e.target.closest('.fv-admin-bar')
+            || e.target.closest('.fv-weg-btn')) { clearTimeout(weg); return; }
+        var el = e.target.closest('[data-fvk]');
+        if (el && haupt() && haupt().contains(el)) { clearTimeout(weg); zeigen(el); }
+        else verstecken();
+      });
+      griff.addEventListener('mouseenter', function () { clearTimeout(weg); });
+
+      /* Naechste Einfuegestelle zum Zeiger suchen: das Feld, dessen Mitte
+         am dichtesten liegt, davor oder dahinter. */
+      function stelleSuchen(x, y) {
+        var h2 = haupt(); if (!h2) return null;
+        var beste = null, abstand = Infinity;
+        Array.prototype.slice.call(h2.querySelectorAll('[data-fvk]')).forEach(function (el) {
+          if (el === zieht.el || zieht.el.contains(el)) return;
+          if (el.closest('.fv-extra')) return;
+          var r = el.getBoundingClientRect();
+          if (r.width < 8 || r.height < 6) return;
+          [['vor', r.top], ['nach', r.bottom]].forEach(function (p) {
+            var d = Math.abs(y - p[1]) + Math.abs(x - (r.left + r.width / 2)) * 0.12;
+            if (d < abstand) { abstand = d; beste = { el: el, wo: p[0], y: p[1], r: r }; }
+          });
+        });
+        return beste;
+      }
+      function linieZeigen(s) {
+        if (!s) { linie.style.display = 'none'; return; }
+        linie.style.display = 'block';
+        linie.style.top = (s.y + window.scrollY - 1) + 'px';
+        linie.style.left = (s.r.left + window.scrollX) + 'px';
+        linie.style.width = s.r.width + 'px';
+      }
+
+      function anfang(x, y) {
+        if (!ziel) return;
+        var k = ziel.getAttribute('data-fvk');
+        if (!k) return;
+        zieht = { el: ziel, key: k, stelle: null };
+        ziel.classList.add('fv-feld-zieht');
+        document.body.classList.add('fv-zieht');
+        bewegen(x, y);
+      }
+      function bewegen(x, y) {
+        if (!zieht) return;
+        zieht.stelle = stelleSuchen(x, y);
+        linieZeigen(zieht.stelle);
+      }
+      function ende() {
+        if (!zieht) return;
+        var z = zieht; zieht = null;
+        linie.style.display = 'none';
+        document.body.classList.remove('fv-zieht');
+        if (z.el) z.el.classList.remove('fv-feld-zieht');
+        if (!z.stelle) return;
+        var ankerKey = z.stelle.el.getAttribute('data-fvk');
+        if (!ankerKey || ankerKey === z.key) return;
+
+        zuege = zuege.filter(function (e) { return e.feld !== z.key; });
+        zuege.push({ feld: z.key, anker: ankerKey, wo: z.stelle.wo });
+        if (z.stelle.wo === 'vor') z.stelle.el.parentNode.insertBefore(z.el, z.stelle.el);
+        else z.stelle.el.parentNode.insertBefore(z.el, z.stelle.el.nextSibling);
+        z.el.setAttribute('data-fv-verschoben', '');
+        legen();
+      }
+
+      griff.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        anfang(e.clientX, e.clientY);
+        function mv(ev) { ev.preventDefault(); bewegen(ev.clientX, ev.clientY); }
+        function up() {
+          document.removeEventListener('mousemove', mv);
+          document.removeEventListener('mouseup', up);
+          ende();
+        }
+        document.addEventListener('mousemove', mv);
+        document.addEventListener('mouseup', up);
+      });
+      griff.addEventListener('touchstart', function (e) {
+        if (!e.touches || !e.touches[0]) return;
+        e.preventDefault();
+        anfang(e.touches[0].clientX, e.touches[0].clientY);
+        function mv(ev) {
+          if (!ev.touches || !ev.touches[0]) return;
+          ev.preventDefault();
+          bewegen(ev.touches[0].clientX, ev.touches[0].clientY);
+        }
+        function up() {
+          griff.removeEventListener('touchmove', mv);
+          griff.removeEventListener('touchend', up);
+          ende();
+        }
+        griff.addEventListener('touchmove', mv, { passive: false });
+        griff.addEventListener('touchend', up);
+      }, { passive: false });
+
+      /* Zuruecksetzen - ohne das waere ein verrutschtes Feld nur ueber
+         die Datenbank zu retten. */
+      document.addEventListener('fv:zuege-zuruecksetzen', function () {
+        if (!zuege.length) { window.alert('Auf dieser Seite wurde nichts verschoben.'); return; }
+        if (!window.confirm('Alle ' + zuege.length + ' Verschiebungen auf dieser Seite zur\u00fccksetzen?\n\n'
+            + 'Die Felder stehen danach wieder dort, wo sie in der Datei stehen.')) return;
+        zuege = [];
+        legen().then(function () { location.reload(); });
+      });
+    }
+
+    function start() {
+      holen().then(function (a) {
+        zuege = a.filter(function (z) { return z && typeof z.feld === 'string' && typeof z.anker === 'string'; });
+        anwenden();
+        bedienung();
+      });
+    }
+
+    document.addEventListener('fv:felder-bereit', start);
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Altlasten: verwaiste Fassungsangaben
+ * ---------------------------------------------------------------------
+ * Eine Fassungsangabe ist nur erreichbar, wenn eine Adresse auf ihren
+ * Schluessel zeigt. Zeigt nichts darauf, liest sie kein Programm mehr -
+ * sie steht nur noch im Weg und taucht in jeder Sicherung auf.
+ *
+ * Der Server entscheidet, was verwaist ist (/api/altlasten), nicht diese
+ * Seite: nur er kennt die feste Routentabelle UND die selbst angelegten
+ * Routen. Geraten wird hier nichts.
+ *
+ * Bewusst ENG: nur Fassungsangaben ohne Route. Texte und Bilder bleiben
+ * aussen vor - bei denen laesst sich nicht sicher sagen, dass sie
+ * niemand mehr braucht.
+ *
+ * Der bisherige Stand wandert beim Entfernen in den Verlauf.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    if (pfad !== '/programme') return;
+
+    var funde = [], erreichbar = [];
+
+    function laden() {
+      return fetch('/api/altlasten', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (a) {
+          funde = (a && a.altlasten) || [];
+          erreichbar = (a && a.erreichbar) || [];
+        })
+        .catch(function () { funde = []; erreichbar = []; });
+    }
+
+    function bauen() {
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-alt-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-alt-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83E\uDDF9 Altlasten <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Fassungsangaben, auf die <strong>keine Adresse mehr zeigt</strong>. '
+      + 'Kein Programm kann sie abfragen \u2013 sie stehen nur noch in der Datenbank und in jeder '
+      + 'Sicherung. Beim Entfernen wandert der bisherige Stand in den Verlauf, du kannst ihn also '
+      + 'nachlesen.</p>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" data-a="neu">Erneut suchen</button>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>'
+      + '<div data-a="liste"></div>'
+      + '<details class="fv-alt-details"><summary>Welche Schl\u00fcssel sind erreichbar?</summary>'
+      + '<div class="fv-alt-erreichbar" data-a="erreichbar"></div></details>';
+      ziel.appendChild(box);
+
+      var liste = box.querySelector('[data-a="liste"]');
+      function sagen(t, gut) {
+        var m = box.querySelector('.fv-prog-melde');
+        m.textContent = t;
+        m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 8000);
+      }
+
+      function zeigen() {
+        box.querySelector('[data-a="erreichbar"]').textContent = erreichbar.join(' \u00b7 ');
+        liste.innerHTML = '';
+        if (!funde.length) {
+          liste.innerHTML = '<p class="fv-prog-hilfe">\u2713 Keine verwaisten Fassungsangaben. '
+                          + 'Alles, was gespeichert ist, wird auch abgefragt.</p>';
+          return;
+        }
+        funde.forEach(function (f) {
+          var karte = document.createElement('div');
+          karte.className = 'fv-alt-karte';
+          karte.setAttribute('data-alt', f.page);
+          karte.innerHTML =
+            '<div class="fv-alt-kopf"><code>' + f.page + '</code>'
+          + (f.versionName ? '<span class="fv-alt-fassung">Fassung ' + f.versionName
+             + (f.versionCode ? ' \u00b7 ' + f.versionCode : '') + '</span>' : '')
+          + '</div>'
+          + '<div class="fv-alt-grund">' + f.grund + '</div>'
+          + '<pre class="fv-alt-inhalt">' + String(f.vorschau || '')
+              .replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>'
+          + '<button type="button" class="fv-bild-weg" data-a="weg">Entfernen</button>';
+
+          karte.querySelector('[data-a="weg"]').addEventListener('click', function () {
+            if (!window.confirm('Diese verwaiste Fassungsangabe entfernen?\n\n'
+                + f.page + (f.versionName ? '  \u2013  Fassung ' + f.versionName : '')
+                + '\n\nAuf diesen Schl\u00fcssel zeigt keine Adresse; kein Programm fragt ihn ab.\n'
+                + 'Der bisherige Stand bleibt im Verlauf nachlesbar.')) return;
+            fetch('/api/altlasten/entfernen', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ password: pw, eintraege: [{ page: f.page, block: f.block }] })
+            }).then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (a) {
+                if (!a || !a.ok || !a.entfernt) { sagen('\u2717 Entfernen fehlgeschlagen.', false); return; }
+                funde = funde.filter(function (x) { return x.page !== f.page; });
+                zeigen();
+                sagen('\u2713 ' + f.page + ' entfernt.', true);
+              })
+              .catch(function () { sagen('\u2717 Entfernen fehlgeschlagen.', false); });
+          });
+
+          liste.appendChild(karte);
+        });
+      }
+
+      box.querySelector('[data-a="neu"]').addEventListener('click', function () {
+        laden().then(function () { zeigen(); sagen('\u2713 Erneut gesucht.', true); });
+      });
+
+      laden().then(zeigen);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
+    else bauen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();

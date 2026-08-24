@@ -122,6 +122,38 @@ function b64ToBytes(b64) {
   return out;
 }
 
+/* Welche Update-Adresse auf welchen Ablage-Schluessel fuehrt.
+   EINE Quelle fuer beide Seiten: der Worker beantwortet damit die
+   Anfragen, der Zaehler erkennt damit verwaiste Fassungsangaben.
+   Zwei Kopien waeren mit der Zeit auseinandergelaufen. */
+const VERSION_ABLAGEN = {
+  "/mischwaldrechner/version.json": "mischwald",
+  "/finnvelo/aufgabenplaner/version.json": "aufgabenplaner",
+  // Der Einkaufsplaner fragt genau diese Adresse ab. Sie MUSS vom Worker
+  // kommen - lag hier eine echte Datei im Ordner, lieferte Cloudflare
+  // die aus, bevor der Worker ueberhaupt gefragt wurde. Die Update-
+  // Kachel im Admin speicherte dann ins Leere: "Gespeichert" gemeldet,
+  // ausgeliefert wurde weiter die alte Datei.
+  "/einkaufsliste/version.json": "einkaufsliste",
+  /* Tourenplaner: zwei getrennte Dateien mit je eigenem Schluessel.
+     Kommen vom WORKER, gepflegt ueber die Kacheln - wie beim
+     Aufgabenplaner. Im Ordner /tourenplaner/ darf keine gleichnamige
+     Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
+     dann still ins Leere. */
+  // Aufgabenplaner PC - eigene Datei, damit App und PC-Programm sich
+  // nicht mehr gegenseitig ueberschreiben.
+  "/finnvelo/aufgabenplaner/pc.json": "aufgabenplaner-pc",
+  // Je Fassung eine eigene Datei - sonst ueberschreiben sich App und
+  // PC-Programm gegenseitig. Schluessel IMMER klein schreiben!
+  "/einkaufsliste/pc.json": "einkaufsliste-pc",
+  "/mischwaldrechner/pc.json": "mischwald-pc",
+  "/lesezeit/pc.json": "lesezeit-pc",   // klein! der Vergleich nutzt toLowerCase()
+  "/tourenplaner/android.json": "tourenplaner-android",
+  "/tourenplaner/pc.json": "tourenplaner-pc",
+  // Lesezeit: die App fragt /lesezeit/version.json ab.
+  "/lesezeit/version.json": "lesezeit"
+};
+
 export class Counter extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -356,6 +388,149 @@ export class Counter extends DurableObject {
       const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       this.sql.exec("INSERT INTO images (id, mime, data, created) VALUES (?, ?, ?, ?)", id, mime, b64, Date.now());
       return json({ id, url: "/api/image/" + id });
+    }
+
+    /* --- Bilder verzeichnen -------------------------------------------
+     * Liefert zu jedem Bild seine Kennung, Groesse und WO es benutzt
+     * wird. Die Bilddaten selbst bleiben draussen - die Uebersicht waere
+     * sonst viele Megabyte gross; die Vorschau holt jedes Bild einzeln
+     * ueber /api/image/<id>.
+     * Wo benutzt: der Inhalt wird nach /api/image/<id> durchsucht. Das
+     * findet auch Bilder in Sammellisten wie der Galerie, wo sie nicht
+     * als eigener Eintrag stehen.
+     * ------------------------------------------------------------------ */
+    if (url.pathname === "/api/images" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+
+      const bilder = this.sql.exec(
+        "SELECT id, mime, LENGTH(data) AS n, created FROM images ORDER BY created DESC"
+      ).toArray();
+      const inhalte = this.sql.exec("SELECT page, block, value FROM content").toArray();
+
+      const benutzt = {};
+      for (const z of inhalte) {
+        const wert = String(z.value || "");
+        if (wert.indexOf("/api/image/") === -1) continue;
+        const treffer = wert.match(/\/api\/image\/([A-Za-z0-9]+)/g) || [];
+        for (const t of treffer) {
+          const id = t.slice("/api/image/".length);
+          if (!benutzt[id]) benutzt[id] = [];
+          if (!benutzt[id].some((e) => e.page === z.page && e.block === z.block)) {
+            benutzt[id].push({ page: z.page, block: z.block });
+          }
+        }
+      }
+
+      return json({
+        bilder: bilder.map((b) => ({
+          id: b.id,
+          mime: b.mime,
+          // LENGTH() zaehlt Base64-Zeichen; die echte Groesse ist drei Viertel davon
+          groesse: Math.round(Number(b.n) * 0.75),
+          created: b.created,
+          benutzt: benutzt[b.id] || []
+        }))
+      });
+    }
+
+    /* --- Altlasten suchen ----------------------------------------------
+     * Eine Fassungsangabe (Block u0) ist nur dann erreichbar, wenn eine
+     * Adresse auf ihren Schluessel zeigt - entweder aus der festen
+     * Routentabelle oder aus den selbst angelegten Routen (system/v0).
+     * Zeigt nichts darauf, liest sie kein Programm mehr.
+     *
+     * Bewusst ENG gefasst: nur u0-Bloecke ohne Route. Texte, Bilder und
+     * Einstellungen bleiben aussen vor - bei denen kann ich nicht sicher
+     * sagen, dass sie niemand mehr braucht, und dann loesche ich lieber
+     * gar nichts.
+     * ------------------------------------------------------------------ */
+    if (url.pathname === "/api/altlasten" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+
+      const erreichbar = {};
+      for (const p in VERSION_ABLAGEN) erreichbar[VERSION_ABLAGEN[p]] = p;
+      const rows = this.sql.exec(
+        "SELECT value FROM content WHERE page = 'system' AND block = 'v0'"
+      ).toArray();
+      if (rows.length && rows[0].value) {
+        try {
+          const eigene = JSON.parse(rows[0].value) || {};
+          for (const p in eigene) {
+            if (typeof eigene[p] === "string") erreichbar[eigene[p]] = p;
+            // eine eigene Route zeigt auch auf die PC-Fassung desselben Namens
+            if (typeof eigene[p] === "string") erreichbar[eigene[p] + "-pc"] = p + " (PC)";
+          }
+        } catch (_e) {}
+      }
+
+      const u0 = this.sql.exec(
+        "SELECT page, value, updated FROM content WHERE block = 'u0' ORDER BY page"
+      ).toArray();
+      const funde = [];
+      for (const z of u0) {
+        if (erreichbar[z.page]) continue;
+        let name = "", nummer = "";
+        try {
+          const v = JSON.parse(z.value);
+          name = String(v.versionName || v.version || "");
+          nummer = String(v.versionCode || v.versionsCode || "");
+        } catch (_e) {}
+        funde.push({
+          page: z.page, block: "u0", updated: z.updated,
+          versionName: name, versionCode: nummer,
+          grund: "Keine Adresse zeigt auf diesen Schl\u00fcssel",
+          vorschau: String(z.value || "").slice(0, 400)
+        });
+      }
+      return json({ altlasten: funde, erreichbar: Object.keys(erreichbar).sort() });
+    }
+
+    if (url.pathname === "/api/altlasten/entfernen" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      const liste = Array.isArray(body.eintraege) ? body.eintraege : [];
+      let weg = 0;
+      for (const e of liste) {
+        const page = String(e && e.page || "");
+        const block = String(e && e.block || "");
+        if (!PAGE_RE.test(page) || block !== "u0") continue;
+        // Der bisherige Stand bleibt im Verlauf - Zuruecknehmen bleibt moeglich.
+        const alt = this.sql.exec(
+          "SELECT type, value FROM content WHERE page = ? AND block = ?", page, block
+        ).toArray();
+        if (!alt.length) continue;
+        try {
+          this.sql.exec(
+            "INSERT INTO verlauf (seite, block, art, wert, zeit) VALUES (?, ?, ?, ?, ?)",
+            page, block, alt[0].type, alt[0].value, Date.now()
+          );
+        } catch (_e) { /* Verlauf ist Beiwerk, kein Grund abzubrechen */ }
+        this.sql.exec("DELETE FROM content WHERE page = ? AND block = ?", page, block);
+        weg++;
+      }
+      if (weg) this.spurLegen("/api/altlasten/entfernen", weg + " verwaiste Fassungsangabe(n) entfernt");
+      return json({ ok: true, entfernt: weg });
+    }
+
+    if (url.pathname === "/api/images/entfernen" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      const ids = Array.isArray(body.ids) ? body.ids : [];
+      let weg = 0;
+      for (const roh of ids) {
+        const id = String(roh || "");
+        if (!/^[A-Za-z0-9]{1,40}$/.test(id)) continue;
+        this.sql.exec("DELETE FROM images WHERE id = ?", id);
+        weg++;
+      }
+      if (weg) this.spurLegen("/api/images/entfernen", weg + " Bild(er) entfernt");
+      return json({ ok: true, entfernt: weg });
     }
 
     if (url.pathname.startsWith("/api/image/") && method === "GET") {
@@ -1768,33 +1943,7 @@ export default {
     // Versionsdateien der Android-Apps (feste Adressen, die in den Apps stecken).
     const versionPfad = url.pathname.toLowerCase().replace(/\/+$/, "");
     // Fest eingebaute Update-Adressen (bleiben immer erreichbar)
-    const VERSION_ROUTEN = {
-      "/mischwaldrechner/version.json": "mischwald",
-      "/finnvelo/aufgabenplaner/version.json": "aufgabenplaner",
-      // Der Einkaufsplaner fragt genau diese Adresse ab. Sie MUSS vom Worker
-      // kommen - lag hier eine echte Datei im Ordner, lieferte Cloudflare
-      // die aus, bevor der Worker ueberhaupt gefragt wurde. Die Update-
-      // Kachel im Admin speicherte dann ins Leere: "Gespeichert" gemeldet,
-      // ausgeliefert wurde weiter die alte Datei.
-      "/einkaufsliste/version.json": "einkaufsliste",
-      /* Tourenplaner: zwei getrennte Dateien mit je eigenem Schluessel.
-         Kommen vom WORKER, gepflegt ueber die Kacheln - wie beim
-         Aufgabenplaner. Im Ordner /tourenplaner/ darf keine gleichnamige
-         Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
-         dann still ins Leere. */
-      // Aufgabenplaner PC - eigene Datei, damit App und PC-Programm sich
-      // nicht mehr gegenseitig ueberschreiben.
-      "/finnvelo/aufgabenplaner/pc.json": "aufgabenplaner-pc",
-      // Je Fassung eine eigene Datei - sonst ueberschreiben sich App und
-      // PC-Programm gegenseitig. Schluessel IMMER klein schreiben!
-      "/einkaufsliste/pc.json": "einkaufsliste-pc",
-      "/mischwaldrechner/pc.json": "mischwald-pc",
-      "/lesezeit/pc.json": "lesezeit-pc",   // klein! der Vergleich nutzt toLowerCase()
-      "/tourenplaner/android.json": "tourenplaner-android",
-      "/tourenplaner/pc.json": "tourenplaner-pc",
-      // Lesezeit: die App fragt /lesezeit/version.json ab.
-      "/lesezeit/version.json": "lesezeit"
-    };
+    const VERSION_ROUTEN = VERSION_ABLAGEN;
     if (versionPfad.endsWith("/version.json") || versionPfad.endsWith("/android.json")
         || versionPfad.endsWith("/pc.json")) {
       let ablage = VERSION_ROUTEN[versionPfad];

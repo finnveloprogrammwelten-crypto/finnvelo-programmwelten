@@ -300,3 +300,323 @@ stats.js:
 Geprueft: 41 Pruefungen, darunter Einrasten auf Spalte 7 bei einer
 1200 px breiten Zone, Umsortieren beim Ablegen, Zurueckziehen der
 Spalte bei Breitenwechsel und unveraendertes Verhalten alter Felder.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (3) - PUNKT 1 UND 2: SEITEN VERLINKEN SICH SELBST,
+                 HAUPTMENUE IST VERWALTBAR
+-----------------------------------------------------------------------
+Vorher: Der Worker legte eine Seite an, aber nichts fuehrte hin. Die
+Kacheln der Startseite und die Zeilen auf /programme standen fest in
+den HTML-Dateien, das Hauptmenue ebenfalls.
+
+1) EIGENE PROGRAMME REIHEN SICH EIN            stats.js: eigeneEinreihen()
+   Liest /api/programme und ergaenzt fuer jede angelegte Seite eine
+   Kachel (Startseite) bzw. eine Zeile (/programme). Seiten, die schon
+   verlinkt sind, werden uebersprungen. Infoseiten (art: "info") kommen
+   nicht in die Programmliste.
+
+   WICHTIG - warum data-fv-text-extra:
+   Die Nummerierung t0, i0, s0 ... folgt der Reihenfolge im Dokument.
+   Eingeschobene Kacheln wuerden alle Nummern dahinter verschieben -
+   jeder gespeicherte Text saesse danach auf dem falschen Feld. Der
+   Haken data-fv-text-extra war im Code seit langem vorgesehen, wurde
+   aber nirgends benutzt; jetzt schiebt er die neuen Kacheln ans ENDE
+   der Nummerierung. Eine Pruefung vergleicht die Schluessel MIT und
+   OHNE zusaetzliche Kacheln - sie muessen gleich bleiben.
+
+   eigeneEinreihen() laeuft VOR keyed(), sonst blieben die neuen
+   Beschreibungen unbearbeitbar.
+
+2) HAUPTMENUE VERWALTBAR                       Block system / h2
+   Verwaltung auf /programme: Beschriftung, Ziel, Reihenfolge,
+   Hinzufuegen, Entfernen (mit Rueckfrage), Zuruecksetzen auf den
+   Ursprung der HTML-Datei.
+   Adressen muessen mit / oder https:// beginnen; volle Adressen
+   oeffnen in einem neuen Fenster. Der aktuelle Pfad bekommt
+   aria-current, die Hervorhebung stimmt also weiter.
+   Solange in h2 nichts steht, bleibt das Menue der HTML-Datei
+   unveraendert - eine leere Datenbank aendert nichts.
+
+Geprueft: 26 Pruefungen. Gesamtstand aller Pruefungen: 186.
+
+NOCH OFFEN aus der Liste: Farben und Schrift (3), neue Abschnitte (4),
+Bilder-Verwalter (5), ganze Abschnitte ausblenden (6), Handy-Vorschau
+(7), urspruengliche Felder verschieben (8).
+
+HINWEIS: PROGRAM_PAGES in stats.js Zeile 14 muss NICHT dynamisch
+werden - isProgram erkennt selbst angelegte Seiten bereits am Aufbau
+(article.program-detail). Geprueft, nicht angenommen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (4) - PUNKT 3: FARBEN UND SCHRIFT IM ADMIN-MODUS
+-----------------------------------------------------------------------
+Neuer Kasten "Gestaltung" auf /programme. Abweichungen liegen in
+system / Block c0 und werden als <style id="fv-gestaltung"> in den
+Kopf gelegt.
+
+Aenderbar:
+  acht Farben  Akzent, Akzent hell, Hintergrund, Flaechen-Hintergrund,
+               Text, Nebentext, schwacher Text, Warnfarbe
+  Schriftart   sechs Stapel (Arial, System, Verdana, Trebuchet,
+               Georgia, Schreibmaschine)
+  Schriftgroesse  85-130 %
+  Flaechen und Linien  20-260 %
+
+Warum ein REGLER fuer Flaechen und Linien statt Farbwaehlern:
+--panel, --panel-strong und --line sind halbdurchsichtiges Weiss ueber
+dem Hintergrund. Drei Farbfelder mit Alpha-Wert waeren unbedienbar;
+ein Regler fuer die Staerke trifft, was man eigentlich will. 100 %
+entspricht genau den Werten aus styles.css.
+
+Bedienung:
+  - Aenderungen wirken SOFORT, gespeichert wird erst auf Knopfdruck
+  - "Verwerfen" holt den gespeicherten Stand zurueck
+  - "Auf Vorgabe zuruecksetzen" mit Rueckfrage
+
+Laeuft fuer ALLE Besucher, nicht nur im Bearbeiten-Modus - sonst saehe
+die Seite nur fuer den Admin anders aus. Der zuletzt geholte Stand
+liegt zusaetzlich in sessionStorage und wird sofort angewandt, damit
+die Seite nicht kurz in den Vorgabefarben aufblitzt.
+
+SICHERHEIT: Alle Werte werden geprueft, bevor sie ins <style> gehen -
+Farben nur als #rrggbb, Schrift nur aus der festen Liste, Regler nur
+im erlaubten Bereich. Sonst koennte ueber den Datenbankeintrag
+beliebiges CSS eingeschleust werden. Eine Pruefung schiebt genau so
+einen Versuch hinein und erwartet, dass er verworfen wird.
+
+Geprueft: 30 Pruefungen. Gesamtstand: 216.
+
+NOCH OFFEN: neue Abschnitte (4), Bilder-Verwalter (5), ganze
+Abschnitte ausblenden (6), Handy-Vorschau (7), urspruengliche Felder
+verschieben (8).
+
+
+-----------------------------------------------------------------------
+24.08.2026 (5) - FARBWAEHLER MIT DURCHSICHTIGKEIT FUER JEDE FARBE
+-----------------------------------------------------------------------
+Der gemeinsame Staerke-Regler fuer Flaechen und Linien ist ersetzt.
+Jede Farbe hat jetzt einen eigenen Waehler:
+  - Farbflaeche fuer Saettigung und Helligkeit (ziehen, Maus + Finger)
+  - Regler fuer den Farbton (Regenbogen)
+  - Regler fuer die Deckkraft, auf Karomuster, damit man sie sieht
+  - Hex-Feld zum genauen Eintippen und Ablesen
+
+Gespeichert wird #rrggbbaa - acht Stellen, die letzten zwei sind die
+Deckkraft. Ein Format, leicht zu pruefen, und CSS versteht es direkt.
+Alte Staende mit sechs Stellen werden um "ff" ergaenzt; ein alter
+"staerke"-Wert wird einmalig in Deckkraft fuer Flaechen und Linien
+umgerechnet, damit nichts verlorengeht.
+
+DREI FARBEN MEHR - vorher fest verdrahtet, jetzt Variablen in
+styles.css und damit erreichbar:
+  --kopf-bg      Kopfzeile (war rgba(6, 9, 16, 0.88))
+  --knopf-text   Schrift auf Knoepfen (war "white")
+  .button.secondary nutzt jetzt var(--panel-strong) statt eines
+  festen Weisstons
+
+Damit sind 13 Farben einstellbar: Akzent, Akzent hell, Knopfschrift,
+Hintergrund, Flaechen-Hintergrund, Kopfzeile, Flaechen, Flaechen
+kraeftig, Linien, Text, Nebentext, schwacher Text, Warnfarbe.
+
+EHRLICH DAZU: In styles.css stehen rund 290 weitere feste Farbwerte.
+Der groesste Teil davon gehoert zur Admin-Oberflaeche (Kaesten,
+Werkzeugleisten, Raster) - die sieht kein Besucher. Ein blindes
+Ersetzen aller Werte waere riskanter als es nuetzt; wenn eine bestimmte
+Stelle stoert, wird sie einzeln zur Variablen gemacht.
+
+Die Pruefung des Stylesheets bleibt: Farben nur als #rrggbb(aa),
+Schrift nur aus der festen Liste, Groesse nur im erlaubten Bereich.
+Eine Pruefung schiebt CSS ueber zwei verschiedene Felder ein und
+erwartet, dass beides verworfen wird.
+
+Geprueft: 36 Pruefungen. Gesamtstand: 222.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (6) - PUNKT 5 UND 7: BILDER-VERWALTER, HANDY-VORSCHAU
+-----------------------------------------------------------------------
+
+PUNKT 5 - BILDER VERWALTEN
+worker.js, zwei neue Routen (beide nur mit Admin-Passwort):
+  /api/images            Verzeichnis aller Bilder: Kennung, Art, Groesse,
+                         Datum und WO das Bild benutzt wird. Der Server
+                         durchsucht dafuer den gesamten Inhalt nach
+                         /api/image/<kennung> - das findet auch Bilder in
+                         Sammellisten wie der Galerie, wo sie nicht als
+                         eigener Eintrag stehen.
+                         Die Bilddaten bleiben DRAUSSEN, sonst waere die
+                         Antwort viele Megabyte gross; die Vorschau holt
+                         jedes Bild einzeln ueber /api/image/<id>.
+  /api/images/entfernen  Loeschen nach Kennung, mit Eintrag im Verlauf.
+
+stats.js, neuer Kasten auf /programme: alle Bilder als Vorschau, mit
+Groesse, Datum und Fundstellen. Unbenutzte sind gelb umrandet. Filter
+"nur unbenutzte zeigen". Summe nennt Anzahl und wieviel Platz die
+unbenutzten belegen.
+
+ZWEI VERSCHIEDENE RUECKFRAGEN beim Entfernen:
+  unbenutzt -> schlichte Bestaetigung
+  benutzt   -> nennt alle Fundstellen und warnt, dass dort leere Stellen
+               bleiben
+Ein benutztes Bild wegzunehmen ist etwas anderes als ein vergessenes -
+also darf es sich auch nicht gleich anfuehlen.
+
+PUNKT 7 - HANDY-VORSCHAU
+Neuer Knopf in der Admin-Leiste. Zeigt die aktuelle Seite in Handy-
+(390), Tablet- (768) oder schmaler Fensterbreite (1024).
+
+WARUM EIN RAHMEN und keine schmal gerechnete Seite:
+Media Queries haengen an der FENSTERbreite. Eine per CSS verkleinerte
+Seite loest sie nicht aus - die Vorschau zeigte dann etwas, das es in
+Wirklichkeit nie gibt. Ein iframe hat ein eigenes Fenster, also greifen
+sie richtig.
+
+Im Rahmen laeuft die Besuchersicht: keine Werkzeugleiste, keine
+Bearbeiten-Kaesten, nichts bearbeitbar.
+
+STOLPERSTEIN, den erst die Pruefung gefunden hat:
+Der Rahmen teilt sich den sessionStorage mit dem Hauptfenster, saehe
+also das Admin-Passwort. Zehn Bausteine fragen unabhaengig danach.
+Erster Versuch war
+    sessionStorage.getItem = function ...
+Das ersetzt die Methode NICHT - bei Storage-Objekten legt eine
+Zuweisung einen EINTRAG namens "getItem" an. Im Browser waere es
+genauso schiefgegangen, nur unbemerkt. Richtig ist der Weg ueber
+Storage.prototype, beschraenkt auf sessionStorage.
+
+Geprueft: 35 Pruefungen. Gesamtstand: 257.
+
+NOCH OFFEN: neue Abschnitte anlegen (4), ganze Abschnitte ausblenden
+(6), urspruengliche Felder verschieben (8).
+
+
+-----------------------------------------------------------------------
+24.08.2026 (7) - PUNKT 4 UND 6: EIGENE ABSCHNITTE, ABSCHNITTE
+                 AUSBLENDEN
+-----------------------------------------------------------------------
+Zwei neue Bloecke je Seite:
+  y0   eigene Abschnitte        [{id, titel}]
+  h1   ausgeblendete Abschnitte ["kennung", ...]
+
+PUNKT 4 - EIGENE ABSCHNITTE
+Knopf "+ Abschnitt" am Seitenende. Fragt nach der Ueberschrift, legt
+den Bereich an und laedt neu (danach kennt ihn die Feld-Verwaltung und
+man kann mit "+ Textfeld" usw. hineinsetzen). Die Ueberschrift ist
+direkt bearbeitbar; leer bleiben darf sie nicht.
+
+WICHTIG - die Ueberschrift laeuft NICHT ueber die t-Nummerierung.
+Sie liegt im Abschnitt selbst (Block y0). Waere sie ein normales
+Textfeld, haette jeder neu angelegte Abschnitt alle Textnummern
+dahinter verschoben - gespeicherte Texte saessen danach auf falschen
+Feldern. textEls() ueberspringt deshalb h2 in [data-fv-sektion].
+Eine Pruefung vergleicht die Schluessel MIT und OHNE neuen Abschnitt.
+
+PUNKT 6 - GANZE ABSCHNITTE AUSBLENDEN
+Jeder Abschnitt bekommt im Bearbeiten-Modus eine kleine Leiste:
+  "Abschnitt ausblenden"   mit Rueckfrage, die den Abschnitt NENNT
+  "wieder einblenden"      wenn er ausgeblendet ist
+  "Abschnitt loeschen"     nur bei selbst angelegten
+Besucher sehen ausgeblendete Abschnitte gar nicht. Im Bearbeiten-Modus
+bleiben sie blass sichtbar, damit man sie zurueckholen kann - dasselbe
+Verhalten wie bei einzelnen Feldern.
+
+Loeschen eines eigenen Abschnitts ist NICHT dasselbe wie Ausblenden;
+die Rueckfrage sagt das ausdruecklich und warnt, dass Felder darin ans
+Seitenende wandern.
+
+Beides funktioniert auf Programmseiten (Traeger .program-detail__body)
+UND auf Start- und Programmseite (dort direkt im Hauptteil).
+
+Geprueft: 34 Pruefungen. Gesamtstand: 291.
+
+NOCH OFFEN: nur noch Punkt 8 - urspruengliche Felder frei verschieben.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (8) - PUNKT 8: VORHANDENE FELDER VERSCHIEBEN
+-----------------------------------------------------------------------
+Damit ist die Liste der acht Punkte abgearbeitet.
+
+DAS PROBLEM: Die Schluessel (t0, i0, s0 ...) werden nach der Reihenfolge
+im Dokument vergeben. Wuerde man ein Feld verschieben und DANACH
+nummerieren, bekaemen alle Felder dahinter neue Nummern - jeder
+gespeicherte Text saesse auf einem fremden Feld. Genau deshalb war
+dieser Punkt der heikelste.
+
+DER AUSWEG: Die HTML-Datei aendert sich nie. Also erst nummerieren,
+dann umstellen. Neues Ereignis "fv:felder-bereit" wird ausgeloest,
+sobald alle Schluessel vergeben UND alle Texte eingesetzt sind. Das
+Verschieben haengt sich dort ein. Was danach passiert, kann die
+Nummerierung nicht mehr stoeren.
+
+Gespeichert wird je Seite in Block z0:
+  [{ feld: "t5", anker: "t9", wo: "vor" }, ...]
+Keine Pixel, keine Indizes, sondern eine BEZIEHUNG zu einem anderen
+Feld. Die haelt auch, wenn sich sonst etwas aendert.
+
+BEDIENUNG
+  - Zeiger auf ein Feld -> Griff erscheint links daneben
+  - ziehen -> eine blaue Linie zeigt, wo es landet
+  - loslassen -> umgestellt und gespeichert
+  - Maus und Finger
+  - neuer Knopf "Verschiebungen" in der Admin-Leiste setzt alle Zuege
+    einer Seite zurueck, mit Rueckfrage und Nennung der Anzahl
+  - im Raster sind verschobene Felder gruen umrandet
+
+Die Umstellung gilt fuer ALLE Besucher, nicht nur im Bearbeiten-Modus.
+Unsinnige Eintraege (unbekanntes Feld, Anker auf sich selbst, kaputte
+Daten) werden uebergangen, ohne die Seite zu stoeren.
+
+Geprueft: 28 Pruefungen. Darunter ausdruecklich der Kernpunkt:
+nach zwei Verschiebungen behaelt JEDES Feld seinen Schluessel, und ein
+gespeicherter Text sitzt danach immer noch auf seinem eigenen Feld.
+
+Gesamtstand aller Pruefungen: 319 in neun Sammlungen.
+
+ALLE ACHT PUNKTE SIND ERLEDIGT.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (9) - ALTLASTEN SELBST ENTFERNEN
+-----------------------------------------------------------------------
+Verwaiste Fassungsangaben liegen in der DATENBANK, nicht in den
+Dateien. Von aussen ist da nicht heranzukommen - also ein Werkzeug
+statt einer Anleitung.
+
+worker.js:
+  Die Routentabelle war im Rumpf der fetch-Funktion eingeschlossen und
+  damit fuer den Zaehler unsichtbar. Sie ist jetzt die gemeinsame
+  Konstante VERSION_ABLAGEN; VERSION_ROUTEN zeigt darauf. EINE Quelle -
+  zwei Kopien waeren mit der Zeit auseinandergelaufen.
+
+  /api/altlasten            sucht u0-Bloecke, auf deren Schluessel
+                            KEINE Adresse zeigt - weder aus der festen
+                            Tabelle noch aus den selbst angelegten
+                            Routen (system/v0)
+  /api/altlasten/entfernen  loescht solche Bloecke, schreibt den
+                            bisherigen Stand vorher in den Verlauf
+
+BEWUSST ENG GEFASST: nur Fassungsangaben ohne Route. Texte, Bilder und
+Einstellungen bleiben aussen vor. Bei denen laesst sich nicht sicher
+sagen, dass sie niemand mehr braucht - und dann wird lieber gar nichts
+geloescht.
+
+stats.js: Kasten "Altlasten" auf /programme. Zeigt je Fund den
+Schluessel, die Fassung, die Begruendung und den vollstaendigen Inhalt
+zum Nachlesen. Entfernen einzeln, mit Rueckfrage. Aufklappbar daneben:
+welche Schluessel erreichbar SIND - damit die Aussage nachpruefbar ist
+und nicht geglaubt werden muss.
+
+Auf dem heutigen Stand findet der Kasten genau einen Fund:
+  tourenplaner   Fassung 6.5 / 60500, mit web-Block auf /api/app/...
+Erreichbar sind die zehn Schluessel der Routentabelle; "tourenplaner"
+(ohne Zusatz) ist nicht darunter.
+
+NICHT als Altlast gewertet - das sind falsche Daten, keine verwaisten:
+  lesezeit-pc  zeigt auf die Android-APK (Route existiert)
+  mischwald    hat gar keinen Eintrag (Route existiert, nur leer)
+
+Geprueft: 31 Pruefungen, darunter die Routentabelle selbst.
+Gesamtstand: 350 in zehn Sammlungen.
