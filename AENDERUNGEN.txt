@@ -722,3 +722,47 @@ sinkt; sie FUEGT einen hinzu und erwartet ihn im Text. Das ist der
 Beweis, dass erzeugt und nicht abgeschrieben wird.
 
 Gesamtstand: 416 Pruefungen in zwoelf Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (12) - WERKZEUGE FINDBAR, DOPPELTER BILDER-KASTEN WEG
+-----------------------------------------------------------------------
+
+MEIN FEHLER: ES GAB SCHON EINEN BILDER-VERWALTER
+Beim Abarbeiten von "Punkt 5" habe ich einen Bilder-Kasten gebaut, ohne
+vorher nachzusehen. Es gab bereits einen ("Hochgeladene Bilder", ueber
+/api/bilder). Beide benutzten die Klasse fv-bild-box und beide sperrten
+sich mit
+    if (document.querySelector('.fv-bild-box')) return;
+gegenseitig aus. Der aeltere lief zuerst - MEINER ERSCHIEN NIE.
+Punkt 5 meiner Liste war also falsch: der Verwalter fehlte nicht.
+
+Aufgeraeumt: der ALTE Kasten und die alte Route /api/bilder sind
+entfernt. Der neue kann alles, was der alte konnte, und zusaetzlich:
+  - Vorschaubild je Eintrag
+  - WO jedes Bild benutzt wird (Seite und Feld), nicht nur ob
+  - Filter "nur unbenutzte zeigen"
+  - Summe, wieviel Platz die Unbenutzten belegen
+  - zwei verschiedene Rueckfragen (benutzt / unbenutzt)
+
+WARUM DER KASTEN NICHT ZU FINDEN WAR
+Neun Verwaltungs-Kaesten liegen auf /programme und nur im Bearbeiten-
+Modus. Das stand nirgends. Wer auf einer Programmseite mit
+"Bearbeiten: AUS" sucht, findet nichts - und hat keinen Anhaltspunkt,
+wo er suchen soll. Ein Werkzeug, das man nicht findet, ist keins.
+
+NEU: Knopf "Werkzeuge" in der Admin-Leiste.
+Listet alle neun Kaesten mit Namen und Zweck. Ein Klick schaltet
+Bearbeiten ein, springt auf /programme, rollt zum richtigen Kasten und
+hebt ihn kurz hervor - ohne das landet man mitten in neun aehnlichen
+Kaesten und sucht weiter.
+
+Das Einschalten von "Bearbeiten" ist kein heimlicher Eingriff: der
+Klick auf ein Werkzeug IST diese Absicht, und der Hinweis im Menue sagt
+es vorher.
+
+Geprueft: 13 zusaetzliche Pruefungen, darunter dass es nur noch EINEN
+Bilder-Kasten gibt und dass die alte Route in stats.js UND worker.js
+verschwunden ist.
+
+Gesamtstand: 429 Pruefungen in zwoelf Sammlungen.

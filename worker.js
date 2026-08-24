@@ -880,44 +880,6 @@ export class Counter extends DurableObject {
     }
 
     // --- Bilder: Uebersicht und Entfernen (nur Admin) ------------------
-    if (url.pathname === "/api/bilder" && method === "POST") {
-      let body = {};
-      try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
-
-      if (body.aktion === "entfernen") {
-        const id = String(body.id || "");
-        if (!id) return json({ error: "bad_request" }, 400);
-        this.sql.exec("DELETE FROM images WHERE id = ?", id);
-        return json({ ok: true });
-      }
-
-      // Uebersicht: Groesse und Alter, aber nicht die Bilddaten selbst
-      const rows = this.sql.exec(
-        "SELECT id, mime, LENGTH(data) AS groesse, created FROM images ORDER BY created DESC LIMIT 300"
-      ).toArray();
-      // Welche Bilder werden noch irgendwo verwendet?
-      const benutzt = {};
-      const inhalte = this.sql.exec("SELECT value FROM content").toArray();
-      for (const z of inhalte) {
-        const v = String(z.value || "");
-        let m;
-        const re = /\/api\/image\/([A-Za-z0-9_-]+)/g;
-        while ((m = re.exec(v)) !== null) benutzt[m[1]] = true;
-      }
-      let gesamt = 0;
-      const liste = rows.map((r) => {
-        gesamt += r.groesse || 0;
-        return {
-          id: r.id, mime: r.mime,
-          groesse: r.groesse || 0,
-          erstellt: new Date(r.created).toISOString(),
-          benutzt: !!benutzt[r.id]
-        };
-      });
-      return json({ bilder: liste, anzahl: liste.length, gesamt: gesamt });
-    }
-
     // --- Sicherung: alle Inhalte ausgeben (nur Admin) ------------------
     // Liefert saemtliche gespeicherten Inhalte als eine Datei. Damit laesst
     // sich alles, was ueber den Bearbeiten-Modus eingetragen wurde, sichern.

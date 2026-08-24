@@ -2000,6 +2000,9 @@
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-werkzeuge" '
+                + 'title="Alle Verwaltungs-K\u00e4sten \u2013 sie liegen auf der Programme-Seite">'
+                + '\uD83E\uDDF0 Werkzeuge</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-zurueck" '
                 + 'title="Alle verschobenen Felder dieser Seite wieder an ihren Platz stellen">'
                 + '\u21BA Verschiebungen</button>'
@@ -2039,6 +2042,69 @@
       /* Raster: legt ein Gitter ueber die Seite und rahmt JEDES Feld ein -
          mit seinem Schluessel. Ueberlagerungen und leere Felder fallen
          damit sofort auf; ohne das sucht man sie mit dem Mauszeiger. */
+      /* Werkzeug-Menue.
+         Die neun Verwaltungs-Kaesten liegen alle auf /programme und nur
+         im Bearbeiten-Modus. Das stand nirgends - man musste es wissen.
+         Hier stehen sie beisammen, und ein Klick bringt einen hin. */
+      var WERKZEUGE = [
+        { klasse: 'fv-gest-box',     name: '\uD83C\uDFA8 Gestaltung',        was: 'Farben und Schrift' },
+        { klasse: 'fv-bild-box',     name: '\uD83D\uDDBC\uFE0F Bilder',      was: 'ansehen und entfernen' },
+        { klasse: 'fv-menue2-box',   name: '\uD83E\uDDED Hauptmen\u00fc',    was: 'Eintr\u00e4ge der Kopfzeile' },
+        { klasse: 'fv-progverw-box', name: '\u2699\uFE0F Programme',          was: 'Seiten anlegen und verwalten' },
+        { klasse: 'fv-menue-box',    name: '\u2699\uFE0F Men\u00fc Web-Apps', was: 'die Klappliste' },
+        { klasse: 'fv-fuss-box',     name: '\u2699\uFE0F Fu\u00dfzeile',      was: 'Links unten' },
+        { klasse: 'fv-kopf-box',     name: '\u2699\uFE0F Google-Eintrag',     was: 'Titel und Beschreibung' },
+        { klasse: 'fv-sich-box',     name: '\uD83D\uDCBE Sicherung',          was: 'herunterladen und einspielen' },
+        { klasse: 'fv-alt-box',      name: '\uD83E\uDDF9 Altlasten',          was: 'verwaiste Angaben' }
+      ];
+      var werkzeugKnopf = bar.querySelector('.fv-admin-werkzeuge');
+      if (werkzeugKnopf) werkzeugKnopf.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var alt2 = document.querySelector('.fv-werkzeug-menue');
+        if (alt2) { alt2.parentNode.removeChild(alt2); return; }
+
+        var menue = document.createElement('div');
+        menue.className = 'fv-werkzeug-menue';
+        var kopf = '<p class="fv-werkzeug-hinweis">Diese K\u00e4sten liegen auf der Seite '
+                 + '<strong>Programme</strong> und brauchen <strong>Bearbeiten: AN</strong>.'
+                 + (EDITING ? '' : ' Ein Klick schaltet beides f\u00fcr dich.') + '</p>';
+        var liste = '';
+        WERKZEUGE.forEach(function (t) {
+          liste += '<button type="button" class="fv-werkzeug-eintrag" data-klasse="' + t.klasse + '">'
+                +  '<span class="fv-werkzeug-name">' + t.name + '</span>'
+                +  '<span class="fv-werkzeug-was">' + t.was + '</span></button>';
+        });
+        menue.innerHTML = kopf + '<div class="fv-werkzeug-liste">' + liste + '</div>';
+        document.body.appendChild(menue);
+        var r = werkzeugKnopf.getBoundingClientRect();
+        menue.style.top = (r.bottom + window.scrollY + 6) + 'px';
+        menue.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+
+        menue.addEventListener('click', function (ev) {
+          var k = ev.target.closest && ev.target.closest('.fv-werkzeug-eintrag');
+          if (!k) return;
+          var klasse = k.getAttribute('data-klasse');
+          /* Bearbeiten einschalten ist hier KEIN heimlicher Eingriff:
+             der Klick auf ein Werkzeug ist genau diese Absicht, und der
+             Hinweis oben im Menue sagt es vorher. */
+          try { sessionStorage.setItem(EDIT_KEY, '1'); } catch (_e) {}
+          var hier = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+          if (hier === '/programme') {
+            location.hash = 'werkzeug=' + klasse;
+            location.reload();
+          } else {
+            location.href = '/programme#werkzeug=' + klasse;
+          }
+        });
+        setTimeout(function () {
+          document.addEventListener('click', function zu(ev) {
+            if (menue.contains(ev.target)) return;
+            if (menue.parentNode) menue.parentNode.removeChild(menue);
+            document.removeEventListener('click', zu);
+          });
+        }, 0);
+      });
+
       var zurueckKnopf = bar.querySelector('.fv-admin-zurueck');
       if (zurueckKnopf) zurueckKnopf.addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('fv:zuege-zuruecksetzen'));
@@ -4501,77 +4567,7 @@
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
 
-/* =====================================================================
- * Bilder-Uebersicht: was liegt auf dem Server, was wird nicht mehr genutzt
- * ===================================================================== */
-(function () {
-  'use strict';
-  try {
-    var pw = '';
-    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
-    var editAn = false;
-    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
-    if (!pw || !editAn) return;
-    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
-    if (pfad !== '/programme') return;
 
-    function kb(n) { return n < 1024 ? n + ' B' : (n < 1024 * 1024 ? Math.round(n / 1024) + ' KB' : (n / 1024 / 1024).toFixed(1) + ' MB'); }
-
-    function holen() {
-      return fetch('/api/bilder', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: pw })
-      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
-    }
-
-    function bauen(res) {
-      var ziel = document.querySelector('main');
-      if (!ziel || !res || document.querySelector('.fv-bild-box')) return;
-      var box = document.createElement('section');
-      box.className = 'fv-prog-box fv-bild-box';
-      box.innerHTML =
-        '<h3 class="fv-prog-titel">\uD83D\uDDBC\uFE0F Hochgeladene Bilder <span>(nur f\u00fcr dich sichtbar)</span></h3>'
-      + '<p class="fv-prog-hilfe">' + res.anzahl + ' Bilder, zusammen ' + kb(res.gesamt) + '. '
-      + 'Bilder mit dem Vermerk <strong>ungenutzt</strong> werden auf keiner Seite mehr verwendet \u2013 '
-      + 'die kannst du gefahrlos entfernen.</p>'
-      + '<div class="fv-bild-gitter" id="fvBListe"></div>';
-      ziel.appendChild(box);
-
-      var listeEl = box.querySelector('#fvBListe');
-      function zeigen(bilder) {
-        listeEl.innerHTML = '';
-        if (!bilder.length) { listeEl.innerHTML = '<p class="fv-prog-leer">Noch keine Bilder hochgeladen.</p>'; return; }
-        bilder.forEach(function (b) {
-          var k = document.createElement('div');
-          k.className = 'fv-bild' + (b.benutzt ? '' : ' fv-bild--frei');
-          k.innerHTML =
-            '<img src="/api/image/' + b.id + '" alt="" loading="lazy">'
-          + '<span class="fv-bild__info">' + kb(b.groesse) + ' \u00b7 '
-          + (b.benutzt ? '<span class="fv-bild__ja">in Benutzung</span>'
-                       : '<span class="fv-bild__nein">ungenutzt</span>') + '</span>';
-          if (!b.benutzt) {
-            var weg = document.createElement('button');
-            weg.type = 'button'; weg.className = 'fv-bild__weg'; weg.textContent = 'entfernen';
-            weg.addEventListener('click', function () {
-              if (!window.confirm('Dieses Bild endg\u00fcltig entfernen?')) return;
-              fetch('/api/bilder', {
-                method: 'POST', headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ password: pw, aktion: 'entfernen', id: b.id })
-              }).then(function (r) { if (r.ok) k.parentNode.removeChild(k); });
-            });
-            k.appendChild(weg);
-          }
-          listeEl.appendChild(k);
-        });
-      }
-      zeigen(res.bilder || []);
-    }
-
-    function start() { holen().then(bauen); }
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
-    else start();
-  } catch (e) { /* niemals die Seite blockieren */ }
-})();
 
 /* =====================================================================
  * Hauptmenue verwalten
@@ -6267,5 +6263,40 @@
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', malen);
     else malen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Werkzeug ansteuern
+ * ---------------------------------------------------------------------
+ * Das Werkzeug-Menue schickt einen mit #werkzeug=<klasse> auf die
+ * Programme-Seite. Die Kaesten werden erst nachtraeglich gebaut - also
+ * warten, bis der gesuchte da ist, dann hinrollen und kurz hervorheben.
+ * Ohne das Hervorheben landet man mitten in neun aehnlichen Kaesten und
+ * sucht weiter.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var treffer = /(?:^|[#&])werkzeug=([a-z0-9-]+)/.exec(location.hash || '');
+    if (!treffer) return;
+    var klasse = treffer[1];
+    var versuche = 0;
+
+    function suchen() {
+      var el = document.querySelector('.' + klasse);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.add('fv-werkzeug-treffer');
+        setTimeout(function () { el.classList.remove('fv-werkzeug-treffer'); }, 2600);
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        return;
+      }
+      if (++versuche > 40) return;            // nach ~8 Sekunden aufgeben
+      setTimeout(suchen, 200);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', suchen);
+    else suchen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
