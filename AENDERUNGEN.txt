@@ -666,3 +666,59 @@ Loesung:
 Geprueft: 21 Pruefungen (Regeln im Stylesheet UND Verhalten: Hoehe
 gemessen, Vorschau auf und zu, Escape). Gesamtstand: 371 in elf
 Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (11) - DATENSCHUTZSEITE NACH DER FINNVELO-VORLAGE
+-----------------------------------------------------------------------
+Der bisherige Text war das Musterbeispiel fuer das, wovor die Vorlage
+warnt. Stand 27.05.2026, und er behauptete:
+  "keine Benutzerkonten"   -> es gibt einen Admin-Zugang und 25 Kanaele
+  "kein Kontaktformular"   -> es gibt die Kommentarseite
+  "moeglichst keine personenbezogenen Daten"
+                           -> Besucherzaehlung, Kommentare mit Namen,
+                              Kanaele mit Mitgliedern
+Nicht erwaehnt: localStorage, YouTube, GitHub, PayPal.
+
+DIE SEITE WIRD JETZT ERZEUGT, NICHT GESCHRIEBEN.
+In stats.js steht EINE Tabelle: EMPFAENGER, LOKAL, SERVER, NIEMALS,
+SCHALTER. Der Text wird daraus gebaut. Kommt eine Stelle dazu, steht es
+sofort richtig.
+
+JEDE ZEILE WURDE AM QUELLTEXT GEPRUEFT, nicht angenommen:
+  Cloudflare        laeuft als Worker -> IP bei JEDEM Aufruf, USA
+  i.ytimg.com       stats.js setzt das Standbild beim SEITENAUFBAU,
+                    also OHNE Klick. Genau die Kategorie, die laut
+                    Vorlage am haeufigsten vergessen wird.
+  youtube-nocookie  erst beim Klick (Zwei-Klick-Loesung), geprueft
+  github.com        nur Downloads, erst beim Klick
+  paypal.me         nur Spendenknopf, erst beim Klick
+
+NICHT aufgenommen, weil geprueft und NICHT besucherwirksam:
+  cdn.jsdelivr.net  steckt in tess/tesseract.min.js - die Datei wird
+                    von KEINER Seite geladen (grep ueber alle *.html)
+  api.indexnow.org  tools/indexnow.js ist ein Node-Werkzeug, laeuft
+                    nie im Browser
+
+UNBEQUEME WAHRHEITEN, die jetzt dastehen:
+  - Bei Fehlversuchen an der Kanal-Anmeldung wird die IP-Adresse im
+    KLARTEXT gespeichert (worker.js, Tabelle "bremse"). Geloescht wird
+    sie erst bei der naechsten richtigen Anmeldung.
+  - Bei Kommentaren ist es anders: dort wird die IP gehasht und nur im
+    Arbeitsspeicher gehalten. Der Unterschied wird erklaert, nicht
+    verwischt.
+  - Das YouTube-Standbild laedt ohne Zutun.
+  - Es steht ausdruecklich dabei, dass dies KEINE Datenschutzerklaerung
+    im Rechtssinn ist, und was dafuer fehlt.
+
+Ohne JavaScript bleibt ein kurzer Notbehelf stehen, der die vier
+wichtigsten Empfaenger nennt - kein zweiter vollstaendiger Text, der
+auseinanderlaufen koennte.
+
+Geprueft: 45 Pruefungen, darunter die sechs aus Abschnitt 6 der
+Vorlage. Der Kern: die Pruefung SCHALTET einen Empfaenger ab und
+erwartet, dass "(abgeschaltet)" erscheint und die Zahl von 5 auf 4
+sinkt; sie FUEGT einen hinzu und erwartet ihn im Text. Das ist der
+Beweis, dass erzeugt und nicht abgeschrieben wird.
+
+Gesamtstand: 416 Pruefungen in zwoelf Sammlungen.

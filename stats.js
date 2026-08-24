@@ -6009,3 +6009,263 @@
     else bauen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * Datenschutzseite - ERZEUGT, NICHT GESCHRIEBEN
+ * ---------------------------------------------------------------------
+ * Nach der FINNVELO-Vorlage vom 24.08.2026.
+ *
+ * Der Grundsatz: Ein von Hand getippter Datenschutztext ist am Tag der
+ * Auslieferung richtig und danach nie wieder. Der bisherige Text auf
+ * dieser Seite war dafuer das Muster - er stammte vom 27.05.2026 und
+ * behauptete "keine Benutzerkonten, kein Kontaktformular", waehrend es
+ * laengst Kommentare, einen Admin-Zugang und 25 Kanaele gab.
+ *
+ * Deshalb steht hier EINE Tabelle aller Stellen, an die etwas
+ * hinausgeht oder wo etwas liegen bleibt. Der Text wird daraus gebaut.
+ * Kommt etwas dazu, wird es hier eingetragen - und die Seite stimmt im
+ * selben Moment wieder.
+ *
+ * Jede Zeile unten wurde am Quelltext geprueft, nicht angenommen. Wo es
+ * herkommt, steht als Fundstelle dabei.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var FASSUNG = '24.08.2026';
+
+    /* ---- Empfaenger: wohin etwas hinausgeht --------------------------
+       an:  ist es gerade eingeschaltet? Abgeschaltetes bleibt STEHEN und
+            wird als abgeschaltet gekennzeichnet - wegzulassen waere
+            falsch, der Mensch soll sehen was es gibt und was ruht.
+       ohneZutun: geschieht es ohne bewusste Handlung?                 */
+    var EMPFAENGER = [
+      {
+        id: 'cloudflare',
+        name: 'Cloudflare',
+        traeger: 'Cloudflare, Inc.',
+        adresse: 'finnveloprogramme.com',
+        wo: 'USA (Server weltweit verteilt)',
+        sendet: 'IP-Adresse, Zeitpunkt, aufgerufene Adresse, Browserkennung',
+        wann: 'bei JEDEM Aufruf dieser Seite',
+        ohneZutun: true,
+        an: true,
+        fund: 'Die Webseite laeuft als Cloudflare Worker; jede Anfrage geht durch deren Netz.'
+      },
+      {
+        id: 'ytimg',
+        name: 'YouTube-Vorschaubild',
+        traeger: 'Google LLC',
+        adresse: 'i.ytimg.com',
+        wo: 'USA',
+        sendet: 'IP-Adresse, Kennung des Videos',
+        wann: 'beim Laden einer Seite MIT Video \u2013 ohne dass du klickst',
+        ohneZutun: true,
+        an: true,
+        fund: 'stats.js: das Standbild wird als Hintergrund gesetzt, sobald die Seite aufbaut.'
+      },
+      {
+        id: 'youtube',
+        name: 'YouTube',
+        traeger: 'Google LLC',
+        adresse: 'www.youtube-nocookie.com',
+        wo: 'USA',
+        sendet: 'IP-Adresse, Kennung des Videos, Browserkennung',
+        wann: 'erst wenn du auf das Video klickst',
+        ohneZutun: false,
+        an: true,
+        fund: 'stats.js: der Rahmen wird erst beim Klick eingesetzt (\u201eZwei-Klick-L\u00f6sung\u201c).'
+      },
+      {
+        id: 'github',
+        name: 'GitHub',
+        traeger: 'GitHub, Inc. (Microsoft)',
+        adresse: 'github.com',
+        wo: 'USA',
+        sendet: 'IP-Adresse, welche Datei du herunterl\u00e4dst',
+        wann: 'erst wenn du einen Download anklickst',
+        ohneZutun: false,
+        an: true,
+        fund: 'Alle Programmdateien liegen dort; die Webseite verlinkt nur.'
+      },
+      {
+        id: 'paypal',
+        name: 'PayPal',
+        traeger: 'PayPal (Europe) S.\u00e0 r.l. et Cie, S.C.A.',
+        adresse: 'www.paypal.me',
+        wo: 'Luxemburg',
+        sendet: 'IP-Adresse; alles Weitere geschieht dort, nicht hier',
+        wann: 'erst wenn du auf den Spendenknopf klickst',
+        ohneZutun: false,
+        an: true,
+        fund: 'Spendenknopf auf einzelnen Programmseiten.'
+      }
+    ];
+
+    /* ---- Was auf dem Gerät bleibt ---------------------------------- */
+    var LOKAL = [
+      { was: 'Merker \u201eschon gez\u00e4hlt\u201c', wo: 'localStorage',
+        zweck: 'damit derselbe Browser nicht mehrfach als Besucher z\u00e4hlt',
+        inhalt: 'nur eine 1 \u2013 keine Kennung, kein Zeitpunkt' },
+      { was: 'Lage des Besucher-Schilds', wo: 'localStorage',
+        zweck: 'merkt sich, wohin du das Schild geschoben hast',
+        inhalt: 'zwei Zahlen' },
+      { was: 'Zeitpunkt zuletzt gesehener Kommentare', wo: 'localStorage',
+        zweck: 'zeigt an, was seit deinem letzten Besuch neu ist',
+        inhalt: 'ein Zeitstempel' },
+      { was: 'Admin-Passwort', wo: 'sessionStorage',
+        zweck: 'nur f\u00fcr den Betreiber; wird beim Schlie\u00dfen des Fensters gel\u00f6scht',
+        inhalt: 'nur beim Betreiber vorhanden, nie bei Besuchern' }
+    ];
+
+    /* ---- Was auf dem Server liegt ---------------------------------- */
+    var SERVER = [
+      { was: 'Z\u00e4hlerst\u00e4nde', inhalt: 'nur Zahlen je Seite \u2013 keine Zuordnung zu Personen',
+        dauer: 'dauerhaft' },
+      { was: 'Kommentare', inhalt: 'der Text und der Name, den du selbst eintr\u00e4gst (darf leer bleiben)',
+        dauer: 'bis sie entfernt werden' },
+      { was: 'Seiteninhalte', inhalt: 'Texte und Bilder, die der Betreiber eintr\u00e4gt',
+        dauer: 'dauerhaft' },
+      { was: 'Kan\u00e4le (Listen und Chat)', inhalt: 'VERSCHL\u00dcSSELTE Pakete \u2013 der Server kann sie nicht lesen',
+        dauer: 'bis der Kanal gel\u00f6scht wird' },
+      { was: 'Fehlversuche bei der Kanal-Anmeldung',
+        inhalt: 'die IP-ADRESSE im Klartext, als Sperre gegen Durchprobieren',
+        dauer: 'bis zur n\u00e4chsten erfolgreichen Anmeldung' }
+    ];
+
+    /* ---- Was nie \u00fcbertragen wird -------------------------------- */
+    var NIEMALS = [
+      'Der Inhalt deiner Listen und Nachrichten \u2013 der ist verschl\u00fcsselt, bevor er den Server erreicht.',
+      'Deine E-Mail-Adresse \u2013 es gibt kein Anmeldeformular und keinen Newsletter.',
+      'Dein Name, au\u00dfer du schreibst ihn selbst in einen Kommentar.',
+      'Dein Verhalten auf der Seite \u2013 es gibt keine Analysewerkzeuge, keine Werbung, keine Z\u00e4hlpixel.',
+      'Dein Standort \u2013 er wird nicht abgefragt.'
+    ];
+
+    /* ---- Was du selbst in der Hand hast ---------------------------- */
+    var SCHALTER = [
+      { was: 'Videos', wie: 'Das Video l\u00e4dt erst, wenn du es anklickst. Das Standbild kommt allerdings '
+             + 'schon vorher von Google \u2013 wenn du das nicht willst, blockiere <code>i.ytimg.com</code> '
+             + 'in deinem Browser.' },
+      { was: 'Besucherz\u00e4hlung', wie: 'L\u00f6sche die Daten dieser Webseite in deinem Browser, dann ist '
+             + 'der Merker weg. Ohne JavaScript wird gar nicht gez\u00e4hlt.' },
+      { was: 'Kommentare', wie: 'Den Namen kannst du weglassen. Zum Entfernen eines Kommentars gen\u00fcgt '
+             + 'eine kurze Nachricht \u00fcber die Kontaktseite.' },
+      { was: 'Downloads', wie: 'Sie f\u00fchren zu GitHub. Wer das vermeiden will, l\u00e4dt dort nicht herunter.' }
+    ];
+
+    /* ================================================================= */
+    function sicher(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function zeile(was, wert) {
+      return '<div class="ds-zeile"><div class="ds-was">' + was
+           + '</div><div class="ds-wert">' + wert + '</div></div>';
+    }
+    function gruppe(titel, innen) {
+      return '<section class="ds-gruppe"><h2>' + sicher(titel) + '</h2>' + innen + '</section>';
+    }
+    function absatz(t) { return '<p class="ds-text">' + t + '</p>'; }
+
+    function malen() {
+      var ziel = document.querySelector('[data-fv-datenschutz]');
+      if (!ziel) return;
+
+      var aktive = EMPFAENGER.filter(function (e) { return e.an; });
+      var draussen = aktive.filter(function (e) { return e.wo.indexOf('Deutschland') === -1; });
+      var ohneZutun = EMPFAENGER.filter(function (e) { return e.an && e.ohneZutun; });
+      var aufKlick = EMPFAENGER.filter(function (e) { return e.an && !e.ohneZutun; });
+
+      var h = '';
+
+      /* 1 - Kurz gesagt */
+      h += gruppe('1 \u00b7 Kurz gesagt',
+          absatz('Diese Webseite setzt <strong>keine Cookies</strong>, benutzt keine Analysewerkzeuge, '
+               + 'zeigt keine Werbung und verlangt von dir keine Anmeldung. Gez\u00e4hlt wird nur, '
+               + '<em>wie viele</em> Besucher da waren \u2013 nicht, wer.')
+        + absatz('Es gibt aber sehr wohl einen <strong>Server</strong>: Die Seite l\u00e4uft bei Cloudflare, '
+               + 'und dort liegen die Seiteninhalte, die Kommentare, die Z\u00e4hlerst\u00e4nde und die '
+               + 'verschl\u00fcsselten Daten der Listen- und Chat-Kan\u00e4le. Bei jedem Aufruf geht deine '
+               + 'IP-Adresse dorthin \u2013 das l\u00e4sst sich technisch nicht vermeiden.')
+        + absatz('Wenn du eine Seite mit Video \u00f6ffnest, l\u00e4dt <strong>ohne dein Zutun</strong> ein '
+               + 'Vorschaubild von Google. Das Video selbst startet erst auf Klick.'));
+
+      /* 2 - Was auf dem Ger\u00e4t bleibt */
+      var l = absatz('Diese Seite legt vier Dinge im Speicher deines Browsers ab. Alle vier lassen sich '
+                   + 'l\u00f6schen, indem du die Daten dieser Webseite im Browser entfernst.');
+      LOKAL.forEach(function (x) {
+        l += zeile(sicher(x.was) + '<br><span class="ds-klein">' + sicher(x.wo) + '</span>',
+                   sicher(x.zweck) + '<br><span class="ds-klein">Inhalt: ' + sicher(x.inhalt) + '</span>');
+      });
+      h += gruppe('2 \u00b7 Was auf dem Ger\u00e4t bleibt', l);
+
+      /* 3 - Was das Ger\u00e4t verl\u00e4sst */
+      var e = absatz('Je Empf\u00e4nger eine Zeile. \u00dcbertragen wird immer auch \u2013 wie bei jedem Aufruf '
+                   + 'im Netz \u2013 deine <strong>IP-Adresse</strong>. Empf\u00e4nger au\u00dferhalb Deutschlands '
+                   + 'sind ausdr\u00fccklich als solche genannt.');
+      EMPFAENGER.forEach(function (x) {
+        e += zeile(sicher(x.name) + (x.an ? '' : ' <span class="ds-aus">(abgeschaltet)</span>')
+                 + '<br><span class="ds-klein">' + sicher(x.traeger) + '</span>',
+                   sicher(x.sendet) + '<br><span class="ds-klein">'
+                 + sicher(x.adresse) + ' \u00b7 ' + sicher(x.wo) + ' \u00b7 ' + sicher(x.wann)
+                 + '</span>');
+      });
+      h += gruppe('3 \u00b7 Was das Ger\u00e4t verl\u00e4sst', e);
+
+      /* 4 - Auch ohne dein Zutun */
+      var o = absatz('Das Heikelste und am h\u00e4ufigsten Vergessene: Was passiert, <strong>ohne</strong> '
+                   + 'dass du etwas anklickst.');
+      ohneZutun.forEach(function (x) {
+        o += zeile(sicher(x.name), sicher(x.wann) + '<br><span class="ds-klein">'
+                 + sicher(x.adresse) + ' \u00b7 ' + sicher(x.wo) + '</span>');
+      });
+      o += absatz('Zum Vergleich \u2013 diese Stellen werden <strong>erst auf Klick</strong> angesprochen: '
+                + aufKlick.map(function (x) { return sicher(x.name); }).join(', ') + '.');
+      h += gruppe('4 \u00b7 Auch ohne dein Zutun', o);
+
+      /* 5 - Was auf dem Server liegt */
+      var s = absatz('Was in der Datenbank bei Cloudflare gespeichert wird.');
+      SERVER.forEach(function (x) {
+        s += zeile(sicher(x.was), sicher(x.inhalt) + '<br><span class="ds-klein">Bleibt: '
+                 + sicher(x.dauer) + '</span>');
+      });
+      s += absatz('<strong>Zur letzten Zeile:</strong> Wer sich bei einem Kanal mit falschem Kennwort '
+                + 'anmeldet, dessen IP-Adresse wird im Klartext vermerkt, damit ein Durchprobieren '
+                + 'gebremst werden kann. Nach der n\u00e4chsten richtigen Anmeldung wird der Eintrag '
+                + 'gel\u00f6scht. Bei Kommentaren ist es anders geregelt: dort wird die IP-Adresse '
+                + '<em>gehasht</em> und nur im Arbeitsspeicher gehalten, nicht gespeichert.');
+      h += gruppe('5 \u00b7 Was auf dem Server liegt', s);
+
+      /* 6 - Was nie \u00fcbertragen wird */
+      var n = '<ul class="ds-liste">';
+      NIEMALS.forEach(function (x) { n += '<li>' + x + '</li>'; });
+      n += '</ul>';
+      h += gruppe('6 \u00b7 Was nie \u00fcbertragen wird', n);
+
+      /* 7 - Was du selbst in der Hand hast */
+      var w = '';
+      SCHALTER.forEach(function (x) { w += zeile(sicher(x.was), x.wie); });
+      h += gruppe('7 \u00b7 Was du selbst in der Hand hast', w);
+
+      /* 8 - Stand */
+      h += gruppe('8 \u00b7 Stand',
+          absatz('Fassung ' + FASSUNG + ' \u00b7 <strong>' + aktive.length + ' von '
+               + EMPFAENGER.length + '</strong> Empf\u00e4ngern angeschaltet, davon <strong>'
+               + draussen.length + '</strong> au\u00dferhalb Deutschlands, davon <strong>'
+               + ohneZutun.length + '</strong> ohne dein Zutun.')
+        + absatz('Diese Seite wird aus dem Verzeichnis der Empf\u00e4nger <strong>erzeugt</strong>, nicht '
+               + 'von Hand geschrieben. Kommt eine Stelle dazu oder f\u00e4llt eine weg, steht es hier '
+               + 'sofort richtig \u2013 genau darum wird der Text nicht gepflegt, sondern gebaut.')
+        + absatz('<strong>Das ist eine ehrliche Auskunft, keine Datenschutzerkl\u00e4rung im Rechtssinn.</strong> '
+               + 'F\u00fcr eine solche fehlen Rechtsgrundlagen je Verarbeitung, Speicherdauern, '
+               + 'Betroffenenrechte, das Beschwerderecht bei der Aufsichtsbeh\u00f6rde und Angaben zur '
+               + '\u00dcbermittlung in Drittl\u00e4nder. Verantwortlicher und ladungsf\u00e4hige Anschrift '
+               + 'stehen im <a href="/impressum">Impressum</a>.'));
+
+      ziel.innerHTML = h;
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', malen);
+    else malen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
