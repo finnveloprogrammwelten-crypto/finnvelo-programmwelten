@@ -620,3 +620,49 @@ NICHT als Altlast gewertet - das sind falsche Daten, keine verwaisten:
 
 Geprueft: 31 Pruefungen, darunter die Routentabelle selbst.
 Gesamtstand: 350 in zehn Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (10) - ADMIN-LEISTE VERDECKTE DIE SEITE
+-----------------------------------------------------------------------
+Zwei gemeldete Fehler, beide echt.
+
+1) DIE LEISTE VERDECKTE DEN OBEREN SEITENRAND
+Die Leiste liegt fest oben (position: fixed), aber nichts glich ihre
+Hoehe aus. Darunter verschwanden:
+  - die klebende Kopfzeile (.site-header sass bei top: 0)
+  - das Besucher-Abzeichen (fest bei top: 84px)
+  - der obere Rand des Inhalts
+
+Loesung: stats.js MISST die Hoehe der Leiste und legt sie als
+--fv-admin-hoehe ab. Warum messen und nicht festschreiben: die Leiste
+bricht auf schmalen Bildschirmen um, dann ist sie zwei- oder dreizeilig.
+Ein fester Wert waere dort falsch. Nachgemessen wird beim Aufbau, kurz
+danach (Schriften aendern die Hoehe noch), bei jeder Fenster-Aenderung
+und ueber einen ResizeObserver.
+
+  body.fv-admin-an  padding-top: var(--fv-admin-hoehe)
+  .site-header      top: var(--fv-admin-hoehe, 0px)
+  Abzeichen         top: calc(84px + var(--fv-admin-hoehe, 0px))
+
+Der Rueckfallwert 0px sorgt dafuer, dass sich fuer BESUCHER nichts
+aendert - ohne Leiste ist der Ausgleich null.
+
+2) DIE VORSCHAU RUTSCHTE UNTER DIE LEISTE
+Die Vorschau war mittig ausgerichtet (align-items: center). War ihr
+Kasten hoeher als das Fenster, schob es den Kopf nach OBEN aus dem Bild -
+und damit die Groessenknoepfe und das Schliessen. Das Fenster liess sich
+anklicken, aber nicht mehr bedienen. Eine Falle.
+
+Loesung:
+  - oben ausrichten statt mittig, mit dem Platz der Leiste als Abstand
+  - der Kopf der Vorschau klebt jetzt (position: sticky) und bleibt beim
+    Rollen sichtbar
+  - der Rahmen wird auf die verfuegbare Fensterhoehe begrenzt
+  - Abzeichen, Loeschknopf und Ziehgriff der Seite liegen hoeher als die
+    Vorschau und klebten ueber ihr - sie werden ausgeblendet, solange
+    sie offen ist
+
+Geprueft: 21 Pruefungen (Regeln im Stylesheet UND Verhalten: Hoehe
+gemessen, Vorschau auf und zu, Escape). Gesamtstand: 371 in elf
+Sammlungen.

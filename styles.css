@@ -80,7 +80,9 @@ main > * {
 
 .site-header {
   position: sticky;
-  top: 0;
+  /* Unter der Admin-Leiste kleben, nicht unter ihr verschwinden.
+     Ohne Leiste ist die Variable 0 - fuer Besucher aendert sich nichts. */
+  top: var(--fv-admin-hoehe, 0px);
   z-index: 20;
   display: flex;
   justify-content: space-between;
@@ -2904,3 +2906,39 @@ body.fv-raster-an [data-fv-verschoben] { outline-color: rgba(126, 231, 135, 0.85
   color: var(--muted);
   word-break: break-word;
 }
+
+
+/* ---------------------------------------------------------------------
+   Platz fuer die Admin-Leiste
+   Die Leiste liegt fest oben. Ohne Ausgleich verschwindet der obere Rand
+   der Seite darunter - Kopfzeile, Besucher-Abzeichen, die erste
+   Ueberschrift. Die Hoehe misst stats.js und legt sie in
+   --fv-admin-hoehe ab; sie aendert sich, wenn die Leiste umbricht.
+   --------------------------------------------------------------------- */
+body.fv-admin-an { padding-top: var(--fv-admin-hoehe, 0px); }
+
+/* Die Vorschau darf nicht unter die Leiste rutschen - sonst waeren ihre
+   eigenen Knoepfe samt Schliessen nicht mehr erreichbar. Deshalb oben
+   ausrichten statt mittig und den Platz der Leiste aussparen. */
+.fv-vorschau {
+  align-items: flex-start;
+  padding-top: calc(var(--fv-admin-hoehe, 0px) + 16px);
+  overflow: auto;
+}
+.fv-vorschau__kopf {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(6, 10, 20, 0.92);
+}
+.fv-vorschau__rahmen {
+  max-height: calc(100vh - var(--fv-admin-hoehe, 0px) - 130px);
+}
+
+/* Solange die Vorschau offen ist, nichts darueber schweben lassen. */
+body.fv-vorschau-an .fv-stats-badge,
+body.fv-vorschau-an .fv-weg-btn,
+body.fv-vorschau-an .fv-zieh-feld,
+body.fv-vorschau-an .fv-zieh-linie { display: none !important; }

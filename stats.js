@@ -93,8 +93,8 @@
         + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;}'
         + '.fv-edit-on .fv-stats-badge:hover{border-color:rgba(120,170,255,.7);}'
         + '.fv-stats-badge.fv-zieht{cursor:grabbing;opacity:.85;}'
-      + '.fv-stats-badge--home{top:84px;right:20px;left:auto;}'
-      + '.fv-stats-badge--page{top:84px;right:20px;left:auto;}'
+      + '.fv-stats-badge--home{top:calc(84px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
+      + '.fv-stats-badge--page{top:calc(84px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
       + '.fv-stats-badge .fv-sep{opacity:.35;}'
       + '.fv-video-facade{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:#000 center/cover no-repeat;border-radius:inherit;display:block;}'
@@ -1951,6 +1951,39 @@
       rasterTakt = setTimeout(rasterSchilder, 180);
     });
 
+    /* ---- Platz fuer die Admin-Leiste schaffen --------------------------
+       Die Leiste liegt fest oben (position: fixed) und verdeckte bisher
+       den oberen Rand der Seite: die klebende Kopfzeile sitzt bei top: 0,
+       das Besucher-Abzeichen bei top: 84px - beide wussten nichts von
+       ihr. Also wird die ECHTE Hoehe gemessen (sie bricht auf schmalen
+       Bildschirmen um, ein fester Wert waere dort falsch) und als
+       --fv-admin-hoehe hinterlegt. Das CSS schiebt damit die ganze Seite
+       nach unten. */
+    var hoehenTakt = null;
+    function leistenHoeheMessen() {
+      var bar = document.querySelector('.fv-admin-bar');
+      var h = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--fv-admin-hoehe', h + 'px');
+      document.body.classList.toggle('fv-admin-an', h > 0);
+    }
+    function hoeheBeobachten() {
+      leistenHoeheMessen();
+      // ein zweites Mal nach dem ersten Zeichnen - Schriften und Umbruch
+      // aendern die Hoehe noch
+      setTimeout(leistenHoeheMessen, 60);
+      setTimeout(leistenHoeheMessen, 400);
+      window.addEventListener('resize', function () {
+        clearTimeout(hoehenTakt);
+        hoehenTakt = setTimeout(leistenHoeheMessen, 120);
+      });
+      if (window.ResizeObserver) {
+        try {
+          var bar = document.querySelector('.fv-admin-bar');
+          if (bar) new ResizeObserver(leistenHoeheMessen).observe(bar);
+        } catch (e) {}
+      }
+    }
+
     /* ---- Admin-Werkzeugleiste (mit Umschalter) ------------------------ */
     function toolbar() {
       if (document.querySelector('.fv-admin-bar')) return;
@@ -1999,6 +2032,8 @@
         location.reload();
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
+      hoeheBeobachten();
+
       bar.querySelector('.fv-admin-putzen').addEventListener('click', felderSaeubern);
 
       /* Raster: legt ein Gitter ueber die Seite und rahmt JEDES Feld ein -
@@ -5341,6 +5376,10 @@
       + 'Deine Werkzeuge sind hier bewusst ausgeblendet.</p>'
       + '</div>';
       document.body.appendChild(huelle);
+      /* Abzeichen und schwebende Knoepfe der Seite liegen hoeher als die
+         Vorschau und wuerden ueber ihr kleben. Solange sie offen ist,
+         bleiben sie weg. */
+      document.body.classList.add('fv-vorschau-an');
 
       var rahmen = huelle.querySelector('[data-a="rahmen"]');
       var anzeige = huelle.querySelector('[data-a="anzeige"]');
@@ -5363,6 +5402,7 @@
 
       function zu() {
         if (huelle.parentNode) huelle.parentNode.removeChild(huelle);
+        document.body.classList.remove('fv-vorschau-an');
         document.removeEventListener('keydown', beiTaste);
       }
       function beiTaste(e) { if (e.key === 'Escape') zu(); }
