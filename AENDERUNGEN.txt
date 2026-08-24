@@ -218,3 +218,85 @@ stats.js, ZIP:
 Geprueft: 34 Pruefungen, darunter dass das Passwort NICHT in den
 lesbaren Blaettern landet und dass Nachrichteninhalte nicht ausgegeben
 werden.
+
+
+-----------------------------------------------------------------------
+24.08.2026 - BEDIENUNG: LOESCHEN, RASTER, FREIE POSITION
+-----------------------------------------------------------------------
+BEFUND zur Ueberlagerung im Kopf (aus der Sicherung vom 24.08.):
+  global n0 = "Programmwelten"   <- das ist das <strong>, sollte "Finnvelo"
+  global n1 = "<br>"             <- das ist das <small>, sollte "Programmwelten"
+Die Texte sind verrutscht. Das leere n1 behaelt im Bearbeiten-Modus
+seinen Rahmen - das ist der zweite Kasten, der sich ueberlagert.
+Warum es nicht loeschbar war: stats.js Zeile 543 nahm .site-header und
+footer vom Loeschknopf AUS.
+
+1) LOESCHKNOPF GILT JETZT UEBERALL
+   Die Ausnahme fuer Kopf- und Fusszeile ist entfallen. Jedes Feld mit
+   data-fvk bekommt den schwebenden Knopf.
+
+2) RUECKFRAGE VOR DEM ENTFERNEN
+   Nennt den betroffenen Text, damit man beim Bestaetigen weiss, was
+   gemeint ist. Bei leeren Feldern steht "ein leeres Feld".
+   Kein zweiter Papierkorb - Rueckholen laeuft weiter ueber
+   "wieder einblenden" und den Verlauf.
+
+3) RASTER (neuer Knopf in der Admin-Leiste)
+   Legt ein Gitter (20 px / 100 px) ueber die Seite und rahmt JEDES
+   Feld ein, mit Schild und Schluessel:
+     blau  = normales Feld
+     gelb  = leeres Feld
+     rot   = Schluessel kommt doppelt vor
+   Genau damit findet man Faelle wie n1 ohne Suchen. Zustand bleibt
+   in der Sitzung erhalten.
+
+4) FREIE POSITION FUER ZUSATZFELDER
+   Vorher landete jedes angelegte Feld am ENDE seines Abschnitts.
+   Neu im Block "anker" + "wo": ein Zusatzfeld kann VOR oder NACH
+   jedem vorhandenen Feld des Abschnitts sitzen. In der Werkzeugleiste
+   jedes Feldes gibt es dazu die Auswahl "Wohin im Abschnitt?" mit
+   allen Stellen des Abschnitts. Ohne Anker bleibt es wie bisher am
+   Abschnittsende - alte Felder aendern sich also nicht.
+
+Geprueft: 26 Pruefungen (Loeschen in Kopf UND Fusszeile, Abfrage mit
+Nein und Ja, Raster an/aus samt Schildern, Einhaengen vor dem
+gewaehlten Feld, unveraendertes Verhalten ohne Anker).
+
+
+-----------------------------------------------------------------------
+24.08.2026 (2) - FELDER AM RASTER AUSRICHTEN UND ZIEHEN
+-----------------------------------------------------------------------
+ENTSCHEIDUNG: Spaltenraster statt fester Pixelpositionen.
+Feste Positionen waeren einfacher, brechen aber auf schmalen
+Bildschirmen - die Seite waechst mit, ein Handy ist ein Drittel so
+breit. Im Raster faellt dort alles auf volle Breite zusammen, die
+Reihenfolge bleibt. Die Media Query setzt das mit !important durch,
+damit sie auch von Hand gesetzte Spalten schlaegt.
+
+styles.css:
+  .fv-extra-zone ist jetzt ein Raster mit ZWOELF Spalten
+  (vorher flex mit Prozentbreiten). Breiten wurden zu Spannen:
+    voll = 12   halb = 6   drittel = 4   viertel = 3
+  Beim Ziehen zeigt nur die betroffene Zone ihre Spaltenlinien.
+
+stats.js:
+  + Feld "spalte" im Datensatz (0 = von selbst einordnen, 1..12 =
+    Startspalte). Alte Felder haben keine und verhalten sich
+    unveraendert.
+  + rasterLage() setzt grid-column je Feld.
+  + ziehenAnbinden(): Ziehgriff in der Werkzeugleiste jedes Feldes.
+    Waagerecht = Startspalte (rastet auf zwoelf Spalten ein),
+    senkrecht = Reihenfolge. Auch in die Zone eines ANDEREN
+    Abschnitts ziehen ist moeglich. Ein Platzhalter zeigt vorher, wo
+    es landet. Maus und Finger (touch) sind angebunden.
+  + Breitenwechsel zieht die Startspalte zurueck, wenn das Feld sonst
+    ueber Spalte 12 hinausragen wuerde - sonst braeche es stumm um.
+  + Positionswahl nennt jetzt die belegten Spalten und hat
+    "Spalte aufheben". Anker und Raster schliessen sich aus; wer eines
+    setzt, loescht das andere.
+  Die Pfeile hoch/runter bleiben - auf kleinen Bildschirmen und mit
+  der Tastatur ist Ziehen unhandlich.
+
+Geprueft: 41 Pruefungen, darunter Einrasten auf Spalte 7 bei einer
+1200 px breiten Zone, Umsortieren beim Ablegen, Zurueckziehen der
+Spalte bei Breitenwechsel und unveraendertes Verhalten alter Felder.

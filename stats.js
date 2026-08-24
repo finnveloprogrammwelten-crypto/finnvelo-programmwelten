@@ -520,7 +520,7 @@
       btn.type = 'button';
       btn.className = 'fv-weg-btn';
       btn.innerHTML = '\u2715';
-      btn.setAttribute('title', 'Dieses Element ausblenden');
+      btn.setAttribute('title', 'Dieses Feld entfernen (l\u00e4sst sich \u00fcber \u21BA wieder einblenden)');
       btn.style.display = 'none';
       document.body.appendChild(btn);
 
@@ -539,8 +539,11 @@
       document.addEventListener('mouseover', function (e) {
         if (!e.target || !e.target.closest) return;
         if (e.target.closest('.fv-weg-btn') || e.target.closest('.fv-admin-bar')) { clearTimeout(weg); return; }
+        /* Frueher waren Kopf- und Fusszeile ausgenommen. Damit liess sich ein
+           leeres Feld dort nicht mehr entfernen - genau der Fall, in dem sich
+           zwei Rahmen im Kopf ueberlagert haben. Jetzt gilt der Knopf ueberall. */
         var el = e.target.closest('[data-fvk]');
-        if (el && !el.closest('.site-header') && !el.closest('footer')) { clearTimeout(weg); zeigen(el); }
+        if (el) { clearTimeout(weg); zeigen(el); }
         else verstecken();
       });
       btn.addEventListener('mouseenter', function () { clearTimeout(weg); });
@@ -549,6 +552,14 @@
         if (!ziel) return;
         var key = ziel.getAttribute('data-fvk');
         if (!key || istVersteckt(key)) return;
+        /* Rueckfrage, damit ein Fehlklick nichts wegnimmt. Der Text nennt,
+           WAS verschwindet - sonst weiss man beim Bestaetigen nicht, was
+           gemeint war. */
+        var probe = (ziel.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!probe) probe = ziel.tagName.toLowerCase() === 'img' ? 'ein Bild' : 'ein leeres Feld';
+        else if (probe.length > 60) probe = probe.slice(0, 57) + '\u2026';
+        if (!window.confirm('Dieses Feld wirklich entfernen?\n\n' + probe
+            + '\n\nDu kannst es \u00fcber \u201e\u21BA wieder einblenden\u201c zur\u00fcckholen.')) return;
         versteckt.push(key);
         btn.style.display = 'none';
         saveHidden().then(function () { applyHidden(k); });
@@ -1249,7 +1260,18 @@
         url: typeof b.url === 'string' ? b.url : '',
         alt: typeof b.alt === 'string' ? b.alt : '',
         breite: ['viertel', 'drittel', 'halb', 'voll'].indexOf(b.breite) !== -1 ? b.breite : 'voll',
-        ziel: typeof b.ziel === 'string' ? b.ziel : ''
+        ziel: typeof b.ziel === 'string' ? b.ziel : '',
+        /* Freie Position: "anker" ist der Schluessel eines vorhandenen
+           Elements (data-fvk), "wo" sagt davor oder danach. Ohne Anker
+           landet das Feld wie bisher am Abschnittsende. */
+        anker: typeof b.anker === 'string' ? b.anker : '',
+        wo: b.wo === 'vor' ? 'vor' : 'nach',
+        /* Startspalte im Zwoelfer-Raster. 0 heisst: von selbst einordnen
+           (so verhalten sich alle Felder, die es vor dem Raster gab). */
+        spalte: (function (v) {
+          var n = parseInt(v, 10);
+          return (isFinite(n) && n >= 1 && n <= 12) ? n : 0;
+        })(b.spalte)
       };
     }
     function parseCustom(item) {
@@ -1281,6 +1303,190 @@
       out.push({ id: '', name: 'Seitenende', el: root });
       return out;
     }
+    /* Alle Stellen, an die ein Zusatzfeld in diesem Abschnitt kann.
+       Das sind die vorhandenen Felder mit data-fvk - davor oder danach. */
+    function ankerListe(sekEl) {
+      var out = [];
+      if (!sekEl) return out;
+      qsa(sekEl, '[data-fvk]').forEach(function (el) {
+        if (el.closest('.fv-extra')) return;          // eigene Felder nicht
+        var k = el.getAttribute('data-fvk');
+        if (!k) return;
+        var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!t) t = (el.tagName.toLowerCase() === 'img') ? 'Bild' : 'leeres Feld';
+        if (t.length > 30) t = t.slice(0, 29) + '\u2026';
+        out.push({ key: k, name: t, el: el });
+        if (out.length > 40) return;
+      });
+      return out;
+    }
+    function ankerElement(sekEl, key) {
+      if (!sekEl || !key) return null;
+      var treffer = null;
+      qsa(sekEl, '[data-fvk]').forEach(function (el) {
+        if (treffer || el.closest('.fv-extra')) return;
+        if (el.getAttribute('data-fvk') === key) treffer = el;
+      });
+      return treffer;
+    }
+
+    /* ---- Felder mit der Maus ans Raster ziehen -------------------------
+       Waagerecht bestimmt die Startspalte (Einrasten auf zwoelf Spalten),
+       senkrecht die Reihenfolge in der Zone. Man kann auch in die Zone
+       eines anderen Abschnitts ziehen.
+
+       Bewusst KEINE festen Pixelpositionen: die Seite waechst mit, und
+       auf einem Handy liegt bei festen Werten alles uebereinander. Im
+       Raster faellt dort einfach alles auf volle Breite zusammen. */
+    function ziehenAnbinden(griff, blockId) {
+      var zieht = null;
+
+      function zonenListe() {
+        return alleZonen().filter(function (z) { return z.offsetParent !== null || true; });
+      }
+      function zoneUnter(x, y) {
+        var treffer = null;
+        zonenListe().forEach(function (z) {
+          var r = z.getBoundingClientRect();
+          // etwas Rand, damit man eine leere Zone auch treffen kann
+          if (x >= r.left - 24 && x <= r.right + 24 && y >= r.top - 24 && y <= r.bottom + 24) treffer = z;
+        });
+        return treffer;
+      }
+      function spalteAus(zone, x) {
+        var r = zone.getBoundingClientRect();
+        if (r.width < 24) return 0;
+        var breit = r.width / 12;
+        var n = Math.floor((x - r.left) / breit) + 1;
+        return Math.min(12, Math.max(1, n));
+      }
+
+      function anfang(x, y) {
+        var i = -1;
+        customBlocks.forEach(function (b, k) { if (b.id === blockId) i = k; });
+        if (i === -1) return;
+        var wrap = document.querySelector('[data-fv-block="' + blockId + '"]');
+        if (!wrap) return;
+        zieht = { idx: i, wrap: wrap, platz: document.createElement('div'), zone: null, spalte: 0 };
+        zieht.platz.className = 'fv-extra fv-extra-platz';
+        wrap.classList.add('fv-extra--zieht');
+        document.body.classList.add('fv-zieht');
+        bewegen(x, y);
+      }
+
+      function bewegen(x, y) {
+        if (!zieht) return;
+        var zone = zoneUnter(x, y);
+        if (!zone) return;
+        if (zieht.zone !== zone) {
+          if (zieht.zone) zieht.zone.classList.remove('fv-zone-ziel');
+          zone.classList.add('fv-zone-ziel');
+          zieht.zone = zone;
+        }
+        zieht.spalte = spalteAus(zone, x);
+        var sp = spanneVon(customBlocks[zieht.idx]);
+        if (zieht.spalte + sp - 1 > 12) zieht.spalte = Math.max(1, 13 - sp);
+        zieht.platz.style.gridColumn = zieht.spalte + ' / span ' + sp;
+
+        /* Einfuegestelle: vor dem ersten Feld, dessen Mitte unter dem
+           Zeiger liegt. So bleibt die Reihenfolge nachvollziehbar. */
+        var kinder = Array.prototype.slice.call(zone.children).filter(function (c) {
+          return c !== zieht.wrap && c !== zieht.platz && c.classList
+              && c.classList.contains('fv-extra');
+        });
+        var vor = null;
+        kinder.forEach(function (c) {
+          if (vor) return;
+          var r = c.getBoundingClientRect();
+          if (y < r.top + r.height / 2) vor = c;
+        });
+        if (vor) zone.insertBefore(zieht.platz, vor);
+        else zone.appendChild(zieht.platz);
+      }
+
+      function ende() {
+        if (!zieht) return;
+        var z = zieht;
+        zieht = null;
+        document.body.classList.remove('fv-zieht');
+        if (z.wrap) z.wrap.classList.remove('fv-extra--zieht');
+        if (z.zone) z.zone.classList.remove('fv-zone-ziel');
+        if (!z.zone || !z.platz.parentNode) { renderCustom(); return; }
+
+        var b = customBlocks[z.idx];
+        if (!b) { renderCustom(); return; }
+        b.spalte = z.spalte;
+        b.anker = '';                                  // Raster schlaegt Anker
+        b.ziel = z.zone.getAttribute('data-fv-zone') || '';
+
+        /* Neue Stelle im Feld bestimmen: vor welchem eigenen Block liegt
+           der Platzhalter? Dessen Position im Gesamtfeld ist das Ziel. */
+        var nachher = z.platz.nextElementSibling;
+        var nachId = null;
+        while (nachher && !nachId) {
+          if (nachher.getAttribute && nachher.getAttribute('data-fv-block')) {
+            nachId = nachher.getAttribute('data-fv-block');
+          }
+          nachher = nachher.nextElementSibling;
+        }
+        if (z.platz.parentNode) z.platz.parentNode.removeChild(z.platz);
+
+        customBlocks.splice(z.idx, 1);
+        var einfuegen = customBlocks.length;
+        if (nachId) {
+          customBlocks.forEach(function (o, k) {
+            if (o.id === nachId && einfuegen === customBlocks.length) einfuegen = k;
+          });
+        }
+        customBlocks.splice(einfuegen, 0, b);
+        saveCustom().then(renderCustom);
+      }
+
+      griff.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        anfang(e.clientX, e.clientY);
+        function mv(ev) { ev.preventDefault(); bewegen(ev.clientX, ev.clientY); }
+        function up() {
+          document.removeEventListener('mousemove', mv);
+          document.removeEventListener('mouseup', up);
+          ende();
+        }
+        document.addEventListener('mousemove', mv);
+        document.addEventListener('mouseup', up);
+      });
+      griff.addEventListener('touchstart', function (e) {
+        if (!e.touches || !e.touches[0]) return;
+        e.preventDefault();
+        anfang(e.touches[0].clientX, e.touches[0].clientY);
+        function mv(ev) {
+          if (!ev.touches || !ev.touches[0]) return;
+          ev.preventDefault();
+          bewegen(ev.touches[0].clientX, ev.touches[0].clientY);
+        }
+        function up() {
+          griff.removeEventListener('touchmove', mv);
+          griff.removeEventListener('touchend', up);
+          ende();
+        }
+        griff.addEventListener('touchmove', mv, { passive: false });
+        griff.addEventListener('touchend', up);
+      }, { passive: false });
+    }
+
+    var SPANNE = { voll: 12, halb: 6, drittel: 4, viertel: 3 };
+    function spanneVon(b) { return SPANNE[b.breite] || 12; }
+    /* Legt ein Feld ins Raster. Ohne Startspalte bleibt es im Fluss -
+       dann ordnet CSS es selbst ein, genau wie vor dem Umbau. */
+    function rasterLage(wrap, b) {
+      var sp = spanneVon(b);
+      if (b.spalte >= 1 && b.spalte + sp - 1 <= 12) {
+        wrap.style.gridColumn = b.spalte + ' / span ' + sp;
+      } else {
+        wrap.style.gridColumn = 'span ' + sp;
+      }
+    }
+
     function zoneIn(container, zielId) {
       var z = container.querySelector(':scope > .fv-extra-zone');
       if (!z) {
@@ -1301,6 +1507,10 @@
       var ziele = zielListe();
       // alle Zonen leeren
       alleZonen().forEach(function (z) { z.innerHTML = ''; z.style.display = 'none'; });
+      // frei gesetzte Felder abraeumen - sie haengen nicht in einer Zone
+      qsa(root, '.fv-extra--frei').forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
 
       ziele.forEach(function (ziel) {
         var eigene = [];
@@ -1321,6 +1531,8 @@
           var b = paar.b, idx = paar.i;
           var wrap = document.createElement('div');
           wrap.className = 'fv-extra fv-extra--' + b.breite + (b.typ === 'bild' ? ' fv-extra--bild' : '');
+          wrap.setAttribute('data-fv-block', b.id);
+          rasterLage(wrap, b);
 
           if (b.typ === 'bild') {
             var fig = document.createElement('figure');
@@ -1479,6 +1691,18 @@
             }
 
             // Reihenfolge innerhalb desselben Abschnitts
+            /* Ziehgriff: fasst das Feld an und legt es aufs Raster.
+               Die Pfeile bleiben - mit der Tastatur oder auf kleinen
+               Bildschirmen ist Ziehen unhandlich. */
+            var griff = document.createElement('button');
+            griff.type = 'button';
+            griff.className = 'fv-extra__k fv-zieh-griff';
+            griff.innerHTML = '\u2807\u2807';
+            griff.setAttribute('title', 'Ziehen, um das Feld am Raster auszurichten');
+            griff.setAttribute('aria-label', 'Feld verschieben');
+            leiste.appendChild(griff);
+            ziehenAnbinden(griff, b.id);
+
             knopf('\u2191', 'Nach oben schieben', function () {
               var vorher = null;
               for (var i = idx - 1; i >= 0; i--) {
@@ -1512,6 +1736,12 @@
               });
             brSel.addEventListener('change', function () {
               customBlocks[idx].breite = brSel.value;
+              // Breiter geworden? Startspalte zurueckziehen, damit das Feld
+              // nicht ueber Spalte 12 hinausragt und stumm umbricht.
+              var sp = spanneVon(customBlocks[idx]);
+              if (customBlocks[idx].spalte && customBlocks[idx].spalte + sp - 1 > 12) {
+                customBlocks[idx].spalte = Math.max(1, 13 - sp);
+              }
               saveCustom().then(renderCustom);
             });
             leiste.appendChild(brSel);
@@ -1528,9 +1758,54 @@
             });
             zSel.addEventListener('change', function () {
               customBlocks[idx].ziel = zSel.value;
+              customBlocks[idx].anker = '';        // neuer Abschnitt, alter Anker gilt nicht
               saveCustom().then(renderCustom);
             });
             leiste.appendChild(zSel);
+
+            /* Position innerhalb des Abschnitts. Vorher landete jedes
+               Zusatzfeld immer am Ende - man konnte es nicht zwischen
+               vorhandene Felder setzen. */
+            var pSel = document.createElement('select');
+            pSel.className = 'fv-extra__sel fv-extra__sel--pos';
+            pSel.setAttribute('title', 'Wohin im Abschnitt?');
+            var opEnde = document.createElement('option');
+            opEnde.value = '';
+            opEnde.textContent = b.spalte
+              ? ('im Raster, Spalte ' + b.spalte + '\u2013' + (b.spalte + spanneVon(b) - 1))
+              : 'am Abschnittsende';
+            if (!b.anker) opEnde.selected = true;
+            pSel.appendChild(opEnde);
+
+            // Zuruecksetzen: wieder von selbst einordnen lassen
+            if (b.spalte) {
+              var opFrei = document.createElement('option');
+              opFrei.value = 'raster-aus';
+              opFrei.textContent = '\u21BA Spalte aufheben';
+              pSel.appendChild(opFrei);
+            }
+            ankerListe(ziel.el).forEach(function (a) {
+              [['vor', '\u2191 vor: '], ['nach', '\u2193 nach: ']].forEach(function (r) {
+                var op = document.createElement('option');
+                op.value = r[0] + '|' + a.key;
+                op.textContent = r[1] + a.name;
+                if (b.anker === a.key && b.wo === r[0]) op.selected = true;
+                pSel.appendChild(op);
+              });
+            });
+            pSel.addEventListener('change', function () {
+              var v = pSel.value;
+              if (v === 'raster-aus') { customBlocks[idx].spalte = 0; customBlocks[idx].anker = ''; }
+              else if (!v) { customBlocks[idx].anker = ''; }
+              else {
+                customBlocks[idx].spalte = 0;   // Anker und Raster schliessen sich aus
+                var teil = v.split('|');
+                customBlocks[idx].wo = teil[0];
+                customBlocks[idx].anker = teil[1];
+              }
+              saveCustom().then(renderCustom);
+            });
+            leiste.appendChild(pSel);
 
             knopf('\u2715', 'Feld entfernen', function () {
               if (!window.confirm('Dieses Feld wirklich entfernen?')) return;
@@ -1542,7 +1817,16 @@
             wrap.appendChild(leiste);
           }
 
-          z.appendChild(wrap);
+          /* Einhaengen: mit Anker direkt neben das gewaehlte Feld,
+             sonst wie bisher in die Zone am Abschnittsende. */
+          var ank = b.anker ? ankerElement(ziel.el, b.anker) : null;
+          if (ank && ank.parentNode) {
+            wrap.classList.add('fv-extra--frei');
+            if (b.wo === 'vor') ank.parentNode.insertBefore(wrap, ank);
+            else ank.parentNode.insertBefore(wrap, ank.nextSibling);
+          } else {
+            z.appendChild(wrap);
+          }
         });
 
         if (EDITING) {
@@ -1591,6 +1875,39 @@
       });
     }
 
+    /* ---- Raster: Schilder mit dem Schluessel an jedes Feld ------------- */
+    function rasterSchilderWeg() {
+      qsa(document, '.fv-raster-schild').forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+    }
+    function rasterSchilder() {
+      rasterSchilderWeg();
+      var gesehen = {};
+      qsa(document, '[data-fvk], [data-fvx]').forEach(function (el) {
+        var k = el.getAttribute('data-fvk') || el.getAttribute('data-fvx');
+        if (!k) return;
+        var r = el.getBoundingClientRect();
+        if (r.width < 6 && r.height < 6) return;
+        var schild = document.createElement('span');
+        schild.className = 'fv-raster-schild';
+        var leer = !((el.textContent || '').trim()) && el.tagName.toLowerCase() !== 'img';
+        schild.textContent = k + (leer ? ' \u00b7 leer' : '');
+        if (leer) schild.classList.add('fv-raster-schild--leer');
+        if (gesehen[k]) schild.classList.add('fv-raster-schild--doppelt');
+        gesehen[k] = true;
+        schild.style.top = (r.top + window.scrollY) + 'px';
+        schild.style.left = (r.left + window.scrollX) + 'px';
+        document.body.appendChild(schild);
+      });
+    }
+    var rasterTakt = null;
+    window.addEventListener('resize', function () {
+      if (!document.body.classList.contains('fv-raster-an')) return;
+      clearTimeout(rasterTakt);
+      rasterTakt = setTimeout(rasterSchilder, 180);
+    });
+
     /* ---- Admin-Werkzeugleiste (mit Umschalter) ------------------------ */
     function toolbar() {
       if (document.querySelector('.fv-admin-bar')) return;
@@ -1607,6 +1924,9 @@
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-raster" '
+                + 'title="Raster und Feldrahmen einblenden \u2013 zeigt, wo Felder sitzen und was sich \u00fcberlagert">'
+                + '\u25A6 Raster</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-sichern" '
                 + 'title="Den gesamten Datenbestand als ZIP herunterladen">\uD83D\uDCBE Sicherung</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-seiten">+ Seite</button>'
@@ -1631,6 +1951,17 @@
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
       bar.querySelector('.fv-admin-putzen').addEventListener('click', felderSaeubern);
+
+      /* Raster: legt ein Gitter ueber die Seite und rahmt JEDES Feld ein -
+         mit seinem Schluessel. Ueberlagerungen und leere Felder fallen
+         damit sofort auf; ohne das sucht man sie mit dem Mauszeiger. */
+      var rasterKnopf = bar.querySelector('.fv-admin-raster');
+      if (rasterKnopf) rasterKnopf.addEventListener('click', function () {
+        var an = document.body.classList.toggle('fv-raster-an');
+        rasterKnopf.classList.toggle('an', an);
+        try { sessionStorage.setItem('fv_raster', an ? '1' : '0'); } catch (e) {}
+        if (an) rasterSchilder(); else rasterSchilderWeg();
+      });
       // Die Sicherung liegt in einem eigenen Block - per Ereignis rufen.
       bar.querySelector('.fv-admin-sichern').addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('fv:sicherung-laden'));
