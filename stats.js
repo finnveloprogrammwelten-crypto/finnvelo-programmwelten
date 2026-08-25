@@ -1317,8 +1317,28 @@
             });
           }
         }
+        /* Abschnitt ausblenden - aber NUR, wenn es dort ueberhaupt nichts
+           zu sehen gibt.
+           Die Regel hiess frueher "leere Galerie -> Abschnitt weg". Das
+           stimmte nur, solange der Abschnitt ausser der Galerie nichts
+           enthielt. Auf archivar und mischwaldrechner liegen die Bilder
+           aber STATISCH im HTML (assets/images/...), die Galerie daneben
+           ist leer. Dort hat die alte Regel den ganzen Abschnitt fuer
+           Besucher versteckt - samt der vorhandenen Bilder.
+           Jetzt zaehlt, ob irgendein Bild da ist, egal woher. */
         var sec = cont.closest('[data-fv-gallery-section]');
-        if (sec) sec.style.display = (!galleryUrls.length && !EDITING) ? 'none' : '';
+        if (sec) {
+          var festeBilder = qsa(sec, 'img').filter(function (im) {
+            return !im.closest('[data-fv-gallery]');
+          }).length;
+          var etwasDa = galleryUrls.length > 0 || festeBilder > 0;
+          /* EIGENE Klasse statt style.display. Das Ausblenden ganzer
+             Abschnitte schreibt dieselbe Eigenschaft - wer zuletzt lief,
+             gewann, und eine gefuellte Galerie konnte unsichtbar bleiben.
+             Mit getrennten Klassen kann keiner den anderen ueberschreiben,
+             und im CSS gewinnt das absichtliche Ausblenden. */
+          sec.classList.toggle('fv-leer-weg', !etwasDa && !EDITING);
+        }
       });
     }
 
@@ -5621,8 +5641,9 @@
         var k = kennung(sec);
         var weg = istWeg(k);
         sec.classList.toggle('fv-sektion-weg', weg && editAn);
-        if (weg && !editAn) sec.style.display = 'none';
-        else sec.style.display = '';
+        // eigene Klasse - siehe renderGallery(): style.display teilen sich
+        // sonst zwei Bausteine und ueberschreiben einander
+        sec.classList.toggle('fv-sektion-versteckt', weg && !editAn);
       });
     }
 

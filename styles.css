@@ -3101,3 +3101,12 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
 }
 .fv-wahl__bild--drin { opacity: 0.38; cursor: default; }
 .fv-wahl__bild--drin:hover { border-color: var(--line); }
+
+/* ---------------------------------------------------------------------
+   Abschnitte verbergen - zwei Gruende, zwei Klassen
+   fv-leer-weg          nichts drin (leere Galerie, keine festen Bilder)
+   fv-sektion-versteckt vom Betreiber bewusst ausgeblendet
+   Beide waren frueher style.display und haben einander ueberschrieben.
+   --------------------------------------------------------------------- */
+[data-fv-gallery-section].fv-leer-weg { display: none; }
+.fv-sektion-versteckt { display: none !important; }

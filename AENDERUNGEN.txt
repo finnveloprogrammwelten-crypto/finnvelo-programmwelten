@@ -817,3 +817,123 @@ dieselben Galeriebilder sehen wie der Admin - das war die eigentliche
 Beschwerde.
 
 Gesamtstand: 454 Pruefungen in dreizehn Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (14) - VON MIR VERURSACHT: OBERFLAECHEN-ABSCHNITT WURDE
+                  FUER BESUCHER AUSGEBLENDET
+-----------------------------------------------------------------------
+Gemeldet: Auf archivar und mischwaldrechner fehlen die Bilder,
+bei command-control werden sie gezeigt.
+
+DIE URSACHE WAR MEINE AENDERUNG VOM SELBEN TAG.
+Beim "einheitlichen Seitenaufbau" habe ich das Attribut
+data-fv-gallery-section in archivar.html, mischwaldrechner.html,
+command-control.html und aufgabenplaner.html ergaenzt - im
+Ursprungspaket stand es dort NICHT (nachgeprueft). Dazu notiert hatte
+ich: "nur das Attribut, kein Text angefasst". Ich hielt es fuer
+folgenlos.
+
+Daran haengt aber diese Zeile in renderGallery():
+    sec.style.display = (!galleryUrls.length && !EDITING) ? 'none' : '';
+Vorher fand sie auf diesen Seiten kein sec und tat nichts. Danach fand
+sie eines - und blendete bei LEERER Galerie den ganzen Abschnitt fuer
+Besucher aus.
+
+Warum genau diese drei Seiten:
+  archivar          Bilder liegen STATISCH im HTML, g0 = []   -> weg
+  mischwaldrechner  Bilder liegen STATISCH im HTML, kein g0   -> weg
+  command-control   statischer Block auskommentiert, g0 gefuellt -> bleibt
+Also genau das gemeldete Bild.
+
+BEHOBEN: Die Regel zaehlt jetzt, ob im Abschnitt UEBERHAUPT ein Bild
+steht - aus der Galerie oder statisch aus dem HTML. Nur wenn es keins
+gibt, wird der Abschnitt fuer Besucher ausgeblendet. Damit bleibt der
+urspruengliche Zweck erhalten (kein leerer "Oberflaeche"-Kasten bei
+Programmen ohne Bildschirmfotos), ohne vorhandene Bilder zu
+verschlucken.
+
+Die neue Pruefung wurde GEGEN DEN ALTEN CODE laufen gelassen: dort
+schlaegt sie fehl (display=none). Eine Pruefung, die auch vorher
+bestanden haette, waere wertlos gewesen.
+
+NACHTRAG zur Sicherung vom 24.08. 12:48: g0 ist bei archivar weiterhin
+[] und bei mischwaldrechner gar nicht vorhanden - das ist RICHTIG so.
+Diese Seiten brauchen keine Galerie, ihre Bilder stehen im HTML. Der
+Fehler lag nie beim Speichern.
+
+Geprueft: 6 zusaetzliche Pruefungen. Gesamtstand: 460 in dreizehn
+Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (15) - NACHWEIS: ALLE SEITEN UND DER SEITENERZEUGER
+-----------------------------------------------------------------------
+Neue Pruefsammlung pruef-oberflaechen.js. Sie laedt JEDE Produktseite
+als BESUCHER mit dem echten Datenstand aus der Sicherung vom 24.08.
+12:48 und sieht nach, ob der Oberflaechen-Abschnitt sichtbar ist und
+wieviele Bilder ankommen. Also gegen die wirklichen Daten, nicht gegen
+ausgedachte.
+
+Ergebnis (Besuchersicht):
+  Seite                  g0   statisch  sichtbar  Bilder
+  archivar               0    4         ja        4
+  mischwaldrechner       -    5         ja        5
+  command-control        3    0*        ja        3
+  aufgabenplaner         0    0         nein      0
+  lesezeit               -    0         nein      0
+  einkaufsliste          -    0         nein      0
+  tourenplaner           -    0         nein      0
+  finanzmanager          -    0         nein      0
+  medienstudio           -    0         nein      0
+  haus-und-gartenplaner  -    0         nein      0
+
+  * In command-control.html stehen zwar vier Bildkarten im Rohtext,
+    sie liegen aber in einem HTML-Kommentar und sind damit nicht aktiv.
+    Ein einfaches Zaehlen im Text haette hier 4 gemeldet - geprueft
+    wurde deshalb im aufgebauten Dokument, nicht im Rohtext.
+
+"nein" ist bei den sieben Seiten RICHTIG: dort gibt es weder Galerie-
+noch statische Bilder, also waere ein leerer Kasten "Oberflaeche" zu
+sehen. Sobald ein Bild eingehaengt wird, erscheint der Abschnitt.
+
+Marker: alle elf Produktseiten UND _vorlage-programm.html haben
+data-fv-gallery-section und data-fv-gallery.
+
+SEITE ANLEGEN: programmSeite() im Worker wurde wirklich aufgerufen und
+das Ergebnis geprueft - beide Marker sind da, ohne Bilder bleibt der
+Abschnitt fuer Besucher weg, mit Bildern erscheint er samt Inhalt.
+
+Keine Produktseite mehr ohne Marker. tester.html ist keine Produkt-
+seite (Textseite "Testerbereich wird neu aufgebaut"), braucht also
+keinen.
+
+Gesamtstand: 490 Pruefungen in vierzehn Sammlungen.
+
+
+-----------------------------------------------------------------------
+24.08.2026 (16) - GEFUELLTE GALERIE KONNTE UNSICHTBAR BLEIBEN
+-----------------------------------------------------------------------
+Zwei Bausteine schrieben dieselbe Eigenschaft:
+
+  renderGallery()        sec.style.display = ''        (Bilder da)
+  ausblendenAnwenden()   sec.style.display = 'none'    (Abschnitt aus)
+
+Wer zuletzt lief, gewann. Je nach Reihenfolge konnte ein Abschnitt mit
+gefuellter Galerie unsichtbar bleiben - oder ein bewusst ausgeblendeter
+Abschnitt wieder auftauchen. Beides ohne jede Meldung.
+
+Solche Konflikte findet man nicht durch Lesen, sondern nur, wenn man
+danach sucht: ZWEI Bausteine, die dieselbe Eigenschaft desselben
+Elements setzen, ohne voneinander zu wissen.
+
+BEHOBEN: getrennte Klassen statt einer gemeinsamen Eigenschaft.
+  fv-leer-weg           nichts drin (leere Galerie UND keine festen Bilder)
+  fv-sektion-versteckt  vom Betreiber bewusst ausgeblendet
+Im CSS gewinnt das absichtliche Ausblenden (!important). Keiner der
+beiden fasst style.display mehr an.
+
+Geprueft: 5 neue Pruefungen, darunter beide Richtungen des Konflikts
+und dass style.display leer BLEIBT.
+
+Gesamtstand: 495 Pruefungen in vierzehn Sammlungen.
