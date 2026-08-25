@@ -937,3 +937,47 @@ Geprueft: 5 neue Pruefungen, darunter beide Richtungen des Konflikts
 und dass style.display leer BLEIBT.
 
 Gesamtstand: 495 Pruefungen in vierzehn Sammlungen.
+
+
+-----------------------------------------------------------------------
+25.08.2026 - BEREINIGTER ORDNER
+-----------------------------------------------------------------------
+Ausgangspunkt: der Stand von GitHub (main). Der wurde vorher Byte fuer
+Byte gegen das letzte Paket verglichen - alle 90 Dateien identisch, kein
+Unterschied. GitHub war also bereits richtig; nur die laufende Webseite
+hing eine Fassung zurueck.
+
+ENTFERNT
+  tess/       21 MB Texterkennung (Tesseract). Von KEINER Seite geladen -
+              geprueft mit grep ueber alle HTML- und JS-Dateien. Wurde
+              trotzdem oeffentlich ausgeliefert (HTTP 200 gemessen).
+  downloads/  enthielt nur Mischwald.apk (11 MB). Auf die Datei verweist
+              keine Seite; alle Downloads liegen laut Festlegung auf
+              GitHub und werden von dort verlinkt.
+
+Zusammen 32 MB von 54 MB. Beides bleibt in der Versionsgeschichte
+erhalten - geloescht ist nur der Arbeitsstand.
+
+OEFFENTLICH ABRUFBARE UNTERLAGEN GESCHLOSSEN
+Geprueft mit curl gegen die laufende Seite:
+  UEBERGABE.md                      HTTP 200   85 900 Bytes
+  AENDERUNGEN.txt                   HTTP 200   38 148 Bytes
+  ANLEITUNG-Aufgabenplaner-Update.md
+  README.md                         HTTP 404  (stand schon in .assetsignore)
+Die ersten drei fehlten in .assetsignore und waren damit fuer jeden
+lesbar - samt Blocknamen, Admin-Mechanik und Aufbau der Datenbank.
+Jetzt eingetragen. Die Dateien BLEIBEN im Ordner, sie werden nur nicht
+mehr ausgeliefert.
+
+Ebenfalls eingetragen: .assetsignore selbst, sowie tess und downloads -
+falls die Ordner je zurueckkehren, bleiben sie draussen.
+
+NICHT ANGETASTET
+wrangler.jsonc, _headers, .well-known/assetlinks.json, robots.txt,
+sitemap.xml, favicon.ico, der IndexNow-Schluessel, FinnVelo/,
+einkaufsliste/, tools/ und alle Seiten.
+
+Geprueft: stats.js, worker.js und styles.css unveraendert (Pruefsummen
+stimmen), wrangler.jsonc und sitemap.xml gueltig, alle vierzehn
+Pruefsammlungen gegen den bereinigten Ordner: 495 Pruefungen, keine
+fehlgeschlagen.

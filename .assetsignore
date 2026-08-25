@@ -21,8 +21,15 @@ wrangler.toml
 # Sonstiges/Doku
 .gitattributes
 .gitignore
+.assetsignore
 README.md
 ANLEITUNG-Zaehler.txt
+# Diese drei waren bis 25.08.2026 OEFFENTLICH abrufbar (HTTP 200 geprueft).
+# Sie beschreiben Blocknamen, Admin-Mechanik und den Aufbau der Datenbank -
+# nichts, was ein Besucher braucht.
+UEBERGABE.md
+AENDERUNGEN.txt
+ANLEITUNG-Aufgabenplaner-Update.md
 
 # Hilfsskripte (nicht oeffentlich)
 tools
@@ -41,3 +48,10 @@ version-vorlage.json
 
 # Kopiervorlage - keine echte Seite
 _vorlage-programm.html
+
+# Entfernt am 25.08.2026 - falls die Ordner je zurueckkehren, bleiben sie
+# vom oeffentlichen Hosting ausgenommen:
+#   tess/       21 MB Texterkennung, von KEINER Seite geladen (geprueft)
+#   downloads/  Downloads liegen auf GitHub und werden von dort verlinkt
+tess
+downloads
