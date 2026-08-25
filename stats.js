@@ -7,6 +7,38 @@
  * "schon gezaehlt"-Merker liegt anonym im localStorage des Browsers.
  * Faellt die Server-Komponente aus, bricht nichts - es wird nur "-" angezeigt.
  */
+/* =====================================================================
+ * Handy-Vorschau: Besuchersicht erzwingen
+ * ---------------------------------------------------------------------
+ * Die Vorschau laedt die Seite in einem schmalen Rahmen. Nur so greifen
+ * die Media Queries wirklich - eine schmal gerechnete Seite wuerde sie
+ * NICHT ausloesen, weil sie an der Fensterbreite haengen.
+ *
+ * Der Rahmen liegt auf derselben Herkunft und teilt sich deshalb den
+ * sessionStorage - er saehe also das Admin-Passwort und wuerde die
+ * Werkzeugleiste zeigen. Zehn Bausteine fragen unabhaengig voneinander
+ * danach. Statt zehn Stellen zu aendern (und die elfte zu vergessen),
+ * werden die beiden Schluessel im Vorschau-Rahmen an EINER Stelle
+ * verdeckt. Gilt nur im Rahmen; das echte Fenster ist unberuehrt.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    if (!/[?&]fv-vorschau=1(&|$)/.test(location.search || '')) return;
+    /* NICHT sessionStorage.getItem = ... schreiben: bei Storage-Objekten
+       legt eine Zuweisung einen EINTRAG namens "getItem" an, statt die
+       Methode zu ersetzen. Der Weg geht ueber den Prototyp - und nur
+       fuer sessionStorage, damit localStorage unberuehrt bleibt. */
+    var proto = (window.Storage && window.Storage.prototype) || null;
+    if (!proto || typeof proto.getItem !== 'function') return;
+    var echt = proto.getItem;
+    proto.getItem = function (k) {
+      if (this === window.sessionStorage && (k === 'fv_admin_pw' || k === 'fv_edit')) return null;
+      return echt.call(this, k);
+    };
+  } catch (e) {}
+})();
+
 (function () {
   'use strict';
 
@@ -61,8 +93,8 @@
         + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;}'
         + '.fv-edit-on .fv-stats-badge:hover{border-color:rgba(120,170,255,.7);}'
         + '.fv-stats-badge.fv-zieht{cursor:grabbing;opacity:.85;}'
-      + '.fv-stats-badge--home{top:84px;right:20px;left:auto;}'
-      + '.fv-stats-badge--page{top:84px;right:20px;left:auto;}'
+      + '.fv-stats-badge--home{top:calc(84px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
+      + '.fv-stats-badge--page{top:calc(84px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
       + '.fv-stats-badge .fv-sep{opacity:.35;}'
       + '.fv-video-facade{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:#000 center/cover no-repeat;border-radius:inherit;display:block;}'
@@ -172,12 +204,11 @@
   function renderBadge() {
     if (!badgeEl) return;
     if (isHome) {
+      /* Nur noch die Besucherzahl. "Planer" und "Mischwald" zaehlten Aufrufe
+         der Web-Fassungen - die gibt es nicht mehr, sie standen dauerhaft auf
+         "-". Die Zaehler bleiben im Server erhalten, nur die Anzeige ist fort. */
       badgeEl.innerHTML =
-        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>'
-        + '<span class="fv-sep">\u00b7</span>'
-        + '<span>\uD83C\uDFE1 Planer: <b>' + fmt(counts['open:planer']) + '</b></span>'
-        + '<span class="fv-sep">\u00b7</span>'
-        + '<span>\uD83C\uDF32 Mischwald: <b>' + fmt(counts['open:mischwald']) + '</b></span>';
+        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>';
     } else if (isProgram) {
       badgeEl.innerHTML =
         '<span>\uD83D\uDC41\uFE0F Besucher: <b>' + fmt(counts['views:' + key]) + '</b></span>'
@@ -256,7 +287,8 @@
     if (isHome) {
       badgeEl = makeBadge('home');
       badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
-      keysToShow = ['views:site', 'open:planer', 'open:mischwald'];
+      // Nur noch der eine Zaehler wird angezeigt - die anderen nicht mehr holen.
+      keysToShow = ['views:site'];
     } else if (isProgram) {
       badgeEl = makeBadge('page');
       badgeEl.innerHTML = '<span>Lädt…</span>';
@@ -303,7 +335,12 @@
 
     function adminPw() { try { return sessionStorage.getItem(PW_KEY) || ''; } catch (e) { return ''; } }
     function editOn() { try { return sessionStorage.getItem(EDIT_KEY) === '1'; } catch (e) { return false; } }
-    var ADMIN = !!adminPw();
+    /* Handy-Vorschau: die Seite laeuft in einem Rahmen und soll dort
+       aussehen wie fuer Besucher. Ohne das saehe man im Rahmen die
+       eigene Werkzeugleiste und die Bearbeiten-Kaesten - also alles
+       ausser dem, was man pruefen wollte. */
+    var VORSCHAU = /[?&]fv-vorschau=1(&|$)/.test(location.search || '');
+    var ADMIN = !VORSCHAU && !!adminPw();
     var EDITING = ADMIN && editOn();
 
     function slug() {
@@ -335,6 +372,12 @@
       qsa(root, TEXT_SEL).forEach(function (el) {
         if (el.closest('.fv-gallery')) return;
         if (el.closest('.fv-extra-zone')) return;               // Zusatztexte -> eigene Logik (x0)
+        /* Ueberschrift eines selbst angelegten Abschnitts: gehoert dem
+           Abschnitt selbst (Block y0), nicht der t-Nummerierung. Sonst
+           haetten neu angelegte Abschnitte alle Nummern dahinter
+           verschoben - und jeder gespeicherte Text saesse falsch. */
+        if (el.matches('h2') && el.parentNode && el.parentNode.hasAttribute
+            && el.parentNode.hasAttribute('data-fv-sektion')) return;
         if (el.querySelector(TEXT_SEL)) return;                 // Container -> ueberspringen
         if (el.querySelector('img')) return;                    // enthaelt Bild -> separat
         if (!el.textContent || !el.textContent.trim()) return;  // leer
@@ -520,7 +563,7 @@
       btn.type = 'button';
       btn.className = 'fv-weg-btn';
       btn.innerHTML = '\u2715';
-      btn.setAttribute('title', 'Dieses Element ausblenden');
+      btn.setAttribute('title', 'Dieses Feld entfernen (l\u00e4sst sich \u00fcber \u21BA wieder einblenden)');
       btn.style.display = 'none';
       document.body.appendChild(btn);
 
@@ -539,8 +582,11 @@
       document.addEventListener('mouseover', function (e) {
         if (!e.target || !e.target.closest) return;
         if (e.target.closest('.fv-weg-btn') || e.target.closest('.fv-admin-bar')) { clearTimeout(weg); return; }
+        /* Frueher waren Kopf- und Fusszeile ausgenommen. Damit liess sich ein
+           leeres Feld dort nicht mehr entfernen - genau der Fall, in dem sich
+           zwei Rahmen im Kopf ueberlagert haben. Jetzt gilt der Knopf ueberall. */
         var el = e.target.closest('[data-fvk]');
-        if (el && !el.closest('.site-header') && !el.closest('footer')) { clearTimeout(weg); zeigen(el); }
+        if (el) { clearTimeout(weg); zeigen(el); }
         else verstecken();
       });
       btn.addEventListener('mouseenter', function () { clearTimeout(weg); });
@@ -549,6 +595,14 @@
         if (!ziel) return;
         var key = ziel.getAttribute('data-fvk');
         if (!key || istVersteckt(key)) return;
+        /* Rueckfrage, damit ein Fehlklick nichts wegnimmt. Der Text nennt,
+           WAS verschwindet - sonst weiss man beim Bestaetigen nicht, was
+           gemeint war. */
+        var probe = (ziel.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!probe) probe = ziel.tagName.toLowerCase() === 'img' ? 'ein Bild' : 'ein leeres Feld';
+        else if (probe.length > 60) probe = probe.slice(0, 57) + '\u2026';
+        if (!window.confirm('Dieses Feld wirklich entfernen?\n\n' + probe
+            + '\n\nDu kannst es \u00fcber \u201e\u21BA wieder einblenden\u201c zur\u00fcckholen.')) return;
         versteckt.push(key);
         btn.style.display = 'none';
         saveHidden().then(function () { applyHidden(k); });
@@ -634,6 +688,8 @@
         // Download-Bereiche ein-/ausblenden. Muss auch fuer Besucher laufen -
         // sonst sehen sie einen Bereich, den der Admin abgeschaltet hat.
         parseBereiche(map['y0']); renderBereiche();
+        // Statuszeichen aus der gemeinsamen Ablage - auch fuer Besucher.
+        parseStatusListe(gmap['z0']); renderStatusListe();
       }).catch(function () {});
     }
 
@@ -1075,7 +1131,51 @@
         } catch (e) {}
       }
     }
-    function saveGallery() { return save('g0', 'text', JSON.stringify(galleryUrls)); }
+    /* Galerie sichern - MIT Nachweis.
+       Vorher wurde das Ergebnis nie angesehen. Schlug das Speichern fehl,
+       blieben die Bilder trotzdem auf dem Bildschirm stehen (sie lagen ja
+       im Speicher) und waren nach dem Neuladen weg. Genau so entstehen
+       hochgeladene Bilder, die in keiner Galerie stehen.
+       Jetzt wird zurueckgelesen und verglichen. Stimmt es nicht, gibt es
+       eine Meldung statt Stille. */
+    function galerieMelden(text, gut) {
+      galleryConts().forEach(function (cont) {
+        var alt2 = cont.parentNode && cont.parentNode.querySelector('.fv-gallery__melde');
+        if (alt2) alt2.parentNode.removeChild(alt2);
+        var m = document.createElement('p');
+        m.className = 'fv-gallery__melde' + (gut ? ' gut' : ' schlecht');
+        m.textContent = text;
+        if (cont.parentNode) cont.parentNode.insertBefore(m, cont.nextSibling);
+        if (gut) setTimeout(function () { if (m.parentNode) m.parentNode.removeChild(m); }, 6000);
+      });
+    }
+    function saveGallery() {
+      var sollen = JSON.stringify(galleryUrls);
+      return save('g0', 'text', sollen).then(function (ok) {
+        if (!ok) {
+          galerieMelden('\u2717 Die Galerie konnte NICHT gespeichert werden. '
+                      + 'Die Bilder sind nach dem Neuladen wieder weg.', false);
+          return false;
+        }
+        // nachlesen statt glauben
+        return fetch(API + '/content?page=' + encodeURIComponent(SLUG))
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (res) {
+            var steht = null;
+            if (res && res.items) res.items.forEach(function (it) {
+              if (it.block === 'g0') steht = it.value;
+            });
+            if (steht === sollen) {
+              galerieMelden('\u2713 Galerie gespeichert (' + galleryUrls.length + ' Bilder).', true);
+              return true;
+            }
+            galerieMelden('\u2717 Gespeichert, aber der Server hat etwas anderes zur\u00fcckgegeben. '
+                        + 'Bitte die Seite neu laden und nachsehen.', false);
+            return false;
+          })
+          .catch(function () { return true; });   // Nachlesen misslungen: nicht falsch alarmieren
+      });
+    }
     function moveImg(idx, dir) {
       var j = idx + dir;
       if (j < 0 || j >= galleryUrls.length) return;
@@ -1109,6 +1209,55 @@
         });
       })();
     }
+    /* Auswahlfenster fuer bereits hochgeladene Bilder. */
+    function vorhandeneWaehlen(cont) {
+      if (document.querySelector('.fv-wahl')) return;
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-wahl';
+      huelle.innerHTML =
+        '<div class="fv-wahl__kasten">'
+      + '  <div class="fv-wahl__kopf"><strong>Bereits hochgeladene Bilder</strong>'
+      + '    <span class="fv-wahl__zahl" data-a="zahl"></span>'
+      + '    <button type="button" class="fv-wahl__zu" data-a="zu" aria-label="Schlie\u00dfen">\u2715</button>'
+      + '  </div>'
+      + '  <p class="fv-wahl__hilfe">Anklicken f\u00fcgt das Bild dieser Galerie hinzu. '
+      + 'Bilder, die schon in dieser Galerie stehen, sind ausgegraut.</p>'
+      + '  <div class="fv-wahl__netz" data-a="netz">Wird geladen \u2026</div>'
+      + '</div>';
+      document.body.appendChild(huelle);
+      function zu() { if (huelle.parentNode) huelle.parentNode.removeChild(huelle); }
+      huelle.querySelector('[data-a="zu"]').addEventListener('click', zu);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) zu(); });
+
+      var netz = huelle.querySelector('[data-a="netz"]');
+      fetch(API + '/images', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw() })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (a) {
+          var bilder = (a && a.bilder) || [];
+          huelle.querySelector('[data-a="zahl"]').textContent = bilder.length + ' vorhanden';
+          if (!bilder.length) { netz.textContent = 'Keine Bilder in der Datenbank.'; return; }
+          netz.innerHTML = '';
+          bilder.forEach(function (b) {
+            var url = '/api/image/' + b.id;
+            var drin = galleryUrls.indexOf(url) !== -1;
+            var k = document.createElement('button');
+            k.type = 'button';
+            k.className = 'fv-wahl__bild' + (drin ? ' fv-wahl__bild--drin' : '');
+            k.innerHTML = '<img src="' + url + '" alt="" loading="lazy">'
+                        + '<span>' + (drin ? 'schon drin' : Math.round(b.groesse / 1024) + ' KB') + '</span>';
+            if (!drin) k.addEventListener('click', function () {
+              galleryUrls.push(url);
+              renderGallery(); saveGallery();
+              zu();
+            });
+            netz.appendChild(k);
+          });
+        })
+        .catch(function () { netz.textContent = 'Die Liste konnte nicht geladen werden.'; });
+    }
+
     function pickImages() {
       var inp = document.createElement('input');
       inp.type = 'file'; inp.accept = 'image/*'; inp.multiple = true;
@@ -1145,6 +1294,19 @@
           add.innerHTML = '<span class="fv-gallery__plus" aria-hidden="true">+</span><span>Bild hinzuf\u00fcgen</span>';
           add.addEventListener('click', pickImages);
           cont.appendChild(add);
+
+          /* Zweiter Weg: Bilder, die schon in der Datenbank liegen, wieder
+             einhaengen. Ohne den kommt man an bereits hochgeladene Bilder
+             nicht mehr heran - man kann sie nur neu hochladen und hat sie
+             dann doppelt. Genau das ist passiert: 34 Bilder in der
+             Datenbank, aber nur drei in einer Galerie. */
+          var vorhanden = document.createElement('button');
+          vorhanden.type = 'button';
+          vorhanden.className = 'fv-gallery__add fv-gallery__add--alt';
+          vorhanden.innerHTML = '<span class="fv-gallery__plus" aria-hidden="true">\u21BA</span>'
+                              + '<span>Bereits hochgeladenes w\u00e4hlen</span>';
+          vorhanden.addEventListener('click', function () { vorhandeneWaehlen(cont); });
+          cont.appendChild(vorhanden);
           if (!cont.getAttribute('data-fv-drop')) {
             cont.setAttribute('data-fv-drop', '1');
             cont.addEventListener('dragover', function (e) { e.preventDefault(); cont.classList.add('fv-gallery--drop'); });
@@ -1155,8 +1317,28 @@
             });
           }
         }
+        /* Abschnitt ausblenden - aber NUR, wenn es dort ueberhaupt nichts
+           zu sehen gibt.
+           Die Regel hiess frueher "leere Galerie -> Abschnitt weg". Das
+           stimmte nur, solange der Abschnitt ausser der Galerie nichts
+           enthielt. Auf archivar und mischwaldrechner liegen die Bilder
+           aber STATISCH im HTML (assets/images/...), die Galerie daneben
+           ist leer. Dort hat die alte Regel den ganzen Abschnitt fuer
+           Besucher versteckt - samt der vorhandenen Bilder.
+           Jetzt zaehlt, ob irgendein Bild da ist, egal woher. */
         var sec = cont.closest('[data-fv-gallery-section]');
-        if (sec) sec.style.display = (!galleryUrls.length && !EDITING) ? 'none' : '';
+        if (sec) {
+          var festeBilder = qsa(sec, 'img').filter(function (im) {
+            return !im.closest('[data-fv-gallery]');
+          }).length;
+          var etwasDa = galleryUrls.length > 0 || festeBilder > 0;
+          /* EIGENE Klasse statt style.display. Das Ausblenden ganzer
+             Abschnitte schreibt dieselbe Eigenschaft - wer zuletzt lief,
+             gewann, und eine gefuellte Galerie konnte unsichtbar bleiben.
+             Mit getrennten Klassen kann keiner den anderen ueberschreiben,
+             und im CSS gewinnt das absichtliche Ausblenden. */
+          sec.classList.toggle('fv-leer-weg', !etwasDa && !EDITING);
+        }
       });
     }
 
@@ -1247,7 +1429,18 @@
         url: typeof b.url === 'string' ? b.url : '',
         alt: typeof b.alt === 'string' ? b.alt : '',
         breite: ['viertel', 'drittel', 'halb', 'voll'].indexOf(b.breite) !== -1 ? b.breite : 'voll',
-        ziel: typeof b.ziel === 'string' ? b.ziel : ''
+        ziel: typeof b.ziel === 'string' ? b.ziel : '',
+        /* Freie Position: "anker" ist der Schluessel eines vorhandenen
+           Elements (data-fvk), "wo" sagt davor oder danach. Ohne Anker
+           landet das Feld wie bisher am Abschnittsende. */
+        anker: typeof b.anker === 'string' ? b.anker : '',
+        wo: b.wo === 'vor' ? 'vor' : 'nach',
+        /* Startspalte im Zwoelfer-Raster. 0 heisst: von selbst einordnen
+           (so verhalten sich alle Felder, die es vor dem Raster gab). */
+        spalte: (function (v) {
+          var n = parseInt(v, 10);
+          return (isFinite(n) && n >= 1 && n <= 12) ? n : 0;
+        })(b.spalte)
       };
     }
     function parseCustom(item) {
@@ -1279,6 +1472,190 @@
       out.push({ id: '', name: 'Seitenende', el: root });
       return out;
     }
+    /* Alle Stellen, an die ein Zusatzfeld in diesem Abschnitt kann.
+       Das sind die vorhandenen Felder mit data-fvk - davor oder danach. */
+    function ankerListe(sekEl) {
+      var out = [];
+      if (!sekEl) return out;
+      qsa(sekEl, '[data-fvk]').forEach(function (el) {
+        if (el.closest('.fv-extra')) return;          // eigene Felder nicht
+        var k = el.getAttribute('data-fvk');
+        if (!k) return;
+        var t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+        if (!t) t = (el.tagName.toLowerCase() === 'img') ? 'Bild' : 'leeres Feld';
+        if (t.length > 30) t = t.slice(0, 29) + '\u2026';
+        out.push({ key: k, name: t, el: el });
+        if (out.length > 40) return;
+      });
+      return out;
+    }
+    function ankerElement(sekEl, key) {
+      if (!sekEl || !key) return null;
+      var treffer = null;
+      qsa(sekEl, '[data-fvk]').forEach(function (el) {
+        if (treffer || el.closest('.fv-extra')) return;
+        if (el.getAttribute('data-fvk') === key) treffer = el;
+      });
+      return treffer;
+    }
+
+    /* ---- Felder mit der Maus ans Raster ziehen -------------------------
+       Waagerecht bestimmt die Startspalte (Einrasten auf zwoelf Spalten),
+       senkrecht die Reihenfolge in der Zone. Man kann auch in die Zone
+       eines anderen Abschnitts ziehen.
+
+       Bewusst KEINE festen Pixelpositionen: die Seite waechst mit, und
+       auf einem Handy liegt bei festen Werten alles uebereinander. Im
+       Raster faellt dort einfach alles auf volle Breite zusammen. */
+    function ziehenAnbinden(griff, blockId) {
+      var zieht = null;
+
+      function zonenListe() {
+        return alleZonen().filter(function (z) { return z.offsetParent !== null || true; });
+      }
+      function zoneUnter(x, y) {
+        var treffer = null;
+        zonenListe().forEach(function (z) {
+          var r = z.getBoundingClientRect();
+          // etwas Rand, damit man eine leere Zone auch treffen kann
+          if (x >= r.left - 24 && x <= r.right + 24 && y >= r.top - 24 && y <= r.bottom + 24) treffer = z;
+        });
+        return treffer;
+      }
+      function spalteAus(zone, x) {
+        var r = zone.getBoundingClientRect();
+        if (r.width < 24) return 0;
+        var breit = r.width / 12;
+        var n = Math.floor((x - r.left) / breit) + 1;
+        return Math.min(12, Math.max(1, n));
+      }
+
+      function anfang(x, y) {
+        var i = -1;
+        customBlocks.forEach(function (b, k) { if (b.id === blockId) i = k; });
+        if (i === -1) return;
+        var wrap = document.querySelector('[data-fv-block="' + blockId + '"]');
+        if (!wrap) return;
+        zieht = { idx: i, wrap: wrap, platz: document.createElement('div'), zone: null, spalte: 0 };
+        zieht.platz.className = 'fv-extra fv-extra-platz';
+        wrap.classList.add('fv-extra--zieht');
+        document.body.classList.add('fv-zieht');
+        bewegen(x, y);
+      }
+
+      function bewegen(x, y) {
+        if (!zieht) return;
+        var zone = zoneUnter(x, y);
+        if (!zone) return;
+        if (zieht.zone !== zone) {
+          if (zieht.zone) zieht.zone.classList.remove('fv-zone-ziel');
+          zone.classList.add('fv-zone-ziel');
+          zieht.zone = zone;
+        }
+        zieht.spalte = spalteAus(zone, x);
+        var sp = spanneVon(customBlocks[zieht.idx]);
+        if (zieht.spalte + sp - 1 > 12) zieht.spalte = Math.max(1, 13 - sp);
+        zieht.platz.style.gridColumn = zieht.spalte + ' / span ' + sp;
+
+        /* Einfuegestelle: vor dem ersten Feld, dessen Mitte unter dem
+           Zeiger liegt. So bleibt die Reihenfolge nachvollziehbar. */
+        var kinder = Array.prototype.slice.call(zone.children).filter(function (c) {
+          return c !== zieht.wrap && c !== zieht.platz && c.classList
+              && c.classList.contains('fv-extra');
+        });
+        var vor = null;
+        kinder.forEach(function (c) {
+          if (vor) return;
+          var r = c.getBoundingClientRect();
+          if (y < r.top + r.height / 2) vor = c;
+        });
+        if (vor) zone.insertBefore(zieht.platz, vor);
+        else zone.appendChild(zieht.platz);
+      }
+
+      function ende() {
+        if (!zieht) return;
+        var z = zieht;
+        zieht = null;
+        document.body.classList.remove('fv-zieht');
+        if (z.wrap) z.wrap.classList.remove('fv-extra--zieht');
+        if (z.zone) z.zone.classList.remove('fv-zone-ziel');
+        if (!z.zone || !z.platz.parentNode) { renderCustom(); return; }
+
+        var b = customBlocks[z.idx];
+        if (!b) { renderCustom(); return; }
+        b.spalte = z.spalte;
+        b.anker = '';                                  // Raster schlaegt Anker
+        b.ziel = z.zone.getAttribute('data-fv-zone') || '';
+
+        /* Neue Stelle im Feld bestimmen: vor welchem eigenen Block liegt
+           der Platzhalter? Dessen Position im Gesamtfeld ist das Ziel. */
+        var nachher = z.platz.nextElementSibling;
+        var nachId = null;
+        while (nachher && !nachId) {
+          if (nachher.getAttribute && nachher.getAttribute('data-fv-block')) {
+            nachId = nachher.getAttribute('data-fv-block');
+          }
+          nachher = nachher.nextElementSibling;
+        }
+        if (z.platz.parentNode) z.platz.parentNode.removeChild(z.platz);
+
+        customBlocks.splice(z.idx, 1);
+        var einfuegen = customBlocks.length;
+        if (nachId) {
+          customBlocks.forEach(function (o, k) {
+            if (o.id === nachId && einfuegen === customBlocks.length) einfuegen = k;
+          });
+        }
+        customBlocks.splice(einfuegen, 0, b);
+        saveCustom().then(renderCustom);
+      }
+
+      griff.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        anfang(e.clientX, e.clientY);
+        function mv(ev) { ev.preventDefault(); bewegen(ev.clientX, ev.clientY); }
+        function up() {
+          document.removeEventListener('mousemove', mv);
+          document.removeEventListener('mouseup', up);
+          ende();
+        }
+        document.addEventListener('mousemove', mv);
+        document.addEventListener('mouseup', up);
+      });
+      griff.addEventListener('touchstart', function (e) {
+        if (!e.touches || !e.touches[0]) return;
+        e.preventDefault();
+        anfang(e.touches[0].clientX, e.touches[0].clientY);
+        function mv(ev) {
+          if (!ev.touches || !ev.touches[0]) return;
+          ev.preventDefault();
+          bewegen(ev.touches[0].clientX, ev.touches[0].clientY);
+        }
+        function up() {
+          griff.removeEventListener('touchmove', mv);
+          griff.removeEventListener('touchend', up);
+          ende();
+        }
+        griff.addEventListener('touchmove', mv, { passive: false });
+        griff.addEventListener('touchend', up);
+      }, { passive: false });
+    }
+
+    var SPANNE = { voll: 12, halb: 6, drittel: 4, viertel: 3 };
+    function spanneVon(b) { return SPANNE[b.breite] || 12; }
+    /* Legt ein Feld ins Raster. Ohne Startspalte bleibt es im Fluss -
+       dann ordnet CSS es selbst ein, genau wie vor dem Umbau. */
+    function rasterLage(wrap, b) {
+      var sp = spanneVon(b);
+      if (b.spalte >= 1 && b.spalte + sp - 1 <= 12) {
+        wrap.style.gridColumn = b.spalte + ' / span ' + sp;
+      } else {
+        wrap.style.gridColumn = 'span ' + sp;
+      }
+    }
+
     function zoneIn(container, zielId) {
       var z = container.querySelector(':scope > .fv-extra-zone');
       if (!z) {
@@ -1299,6 +1676,10 @@
       var ziele = zielListe();
       // alle Zonen leeren
       alleZonen().forEach(function (z) { z.innerHTML = ''; z.style.display = 'none'; });
+      // frei gesetzte Felder abraeumen - sie haengen nicht in einer Zone
+      qsa(root, '.fv-extra--frei').forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
 
       ziele.forEach(function (ziel) {
         var eigene = [];
@@ -1319,6 +1700,8 @@
           var b = paar.b, idx = paar.i;
           var wrap = document.createElement('div');
           wrap.className = 'fv-extra fv-extra--' + b.breite + (b.typ === 'bild' ? ' fv-extra--bild' : '');
+          wrap.setAttribute('data-fv-block', b.id);
+          rasterLage(wrap, b);
 
           if (b.typ === 'bild') {
             var fig = document.createElement('figure');
@@ -1477,6 +1860,18 @@
             }
 
             // Reihenfolge innerhalb desselben Abschnitts
+            /* Ziehgriff: fasst das Feld an und legt es aufs Raster.
+               Die Pfeile bleiben - mit der Tastatur oder auf kleinen
+               Bildschirmen ist Ziehen unhandlich. */
+            var griff = document.createElement('button');
+            griff.type = 'button';
+            griff.className = 'fv-extra__k fv-zieh-griff';
+            griff.innerHTML = '\u2807\u2807';
+            griff.setAttribute('title', 'Ziehen, um das Feld am Raster auszurichten');
+            griff.setAttribute('aria-label', 'Feld verschieben');
+            leiste.appendChild(griff);
+            ziehenAnbinden(griff, b.id);
+
             knopf('\u2191', 'Nach oben schieben', function () {
               var vorher = null;
               for (var i = idx - 1; i >= 0; i--) {
@@ -1510,6 +1905,12 @@
               });
             brSel.addEventListener('change', function () {
               customBlocks[idx].breite = brSel.value;
+              // Breiter geworden? Startspalte zurueckziehen, damit das Feld
+              // nicht ueber Spalte 12 hinausragt und stumm umbricht.
+              var sp = spanneVon(customBlocks[idx]);
+              if (customBlocks[idx].spalte && customBlocks[idx].spalte + sp - 1 > 12) {
+                customBlocks[idx].spalte = Math.max(1, 13 - sp);
+              }
               saveCustom().then(renderCustom);
             });
             leiste.appendChild(brSel);
@@ -1526,9 +1927,54 @@
             });
             zSel.addEventListener('change', function () {
               customBlocks[idx].ziel = zSel.value;
+              customBlocks[idx].anker = '';        // neuer Abschnitt, alter Anker gilt nicht
               saveCustom().then(renderCustom);
             });
             leiste.appendChild(zSel);
+
+            /* Position innerhalb des Abschnitts. Vorher landete jedes
+               Zusatzfeld immer am Ende - man konnte es nicht zwischen
+               vorhandene Felder setzen. */
+            var pSel = document.createElement('select');
+            pSel.className = 'fv-extra__sel fv-extra__sel--pos';
+            pSel.setAttribute('title', 'Wohin im Abschnitt?');
+            var opEnde = document.createElement('option');
+            opEnde.value = '';
+            opEnde.textContent = b.spalte
+              ? ('im Raster, Spalte ' + b.spalte + '\u2013' + (b.spalte + spanneVon(b) - 1))
+              : 'am Abschnittsende';
+            if (!b.anker) opEnde.selected = true;
+            pSel.appendChild(opEnde);
+
+            // Zuruecksetzen: wieder von selbst einordnen lassen
+            if (b.spalte) {
+              var opFrei = document.createElement('option');
+              opFrei.value = 'raster-aus';
+              opFrei.textContent = '\u21BA Spalte aufheben';
+              pSel.appendChild(opFrei);
+            }
+            ankerListe(ziel.el).forEach(function (a) {
+              [['vor', '\u2191 vor: '], ['nach', '\u2193 nach: ']].forEach(function (r) {
+                var op = document.createElement('option');
+                op.value = r[0] + '|' + a.key;
+                op.textContent = r[1] + a.name;
+                if (b.anker === a.key && b.wo === r[0]) op.selected = true;
+                pSel.appendChild(op);
+              });
+            });
+            pSel.addEventListener('change', function () {
+              var v = pSel.value;
+              if (v === 'raster-aus') { customBlocks[idx].spalte = 0; customBlocks[idx].anker = ''; }
+              else if (!v) { customBlocks[idx].anker = ''; }
+              else {
+                customBlocks[idx].spalte = 0;   // Anker und Raster schliessen sich aus
+                var teil = v.split('|');
+                customBlocks[idx].wo = teil[0];
+                customBlocks[idx].anker = teil[1];
+              }
+              saveCustom().then(renderCustom);
+            });
+            leiste.appendChild(pSel);
 
             knopf('\u2715', 'Feld entfernen', function () {
               if (!window.confirm('Dieses Feld wirklich entfernen?')) return;
@@ -1540,7 +1986,16 @@
             wrap.appendChild(leiste);
           }
 
-          z.appendChild(wrap);
+          /* Einhaengen: mit Anker direkt neben das gewaehlte Feld,
+             sonst wie bisher in die Zone am Abschnittsende. */
+          var ank = b.anker ? ankerElement(ziel.el, b.anker) : null;
+          if (ank && ank.parentNode) {
+            wrap.classList.add('fv-extra--frei');
+            if (b.wo === 'vor') ank.parentNode.insertBefore(wrap, ank);
+            else ank.parentNode.insertBefore(wrap, ank.nextSibling);
+          } else {
+            z.appendChild(wrap);
+          }
         });
 
         if (EDITING) {
@@ -1589,6 +2044,72 @@
       });
     }
 
+    /* ---- Raster: Schilder mit dem Schluessel an jedes Feld ------------- */
+    function rasterSchilderWeg() {
+      qsa(document, '.fv-raster-schild').forEach(function (el) {
+        if (el.parentNode) el.parentNode.removeChild(el);
+      });
+    }
+    function rasterSchilder() {
+      rasterSchilderWeg();
+      var gesehen = {};
+      qsa(document, '[data-fvk], [data-fvx]').forEach(function (el) {
+        var k = el.getAttribute('data-fvk') || el.getAttribute('data-fvx');
+        if (!k) return;
+        var r = el.getBoundingClientRect();
+        if (r.width < 6 && r.height < 6) return;
+        var schild = document.createElement('span');
+        schild.className = 'fv-raster-schild';
+        var leer = !((el.textContent || '').trim()) && el.tagName.toLowerCase() !== 'img';
+        schild.textContent = k + (leer ? ' \u00b7 leer' : '');
+        if (leer) schild.classList.add('fv-raster-schild--leer');
+        if (gesehen[k]) schild.classList.add('fv-raster-schild--doppelt');
+        gesehen[k] = true;
+        schild.style.top = (r.top + window.scrollY) + 'px';
+        schild.style.left = (r.left + window.scrollX) + 'px';
+        document.body.appendChild(schild);
+      });
+    }
+    var rasterTakt = null;
+    window.addEventListener('resize', function () {
+      if (!document.body.classList.contains('fv-raster-an')) return;
+      clearTimeout(rasterTakt);
+      rasterTakt = setTimeout(rasterSchilder, 180);
+    });
+
+    /* ---- Platz fuer die Admin-Leiste schaffen --------------------------
+       Die Leiste liegt fest oben (position: fixed) und verdeckte bisher
+       den oberen Rand der Seite: die klebende Kopfzeile sitzt bei top: 0,
+       das Besucher-Abzeichen bei top: 84px - beide wussten nichts von
+       ihr. Also wird die ECHTE Hoehe gemessen (sie bricht auf schmalen
+       Bildschirmen um, ein fester Wert waere dort falsch) und als
+       --fv-admin-hoehe hinterlegt. Das CSS schiebt damit die ganze Seite
+       nach unten. */
+    var hoehenTakt = null;
+    function leistenHoeheMessen() {
+      var bar = document.querySelector('.fv-admin-bar');
+      var h = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
+      document.documentElement.style.setProperty('--fv-admin-hoehe', h + 'px');
+      document.body.classList.toggle('fv-admin-an', h > 0);
+    }
+    function hoeheBeobachten() {
+      leistenHoeheMessen();
+      // ein zweites Mal nach dem ersten Zeichnen - Schriften und Umbruch
+      // aendern die Hoehe noch
+      setTimeout(leistenHoeheMessen, 60);
+      setTimeout(leistenHoeheMessen, 400);
+      window.addEventListener('resize', function () {
+        clearTimeout(hoehenTakt);
+        hoehenTakt = setTimeout(leistenHoeheMessen, 120);
+      });
+      if (window.ResizeObserver) {
+        try {
+          var bar = document.querySelector('.fv-admin-bar');
+          if (bar) new ResizeObserver(leistenHoeheMessen).observe(bar);
+        } catch (e) {}
+      }
+    }
+
     /* ---- Admin-Werkzeugleiste (mit Umschalter) ------------------------ */
     function toolbar() {
       if (document.querySelector('.fv-admin-bar')) return;
@@ -1605,6 +2126,20 @@
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-werkzeuge" '
+                + 'title="Alle Verwaltungs-K\u00e4sten \u2013 sie liegen auf der Programme-Seite">'
+                + '\uD83E\uDDF0 Werkzeuge</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-zurueck" '
+                + 'title="Alle verschobenen Felder dieser Seite wieder an ihren Platz stellen">'
+                + '\u21BA Verschiebungen</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-vorschau" '
+                + 'title="Die Seite in Handy- oder Tabletbreite ansehen">'
+                + '\uD83D\uDCF1 Vorschau</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-raster" '
+                + 'title="Raster und Feldrahmen einblenden \u2013 zeigt, wo Felder sitzen und was sich \u00fcberlagert">'
+                + '\u25A6 Raster</button>'
+                + '<button type="button" class="fv-admin-btn fv-admin-sichern" '
+                + 'title="Den gesamten Datenbestand als ZIP herunterladen">\uD83D\uDCBE Sicherung</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-seiten">+ Seite</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-verlauf">\u21BA Verlauf</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-logout">Abmelden</button>';
@@ -1626,7 +2161,97 @@
         location.reload();
       });
       bar.querySelector('.fv-admin-verlauf').addEventListener('click', verlaufZeigen);
+      hoeheBeobachten();
+
       bar.querySelector('.fv-admin-putzen').addEventListener('click', felderSaeubern);
+
+      /* Raster: legt ein Gitter ueber die Seite und rahmt JEDES Feld ein -
+         mit seinem Schluessel. Ueberlagerungen und leere Felder fallen
+         damit sofort auf; ohne das sucht man sie mit dem Mauszeiger. */
+      /* Werkzeug-Menue.
+         Die neun Verwaltungs-Kaesten liegen alle auf /programme und nur
+         im Bearbeiten-Modus. Das stand nirgends - man musste es wissen.
+         Hier stehen sie beisammen, und ein Klick bringt einen hin. */
+      var WERKZEUGE = [
+        { klasse: 'fv-gest-box',     name: '\uD83C\uDFA8 Gestaltung',        was: 'Farben und Schrift' },
+        { klasse: 'fv-bild-box',     name: '\uD83D\uDDBC\uFE0F Bilder',      was: 'ansehen und entfernen' },
+        { klasse: 'fv-menue2-box',   name: '\uD83E\uDDED Hauptmen\u00fc',    was: 'Eintr\u00e4ge der Kopfzeile' },
+        { klasse: 'fv-progverw-box', name: '\u2699\uFE0F Programme',          was: 'Seiten anlegen und verwalten' },
+        { klasse: 'fv-menue-box',    name: '\u2699\uFE0F Men\u00fc Web-Apps', was: 'die Klappliste' },
+        { klasse: 'fv-fuss-box',     name: '\u2699\uFE0F Fu\u00dfzeile',      was: 'Links unten' },
+        { klasse: 'fv-kopf-box',     name: '\u2699\uFE0F Google-Eintrag',     was: 'Titel und Beschreibung' },
+        { klasse: 'fv-sich-box',     name: '\uD83D\uDCBE Sicherung',          was: 'herunterladen und einspielen' },
+        { klasse: 'fv-alt-box',      name: '\uD83E\uDDF9 Altlasten',          was: 'verwaiste Angaben' }
+      ];
+      var werkzeugKnopf = bar.querySelector('.fv-admin-werkzeuge');
+      if (werkzeugKnopf) werkzeugKnopf.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var alt2 = document.querySelector('.fv-werkzeug-menue');
+        if (alt2) { alt2.parentNode.removeChild(alt2); return; }
+
+        var menue = document.createElement('div');
+        menue.className = 'fv-werkzeug-menue';
+        var kopf = '<p class="fv-werkzeug-hinweis">Diese K\u00e4sten liegen auf der Seite '
+                 + '<strong>Programme</strong> und brauchen <strong>Bearbeiten: AN</strong>.'
+                 + (EDITING ? '' : ' Ein Klick schaltet beides f\u00fcr dich.') + '</p>';
+        var liste = '';
+        WERKZEUGE.forEach(function (t) {
+          liste += '<button type="button" class="fv-werkzeug-eintrag" data-klasse="' + t.klasse + '">'
+                +  '<span class="fv-werkzeug-name">' + t.name + '</span>'
+                +  '<span class="fv-werkzeug-was">' + t.was + '</span></button>';
+        });
+        menue.innerHTML = kopf + '<div class="fv-werkzeug-liste">' + liste + '</div>';
+        document.body.appendChild(menue);
+        var r = werkzeugKnopf.getBoundingClientRect();
+        menue.style.top = (r.bottom + window.scrollY + 6) + 'px';
+        menue.style.right = Math.max(8, window.innerWidth - r.right) + 'px';
+
+        menue.addEventListener('click', function (ev) {
+          var k = ev.target.closest && ev.target.closest('.fv-werkzeug-eintrag');
+          if (!k) return;
+          var klasse = k.getAttribute('data-klasse');
+          /* Bearbeiten einschalten ist hier KEIN heimlicher Eingriff:
+             der Klick auf ein Werkzeug ist genau diese Absicht, und der
+             Hinweis oben im Menue sagt es vorher. */
+          try { sessionStorage.setItem(EDIT_KEY, '1'); } catch (_e) {}
+          var hier = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+          if (hier === '/programme') {
+            location.hash = 'werkzeug=' + klasse;
+            location.reload();
+          } else {
+            location.href = '/programme#werkzeug=' + klasse;
+          }
+        });
+        setTimeout(function () {
+          document.addEventListener('click', function zu(ev) {
+            if (menue.contains(ev.target)) return;
+            if (menue.parentNode) menue.parentNode.removeChild(menue);
+            document.removeEventListener('click', zu);
+          });
+        }, 0);
+      });
+
+      var zurueckKnopf = bar.querySelector('.fv-admin-zurueck');
+      if (zurueckKnopf) zurueckKnopf.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:zuege-zuruecksetzen'));
+      });
+
+      var vorschauKnopf = bar.querySelector('.fv-admin-vorschau');
+      if (vorschauKnopf) vorschauKnopf.addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:vorschau-oeffnen'));
+      });
+
+      var rasterKnopf = bar.querySelector('.fv-admin-raster');
+      if (rasterKnopf) rasterKnopf.addEventListener('click', function () {
+        var an = document.body.classList.toggle('fv-raster-an');
+        rasterKnopf.classList.toggle('an', an);
+        try { sessionStorage.setItem('fv_raster', an ? '1' : '0'); } catch (e) {}
+        if (an) rasterSchilder(); else rasterSchilderWeg();
+      });
+      // Die Sicherung liegt in einem eigenen Block - per Ereignis rufen.
+      bar.querySelector('.fv-admin-sichern').addEventListener('click', function () {
+        document.dispatchEvent(new CustomEvent('fv:sicherung-laden'));
+      });
       // Die Seitenverwaltung liegt in einem eigenen Block - per Ereignis rufen.
       bar.querySelector('.fv-admin-seiten').addEventListener('click', function () {
         document.dispatchEvent(new CustomEvent('fv:seiten-oeffnen'));
@@ -1663,6 +2288,138 @@
           });
         })
         .catch(function () { /* der Hinweis ist Beiwerk - nie stoeren */ });
+    }
+
+    /* ================================================================
+     * Statuszeichen je Programm - einmal setzen, ueberall wirksam
+     * ----------------------------------------------------------------
+     * Dasselbe Zeichen ("Vollversion", "In Entwicklung" ...) steht an drei
+     * Stellen: auf der Programmseite, in der Kachel der Startseite und in
+     * der Zeile der Uebersicht. Bisher musste es dreimal einzeln gepflegt
+     * werden - und lief regelmaessig auseinander.
+     *
+     * Jetzt liegt es EINMAL in der globalen Ablage (Block "z0"), als
+     * Zuordnung { programm: zeichen }. Alle drei Stellen lesen daraus,
+     * auch fuer Besucher.
+     * ================================================================ */
+    var STATUS_VORSCHLAEGE = ['In Entwicklung', 'Vollversion', 'Vollversion Weiterentwicklung'];
+    var statusListe = {};
+
+    function parseStatusListe(item) {
+      statusListe = {};
+      if (item && item.type === 'text' && item.value) {
+        try {
+          var o = JSON.parse(item.value);
+          if (o && typeof o === 'object') statusListe = o;
+        } catch (e) { statusListe = {}; }
+      }
+    }
+
+    /* Zu welchem Programm gehoert dieses Statusfeld?
+       - Auf einer Programmseite: die Seite selbst.
+       - In einer Kachel oder Zeile: das Ziel des umgebenden Links. */
+    function programmVonStatus(el) {
+      var a = el.closest && el.closest('a[href^="/"]');
+      if (a) {
+        var z = (a.getAttribute('href') || '').replace(/^\/+|\/+$/g, '');
+        if (z && z.indexOf('/') === -1) return z;
+      }
+      if (document.querySelector('article.program-detail')) return SLUG;
+      return null;
+    }
+
+    function alleStatusFelder() {
+      return Array.prototype.slice.call(
+        document.querySelectorAll('.program-button__status, .program-detail__summary .status, .program-row .status'));
+    }
+
+    function renderStatusListe() {
+      alleStatusFelder().forEach(function (el) {
+        var p = programmVonStatus(el);
+        if (!p) return;
+        var wert = statusListe[p];
+        if (typeof wert === 'string' && wert !== '' && el.innerHTML !== wert) {
+          el.innerHTML = wert;
+        }
+      });
+    }
+
+    function statusSetzen(programm, wert) {
+      if (!programm) return Promise.resolve(false);
+      statusListe[programm] = wert;
+      renderStatusListe();
+      return save('z0', 'text', JSON.stringify(statusListe), GLOBAL);
+    }
+
+    /* Auswahlliste an ein Statusfeld haengen - kleiner Pfeil rechts.
+       Der Text bleibt frei beschreibbar; die Liste ist nur eine Abkuerzung. */
+    function statusAuswahl(el) {
+      if (!EDITING) return;
+      var programm = programmVonStatus(el);
+      if (!programm) return;
+      if (el.parentNode && el.parentNode.querySelector(':scope > .fv-status-pfeil')) return;
+
+      var pfeil = document.createElement('button');
+      pfeil.type = 'button';
+      pfeil.className = 'fv-status-pfeil';
+      pfeil.title = 'Aus der Liste waehlen';
+      pfeil.textContent = '\u25BE';
+      if (el.parentNode) el.parentNode.insertBefore(pfeil, el.nextSibling);
+
+      pfeil.addEventListener('click', function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var offen = document.querySelector('.fv-status-liste');
+        if (offen) { offen.parentNode.removeChild(offen); return; }
+
+        var liste = document.createElement('div');
+        liste.className = 'fv-status-liste';
+        STATUS_VORSCHLAEGE.forEach(function (t) {
+          var k = document.createElement('button');
+          k.type = 'button';
+          k.className = 'fv-status-wahl' + (el.textContent.trim() === t ? ' an' : '');
+          k.textContent = t;
+          k.addEventListener('click', function () {
+            liste.parentNode.removeChild(liste);
+            statusSetzen(programm, t).then(function (gut) {
+              flash(el, gut !== false);
+            });
+          });
+          liste.appendChild(k);
+        });
+        /* Direkt UNTER dem Zeichen aufklappen, linksbuendig dazu - nicht
+           versetzt ueber die Plakette daneben. Passt die Liste nach unten
+           nicht mehr aufs Bild, klappt sie nach oben auf. */
+        var r = el.getBoundingClientRect();
+        liste.style.left = (window.scrollX + r.left) + 'px';
+        liste.style.top = (window.scrollY + r.bottom + 6) + 'px';
+        document.body.appendChild(liste);
+        var lh = liste.getBoundingClientRect().height;
+        if (r.bottom + 6 + lh > window.innerHeight && r.top - lh - 6 > 0) {
+          liste.style.top = (window.scrollY + r.top - lh - 6) + 'px';
+        }
+        // Nicht ueber den rechten Rand hinaus
+        var lb = liste.getBoundingClientRect();
+        if (lb.right > window.innerWidth - 8) {
+          liste.style.left = Math.max(8, window.scrollX + window.innerWidth - lb.width - 8) + 'px';
+        }
+
+        setTimeout(function () {
+          document.addEventListener('click', function zu(ev) {
+            if (liste.contains(ev.target) || ev.target === pfeil) return;
+            if (liste.parentNode) liste.parentNode.removeChild(liste);
+            document.removeEventListener('click', zu);
+          });
+        }, 0);
+      });
+
+      /* Auch das freie Tippen wandert in die gemeinsame Ablage - sonst
+         waere der Wert nur auf dieser einen Seite geaendert. */
+      el.addEventListener('blur', function () {
+        var wert = sauberesHtml(el);
+        if (wert !== el.innerHTML) el.innerHTML = wert;
+        if (statusListe[programm] === wert) return;
+        statusSetzen(programm, wert);
+      });
     }
 
     /* ================================================================
@@ -1935,10 +2692,75 @@
         .catch(function () { liste.textContent = 'Konnte nicht geladen werden.'; });
     }
 
+    /* ---- Selbst angelegte Programme in die Listen einreihen -------------
+       Die Kacheln auf der Startseite und die Zeilen auf /programme stehen
+       fest in den HTML-Dateien. Eine ueber "+ Seite" angelegte Seite kam
+       darin nicht vor - sie existierte, aber nichts fuehrte hin.
+
+       Die neuen Kacheln bekommen data-fv-text-extra. Das ist wichtig:
+       die Nummerierung (t0, i0, s0 ...) folgt der Reihenfolge im Dokument.
+       Ohne die Kennzeichnung wuerden eingeschobene Kacheln alle Nummern
+       dahinter verschieben - und jeder gespeicherte Text saesse danach
+       auf dem falschen Feld. Mit ihr landen sie am ENDE der Nummerierung,
+       und der Altbestand bleibt, wo er ist. */
+    function eigeneEinreihen() {
+      var gitter = document.querySelector('.program-button-grid');
+      var liste = document.querySelector('.program-row-list');
+      var ziel = gitter || liste;
+      if (!ziel) return Promise.resolve();
+
+      return fetch('/api/programme', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var progs = (res && res.programme) || [];
+          if (!progs.length) return;
+          progs.forEach(function (p) {
+            if (!p || !p.slug) return;
+            if (p.art === 'info') return;                 // Infoseiten nicht als Programm
+            var pfad = '/' + p.slug;
+            if (ziel.querySelector('a[href="' + pfad + '"]')) return;   // steht schon drin
+
+            var a = document.createElement('a');
+            a.setAttribute('href', pfad);
+            a.setAttribute('aria-label', (p.name || p.slug) + ' \u00f6ffnen');
+            a.setAttribute('data-fv-text-extra', '');
+            a.setAttribute('data-fv-prog', p.slug);
+
+            if (gitter) {
+              a.className = 'program-button';
+              a.innerHTML =
+                '<span class="program-button__status" data-fv-added hidden></span>'
+              + (p.bild
+                  ? '<img src="' + p.bild + '" alt="' + (p.name || p.slug) + '">'
+                  : '<span class="program-button__name">' + (p.name || p.slug) + '</span>')
+              + '<span class="program-button__description">'
+              + (p.kurz || 'Kurzbeschreibung \u2013 im Bearbeiten-Modus \u00e4nderbar.')
+              + '</span>';
+            } else {
+              a.className = 'program-row';
+              a.innerHTML =
+                '<span class="program-row__image">'
+              + (p.bild ? '<img src="' + p.bild + '" alt="' + (p.name || p.slug) + '">' : '')
+              + '</span>'
+              + '<span class="program-row__content">'
+              + '<strong>' + (p.name || p.slug) + '</strong>'
+              + '<span>' + (p.kurz || 'Kurzbeschreibung \u2013 im Bearbeiten-Modus \u00e4nderbar.') + '</span>'
+              + '</span>';
+            }
+            ziel.appendChild(a);
+          });
+        })
+        .catch(function () { /* ohne Verzeichnis bleibt alles wie bisher */ });
+    }
+
     /* ---- Ablauf -------------------------------------------------------- */
     function run() {
       var k = keyed();
       applyOverrides(k).then(function () {
+        /* Die Schluessel stehen jetzt fest. Ab hier darf umgestellt
+           werden, ohne dass sich etwas verschiebt - das Verschieben von
+           Feldern haengt sich hier ein. */
+        try { document.dispatchEvent(new CustomEvent('fv:felder-bereit')); } catch (_e) {}
         if (ADMIN) toolbar();
         if (EDITING) {
           enableText(k.t, SLUG);
@@ -1947,6 +2769,7 @@
           enableStatus(k.s);
           enableLinks(k.d);   // bringt die Ziel-Zeile samt Web-App-Upload mit
           bereichSchalter();  // Ein-/Ausblenden der beiden Download-Bereiche
+          alleStatusFelder().forEach(statusAuswahl);   // Auswahlliste am Statuszeichen
           enableVideo();
           enableSortable();
           // renderCustom() lief bereits in applyOverrides (inkl. Bearbeiten-Affordances)
@@ -1954,8 +2777,9 @@
       });
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', run);
-    else run();
+    function los() { eigeneEinreihen().then(run, run); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', los);
+    else los();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
 
@@ -2016,148 +2840,213 @@
 })();
 
 /* =====================================================================
- * App-Aktualisierung im Bearbeiten-Modus pflegen (mehrere Apps)
- * Die Android-Apps fragen beim Start ihre version.json ab. Dieses Feld
- * schreibt genau diese Datei - ohne die Webseite neu zu veroeffentlichen.
- * Erscheint nur als Admin mit Bearbeiten: AN, auf der jeweiligen
- * Programmseite. Eigenstaendig gekapselt: faellt aus, ohne die Seite zu
- * stoeren.
+ * Aktualisierung pflegen - EINE KACHEL JE FASSUNG, EINE DATEI JE KACHEL
+ * ---------------------------------------------------------------------
+ * Android-App und PC-Programm sind zwei eigenstaendige Programme. Sie
+ * teilen sich nichts: nicht die Datei, nicht die Felder, nicht das
+ * Objekt im Speicher. Jede Kachel kennt genau EINE Definition aus APPS
+ * und schreibt genau EINE Ablage. Die andere Fassung kann sie gar nicht
+ * beruehren - nicht weil etwas abgefangen wird, sondern weil sie sie
+ * nicht kennt.
+ *
+ * Frueher gab es eine Kachel mit Reitern und ein gemeinsames Objekt.
+ * Beim Speichern wurde es aufgeteilt, beim Laden wieder zusammengefuehrt.
+ * Ergebnis: Eintraege im PC-Reiter landeten in der App-Datei, und
+ * PC-Werte verschwanden wieder. Reiter, Zusammenfuehrung und Aufteilung
+ * sind ersatzlos entfallen.
+ *
+ * Der Standard fuer PC-Fassungen (ANWEISUNG-PC-Aktualisierung.md):
+ *   { schluessel: "...-PC", versionCode, versionName, apk, hinweise }
+ * "apk" heisst auch beim PC so - dieselbe Eingabemaske fuer beide.
  * ===================================================================== */
 (function () {
   'use strict';
   try {
-    // Pro App: wo das Feld erscheint (seite), wo gespeichert wird (ablage),
-    // welche Adresse die App abfragt (pruef), welche Felder es gibt und welche
-    // festen Werte immer mitgeschrieben werden (fest).
+
+    /* Die vier Felder jeder PC-Fassung. Ueberall gleich - genau das ist
+       der Sinn des Standards. "rechenweg" steht nur im Beschriftungstext,
+       weil der Tourenplaner mit einem Versatz von 1 000 000 zaehlt. */
+    function pcFelder(rechenweg, beispielCode, beispielDatei) {
+      return [
+        { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 3.0' },
+        { key: 'versionCode', label: 'Versions-Code (' + rechenweg + ')',
+          typ: 'zahl', ph: 'z. B. ' + beispielCode },
+        { key: 'apk', label: 'Download-Adresse des Installers (EXE oder ZIP)',
+          typ: 'url', ph: beispielDatei },
+        { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+      ];
+    }
+
+    var GH = 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/';
+
+    var HINWEIS_APP = 'Diese Felder liest die Android-App. Das PC-Programm hat eine '
+                    + 'eigene Kachel mit einer eigenen Datei - hier ist es nicht zu finden.';
+    var HINWEIS_PC  = 'Diese Felder liest das PC-Programm. Sie stehen in einer eigenen '
+                    + 'Datei; mit der App-Fassung haben sie nichts zu tun.';
+
+    /* Je Fassung eine Definition:
+         seite      - kommt im Pfad der Programmseite vor
+         art        - 'app' oder 'pc' (bestimmt, in welchen Bereich die Kachel kommt)
+         ablage     - Schluessel in der Datenbank, Block u0
+         appAblage  - nur bei art 'pc': woher ein alter "pc"-Block uebernommen wird
+         pruef      - Adresse, die das Programm abfragt
+         felder     - Eingabefelder dieser Fassung
+         fest       - Werte, die immer mitgeschrieben werden (Erkennungsmerkmal)
+         vorgabe    - Stand, solange nichts gespeichert ist                        */
     var APPS = [
+      /* ---- Einkaufsplaner ------------------------------------------- */
       {
-        /* Der Einkaufsplaner fragt /einkaufsliste/version.json ab. Diese
-           Datei wird vom WORKER erzeugt, nicht aus dem Ordner geliefert -
-           lag dort eine echte Datei, gewann sie immer, und das Speichern
-           hier lief still ins Leere.
-           Feldnamen wie beim Aufgabenplaner: "apk" und "hinweise". */
-        seite: 'einkaufsliste',
+        seite: 'einkaufsliste', art: 'app', sauber: true,
         ablage: 'einkaufsliste',
         pruef: '/einkaufsliste/version.json',
-        titel: 'Einkaufsplaner',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.2.0' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 20200' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.11.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 21100' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../FINNVELO-Einkaufsplaner-2.2.0.apk' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Rubriken sortieren richtig' }
+            ph: 'https://github.com/.../FINNVELO-Einkaufsplaner-2.11.0.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
-        // Schuetzt davor, dass eine andere App diese Datei liest.
         fest: { schluessel: 'FINNVELO-EINKAUFSPLANER' },
-        vorgabe: {
-          schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 20200, versionName: '2.2.0',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Einkaufsplaner/FINNVELO-Einkaufsplaner-2.2.0.apk',
-          hinweise: 'Rubriken sortieren jetzt richtig, eigene Rubriken anlegbar, Löschknopf in der Datenbank.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 21100, versionName: '2.11.0',
+                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-2.11.0.apk', hinweise: '' }
       },
       {
-        seite: 'mischwaldrechner',
+        seite: 'einkaufsliste', art: 'pc',
+        ablage: 'einkaufsliste-pc', appAblage: 'einkaufsliste',
+        pruef: '/einkaufsliste/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                         'https://github.com/.../FINNVELO-Einkaufsplaner-Setup-1.0.exe'),
+        fest: { schluessel: 'FINNVELO-EINKAUFSPLANER-PC' },
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Mischwaldrechner ----------------------------------------- */
+      {
+        seite: 'mischwaldrechner', art: 'app',
         ablage: 'mischwald',
         pruef: '/mischwaldrechner/version.json',
-        titel: 'Mischwaldrechner',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.0.2', auch: ['version'] },
+          { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.8', auch: ['version'] },
           { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 2' },
           { key: 'download', label: 'Download-Adresse der APK', typ: 'url', ph: 'https://github.com/.../Mischwald.apk' },
-          { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Kartenerkennung verbessert' }
+          { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: {},
-        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0', download: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloMischwaldrechner/Mischwald.apk', hinweis: '' }
+        vorgabe: { versionCode: 1, versionName: '1.0.0', version: '1.0.0',
+                   download: GH + 'FinnveloMischwaldrechner/Mischwald.apk', hinweis: '' }
       },
       {
-        seite: 'aufgabenplaner',
+        seite: 'mischwaldrechner', art: 'pc',
+        ablage: 'mischwald-pc', appAblage: 'mischwald',
+        pruef: '/mischwaldrechner/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                         'https://github.com/.../FINNVELO-Mischwaldrechner-Setup-1.0.exe'),
+        fest: { schluessel: 'FINNVELO-MISCHWALD-PC' },
+        vorgabe: { schluessel: 'FINNVELO-MISCHWALD-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Aufgabenplaner ------------------------------------------- */
+      {
+        seite: 'aufgabenplaner', art: 'app',
         ablage: 'aufgabenplaner',
         pruef: '/FinnVelo/Aufgabenplaner/version.json',
-        titel: 'Aufgabenplaner',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 3.2' },
-          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 32' },
-          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url', ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-3.2.apk' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: 'z. B. Erinnerungen verbessert' }
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 8.28' },
+          { key: 'versionCode', label: 'Versions-Code (Zahl)', typ: 'zahl', ph: 'z. B. 198' },
+          { key: 'apk', label: 'Download-Adresse der APK (GitHub)', typ: 'url',
+            ph: 'https://github.com/.../FINNVELO-Aufgabenplaner-8.28.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-AUFGABENPLANER' },
-        vorgabe: {
-          schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 101, versionName: '7.31',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-7.31.apk',
-          hinweise: 'Die Masken fuer Anlegen, Beitreten und Koppeln behalten ihre Eingaben. Kanal verlassen statt loeschen.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-AUFGABENPLANER', versionCode: 198, versionName: '8.28',
+                   apk: GH + 'FinnveloAufgabenplaner/FINNVELO-Aufgabenplaner-8.28.apk', hinweise: '' }
       },
       {
-        /* Lesezeit. Die App fragt /lesezeit/version.json ab.
-           Ordner, Programmname und Paketname heissen einheitlich "Lesezeit".
-           ACHTUNG: eigenes Format - "programm", "version", "versionsCode"
-           statt schluessel/versionName/versionCode. Deshalb eigene Felder. */
-        seite: 'lesezeit',
+        /* Das PC-Programm liest /FinnVelo/Aufgabenplaner/pc.json und
+           verlangt schluessel FINNVELO-AUFGABENPLANER-PC. Geprueft am
+           Quelltext (quelle/aktualisierung.js). */
+        seite: 'aufgabenplaner', art: 'pc',
+        ablage: 'aufgabenplaner-pc', appAblage: 'aufgabenplaner',
+        pruef: '/FinnVelo/Aufgabenplaner/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '30000',
+                         'https://github.com/.../FINNVELO-Aufgabenplaner-Setup-3.0.exe'),
+        fest: { schluessel: 'FINNVELO-AUFGABENPLANER-PC' },
+        vorgabe: { schluessel: 'FINNVELO-AUFGABENPLANER-PC', versionCode: 30000, versionName: '3.0',
+                   apk: GH + 'FinnveloAufgabenplaner/FINNVELO.Aufgabenplaner.Setup.3.0.0.exe',
+                   hinweise: 'Beim Anmelden starten, Logo in der Kopfzeile, Wetterzeichen passt zum Regenrisiko.' }
+      },
+
+      /* ---- Lesezeit -------------------------------------------------- */
+      {
+        /* ACHTUNG: eigenes Format der App - "programm", "version",
+           "versionsCode" statt schluessel/versionName/versionCode. */
+        seite: 'lesezeit', art: 'app', sauber: true,
         ablage: 'lesezeit',
         pruef: '/lesezeit/version.json',
-        titel: 'Lesezeit',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'version', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.5.0' },
+          { key: 'version', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.9.1' },
           { key: 'versionsCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)',
-            typ: 'zahl', ph: 'z. B. 10500' },
+            typ: 'zahl', ph: 'z. B. 20901' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk' },
-          { key: 'datei', label: 'Dateiname der APK', typ: 'text', ph: 'FINNVELO-Lesezeit-1.5.0.apk' }
+            ph: 'https://github.com/.../FINNVELO-Lesezeit-2.9.1.apk' },
+          { key: 'datei', label: 'Dateiname der APK', typ: 'text', ph: 'FINNVELO-Lesezeit-2.9.1.apk' }
         ],
         fest: { programm: 'FINNVELO-LESEZEIT', paket: 'de.finnvelo.lesetagebuch',
                 adresse: 'https://finnveloprogramme.com/lesezeit/' },
-        vorgabe: {
-          programm: 'FINNVELO-LESEZEIT', version: '1.5.0', versionsCode: 10500,
-          adresse: 'https://finnveloprogramme.com/lesezeit/',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk',
-          datei: 'FINNVELO-Lesezeit-1.5.0.apk',
-          paket: 'de.finnvelo.lesetagebuch'
-        }
+        vorgabe: { programm: 'FINNVELO-LESEZEIT', version: '2.9.1', versionsCode: 20901,
+                   adresse: 'https://finnveloprogramme.com/lesezeit/',
+                   apk: GH + 'Lesezeit/FINNVELO-Lesezeit-2.9.1.apk',
+                   datei: 'FINNVELO-Lesezeit-2.9.1.apk', paket: 'de.finnvelo.lesetagebuch' }
       },
       {
-        /* Tourenplaner, Android - die App liest /tourenplaner/android.json.
-           Kommt vom WORKER; im Ordner darf keine solche Datei liegen. */
-        seite: 'tourenplaner',
+        seite: 'lesezeit', art: 'pc',
+        ablage: 'lesezeit-pc', appAblage: 'lesezeit',
+        pruef: '/lesezeit/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                         'https://github.com/.../FINNVELO-Lesezeit-Setup-1.0.exe'),
+        fest: { schluessel: 'FINNVELO-LESEZEIT-PC' },
+        vorgabe: { schluessel: 'FINNVELO-LESEZEIT-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Tourenplaner --------------------------------------------- */
+      {
+        seite: 'tourenplaner', art: 'app',
         ablage: 'tourenplaner-android',
         pruef: '/tourenplaner/android.json',
-        titel: 'Tourenplaner (Android)',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.0' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 3.1' },
           { key: 'versionCode', label: 'Versions-Code (1000000 + major x 10000 + minor x 100 + patch)',
-            typ: 'zahl', ph: 'z. B. 1020000' },
+            typ: 'zahl', ph: 'z. B. 1030100' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-2.0.apk' },
+            ph: 'https://github.com/.../FINNVELO-Tourenplaner-3.1.apk' },
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID' },
-        vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 1020000, versionName: '2.0',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-2.0.apk',
-          hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-TOURENPLANER-ANDROID', versionCode: 1030100, versionName: '3.1',
+                   apk: GH + 'Tourenplaner/FINNVELO-Tourenplaner-3.1.apk', hinweise: '' }
       },
       {
-        /* Tourenplaner, Windows - eigene Datei, eigener Schluessel.
-           Das Feld heisst auch hier "apk", damit dasselbe Formular passt;
-           gemeint ist der Installer. */
-        seite: 'tourenplaner',
-        ablage: 'tourenplaner-pc',
+        /* Das PC-Programm liest /tourenplaner/pc.json, verlangt
+           schluessel FINNVELO-TOURENPLANER-PC und nimmt die Adresse aus
+           "apk" (ersatzweise "datei"). Geprueft am Quelltext
+           (pc/haupt.js). Eigene Fassung dort: 1.4 / 1010400. */
+        seite: 'tourenplaner', art: 'pc',
+        ablage: 'tourenplaner-pc', appAblage: 'tourenplaner-android',
         pruef: '/tourenplaner/pc.json',
-        titel: 'Tourenplaner (PC)',
-        felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum Dateinamen passen)', typ: 'text', ph: 'z. B. 2.0' },
-          { key: 'versionCode', label: 'Versions-Code (1000000 + major x 10000 + minor x 100 + patch)',
-            typ: 'zahl', ph: 'z. B. 1020000' },
-          { key: 'apk', label: 'Download-Adresse des Installers (EXE)', typ: 'url',
-            ph: 'https://github.com/.../releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-2.0.0.exe' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
-        ],
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('1000000 + major x 10000 + minor x 100 + patch', '1020500',
+                         'https://github.com/.../FINNVELO-Tourenplaner-Einrichtung-2.5.0.exe'),
         fest: { schluessel: 'FINNVELO-TOURENPLANER-PC' },
-        vorgabe: {
-          schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 1020000, versionName: '2.0',
-          apk: 'https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Tourenplaner/FINNVELO-Tourenplaner-Einrichtung-2.0.0.exe',
-          hinweise: 'Das Suchfeld leert sich, sobald ein Treffer uebernommen wurde.'
-        }
+        vorgabe: { schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
       }
     ];
 
@@ -2169,14 +3058,19 @@
 
     var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
     var slug = pfad.replace(/^\//, '') || 'start';
-    var cfg = null;
-    for (var i = 0; i < APPS.length; i++) {
-      if (pfad.indexOf(APPS[i].seite) !== -1) { cfg = APPS[i]; break; }
-    }
-    var festeApp = !!cfg;   // die zwei eingebauten Apps haben feste Adressen
 
-    /* Bauplaene fuer selbst angelegte Update-Pruefungen.
-       Welche Feldnamen die App liest, haengt davon ab, wie sie gebaut wurde. */
+    /* ALLE passenden Definitionen sammeln, nicht nur die erste. Frueher
+       stand hier ein "break" - dadurch bekam eine Seite immer nur eine
+       Kachel, und welche das war, hing an der Reihenfolge im Feld. Bei
+       Lesezeit fragte die Android-Kachel deshalb einmal die PC-Datei ab. */
+    var cfgs = [];
+    for (var i = 0; i < APPS.length; i++) {
+      if (pfad.indexOf(APPS[i].seite) !== -1) cfgs.push(APPS[i]);
+    }
+    var festeApp = cfgs.length > 0;
+
+    /* Bauplaene fuer selbst angelegte Seiten: welche Feldnamen die eigene
+       App liest, haengt davon ab, wie sie gebaut wurde. */
     var BAUPLAENE = {
       mischwald: {
         name: 'Wie Mischwaldrechner',
@@ -2202,71 +3096,91 @@
       }
     };
 
+    /* Selbst angelegte Programmseite: auch sie bekommt BEIDE Fassungen -
+       eine App-Kachel und eine PC-Kachel, jede einzeln scharfzuschalten.
+       Damit ist jede Produktseite gleich aufgebaut. */
+    if (!festeApp) {
+      if (!document.querySelector('.program-download-block')) return;
+      cfgs = [
+        { seite: slug, art: 'app', frei: true,
+          ablage: slug, pruef: '/' + slug + '/version.json',
+          titel: 'Android-App', hinweis: HINWEIS_APP,
+          felder: BAUPLAENE.mischwald.felder, fest: {}, vorgabe: BAUPLAENE.mischwald.vorgabe },
+        { seite: slug, art: 'pc', frei: true,
+          ablage: slug + '-pc', appAblage: slug, pruef: '/' + slug + '/pc.json',
+          titel: 'PC-Version', hinweis: HINWEIS_PC,
+          felder: pcFelder('major x 10000 + minor x 100 + patch', '10000',
+                           'https://github.com/.../Setup-1.0.exe'),
+          fest: {}, vorgabe: { versionCode: 0, versionName: '', apk: '', hinweise: '' } }
+      ];
+    }
+
+    function copy(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
+
     /* Liest die Versionsnummer aus dem Dateinamen einer Adresse.
-     *   ".../FINNVELO-Aufgabenplaner-7.41.apk"  ->  "7.41"
-     *   ".../App_v2.3.1.apk"                    ->  "2.3.1"
-     *   ".../Mischwald.apk"                     ->  ""   (keine drin)
-     *
-     * Bewusst streng: verlangt wird eine durch Punkt getrennte Zahlenfolge,
-     * die direkt vor ".apk" steht und durch -, _ oder Leerzeichen vom Namen
-     * getrennt ist. Ein "v" davor ist erlaubt. Lieber nichts erkennen, als
-     * eine falsche Nummer eintragen - eine falsche Version waere schlimmer
-     * als gar keine, weil die App dann ein Update meldet, das keines ist. */
+       Bewusst streng: lieber nichts erkennen als eine falsche Nummer. */
     function versionAusName(adresse) {
       if (!adresse) return '';
-      var s = String(adresse);
-      // Anker und Abfragezusatz abschneiden (".../App-7.41.apk?raw=true")
-      s = s.split('#')[0].split('?')[0];
+      var s = String(adresse).split('#')[0].split('?')[0];
       var name = s.substring(s.lastIndexOf('/') + 1);
-      var treffer = /[-_ ]v?(\d+(?:\.\d+)+)\.apk$/i.exec(name);
+      var treffer = /[-_ .]v?(\d+(?:\.\d+)+)\.(apk|exe|zip)$/i.exec(name);
       return treffer ? treffer[1] : '';
     }
 
-    var einstellung = { aktiv: false, pfad: '/' + slug + '/version.json', bauplan: 'mischwald', merkmal: '' };
-
-    if (!cfg) {
-      // Nur auf Programmseiten anbieten (dort, wo es einen Download-Bereich gibt)
-      if (!document.querySelector('.program-download-block')) return;
-      cfg = { seite: slug, ablage: slug, pruef: einstellung.pfad, titel: 'diese App',
-              felder: BAUPLAENE.mischwald.felder, fest: {}, vorgabe: BAUPLAENE.mischwald.vorgabe };
-    }
-
-    function ladeEinstellung() {
-      return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
+    /* ---- Datenbank: genau ein Block je Ablage ---------------------- */
+    function holen(ablage) {
+      return fetch('/api/content?page=' + encodeURIComponent(ablage), { method: 'GET' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
-          if (res && res.items) {
-            res.items.forEach(function (it) {
-              if (it.block !== 'u1' || !it.value) return;
-              try {
-                var e = JSON.parse(it.value);
-                if (e && typeof e === 'object') {
-                  einstellung.aktiv = !!e.aktiv;
-                  if (e.pfad) einstellung.pfad = e.pfad;
-                  if (e.bauplan && BAUPLAENE[e.bauplan]) einstellung.bauplan = e.bauplan;
-                  if (typeof e.merkmal === 'string') einstellung.merkmal = e.merkmal;
-                }
-              } catch (er) {}
-            });
-          }
-          if (!festeApp) {
-            var bp = BAUPLAENE[einstellung.bauplan];
-            cfg.felder = bp.felder; cfg.vorgabe = bp.vorgabe; cfg.pruef = einstellung.pfad;
-            cfg.fest = einstellung.merkmal ? { schluessel: einstellung.merkmal } : {};
-          }
-        }).catch(function () {});
+          var roh = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
+          if (!roh) return null;
+          try { return JSON.parse(roh); } catch (e) { return null; }
+        }).catch(function () { return null; });
     }
-
-    function speichereEinstellung() {
+    function legen(ablage, wert) {
       return fetch('/api/content', {
         method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ page: cfg.ablage, block: 'u1', type: 'text',
-                               value: JSON.stringify(einstellung), password: pw })
+        body: JSON.stringify({ page: ablage, block: 'u0', type: 'text',
+                               value: JSON.stringify(wert, null, 2), password: pw })
       }).then(function (r) { return r.ok; }).catch(function () { return false; });
     }
 
-    /* Verzeichnis der Adressen pflegen, damit der Server sie ausliefert */
-    function verzeichnisPflegen(anlegen) {
+    /* ---- Einstellungen selbst angelegter Fassungen (Block u1) ------- */
+    function ladeEinstellung(c) {
+      c.einst = { aktiv: false, pfad: c.pruef, bauplan: 'mischwald', merkmal: '' };
+      if (!c.frei) return Promise.resolve();
+      return fetch('/api/content?page=' + encodeURIComponent(c.ablage), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          if (res && res.items) res.items.forEach(function (it) {
+            if (it.block !== 'u1' || !it.value) return;
+            try {
+              var e = JSON.parse(it.value);
+              if (e && typeof e === 'object') {
+                c.einst.aktiv = !!e.aktiv;
+                if (e.pfad) c.einst.pfad = e.pfad;
+                if (e.bauplan && BAUPLAENE[e.bauplan]) c.einst.bauplan = e.bauplan;
+                if (typeof e.merkmal === 'string') c.einst.merkmal = e.merkmal;
+              }
+            } catch (er) {}
+          });
+          c.pruef = c.einst.pfad;
+          if (c.art === 'app') {
+            var bp = BAUPLAENE[c.einst.bauplan];
+            c.felder = bp.felder; c.vorgabe = bp.vorgabe;
+          }
+          c.fest = c.einst.merkmal ? { schluessel: c.einst.merkmal } : {};
+        }).catch(function () {});
+    }
+    function speichereEinstellung(c) {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: c.ablage, block: 'u1', type: 'text',
+                               value: JSON.stringify(c.einst), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+    function verzeichnisPflegen(c, anlegen) {
       return fetch('/api/content?page=system', { method: 'GET' })
         .then(function (r) { return r.ok ? r.json() : null; })
         .then(function (res) {
@@ -2274,11 +3188,10 @@
           if (res && res.items) res.items.forEach(function (it) {
             if (it.block === 'v0' && it.value) { try { routen = JSON.parse(it.value) || {}; } catch (e) {} }
           });
-          // alte Adresse dieser Seite entfernen
           for (var p in routen) {
-            if (routen.hasOwnProperty(p) && routen[p] === cfg.ablage) delete routen[p];
+            if (routen.hasOwnProperty(p) && routen[p] === c.ablage) delete routen[p];
           }
-          if (anlegen) routen[einstellung.pfad.toLowerCase()] = cfg.ablage;
+          if (anlegen) routen[c.einst.pfad.toLowerCase()] = c.ablage;
           return fetch('/api/content', {
             method: 'POST', headers: { 'content-type': 'application/json' },
             body: JSON.stringify({ page: 'system', block: 'v0', type: 'text',
@@ -2287,211 +3200,251 @@
         }).catch(function () { return false; });
     }
 
-    function laden() {
-      return fetch('/api/content?page=' + encodeURIComponent(cfg.ablage), { method: 'GET' })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (res) {
-          var roh = '';
-          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'u0') roh = it.value || ''; });
-          if (!roh) return copy(cfg.vorgabe);
-          try { return JSON.parse(roh); } catch (e) { return copy(cfg.vorgabe); }
-        })
-        .catch(function () { return copy(cfg.vorgabe); });
+    /* ---- Altbestand uebernehmen ------------------------------------
+       Eine PC-Fassung lag frueher als Block "pc" IN der App-Datei, und
+       die Feldnamen hiessen dort "url"/"hinweis". Beides wird einmalig
+       geradegezogen:
+         - ist die eigene Datei leer, aber in der App-Datei steht ein
+           "pc"-Block, wird er uebernommen und dort entfernt
+         - "url" wird zu "apk", "hinweis" zu "hinweise"
+       Danach kennt die PC-Kachel nur noch ihre eigene Datei.          */
+    function normieren(c, o) {
+      var r = {};
+      var f = c.fest || {};
+      for (var fk in f) if (f.hasOwnProperty(fk)) r[fk] = f[fk];
+      o = o || {};
+      r.versionCode = parseInt(o.versionCode || o.versionsCode || 0, 10) || 0;
+      r.versionName = String(o.versionName || o.version || '');
+      r.apk = String(o.apk || o.url || o.download || '');
+      r.hinweise = String(o.hinweise || o.hinweis || '');
+      return r;
     }
-    function copy(o) { var r = {}; for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k]; return r; }
+    function gleich(a, b) {
+      try { return JSON.stringify(a) === JSON.stringify(b); } catch (e) { return false; }
+    }
+    /* @return {stand, umgezogen} */
+    function pcStandHolen(c) {
+      return holen(c.ablage).then(function (eigen) {
+        var hatEigen = eigen && (parseInt(eigen.versionCode, 10) > 0 || eigen.apk || eigen.url);
+        if (hatEigen) {
+          var sauber = normieren(c, eigen);
+          if (gleich(sauber, eigen)) return { stand: sauber, umgezogen: false };
+          return legen(c.ablage, sauber).then(function () {
+            return { stand: sauber, umgezogen: 'Feldnamen auf den Standard gebracht' };
+          });
+        }
+        if (!c.appAblage) return { stand: eigen || copy(c.vorgabe), umgezogen: false };
+        return holen(c.appAblage).then(function (app) {
+          if (!app || !app.pc || typeof app.pc !== 'object') {
+            return { stand: eigen || copy(c.vorgabe), umgezogen: false };
+          }
+          var uebernommen = normieren(c, app.pc);
+          var ohne = {};
+          for (var k in app) if (app.hasOwnProperty(k) && k !== 'pc') ohne[k] = app[k];
+          return legen(c.ablage, uebernommen)
+            .then(function () { return legen(c.appAblage, ohne); })
+            .then(function () {
+              return { stand: uebernommen,
+                       umgezogen: 'Alte PC-Angaben aus der App-Datei übernommen' };
+            });
+        });
+      });
+    }
 
-    /* ================================================================
-     * Mehrere Fassungen je Programm: Android, PC, Web
-     * ----------------------------------------------------------------
-     * Frueher gab es genau EINEN Satz Felder - also nur eine Fassung.
-     * Wer eine PC-Fassung nachschob, musste sich entscheiden, welche
-     * Nummer in der version.json steht.
-     *
-     * Ablage, und das ist der Punkt: Die Android-Fassung bleibt dort,
-     * wo sie immer war - GANZ OBEN in der version.json. Alle Apps, die
-     * heute draussen sind, lesen genau diese Felder. Weitere Fassungen
-     * kommen als eigener Block darunter ("pc": {...}). Aeltere Apps
-     * uebersehen ihn einfach, und nichts bricht.
-     *
-     * Die Web-Fassung braucht keine Nummer - sie ist immer aktuell,
-     * sobald die Datei ausgetauscht ist. Fuer sie wird nur die Adresse
-     * gepflegt.
-     * ================================================================ */
-    /* Alle Kacheln dieser Seite speichern NACHEINANDER. Ohne Reihung wuerde
-       bei drei Fenstern jede ihren Stand von vorhin zurueckschreiben und die
-       Aenderungen der anderen ueberbuegeln - ein Wettlauf, der genau dann
-       zuschlaegt, wenn man kurz hintereinander klickt. */
+    /* ---- App-Datei entrümpeln --------------------------------------
+       Manche App-Dateien tragen noch Felder aus früheren Bauformen mit
+       sich herum - beim Einkaufsplaner "url" (2.2.0) neben "apk"
+       (2.11.0), bei Lesezeit ein "versionCode" neben "versionsCode".
+       Gelesen wird jeweils nur das Erste; das Zweite ist Altlast, die
+       beim Nachsehen in die Irre führt.
+
+       Nur Definitionen mit sauber:true werden entrümpelt - dort ist der
+       vollständige Aufbau der Datei bekannt und am Quelltext der App
+       geprüft. Wo das nicht der Fall ist, bleibt jedes Feld stehen. */
+    function appSauber(c, o) {
+      var r = {};
+      var f = c.fest || {};
+      for (var fk in f) if (f.hasOwnProperty(fk)) r[fk] = f[fk];
+      c.felder.forEach(function (fd) {
+        var w = o[fd.key];
+        if (w === undefined || w === null || w === '') {
+          // Ersatzquellen für umbenannte Felder - nichts geht verloren
+          if (fd.key === 'apk') w = o.url || o.download || '';
+          else if (fd.key === 'hinweise') w = o.hinweis || '';
+          else if (fd.key === 'versionsCode') w = o.versionCode || 0;
+          else if (fd.key === 'versionName') w = o.version || '';
+          else w = (fd.typ === 'zahl') ? 0 : '';
+        }
+        if (fd.typ === 'zahl') w = parseInt(w, 10) || 0;
+        r[fd.key] = w;
+        if (fd.auch) fd.auch.forEach(function (k2) { r[k2] = w; });
+      });
+      return r;
+    }
+    function appStandHolen(c) {
+      return holen(c.ablage).then(function (o) {
+        if (!o) return { stand: copy(c.vorgabe), umgezogen: false };
+        if (!c.sauber) return { stand: o, umgezogen: false };
+        var sauber = appSauber(c, o);
+        if (gleich(sauber, o)) return { stand: sauber, umgezogen: false };
+        var weg = [];
+        for (var k in o) if (o.hasOwnProperty(k) && !(k in sauber)) weg.push(k);
+        return legen(c.ablage, sauber).then(function () {
+          return { stand: sauber,
+                   umgezogen: weg.length ? ('Veraltete Felder entfernt: ' + weg.join(', ')) : 'Datei aufgeräumt' };
+        });
+      });
+    }
+
+    /* Alle Kacheln speichern NACHEINANDER - sonst schreibt die zuletzt
+       klickende ihren alten Stand ueber die frischen der anderen. */
     var speicherReihe = Promise.resolve();
     function anstellen(tat) {
       speicherReihe = speicherReihe.then(tat, tat);
       return speicherReihe;
     }
 
-    var PLATTFORMEN = [
-      { schluessel: '',    titel: 'Android-App', unten: 'APK',
-        hinweis: 'Diese Felder liest die Android-App. Sie stehen oben in der version.json - '
-               + 'daran darf sich nichts aendern, sonst merken bereits verteilte Apps '
-               + 'keine Aktualisierung mehr.' },
-      { schluessel: 'pc',  titel: 'PC-Version', unten: 'EXE oder ZIP',
-        hinweis: 'Eigener Block "pc" in derselben version.json. Die PC-Fassung fragt ihn ab; '
-               + 'die Android-App uebersieht ihn.' },
-    ];
-
-    // Felder einer Plattform: Android nutzt die gewohnten Schluessel,
-    // die anderen bekommen einheitliche.
-    function plattformFelder(pf) {
-      if (!pf.schluessel) return cfg.felder;               // Android: unveraendert
-      if (pf.nurAdresse) {
-        return [{ key: 'url', label: 'Adresse der Web-Fassung', typ: 'url',
-                  ph: '/apps/... oder https://\u2026' }];
-      }
-      return [
-        { key: 'versionName', label: 'Versionsnummer', typ: 'text', ph: 'z. B. 1.3.0' },
-        { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)',
-          typ: 'zahl', ph: 'z. B. 10300' },
-        { key: 'url', label: 'Download-Adresse (' + pf.unten + ')', typ: 'url',
-          ph: 'https://\u2026' },
-        { key: 'hinweis', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
-      ];
-    }
-
-    function speichern(obj) {
-      return fetch('/api/content', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ page: cfg.ablage, block: 'u0', type: 'text', value: JSON.stringify(obj, null, 2), password: pw })
-      }).then(function (r) { return r.ok; }).catch(function () { return false; });
-    }
-
-    /* Baut eine Aktualisierungs-Kachel.
-     *   daten   - der geladene Stand der version.json (vollstaendig)
-     *   welche  - Schluessel der Fassungen, die diese Kachel zeigt
-     *   wohin   - Abschnitt, unter den sie gehaengt wird
-     *
-     * Es gibt ZWEI Kacheln: eine unter dem App-Bereich, eine unter dem
-     * PC-Bereich. Beide schreiben in dieselbe version.json.
-     *
-     * Der heikle Punkt dabei: Wenn die App-Kachel speichert, kennt sie die
-     * PC-Felder gar nicht. Wuerde sie ihr Objekt aus dem Nichts bauen, waere
-     * der PC-Block danach weg. Deshalb setzt jede Kachel auf dem zuletzt
-     * geladenen Stand auf und ueberschreibt nur ihre eigenen Fassungen
-     * (siehe "grundstand" in ausFeldern). */
-    function bauen(daten, welche, wohin) {
-      var ziel = wohin || document.querySelector('.program-download-block')
-                       || document.querySelector('main');
+    /* =================================================================
+     * Eine Kachel fuer GENAU EINE Fassung
+     * ================================================================= */
+    function bauen(c, daten, ziel, umzugsmeldung) {
       if (!ziel) return;
-      var meine = PLATTFORMEN.filter(function (p) {
-        return welche.indexOf(p.schluessel) !== -1;
-      });
-      if (!meine.length) return;
       if (ziel.querySelector('.fv-update-box')) return;
 
-      // Gemeinsamer Stand: was zuletzt geladen wurde. Beide Kacheln lesen
-      // und schreiben ihn, damit keine der anderen etwas wegnimmt.
-      var grundstand = daten;
+      var stand = daten || copy(c.vorgabe);
 
       var box = document.createElement('div');
-      box.className = 'fv-update-box';
-      // Reiter fuer die Fassungen. data-pf traegt den Schluessel; leer = Android.
-      var reiterHtml = '<div class="fv-update-reiter"'
-                     + (meine.length < 2 ? ' hidden' : '') + '>';
-      meine.forEach(function (pf, i) {
-        reiterHtml += '<button type="button" class="fv-update-reiter__k' + (i === 0 ? ' an' : '')
-                    + '" data-pf="' + pf.schluessel + '">' + pf.titel + '</button>';
-      });
-      reiterHtml += '</div>';
+      box.className = 'fv-update-box fv-update-box--' + c.art;
 
-      var felderHtml = '';
-      meine.forEach(function (pf, i) {
-        felderHtml += '<div class="fv-update-fach" data-fach="' + pf.schluessel + '"'
-                    + (i === 0 ? '' : ' hidden') + '>'
-                    + '<p class="fv-update-pfhinweis">' + pf.hinweis + '</p>';
-        plattformFelder(pf).forEach(function (f) {
-          var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
-          var extra = (f.typ === 'zahl') ? ' min="1" step="1"' : '';
-          // Der Schluessel traegt die Plattform mit, damit sich die Felder
-          // nicht gegenseitig ueberschreiben.
-          var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
-          felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
-                      + ' data-key="' + kennung + '" placeholder="' + f.ph + '"></label>';
-        });
-        felderHtml += '</div>';
+      var felderHtml = '<p class="fv-update-pfhinweis">' + c.hinweis + '</p>';
+      c.felder.forEach(function (f) {
+        var inTyp = (f.typ === 'zahl') ? 'number' : 'text';
+        var extra = (f.typ === 'zahl') ? ' min="0" step="1"' : '';
+        felderHtml += '<label>' + f.label + '<input type="' + inTyp + '"' + extra
+                    + ' data-key="' + f.key + '" placeholder="' + f.ph + '"></label>';
       });
-      felderHtml = reiterHtml + felderHtml;
 
       var einstellHtml = '';
-      if (!festeApp) {
+      if (c.frei) {
         var planOpt = '';
-        for (var bp in BAUPLAENE) {
-          if (!BAUPLAENE.hasOwnProperty(bp)) continue;
-          planOpt += '<option value="' + bp + '"' + (einstellung.bauplan === bp ? ' selected' : '') + '>'
-                   + BAUPLAENE[bp].name + '</option>';
+        if (c.art === 'app') {
+          for (var bp in BAUPLAENE) {
+            if (!BAUPLAENE.hasOwnProperty(bp)) continue;
+            planOpt += '<option value="' + bp + '"' + (c.einst.bauplan === bp ? ' selected' : '') + '>'
+                     + BAUPLAENE[bp].name + '</option>';
+          }
         }
         einstellHtml =
           '<div class="fv-update-schalter">'
-        + '  <button type="button" class="fv-schalter' + (einstellung.aktiv ? ' an' : '') + '" data-a="schalter">'
+        + '  <button type="button" class="fv-schalter' + (c.einst.aktiv ? ' an' : '') + '" data-a="schalter">'
         + '    <span class="fv-schalter__punkt"></span>'
-        + '    <span class="fv-schalter__text">' + (einstellung.aktiv ? 'Aktiv' : 'Nicht aktiv') + '</span>'
+        + '    <span class="fv-schalter__text">' + (c.einst.aktiv ? 'Aktiv' : 'Nicht aktiv') + '</span>'
         + '  </button>'
-        + '  <span class="fv-schalter__hinweis">Erst wenn dies aktiv ist, beantwortet die Webseite die Update-Anfragen deiner App.</span>'
+        + '  <span class="fv-schalter__hinweis">Erst wenn dies aktiv ist, beantwortet die Webseite '
+        + 'die Update-Anfragen dieser Fassung.</span>'
         + '</div>'
-        + '<div class="fv-update-einstell" data-a="einstell"' + (einstellung.aktiv ? '' : ' hidden') + '>'
-        + '  <label>Adresse, die deine App abfragt'
-        + '    <input type="text" data-a="pfad" value="' + einstellung.pfad + '" placeholder="/meinapp/version.json"></label>'
-        + '  <label>Aufbau der Versionsdatei'
-        + '    <select data-a="bauplan">' + planOpt + '</select></label>'
-        + '  <label>Erkennungsmerkmal (nur falls deine App eines pr\u00fcft \u2013 sonst leer lassen)'
-        + '    <input type="text" data-a="merkmal" value="' + (einstellung.merkmal || '') + '" placeholder="z. B. FINNVELO-MEINEAPP"></label>'
+        + '<div class="fv-update-einstell" data-a="einstell"' + (c.einst.aktiv ? '' : ' hidden') + '>'
+        + '  <label>Adresse, die dieses Programm abfragt'
+        + '    <input type="text" data-a="pfad" value="' + c.einst.pfad + '" placeholder="'
+        + (c.art === 'pc' ? '/meinprogramm/pc.json' : '/meineapp/version.json') + '"></label>'
+        + (c.art === 'app'
+            ? '  <label>Aufbau der Versionsdatei<select data-a="bauplan">' + planOpt + '</select></label>'
+            : '')
+        + '  <label>Erkennungsmerkmal (nur falls das Programm eines pr\u00fcft \u2013 sonst leer lassen)'
+        + '    <input type="text" data-a="merkmal" value="' + (c.einst.merkmal || '') + '" placeholder="z. B. FINNVELO-MEINPROGRAMM-PC"></label>'
         + '</div>';
       }
 
       box.innerHTML =
-        '<h3 class="fv-update-titel">\u2699\uFE0F Aktualisierung \u2013 '
-      + (meine.length === 1 ? meine[0].titel : cfg.titel)
+        '<h3 class="fv-update-titel">\u2699\uFE0F Aktualisierung \u2013 ' + c.titel
       + ' <span>(nur f\u00fcr dich sichtbar)</span></h3>'
-      + '<p class="fv-update-hilfe">' + (festeApp
-          ? ('Die App fragt beim Start <code>' + cfg.pruef + '</code> ab. ')
-          : ('Damit kann eine eigene Android-App auf dieser Webseite nach Updates suchen. '
-             + 'Du legst die Adresse fest, deine App fragt sie ab. '))
-      + 'Trage hier die neue Fassung ein \u2013 die App bietet das Update dann an. '
+      + '<p class="fv-update-hilfe">' + (c.frei
+          ? ('Damit kann ein eigenes Programm auf dieser Webseite nach Updates suchen. '
+             + 'Du legst die Adresse fest, das Programm fragt sie ab. ')
+          : ((c.art === 'pc' ? 'Das PC-Programm' : 'Die App') + ' fragt beim Start '
+             + '<code class="fv-update-adresse">' + c.pruef + '</code> ab. '))
+      + 'Trage hier die neue Fassung ein \u2013 sie wird dann angeboten. '
       + 'Die Webseite muss daf\u00fcr <strong>nicht</strong> neu ver\u00f6ffentlicht werden.</p>'
       + einstellHtml
-      + '<div class="fv-update-felder"' + ((!festeApp && !einstellung.aktiv) ? ' hidden' : '') + ' data-a="felderbox">' + felderHtml + '</div>'
+      + '<div class="fv-update-felder"' + ((c.frei && !c.einst.aktiv) ? ' hidden' : '')
+      + ' data-a="felderbox">' + felderHtml + '</div>'
       + '<div class="fv-update-zeile">'
       + '  <button type="button" class="fv-update-btn" data-a="save">Speichern</button>'
-      + '  <a class="fv-update-link" href="' + cfg.pruef + '" target="_blank" rel="noopener">Datei ansehen</a>'
+      + '  <a class="fv-update-link" href="' + c.pruef + '" target="_blank" rel="noopener">Datei ansehen</a>'
       + '  <button type="button" class="fv-update-mehr" data-a="mehr">JSON direkt bearbeiten</button>'
       + '  <span class="fv-update-melde" data-a="melde"></span>'
       + '</div>'
       + '<textarea class="fv-update-roh" data-a="roh" spellcheck="false" hidden></textarea>'
-      + '<p class="fv-update-warn">Wichtig: Der <strong>Versions-Code</strong> muss bei jeder neuen Fassung '
-      + 'gr\u00f6\u00dfer sein als vorher \u2013 daran erkennt die App, dass es etwas Neues gibt.</p>';
+      + '<p class="fv-update-warn">Wichtig: Der <strong>Versions-Code</strong> muss bei jeder neuen '
+      + 'Fassung gr\u00f6\u00dfer sein als vorher \u2013 daran allein erkennt das Programm, dass es '
+      + 'etwas Neues gibt.</p>';
       ziel.appendChild(box);
 
       var roh = box.querySelector('[data-a="roh"]');
       var melde = box.querySelector('[data-a="melde"]');
 
-      /* ---- Automatik: Ziel des Download-Knopfes uebernehmen -------------
-       * Setzt der Admin oben das Ziel des Download-Knopfes, wandert die
-       * Adresse hier ins Feld - und die Versionsnummer wird aus dem
-       * Dateinamen gelesen (z. B. "...-7.41.apk" -> "7.41").
-       * Der Versions-Code bleibt unangetastet: er steht im Manifest der App
-       * und laesst sich aus dem Namen nicht ableiten. Er wird nur auffaellig
-       * markiert, damit er nicht vergessen wird.
-       * Gespeichert wird NICHT von selbst - erst "Speichern" schreibt die
-       * version.json. So bleibt die letzte Entscheidung beim Menschen.
-       * ------------------------------------------------------------------ */
+      function sagen(text, gut) {
+        melde.textContent = text;
+        melde.className = 'fv-update-melde ' + (gut ? 'gut' : 'schlecht');
+        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 6000);
+      }
+
+      /* ---- Felder <-> Datei ---------------------------------------- */
+      function ausFeldern() {
+        /* PC-Fassung: die Datei hat einen festen, kleinen Aufbau - sie
+           wird sauber neu gebaut. App-Fassung: auf dem geladenen Stand
+           aufsetzen, damit Felder erhalten bleiben, die nur die App
+           kennt (bei Lesezeit z. B. "paket"). Ein alter "pc"-Block
+           faellt dabei immer weg. */
+        var o = (c.art === 'pc') ? {} : copy(stand || {});
+        delete o.pc;
+        var f = c.fest || {};
+        for (var fk in f) if (f.hasOwnProperty(fk)) o[fk] = f[fk];
+        c.felder.forEach(function (fd) {
+          var el = box.querySelector('[data-key="' + fd.key + '"]');
+          if (!el) return;
+          var v = (el.value || '').trim();
+          if (fd.typ === 'zahl') v = parseInt(v, 10) || 0;
+          o[fd.key] = v;
+          if (fd.auch) fd.auch.forEach(function (k2) { o[k2] = v; });
+        });
+        return o;
+      }
+      function inFelder(o) {
+        c.felder.forEach(function (fd) {
+          var el = box.querySelector('[data-key="' + fd.key + '"]');
+          if (!el) return;
+          var w = o ? o[fd.key] : '';
+          el.value = (w === undefined || w === null) ? '' : w;
+        });
+        roh.value = JSON.stringify(ausFeldern(), null, 2);
+      }
+      inFelder(stand);
+      if (umzugsmeldung) sagen('\u2713 ' + umzugsmeldung + '.', true);
+
+      /* ---- Ziel des Download-Knopfes uebernehmen -------------------
+         Frueher stand hier eine Variable "vorsatz", die nirgends
+         deklariert war. Unter 'use strict' warf das jedes Mal einen
+         Fehler, den ein catch verschluckt hat - die Automatik lief
+         also nie. Jetzt ohne Vorsatz: jede Kachel hat eigene Felder. */
       function urlFeldName() {
-        for (var i = 0; i < cfg.felder.length; i++) {
-          if (cfg.felder[i].typ === 'url') return cfg.felder[i].key;
+        for (var i = 0; i < c.felder.length; i++) {
+          if (c.felder[i].typ === 'url') return c.felder[i].key;
         }
         return null;
       }
-
-      /* Der Versions-Code steht im Manifest der App und laesst sich aus dem
-       * Dateinamen nicht ableiten (7.31 gehoert zu Code 101, 1.8 zu Code 9 -
-       * kein Zusammenhang). Deshalb wird er nie von selbst gesetzt. Angeboten
-       * wird nur das Hochzaehlen um eins: das ist der uebliche Fall und bleibt
-       * ein bewusster Klick. */
+      function versionFeldName() {
+        for (var i = 0; i < c.felder.length; i++) {
+          if (/^version(Name)?$/i.test(c.felder[i].key)) return c.felder[i].key;
+        }
+        return null;
+      }
+      function codeFeldName() {
+        for (var i = 0; i < c.felder.length; i++) {
+          if (/^versions?Code$/i.test(c.felder[i].key)) return c.felder[i].key;
+        }
+        return 'versionCode';
+      }
       function codePlusAnbieten(cFeld) {
         var label = cFeld.parentNode;
         if (!label || label.querySelector('.fv-code-plus')) return;
@@ -2501,7 +3454,7 @@
         knopf.type = 'button';
         knopf.className = 'fv-code-plus';
         knopf.textContent = 'auf ' + (jetzt + 1) + ' setzen';
-        knopf.title = 'Zaehlt den Versions-Code um eins hoch \u2013 pruefe, ob das zur App passt';
+        knopf.title = 'Z\u00e4hlt den Versions-Code um eins hoch \u2013 pr\u00fcfe, ob das passt';
         knopf.addEventListener('click', function (e) {
           e.preventDefault();
           var n = parseInt(cFeld.value, 10);
@@ -2513,43 +3466,23 @@
         });
         label.appendChild(knopf);
       }
-
-      function uebernehmen(url, art) {
+      function uebernehmen(url) {
         if (!url) return;
-        var urlKey = urlFeldName();
         var geaendert = [];
-
-        /* In welche Fassung soll die Adresse?
-         *  - Kommt sie vom Web-App-Upload ("web"), gehoert sie IMMER in die
-         *    Web-Fassung. Frueher landete sie im gerade offenen Reiter und
-         *    ueberschrieb dort die APK-Adresse - der Android-Download war weg.
-         *  - Sonst in den offenen Reiter, wie beim Knopf "Ziel speichern". */
-        var pfSchluessel;
-        var offen = box.querySelector('.fv-update-reiter__k.an');
-        var pfSchluessel = offen ? (offen.getAttribute('data-pf') || '') : '';
-
-        if (urlKey) {
-          var uFeld = box.querySelector('[data-key="' + vorsatz
-                    + (pfSchluessel ? 'url' : urlKey) + '"]');
+        var uKey = urlFeldName();
+        if (uKey) {
+          var uFeld = box.querySelector('[data-key="' + uKey + '"]');
           if (uFeld && uFeld.value !== url) {
             uFeld.value = url;
             uFeld.classList.add('fv-uebernommen');
             geaendert.push('Adresse');
           }
         }
-
-        /* Versionsnummer aus dem Dateinamen - aber NUR, wenn das Feld leer
-           ist. Frueher wurde eine eingetragene Nummer stillschweigend
-           ueberschrieben: wer 1.9 eintrug und danach ein Ziel speicherte,
-           das noch auf "...-1.7.0.apk" zeigte, bekam wieder 1.7 - und
-           musste es von Hand in der version.json geradebiegen.
-           Was der Mensch selbst eingetragen hat, hat Vorrang. Bei einer
-           Unstimmigkeit gibt es einen Hinweis statt einer stillen
-           Aenderung. */
         var ver = versionAusName(url);
         var streit = '';
-        if (ver) {
-          var vFeld = box.querySelector('[data-key="' + vorsatz + 'versionName"]');
+        var vKey = versionFeldName();
+        if (ver && vKey) {
+          var vFeld = box.querySelector('[data-key="' + vKey + '"]');
           if (vFeld) {
             var drin = (vFeld.value || '').trim();
             if (!drin) {
@@ -2563,50 +3496,30 @@
             }
           }
         }
-
         if (!geaendert.length) {
-          if (streit) {
-            melde.textContent = streit.replace(/^\s*/, '');
-            melde.className = 'fv-update-melde';
-          }
+          if (streit) { melde.textContent = streit.replace(/^\s*/, ''); melde.className = 'fv-update-melde'; }
           return;
         }
-
-        // Versions-Code auffaellig machen - der muss von Hand hoch.
-        var cFeld = box.querySelector('[data-key="' + vorsatz + 'versionCode"]');
-        if (cFeld) {
-          cFeld.classList.add('fv-pruefen');
-          codePlusAnbieten(cFeld);
-        }
-
+        var cFeld = box.querySelector('[data-key="' + codeFeldName() + '"]');
+        if (cFeld) { cFeld.classList.add('fv-pruefen'); codePlusAnbieten(cFeld); }
         melde.textContent = '\u2713 \u00dcbernommen: ' + geaendert.join(', ')
                           + (ver ? '' : ' \u2013 Version nicht im Dateinamen gefunden')
                           + '. Versions-Code pr\u00fcfen, dann Speichern.' + streit;
         melde.className = 'fv-update-melde gut';
       }
-
       document.addEventListener('fv:ziel-gesetzt', function (e) {
         try {
           var d = (e && e.detail) || {};
-          /* Seit es zwei Kacheln gibt, muss geklaert sein, WELCHE zustaendig
-             ist. Sonst uebernimmt jede die Adresse in ihren eigenen aktiven
-             Reiter - ein PC-Download landete dann auch in der Android-Fassung.
-             Zustaendig ist die Kachel, in deren Download-Bereich der Knopf
-             steht. Eine Web-Meldung nimmt nur die Kachel an, die die
-             Web-Fassung fuehrt. */
-          if (d.art === 'web') {
-            if (welche.indexOf('web') === -1) return;
-          }
+          if (d.art === 'web') return;          // Web-Fassung hat keine Nummer
           if (d.knopf) {
             var bereich = d.knopf.closest && d.knopf.closest('.program-download-block');
-            var meinBereich = box.closest && box.closest('.program-download-block');
-            if (bereich && meinBereich && bereich !== meinBereich) return;
+            var meiner = box.closest && box.closest('.program-download-block');
+            if (bereich && meiner && bereich !== meiner) return;
           }
-          uebernehmen(d.url || '', d.art || '');
-        } catch (_x) { /* nie stoeren */ }
+          uebernehmen(d.url || '');
+        } catch (_x) {}
       });
 
-      // Beim Tippen die Markierung wieder wegnehmen
       box.addEventListener('input', function (e) {
         if (e.target && e.target.classList) {
           e.target.classList.remove('fv-uebernommen');
@@ -2614,248 +3527,134 @@
         }
       });
 
-      if (!festeApp) {
+      /* ---- Schalter selbst angelegter Fassungen -------------------- */
+      if (c.frei) {
         var schalter = box.querySelector('[data-a="schalter"]');
         var einstellBox = box.querySelector('[data-a="einstell"]');
         var felderBox = box.querySelector('[data-a="felderbox"]');
         var zeileBox = box.querySelector('.fv-update-zeile');
-
-        function ansichtSetzen() {
-          schalter.classList.toggle('an', einstellung.aktiv);
-          schalter.querySelector('.fv-schalter__text').textContent = einstellung.aktiv ? 'Aktiv' : 'Nicht aktiv';
-          einstellBox.hidden = !einstellung.aktiv;
-          felderBox.hidden = !einstellung.aktiv;
-          if (zeileBox) zeileBox.hidden = !einstellung.aktiv;
-        }
+        var ansichtSetzen = function () {
+          schalter.classList.toggle('an', c.einst.aktiv);
+          schalter.querySelector('.fv-schalter__text').textContent = c.einst.aktiv ? 'Aktiv' : 'Nicht aktiv';
+          einstellBox.hidden = !c.einst.aktiv;
+          felderBox.hidden = !c.einst.aktiv;
+          if (zeileBox) zeileBox.hidden = !c.einst.aktiv;
+        };
         ansichtSetzen();
-
         schalter.addEventListener('click', function () {
-          einstellung.aktiv = !einstellung.aktiv;
+          c.einst.aktiv = !c.einst.aktiv;
           ansichtSetzen();
-          Promise.all([speichereEinstellung(), verzeichnisPflegen(einstellung.aktiv)]).then(function () {
-            melde.textContent = einstellung.aktiv
-              ? '\u2713 Scharfgeschaltet \u2013 die Adresse antwortet jetzt.'
-              : '\u2713 Abgeschaltet \u2013 die Adresse antwortet nicht mehr.';
-            melde.className = 'fv-update-melde gut';
-            setTimeout(function () { melde.textContent = ''; }, 5000);
+          Promise.all([speichereEinstellung(c), verzeichnisPflegen(c, c.einst.aktiv)]).then(function () {
+            sagen(c.einst.aktiv ? '\u2713 Scharfgeschaltet \u2013 die Adresse antwortet jetzt.'
+                                : '\u2713 Abgeschaltet \u2013 die Adresse antwortet nicht mehr.', true);
           });
         });
-
         box.querySelector('[data-a="pfad"]').addEventListener('change', function (e) {
           var v = (e.target.value || '').trim().toLowerCase();
-          if (!/^\/[a-z0-9\/_-]*version\.json$/.test(v)) {
-            melde.textContent = '\u2717 Die Adresse muss mit / beginnen und auf version.json enden.';
-            melde.className = 'fv-update-melde schlecht';
-            e.target.value = einstellung.pfad;
+          if (!/^\/[a-z0-9\/_-]*(version|pc|android)\.json$/.test(v)) {
+            sagen('\u2717 Die Adresse muss mit / beginnen und auf version.json, pc.json oder android.json enden.', false);
+            e.target.value = c.einst.pfad;
             return;
           }
-          einstellung.pfad = v; cfg.pruef = v;
+          c.einst.pfad = v; c.pruef = v;
           var link = box.querySelector('.fv-update-link');
           if (link) link.setAttribute('href', v);
-          Promise.all([speichereEinstellung(), verzeichnisPflegen(einstellung.aktiv)]).then(function () {
-            melde.textContent = '\u2713 Adresse gespeichert.';
-            melde.className = 'fv-update-melde gut';
-            setTimeout(function () { melde.textContent = ''; }, 4000);
+          Promise.all([speichereEinstellung(c), verzeichnisPflegen(c, c.einst.aktiv)]).then(function () {
+            sagen('\u2713 Adresse gespeichert.', true);
           });
         });
-
-        box.querySelector('[data-a="bauplan"]').addEventListener('change', function (e) {
-          einstellung.bauplan = e.target.value;
-          speichereEinstellung().then(function () { location.reload(); });
+        var bauplanWahl = box.querySelector('[data-a="bauplan"]');
+        if (bauplanWahl) bauplanWahl.addEventListener('change', function (e) {
+          c.einst.bauplan = e.target.value;
+          speichereEinstellung(c).then(function () { location.reload(); });
         });
-
         box.querySelector('[data-a="merkmal"]').addEventListener('change', function (e) {
-          einstellung.merkmal = (e.target.value || '').trim();
-          cfg.fest = einstellung.merkmal ? { schluessel: einstellung.merkmal } : {};
-          speichereEinstellung().then(function () {
-            melde.textContent = '\u2713 Erkennungsmerkmal gespeichert.';
-            melde.className = 'fv-update-melde gut';
-            setTimeout(function () { melde.textContent = ''; }, 4000);
-          });
+          c.einst.merkmal = (e.target.value || '').trim();
+          c.fest = c.einst.merkmal ? { schluessel: c.einst.merkmal } : {};
+          speichereEinstellung(c).then(function () { sagen('\u2713 Erkennungsmerkmal gespeichert.', true); });
         });
       }
 
-      function ausFeldern() {
-        // AUF dem geladenen Stand aufsetzen, nicht bei null anfangen -
-        // sonst loescht diese Kachel die Fassungen der anderen.
-        var o = copy(grundstand || {});
-        var f = copy(cfg.fest);
-        for (var fk in f) if (f.hasOwnProperty(fk)) o[fk] = f[fk];
-        meine.forEach(function (pf) {
-          var unter = {};
-          var leer = true;
-          plattformFelder(pf).forEach(function (f) {
-            var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
-            var el = box.querySelector('[data-key="' + kennung + '"]');
-            if (!el) return;
-            var v = (el.value || '').trim();
-            if (f.typ === 'zahl') v = parseInt(v, 10) || 0;
-            if (v !== '' && v !== 0) leer = false;
-            if (pf.schluessel) {
-              unter[f.key] = v;
-            } else {
-              o[f.key] = v;
-              if (f.auch) f.auch.forEach(function (k2) { o[k2] = v; });
-            }
-          });
-          // Leere Zusatzfassungen gar nicht erst schreiben - sonst stehen
-          // leere Bloecke in der version.json, die niemand braucht.
-          if (pf.schluessel) {
-            if (leer) delete o[pf.schluessel];
-            else o[pf.schluessel] = unter;
-          }
-        });
-        return o;
-      }
-      function inFelder(o) {
-        meine.forEach(function (pf) {
-          var quelle = pf.schluessel ? (o[pf.schluessel] || {}) : o;
-          plattformFelder(pf).forEach(function (f) {
-            var kennung = pf.schluessel ? (pf.schluessel + '.' + f.key) : f.key;
-            var el = box.querySelector('[data-key="' + kennung + '"]');
-            if (!el) return;
-            var w = quelle[f.key];
-            el.value = (w === undefined || w === null) ? '' : w;
-          });
-        });
-        roh.value = JSON.stringify(mischKomplett(o), null, 2);
-      }
-      function mischKomplett(o) {
-        // sichert, dass feste Felder immer enthalten sind
-        var r = copy(cfg.fest);
-        for (var k in o) if (o.hasOwnProperty(k)) r[k] = o[k];
-        return r;
-      }
-      inFelder(daten);
-
-      // Zwischen den Fassungen umschalten
-      function reiterZeigen(wahl) {
-        Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (a) {
-          a.classList.toggle('an', (a.getAttribute('data-pf') || '') === wahl);
-        });
-        Array.prototype.forEach.call(box.querySelectorAll('.fv-update-fach'), function (f) {
-          f.hidden = ((f.getAttribute('data-fach') || '') !== wahl);
-        });
-      }
-      Array.prototype.forEach.call(box.querySelectorAll('.fv-update-reiter__k'), function (k) {
-        k.addEventListener('click', function () {
-          reiterZeigen(k.getAttribute('data-pf') || '');
-        });
-      });
-
-      function sagen(text, gut) {
-        melde.textContent = text;
-        melde.className = 'fv-update-melde ' + (gut ? 'gut' : 'schlecht');
-        setTimeout(function () { melde.textContent = ''; melde.className = 'fv-update-melde'; }, 4500);
-      }
-
+      /* ---- Rohansicht: zeigt GENAU die eigene Datei ---------------- */
       box.querySelector('[data-a="mehr"]').addEventListener('click', function () {
         if (roh.hidden) { roh.value = JSON.stringify(ausFeldern(), null, 2); roh.hidden = false; }
         else { roh.hidden = true; }
       });
 
-      // Wenn die andere Kachel gespeichert hat, den eigenen Grundstand
-      // nachziehen - sonst schriebe man ihren frischen Stand wieder zurueck.
-      document.addEventListener('fv:version-gespeichert', function (e) {
-        try {
-          if (!e || !e.detail || e.detail.quelle === box) return;
-          grundstand = e.detail.stand;
-          inFelder(grundstand);
-        } catch (_x) {}
-      });
-
+      /* ---- Speichern ---------------------------------------------- */
       box.querySelector('[data-a="save"]').addEventListener('click', function () {
-        /* Erst den FRISCHEN Stand holen, dann zusammenbauen. Sonst geht bei
-           drei Fenstern Folgendes schief: alle drei lesen beim Klicken ihren
-           Grundstand von vorhin, und die zuletzt speichernde Kachel schreibt
-           ihn zurueck - die Aenderungen der anderen sind weg. */
         anstellen(function () {
-          return laden()
-            .then(function (frisch) {
-              if (frisch && typeof frisch === 'object') grundstand = frisch;
-            })
+          return holen(c.ablage)
+            .then(function (frisch) { if (frisch && typeof frisch === 'object') stand = frisch; })
             .catch(function () {})
-            .then(zusammenbauenUndSpeichern);
+            .then(pruefenUndSpeichern);
         });
       });
 
-      function zusammenbauenUndSpeichern() {
+      function pruefenUndSpeichern() {
         var obj;
         if (!roh.hidden) {
           try { obj = JSON.parse(roh.value); }
           catch (e) { sagen('\u2717 Das ist kein g\u00fcltiges JSON.', false); return; }
-          obj = mischKomplett(obj);
+          var f = c.fest || {};
+          for (var fk in f) if (f.hasOwnProperty(fk)) obj[fk] = f[fk];
+          delete obj.pc;
         } else {
           obj = ausFeldern();
         }
-        // Der Android-Pflichtcheck gilt nur dort, wo Android auch gepflegt
-        // wird - sonst blockiert er die PC-Kachel grundlos.
-        if (welche.indexOf('') !== -1) {
-          /* Den Codenamen aus den DEFINIERTEN Feldern holen, nicht raten.
-             Die meisten Apps nutzen "versionCode", Lesezeit aber
-             "versionsCode" (mit s) - fest verdrahtet meldete die Pruefung
-             dort "Versions-Code fehlt", obwohl er eingetragen war, und das
-             Speichern brach ab. */
-          var codeFeld = 'versionCode';
-          cfg.felder.forEach(function (f) {
-            if (/^versions?Code$/i.test(f.key)) codeFeld = f.key;
-          });
-          if (!obj[codeFeld] || obj[codeFeld] < 1) {
-            sagen('\u2717 Versions-Code fehlt.', false); return;
-          }
-          var urlWert = obj.apk || obj.download || obj.url || '';
-          if (urlWert && !/^https?:\/\//i.test(urlWert)) {
+        var codeFeld = codeFeldName();
+        var code = parseInt(obj[codeFeld], 10) || 0;
+        var uKey = urlFeldName();
+        var adresse = uKey ? String(obj[uKey] || '') : '';
+
+        /* Eine noch nicht gepflegte PC-Fassung darf leer bleiben - der
+           Server liefert dann versionCode 0, und das Programm meldet
+           schlicht "alles aktuell". Erst wenn etwas drinsteht, muss es
+           stimmen. */
+        var leer = !code && !adresse;
+        if (!leer) {
+          if (code < 1) { sagen('\u2717 Versions-Code fehlt.', false); return; }
+          if (adresse && !/^https?:\/\//i.test(adresse)) {
             sagen('\u2717 Die Download-Adresse muss mit https:// beginnen.', false); return;
           }
         }
-        // Zusatzfassungen ebenso pruefen - eine krumme Adresse dort faellt
-        // sonst erst auf, wenn jemand vergeblich klickt.
-        var meckern = '';
-        meine.forEach(function (pf) {
-          if (!pf.schluessel) return;
-          var u = obj[pf.schluessel];
-          if (!u || !u.url) return;
-          var erlaubt = pf.nurAdresse ? /^(https?:\/\/|\/)/i : /^https?:\/\//i;
-          if (!erlaubt.test(u.url)) {
-            meckern = pf.titel + ': die Adresse muss mit '
-                    + (pf.nurAdresse ? 'https:// oder / ' : 'https:// ') + 'beginnen.';
-          }
-          if (!pf.nurAdresse && u.versionCode && u.versionCode < 1) {
-            meckern = pf.titel + ': der Versions-Code muss groesser als 0 sein.';
-          }
-        });
-        if (meckern) { sagen('\u2717 ' + meckern, false); return; }
-        return speichern(obj).then(function (ok) {
-          if (ok) {
-            grundstand = obj;
-            inFelder(obj);
-            sagen('\u2713 Gespeichert \u2013 die App sieht die neue Fassung sofort.', true);
-            // Die andere Kachel mitziehen, damit sie nicht mit einem
-            // veralteten Stand weiterarbeitet.
-            try {
-              document.dispatchEvent(new CustomEvent('fv:version-gespeichert',
-                { detail: { stand: obj, quelle: box } }));
-            } catch (_x) {}
-          } else { sagen('\u2717 Speichern fehlgeschlagen.', false); }
+        return legen(c.ablage, obj).then(function (ok) {
+          if (!ok) { sagen('\u2717 Speichern fehlgeschlagen.', false); return; }
+          stand = obj;
+          inFelder(obj);
+          sagen('\u2713 Gespeichert in ' + c.pruef + ' \u2013 sofort wirksam.', true);
         });
       }
     }
 
+    /* =================================================================
+     * Start: je Definition eine Kachel im passenden Bereich
+     * ================================================================= */
+    function zielFuer(art) {
+      if (art === 'pc') return document.querySelector('.program-download-block--pc');
+      return document.querySelector(
+        '.program-download-block:not(.program-download-block--pc):not(.program-download-block--web)');
+    }
+
     function start() {
-      ladeEinstellung().then(laden).then(function (daten) {
-        var app = document.querySelector(
-          '.program-download-block:not(.program-download-block--pc)');
-        var pc = document.querySelector('.program-download-block--pc');
-        /* Jedes Fenster kennt NUR seine eigene Fassung - kein Umschalten,
-           keine Reiter. Wer den App-Bereich anschaut, sieht Android-Sachen
-           und sonst nichts. Die Web-Fassung hat kein Versionsfeld: sie ist
-           aktuell, sobald die Datei getauscht ist. */
-        if (app) bauen(daten, [''], app);
-        if (pc) bauen(daten, ['pc'], pc);
-        // Seite ohne Download-Bereiche: eine Kachel mit allem.
-        if (!app && !pc) bauen(daten, ['', 'pc'], null);
+      var haupt = document.querySelector('main');
+      var reihe = Promise.resolve();
+      cfgs.forEach(function (c) {
+        reihe = reihe.then(function () {
+          return ladeEinstellung(c).then(function () {
+            if (c.art === 'pc') return pcStandHolen(c);
+            return appStandHolen(c);
+          }).then(function (erg) {
+            var ziel = zielFuer(c.art);
+            /* Seite ohne eigene Download-Bereiche: alle Kacheln unter
+               den Hauptteil, damit nichts unsichtbar bleibt. */
+            if (!ziel && !document.querySelector('.program-download-block')) ziel = haupt;
+            bauen(c, erg.stand, ziel, erg.umgezogen);
+          });
+        }).catch(function () {});
       });
     }
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }
@@ -3366,9 +4165,22 @@
 })();
 
 /* =====================================================================
- * Sicherung: alle Inhalte herunterladen und wieder einspielen
- * Schuetzt alles, was ueber den Bearbeiten-Modus eingetragen wurde -
- * das steht sonst nur in der Datenbank und nirgends sonst.
+ * Sicherung: alles herunterladen (als ZIP) und wieder einspielen
+ * ---------------------------------------------------------------------
+ * Alles, was im Bearbeiten-Modus eingetragen wird, steht NUR in der
+ * Datenbank auf dem Server - in den Dateien steht der Ursprungstext.
+ * Ohne Sicherung gibt es davon keine zweite Kopie.
+ *
+ * Das ZIP hat zwei Gesichter:
+ *   sicherung.json  - fuer die Maschine. Genau das, was "einspielen"
+ *                     wieder annimmt. Nicht von Hand aendern.
+ *   seiten/*.md     - fuer Menschen. Je Seite eine Liste: welcher Block,
+ *                     welche Art, welcher Text. Damit laesst sich ohne
+ *                     Werkzeug nachlesen, welche Texte geaendert wurden.
+ *   bilder/*        - die hochgeladenen Bilder als echte Dateien.
+ *   LIESMICH.md     - was drin ist und wie man es zurueckspielt.
+ *
+ * Der Knopf sitzt in der Admin-Leiste und wirkt auf JEDER Seite.
  * ===================================================================== */
 (function () {
   'use strict';
@@ -3377,97 +4189,393 @@
     try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
     if (!pw) return;
 
-    function bauen() {
+    /* ---- ZIP schreiben, ohne fremde Bibliothek --------------------
+       Gespeichert wird ohne Verdichtung ("store"). Bilder sind ohnehin
+       schon verdichtet, und Text faellt kaum ins Gewicht - dafuer ist
+       der Schreiber kurz genug, um ihn zu ueberblicken. */
+    var crcTabelle = (function () {
+      var t = new Uint32Array(256);
+      for (var n = 0; n < 256; n++) {
+        var c = n;
+        for (var k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+        t[n] = c >>> 0;
+      }
+      return t;
+    })();
+    function crc32(bytes) {
+      var c = 0xFFFFFFFF;
+      for (var i = 0; i < bytes.length; i++) c = crcTabelle[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+      return (c ^ 0xFFFFFFFF) >>> 0;
+    }
+    function textBytes(s) {
+      if (typeof TextEncoder !== 'undefined') return new TextEncoder().encode(s);
+      var aus = [];
+      for (var i = 0; i < s.length; i++) {
+        var c = s.charCodeAt(i);
+        if (c < 128) aus.push(c);
+        else if (c < 2048) aus.push(192 | (c >> 6), 128 | (c & 63));
+        else aus.push(224 | (c >> 12), 128 | ((c >> 6) & 63), 128 | (c & 63));
+      }
+      return new Uint8Array(aus);
+    }
+    function b64Bytes(b64) {
+      var roh = atob(String(b64).replace(/\s+/g, ''));
+      var a = new Uint8Array(roh.length);
+      for (var i = 0; i < roh.length; i++) a[i] = roh.charCodeAt(i);
+      return a;
+    }
+    function zipBauen(dateien) {
+      var stuecke = [], verzeichnis = [], versatz = 0, jetzt = new Date();
+      var zeit = ((jetzt.getHours() << 11) | (jetzt.getMinutes() << 5) | (jetzt.getSeconds() >> 1)) & 0xFFFF;
+      var datum = (((jetzt.getFullYear() - 1980) << 9) | ((jetzt.getMonth() + 1) << 5) | jetzt.getDate()) & 0xFFFF;
+
+      function schreibe(ziel, p, wert, breite) {
+        for (var i = 0; i < breite; i++) ziel[p + i] = (wert >>> (i * 8)) & 0xFF;
+      }
+
+      dateien.forEach(function (d) {
+        var name = textBytes(d.name);
+        var inhalt = (d.daten instanceof Uint8Array) ? d.daten : textBytes(String(d.daten));
+        var pruef = crc32(inhalt);
+
+        var kopf = new Uint8Array(30 + name.length);
+        schreibe(kopf, 0, 0x04034b50, 4);
+        schreibe(kopf, 4, 20, 2);
+        schreibe(kopf, 6, 0x0800, 2);     // Namen sind UTF-8
+        schreibe(kopf, 8, 0, 2);          // ohne Verdichtung
+        schreibe(kopf, 10, zeit, 2);
+        schreibe(kopf, 12, datum, 2);
+        schreibe(kopf, 14, pruef, 4);
+        schreibe(kopf, 18, inhalt.length, 4);
+        schreibe(kopf, 22, inhalt.length, 4);
+        schreibe(kopf, 26, name.length, 2);
+        schreibe(kopf, 28, 0, 2);
+        kopf.set(name, 30);
+        stuecke.push(kopf, inhalt);
+
+        var eintrag = new Uint8Array(46 + name.length);
+        schreibe(eintrag, 0, 0x02014b50, 4);
+        schreibe(eintrag, 4, 20, 2);
+        schreibe(eintrag, 6, 20, 2);
+        schreibe(eintrag, 8, 0x0800, 2);
+        schreibe(eintrag, 10, 0, 2);
+        schreibe(eintrag, 12, zeit, 2);
+        schreibe(eintrag, 14, datum, 2);
+        schreibe(eintrag, 16, pruef, 4);
+        schreibe(eintrag, 20, inhalt.length, 4);
+        schreibe(eintrag, 24, inhalt.length, 4);
+        schreibe(eintrag, 28, name.length, 2);
+        schreibe(eintrag, 42, versatz, 4);
+        eintrag.set(name, 46);
+        verzeichnis.push(eintrag);
+
+        versatz += kopf.length + inhalt.length;
+      });
+
+      var vLaenge = 0;
+      verzeichnis.forEach(function (e) { vLaenge += e.length; });
+      var schluss = new Uint8Array(22);
+      schreibe(schluss, 0, 0x06054b50, 4);
+      schreibe(schluss, 8, dateien.length, 2);
+      schreibe(schluss, 10, dateien.length, 2);
+      schreibe(schluss, 12, vLaenge, 4);
+      schreibe(schluss, 16, versatz, 4);
+
+      var gesamt = versatz + vLaenge + 22;
+      var aus = new Uint8Array(gesamt), p = 0;
+      stuecke.forEach(function (s) { aus.set(s, p); p += s.length; });
+      verzeichnis.forEach(function (s) { aus.set(s, p); p += s.length; });
+      aus.set(schluss, p);
+      return aus;
+    }
+
+    /* ---- Lesbare Fassung je Seite ------------------------------- */
+    function sicherName(s) { return String(s).replace(/[^a-z0-9_-]/gi, '_') || 'ohne-namen'; }
+    function zeitText(ms) {
+      var n = Number(ms);
+      if (!isFinite(n) || n <= 0) return '';
+      try { return new Date(n).toISOString().slice(0, 16).replace('T', ' '); } catch (e) { return ''; }
+    }
+    function seitenBlatt(seite, eintraege) {
+      var t = '# Seite: ' + seite + '\n\n'
+            + eintraege.length + ' Eintr' + (eintraege.length === 1 ? 'ag' : 'äge') + '.\n\n'
+            + 'Jeder Abschnitt ist ein Feld auf der Seite. `block` ist seine Kennung,\n'
+            + '`art` sagt, was es ist. Der Inhalt steht darunter, unverändert.\n';
+      eintraege.forEach(function (e) {
+        var wann = zeitText(e.updated);
+        t += '\n---\n\n## ' + e.block + '  (' + (e.type || 'text') + ')'
+           + (wann ? '  ·  zuletzt ' + wann : '') + '\n\n';
+        var wert = String(e.value == null ? '' : e.value);
+        if (e.type === 'image' || e.type === 'link') t += wert + '\n';
+        else t += '```\n' + wert.replace(/```/g, '` ` `') + '\n```\n';
+      });
+      return t;
+    }
+    /* Lesbare Blaetter fuer die uebrigen Tabellen. Nicht alles ist zum
+       Lesen gedacht - Nachrichten und Listen sind verschluesselt. Dann
+       steht hier nur, WIE VIEL da ist, damit man erkennt, ob eine
+       Sicherung vollstaendig aussieht. */
+    function tabellenBlatt(tab) {
+      var t = '# Weitere Tabellen\n\nNeben den Seiteninhalten gesichert:\n\n'
+            + '| Tabelle | Zeilen | Was es ist |\n|---|---|---|\n';
+      var erklaerung = {
+        counter_values: 'Zählerstände der Seitenaufrufe',
+        comments: 'Kommentare der Besucher',
+        apps: 'hinterlegte Seiten-Bauplaene',
+        kanalliste: 'welche Kanäle es gibt',
+        verlauf: 'Änderungshistorie hinter „↺ Verlauf"',
+        marken: 'Einladungsmarken',
+        zugang: 'Passwort und Notfall-PIN — steht im Klartext in sicherung.json'
+      };
+      var namen = Object.keys(erklaerung);
+      namen.forEach(function (n) {
+        var z = (tab && tab[n]) || [];
+        t += '| `' + n + '` | ' + z.length + ' | ' + erklaerung[n] + ' |\n';
+      });
+
+      var k = (tab && tab.comments) || [];
+      if (k.length) {
+        t += '\n---\n\n## Kommentare\n';
+        k.forEach(function (c) {
+          t += '\n**' + (c.name || 'ohne Namen') + '**'
+             + (c.created ? '  ·  ' + zeitText(c.created) : '')
+             + (Number(c.removed) ? '  ·  ENTFERNT' + (c.reason ? ' (' + c.reason + ')' : '') : '')
+             + '\n\n```\n' + String(c.body || '').replace(/```/g, '` ` `') + '\n```\n';
+        });
+      }
+      var v = (tab && tab.counter_values) || [];
+      if (v.length) {
+        t += '\n---\n\n## Zählerstände\n\n| Schlüssel | Stand |\n|---|---|\n';
+        v.forEach(function (z) { t += '| `' + z.key + '` | ' + z.value + ' |\n'; });
+      }
+      return t;
+    }
+    function kanalBlatt(kanaele) {
+      var t = '# Kanäle\n\n' + kanaele.length + ' Kanal/Kanäle gesichert.\n\n'
+            + 'Nachrichten, Listen und Anhänge sind **verschlüsselt** — sie stehen in der\n'
+            + 'Sicherung, lassen sich hier aber nicht lesen. Die Zahlen zeigen, dass sie da sind.\n';
+      kanaele.forEach(function (k) {
+        t += '\n---\n\n## Kanal `' + k.code + '`\n\n';
+        if (k.fehler) { t += 'NICHT ERREICHBAR: ' + k.fehler + '\n'; return; }
+        var tb = k.tabellen || {};
+        t += '| Tabelle | Zeilen |\n|---|---|\n';
+        Object.keys(tb).forEach(function (n) {
+          t += '| `' + n + '` | ' + ((tb[n] && tb[n].length) || 0) + ' |\n';
+        });
+      });
+      return t;
+    }
+
+    function endung(mime) {
+      if (/png/.test(mime)) return 'png';
+      if (/webp/.test(mime)) return 'webp';
+      if (/gif/.test(mime)) return 'gif';
+      return 'jpg';
+    }
+
+    function melden(text, gut) {
+      var bar = document.querySelector('.fv-admin-bar');
+      var ziel = document.querySelector('.fv-sich-melde');
+      if (!ziel && bar) {
+        ziel = document.createElement('span');
+        ziel.className = 'fv-sich-melde';
+        bar.querySelector('.fv-admin-right').appendChild(ziel);
+      }
+      var kasten = document.querySelector('#fvSMelde');
+      [ziel, kasten].forEach(function (m) {
+        if (!m) return;
+        m.textContent = text;
+        m.className = (m === kasten ? 'fv-prog-melde ' : 'fv-sich-melde ') + (gut ? 'gut' : 'schlecht');
+      });
+      if (gut) setTimeout(function () {
+        [ziel, kasten].forEach(function (m) { if (m) m.textContent = ''; });
+      }, 12000);
+    }
+
+    var laeuft = false;
+    function sicherungLaden() {
+      if (laeuft) return;
+      laeuft = true;
+      melden('Sicherung wird erstellt \u2026', true);
+      fetch('/api/export', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.text() : null; })
+        .then(function (txt) {
+          if (!txt) throw new Error('leer');
+          var daten = JSON.parse(txt);
+          var inhalte = daten.inhalte || [];
+          var bilder = daten.bilder || [];
+          var kanaele = daten.kanaele || [];
+          var tabZeilen = 0;
+          if (daten.tabellen) {
+            for (var tn in daten.tabellen) {
+              if (daten.tabellen.hasOwnProperty(tn)) tabZeilen += (daten.tabellen[tn] || []).length;
+            }
+          }
+
+          /* nach Seiten ordnen */
+          var nachSeite = {}, reihenfolge = [];
+          inhalte.forEach(function (e) {
+            var s = String(e.page || 'ohne-seite');
+            if (!nachSeite[s]) { nachSeite[s] = []; reihenfolge.push(s); }
+            nachSeite[s].push(e);
+          });
+          reihenfolge.sort();
+
+          var d = new Date();
+          var stempel = d.getFullYear() + '-'
+                      + String(d.getMonth() + 1).padStart(2, '0') + '-'
+                      + String(d.getDate()).padStart(2, '0');
+
+          var liesmich =
+            '# FINNVELO Programmwelten \u2013 Sicherung\n\n'
+          + 'Erstellt: ' + (daten.erstellt || d.toISOString()) + '\n\n'
+          + '- Seiteneintr\u00e4ge: ' + inhalte.length + ' auf ' + reihenfolge.length + ' Seiten\n'
+          + '- Bilder: ' + bilder.length + '\n'
+          + '- Zeilen in weiteren Tabellen: ' + tabZeilen + '\n'
+          + '- Kan\u00e4le: ' + kanaele.length + '\n\n'
+          + '> **Diese Sicherung enth\u00e4lt dein Admin-Passwort und die Notfall-PIN im\n'
+          + '> Klartext** (in `sicherung.json`, Abschnitt `tabellen.zugang`). Ohne sie w\u00e4re\n'
+          + '> ein Wiederanlauf auf einer leeren Datenbank nicht m\u00f6glich. Bewahre die\n'
+          + '> Datei entsprechend auf und lege sie nicht offen ab.\n\n'
+          + '## Was hier drin ist\n\n'
+          + '| Datei | Wof\u00fcr |\n|---|---|\n'
+          + '| `sicherung.json` | Die Sicherung selbst. Genau diese Datei nimmt '
+          + '\u201eSicherung einspielen\u201c wieder an. Nicht von Hand \u00e4ndern. |\n'
+          + '| `seiten/*.md` | Die Seiteninhalte zum Lesen \u2013 je Seite ein Blatt. |\n'
+          + '| `tabellen.md` | Kommentare, Z\u00e4hlerst\u00e4nde, Verlauf, Zugang \u2013 zum Lesen. |\n'
+          + '| `kanaele.md` | Umfang der Kan\u00e4le. Inhalte sind verschl\u00fcsselt. |\n'
+          + '| `bilder/*` | Die hochgeladenen Bilder als echte Dateien. |\n\n'
+          + '## Zur\u00fcckspielen\n\n'
+          + 'Auf `/programme` anmelden, **Bearbeiten: AN**, Kasten \u201eSicherung\u201c \u2192 '
+          + '**Sicherung einspielen** \u2192 `sicherung.json` w\u00e4hlen.\n\n'
+          + 'Was dabei passiert:\n\n'
+          + '- Seitentexte werden **\u00fcberschrieben**.\n'
+          + '- Bilder: vorhandene bleiben, fehlende werden erg\u00e4nzt.\n'
+          + '- Kommentare, Z\u00e4hlerst\u00e4nde, Verlauf, Marken: eingespielt; was seither\n'
+          + '  dazukam, bleibt stehen.\n'
+          + '- Kan\u00e4le: jeder in sein eigenes Objekt zur\u00fcck.\n'
+          + '- **Zugang: nur wenn noch keiner eingerichtet ist.** Ein bestehendes Passwort\n'
+          + '  wird nie \u00fcberschrieben \u2013 sonst k\u00f6nnte eine alte Sicherung dich aussperren.\n\n'
+          + '## Was NICHT drin ist\n\n'
+          + 'Sperrzeiten (`bremse`) und das Fehlerbuch (`fehler`). Beides ist nach einem\n'
+          + 'Wiederanlauf wertlos. Ebenso die Dateien des Projekts selbst \u2013 die liegen\n'
+          + 'in deinem Quellordner, nicht in der Datenbank.\n\n'
+          + '## Wozu die Blätter unter `seiten/`\n\n'
+          + 'In den HTML-Dateien des Projekts steht nur der Ursprungstext. Alles, was '
+          + '\u00fcber den Bearbeiten-Modus ge\u00e4ndert wurde, liegt in der Datenbank \u2013 '
+          + 'und damit hier. Wer wissen will, welche Texte von Hand ge\u00e4ndert wurden, '
+          + 'vergleicht das Blatt der Seite mit der zugeh\u00f6rigen HTML-Datei.\n\n'
+          + '## Seiten in dieser Sicherung\n\n'
+          + reihenfolge.map(function (s) {
+              return '- `' + s + '` \u2013 ' + nachSeite[s].length + ' Eintr\u00e4ge';
+            }).join('\n') + '\n';
+
+          var dateien = [
+            { name: 'LIESMICH.md', daten: liesmich },
+            { name: 'sicherung.json', daten: txt }
+          ];
+          reihenfolge.forEach(function (s) {
+            dateien.push({ name: 'seiten/' + sicherName(s) + '.md',
+                           daten: seitenBlatt(s, nachSeite[s]) });
+          });
+          if (daten.tabellen) dateien.push({ name: 'tabellen.md', daten: tabellenBlatt(daten.tabellen) });
+          if (kanaele.length) dateien.push({ name: 'kanaele.md', daten: kanalBlatt(kanaele) });
+          bilder.forEach(function (b) {
+            try {
+              dateien.push({ name: 'bilder/' + sicherName(b.id) + '.' + endung(b.mime || ''),
+                             daten: b64Bytes(b.data) });
+            } catch (e) {}
+          });
+
+          var roh = zipBauen(dateien);
+          var blob = new Blob([roh], { type: 'application/zip' });
+          var a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = 'finnvelo-sicherung-' + stempel + '.zip';
+          document.body.appendChild(a); a.click();
+          setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+          melden('\u2713 ' + a.download + ' \u2013 ' + inhalte.length + ' Eintr\u00e4ge, '
+               + reihenfolge.length + ' Seiten, ' + bilder.length + ' Bilder, '
+               + tabZeilen + ' Tabellenzeilen, ' + kanaele.length + ' Kan\u00e4le.', true);
+        })
+        .catch(function () { melden('\u2717 Sicherung fehlgeschlagen.', false); })
+        .then(function () { laeuft = false; });
+    }
+
+    function sicherungEinspielen() {
+      var inp = document.createElement('input');
+      inp.type = 'file'; inp.accept = '.json,application/json';
+      inp.onchange = function () {
+        var f = inp.files && inp.files[0]; if (!f) return;
+        var leser = new FileReader();
+        leser.onload = function () {
+          var daten;
+          try { daten = JSON.parse(String(leser.result)); }
+          catch (e) { melden('\u2717 Das ist keine g\u00fcltige Sicherungsdatei.', false); return; }
+          if (!daten || daten.art !== 'finnvelo-sicherung') {
+            melden('\u2717 Das ist keine Finnvelo-Sicherung.', false); return;
+          }
+          if (!window.confirm('Sicherung vom ' + (daten.erstellt || '?').slice(0, 10)
+              + ' einspielen?\n\nAlle Texte werden mit dem Stand aus der Datei \u00fcberschrieben.')) return;
+          melden('Wird eingespielt \u2026', true);
+          fetch('/api/import', {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ password: pw, daten: daten })
+          }).then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (a) {
+              if (!a || !a.ok) { melden('\u2717 Einspielen fehlgeschlagen.', false); return; }
+              melden('\u2713 ' + a.uebernommen + ' Eintr\u00e4ge'
+                   + (a.bilder ? ', ' + a.bilder + ' Bilder' : '')
+                   + (a.zeilen ? ', ' + a.zeilen + ' Tabellenzeilen' : '')
+                   + (a.kanaele ? ', ' + a.kanaele + ' Kan\u00e4le' : '')
+                   + ' eingespielt. Zugang: ' + (a.zugang || '?')
+                   + '. Seite neu laden.', true);
+            })
+            .catch(function () { melden('\u2717 Einspielen fehlgeschlagen.', false); });
+        };
+        leser.readAsText(f);
+      };
+      inp.click();
+    }
+
+    /* Der Knopf in der Admin-Leiste meldet sich hierher. */
+    document.addEventListener('fv:sicherung-laden', sicherungLaden);
+
+    /* Zusaetzlich der ausfuehrliche Kasten auf /programme - dort steht
+       auch das Einspielen, das man selten und bewusst braucht. */
+    function kastenBauen() {
       var ziel = document.querySelector('main');
       if (!ziel || document.querySelector('.fv-sich-box')) return;
       var editAn = false;
       try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
       if (!editAn) return;
       var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
-      if (pfad !== '/programme') return;   // ein fester Ort genuegt
+      if (pfad !== '/programme') return;
 
       var box = document.createElement('section');
       box.className = 'fv-prog-box fv-sich-box';
       box.innerHTML =
         '<h3 class="fv-prog-titel">\uD83D\uDCBE Sicherung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
       + '<p class="fv-prog-hilfe">Alles, was du im Bearbeiten-Modus eintr\u00e4gst \u2013 Texte, Bilder, '
-      + 'Zusatzfelder, ausgeblendete Elemente, App-Versionen, angelegte Programme \u2013 liegt nur in der '
+      + 'Zusatzfelder, ausgeblendete Elemente, Fassungsangaben, angelegte Programme \u2013 liegt nur in der '
       + 'Datenbank auf dem Server. In den Dateien steht nur der Ursprungstext. '
-      + '<strong>Lade dir ab und zu eine Sicherung herunter</strong>, am besten nach gr\u00f6\u00dferen \u00c4nderungen.</p>'
+      + '<strong>Lade dir ab und zu eine Sicherung herunter</strong>, am besten nach gr\u00f6\u00dferen '
+      + '\u00c4nderungen. Du bekommst ein ZIP: die Sicherung selbst, dieselben Inhalte zum Lesen '
+      + 'je Seite, und alle Bilder als Dateien.</p>'
       + '<div class="fv-prog-zeile">'
       + '  <button type="button" class="fv-prog-btn" id="fvSDown">Sicherung herunterladen</button>'
       + '  <button type="button" class="fv-prog-weg" id="fvSUp" style="margin-left:0">Sicherung einspielen</button>'
       + '  <span class="fv-prog-melde" id="fvSMelde"></span>'
       + '</div>';
       ziel.appendChild(box);
-
-      var melde = box.querySelector('#fvSMelde');
-      function sagen(t, gut) {
-        melde.textContent = t;
-        melde.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
-        if (gut) setTimeout(function () { melde.textContent = ''; }, 8000);
-      }
-
-      box.querySelector('#fvSDown').addEventListener('click', function () {
-        sagen('Wird erstellt \u2026', true);
-        fetch('/api/export', {
-          method: 'POST', headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ password: pw })
-        }).then(function (r) { return r.ok ? r.text() : null; })
-          .then(function (txt) {
-            if (!txt) { sagen('\u2717 Sicherung fehlgeschlagen.', false); return; }
-            var d = new Date();
-            var name = 'finnvelo-sicherung-'
-              + d.getFullYear() + '-'
-              + String(d.getMonth() + 1).padStart(2, '0') + '-'
-              + String(d.getDate()).padStart(2, '0') + '.json';
-            var blob = new Blob([txt], { type: 'application/json' });
-            var a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = name;
-            document.body.appendChild(a); a.click();
-            setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-            var anzahl = 0;
-            try { anzahl = (JSON.parse(txt).anzahl) || 0; } catch (e) {}
-            sagen('\u2713 Heruntergeladen: ' + name + ' (' + anzahl + ' Eintr\u00e4ge)', true);
-          }).catch(function () { sagen('\u2717 Sicherung fehlgeschlagen.', false); });
-      });
-
-      box.querySelector('#fvSUp').addEventListener('click', function () {
-        var inp = document.createElement('input');
-        inp.type = 'file'; inp.accept = '.json,application/json';
-        inp.onchange = function () {
-          var f = inp.files && inp.files[0]; if (!f) return;
-          var leser = new FileReader();
-          leser.onload = function () {
-            var daten;
-            try { daten = JSON.parse(String(leser.result || '')); }
-            catch (e) { sagen('\u2717 Das ist keine g\u00fcltige Sicherungsdatei.', false); return; }
-            if (!daten || daten.art !== 'finnvelo-sicherung') {
-              sagen('\u2717 Das ist keine Finnvelo-Sicherung.', false); return;
-            }
-            if (!window.confirm('Sicherung vom ' + (daten.erstellt || '?').slice(0, 10)
-              + ' mit ' + (daten.anzahl || 0) + ' Eintr\u00e4gen einspielen?\n\n'
-              + 'Vorhandene Inhalte mit denselben Feldern werden dabei \u00fcberschrieben.')) return;
-            sagen('Wird eingespielt \u2026', true);
-            fetch('/api/import', {
-              method: 'POST', headers: { 'content-type': 'application/json' },
-              body: JSON.stringify({ password: pw, daten: daten })
-            }).then(function (r) { return r.ok ? r.json() : null; })
-              .then(function (res) {
-                if (res && res.ok) {
-                  sagen('\u2713 ' + res.uebernommen + ' Eintr\u00e4ge eingespielt. Seite neu laden.', true);
-                } else sagen('\u2717 Einspielen fehlgeschlagen.', false);
-              }).catch(function () { sagen('\u2717 Einspielen fehlgeschlagen.', false); });
-          };
-          leser.readAsText(f);
-        };
-        inp.click();
-      });
+      box.querySelector('#fvSDown').addEventListener('click', sicherungLaden);
+      box.querySelector('#fvSUp').addEventListener('click', sicherungEinspielen);
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
-    else bauen();
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', kastenBauen);
+    else kastenBauen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
 
@@ -3585,8 +4693,611 @@
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
 
+
+
 /* =====================================================================
- * Bilder-Uebersicht: was liegt auf dem Server, was wird nicht mehr genutzt
+ * Hauptmenue verwalten
+ * ---------------------------------------------------------------------
+ * Start / Programme / Kommentare / Kontakt standen fest in jeder
+ * HTML-Datei. Beschriften liess sich ein Eintrag, mehr nicht - kein
+ * Hinzufuegen, kein Entfernen, kein Umsortieren, kein anderes Ziel.
+ * Eine selbst angelegte Seite tauchte deshalb nie im Menue auf.
+ *
+ * Jetzt liegt die Menuefolge in der Datenbank (system / Block h2).
+ * Solange dort nichts steht, bleibt das Menue aus der HTML-Datei
+ * unveraendert stehen - eine leere Datenbank aendert also nichts.
+ *
+ * WICHTIG fuer die Nummerierung: Die Eintraege des Hauptmenues sind
+ * Teil der n-Reihe (NAV_TEXT_SEL). Wer hier Eintraege einfuegt oder
+ * entfernt, verschiebt gespeicherte Beschriftungen. Deshalb wird die
+ * Beschriftung NICHT mehr ueber n-Schluessel gefuehrt, sondern steht
+ * im Menueeintrag selbst - genau dort, wo sie hingehoert.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    var nav = document.querySelector('.site-header nav[aria-label="Hauptnavigation"]')
+           || document.querySelector('.site-header nav');
+    if (!nav) return;
+
+    var eintraege = [];
+
+    function ausHtml() {
+      return Array.prototype.slice.call(nav.querySelectorAll('a')).map(function (a) {
+        return { name: (a.textContent || '').trim(), url: a.getAttribute('href') || '/' };
+      }).filter(function (e) { return e.name; });
+    }
+
+    function laden() {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var roh = '';
+          if (res && res.items) res.items.forEach(function (it) {
+            if (it.block === 'h2') roh = it.value || '';
+          });
+          if (!roh) return null;
+          try {
+            var a = JSON.parse(roh);
+            if (!Array.isArray(a)) return null;
+            return a.filter(function (e) { return e && e.name && e.url; });
+          } catch (e) { return null; }
+        }).catch(function () { return null; });
+    }
+    function speichern() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: 'system', block: 'h2', type: 'text',
+                               value: JSON.stringify(eintraege), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* Menue neu zeichnen. Der aktuelle Pfad bekommt aria-current, damit
+       die Hervorhebung stimmt wie vorher aus der HTML-Datei. */
+    function zeichnen() {
+      var hier = (location.pathname || '/').replace(/\.html?$/, '').replace(/\/+$/, '') || '/';
+      nav.innerHTML = '';
+      eintraege.forEach(function (e) {
+        var a = document.createElement('a');
+        a.setAttribute('href', e.url);
+        a.textContent = e.name;
+        var ziel = String(e.url).replace(/\/+$/, '') || '/';
+        if (ziel === hier) a.setAttribute('aria-current', 'page');
+        if (/^https?:/i.test(e.url)) { a.setAttribute('target', '_blank'); a.setAttribute('rel', 'noopener'); }
+        nav.appendChild(a);
+      });
+    }
+
+    function sagen(box, text, gut) {
+      var m = box.querySelector('.fv-prog-melde');
+      if (!m) return;
+      m.textContent = text;
+      m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+      if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 6000);
+    }
+
+    function verwaltung() {
+      if (!pw || !editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;              // ein Ort reicht
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-menue2-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-menue2-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83E\uDDED Hauptmen\u00fc <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Die Eintr\u00e4ge oben in der Kopfzeile. Reihenfolge, Beschriftung und '
+      + 'Ziel bestimmst du hier. Adressen der eigenen Seiten beginnen mit einem Schr\u00e4gstrich, '
+      + 'z.\u00a0B. <code>/mischwaldrechner</code>. Volle Adressen mit <code>https://</code> \u00f6ffnen '
+      + 'in einem neuen Fenster.</p>'
+      + '<div class="fv-menue2-liste"></div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <input type="text" class="fv-prog-feld" id="fvM2Name" placeholder="Beschriftung" maxlength="40">'
+      + '  <input type="text" class="fv-prog-feld" id="fvM2Url" placeholder="/adresse" maxlength="200">'
+      + '  <button type="button" class="fv-prog-btn" id="fvM2Neu">Hinzuf\u00fcgen</button>'
+      + '  <button type="button" class="fv-prog-weg" id="fvM2Reset">Auf Ursprung zur\u00fccksetzen</button>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>';
+      ziel.appendChild(box);
+
+      var listeEl = box.querySelector('.fv-menue2-liste');
+
+      function zeigen() {
+        listeEl.innerHTML = '';
+        eintraege.forEach(function (e, i) {
+          var zeile = document.createElement('div');
+          zeile.className = 'fv-menue2-zeile';
+
+          var nEl = document.createElement('input');
+          nEl.type = 'text'; nEl.className = 'fv-prog-feld'; nEl.value = e.name; nEl.maxLength = 40;
+          nEl.addEventListener('change', function () {
+            var v = (nEl.value || '').trim();
+            if (!v) { nEl.value = e.name; return; }
+            eintraege[i].name = v;
+            speichern().then(function () { zeichnen(); sagen(box, '\u2713 Gespeichert.', true); });
+          });
+
+          var uEl = document.createElement('input');
+          uEl.type = 'text'; uEl.className = 'fv-prog-feld'; uEl.value = e.url; uEl.maxLength = 200;
+          uEl.addEventListener('change', function () {
+            var v = (uEl.value || '').trim();
+            if (!/^(\/|https?:\/\/)/.test(v)) {
+              uEl.value = e.url;
+              sagen(box, '\u2717 Die Adresse muss mit / oder https:// beginnen.', false);
+              return;
+            }
+            eintraege[i].url = v;
+            speichern().then(function () { zeichnen(); sagen(box, '\u2713 Gespeichert.', true); });
+          });
+
+          function knopf(zeichen, titel, tun, aus) {
+            var k = document.createElement('button');
+            k.type = 'button'; k.className = 'fv-menue2-k';
+            k.innerHTML = zeichen; k.setAttribute('title', titel);
+            if (aus) k.disabled = true;
+            k.addEventListener('click', tun);
+            zeile.appendChild(k);
+            return k;
+          }
+
+          zeile.appendChild(nEl);
+          zeile.appendChild(uEl);
+          knopf('\u2191', 'Nach vorn', function () {
+            var t = eintraege[i - 1]; eintraege[i - 1] = eintraege[i]; eintraege[i] = t;
+            speichern().then(function () { zeigen(); zeichnen(); });
+          }, i === 0);
+          knopf('\u2193', 'Nach hinten', function () {
+            var t = eintraege[i + 1]; eintraege[i + 1] = eintraege[i]; eintraege[i] = t;
+            speichern().then(function () { zeigen(); zeichnen(); });
+          }, i === eintraege.length - 1);
+          var weg = knopf('\u2715', 'Eintrag entfernen', function () {
+            if (!window.confirm('Men\u00fceintrag wirklich entfernen?\n\n' + e.name)) return;
+            eintraege.splice(i, 1);
+            speichern().then(function () { zeigen(); zeichnen(); sagen(box, '\u2713 Entfernt.', true); });
+          });
+          weg.classList.add('fv-menue2-k--weg');
+
+          listeEl.appendChild(zeile);
+        });
+      }
+
+      box.querySelector('#fvM2Neu').addEventListener('click', function () {
+        var n = (box.querySelector('#fvM2Name').value || '').trim();
+        var u = (box.querySelector('#fvM2Url').value || '').trim();
+        if (!n) { sagen(box, '\u2717 Beschriftung fehlt.', false); return; }
+        if (!/^(\/|https?:\/\/)/.test(u)) {
+          sagen(box, '\u2717 Die Adresse muss mit / oder https:// beginnen.', false); return;
+        }
+        if (eintraege.length >= 12) { sagen(box, '\u2717 Mehr als zw\u00f6lf passen nicht in die Kopfzeile.', false); return; }
+        eintraege.push({ name: n, url: u });
+        speichern().then(function (ok) {
+          if (!ok) { sagen(box, '\u2717 Speichern fehlgeschlagen.', false); return; }
+          box.querySelector('#fvM2Name').value = '';
+          box.querySelector('#fvM2Url').value = '';
+          zeigen(); zeichnen(); sagen(box, '\u2713 Hinzugef\u00fcgt.', true);
+        });
+      });
+
+      box.querySelector('#fvM2Reset').addEventListener('click', function () {
+        if (!window.confirm('Men\u00fc auf den Ursprung der HTML-Datei zur\u00fccksetzen?\n\n'
+            + 'Deine \u00c4nderungen am Men\u00fc gehen dabei verloren.')) return;
+        eintraege = ausHtml();
+        speichern().then(function () { zeigen(); zeichnen(); sagen(box, '\u2713 Zur\u00fcckgesetzt.', true); });
+      });
+
+      zeigen();
+    }
+
+    /* Beim Start: was in der Datenbank steht, gewinnt. Steht dort nichts,
+       bleibt das Menue der HTML-Datei stehen - und dient zugleich als
+       Ausgangsstand fuer die Verwaltung. */
+    function start() {
+      var ausgang = ausHtml();
+      laden().then(function (gespeichert) {
+        eintraege = (gespeichert && gespeichert.length) ? gespeichert : ausgang;
+        if (gespeichert && gespeichert.length) zeichnen();
+        verwaltung();
+      });
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Gestaltung: Farben und Schrift
+ * ---------------------------------------------------------------------
+ * Das Aussehen haengt an Variablen in :root (styles.css). Abweichungen
+ * liegen in der Datenbank (system / Block c0) und werden als <style> in
+ * den Kopf gelegt.
+ *
+ * JEDE Farbe hat einen eigenen Waehler mit Farbflaeche, Farbton-Regler
+ * und Durchsichtigkeit. Frueher gab es fuer Flaechen und Linien nur
+ * einen gemeinsamen Staerke-Regler - damit liessen sich die Farben
+ * selbst nicht anfassen.
+ *
+ * Gespeichert wird als #rrggbbaa (acht Stellen, letzte zwei sind die
+ * Deckkraft). Ein einziges, leicht pruefbares Format - und CSS versteht
+ * es direkt.
+ *
+ * Laeuft fuer ALLE Besucher, nicht nur im Bearbeiten-Modus.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var SPEICHER = 'fv_gestaltung';
+
+    /* key = CSS-Variable ohne die zwei Striche */
+    var FARBEN = [
+      { key: 'blue',         name: 'Akzent (Kn\u00f6pfe, Links)', vorgabe: '#317cffff' },
+      { key: 'blue-light',   name: 'Akzent hell',                 vorgabe: '#bdd7ffff' },
+      { key: 'knopf-text',   name: 'Schrift auf Kn\u00f6pfen',    vorgabe: '#ffffffff' },
+      { key: 'bg',           name: 'Hintergrund',                 vorgabe: '#03050aff' },
+      { key: 'bg-soft',      name: 'Hintergrund der Fl\u00e4chen', vorgabe: '#070b13ff' },
+      { key: 'kopf-bg',      name: 'Kopfzeile',                   vorgabe: '#060910e0' },
+      { key: 'panel',        name: 'Fl\u00e4chen',                vorgabe: '#ffffff0e' },
+      { key: 'panel-strong', name: 'Fl\u00e4chen (kr\u00e4ftig)', vorgabe: '#ffffff18' },
+      { key: 'line',         name: 'Linien und R\u00e4nder',      vorgabe: '#ffffff1b' },
+      { key: 'text',         name: 'Text',                        vorgabe: '#f4f7fbff' },
+      { key: 'muted',        name: 'Nebentext',                   vorgabe: '#c7d3e7ff' },
+      { key: 'soft',         name: 'Schwacher Text',              vorgabe: '#95a6bfff' },
+      { key: 'red',          name: 'Warnfarbe',                   vorgabe: '#ff4964ff' }
+    ];
+
+    var SCHRIFTEN = [
+      { id: 'arial',     name: 'Arial (Vorgabe)',  wert: 'Arial, Helvetica, sans-serif' },
+      { id: 'system',    name: 'System-Schrift',   wert: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif' },
+      { id: 'verdana',   name: 'Verdana',          wert: 'Verdana, Geneva, sans-serif' },
+      { id: 'trebuchet', name: 'Trebuchet',        wert: '"Trebuchet MS", Tahoma, sans-serif' },
+      { id: 'georgia',   name: 'Georgia (Serife)', wert: 'Georgia, "Times New Roman", serif' },
+      { id: 'mono',      name: 'Schreibmaschine',  wert: 'ui-monospace, "Courier New", monospace' }
+    ];
+
+    /* ---- Farbe umrechnen ------------------------------------------- */
+    function zwei(n) { var s = Math.round(n).toString(16); return s.length < 2 ? '0' + s : s; }
+    function hsvNachHex(h, s, v, a) {
+      h = ((h % 360) + 360) % 360; s = Math.max(0, Math.min(1, s)); v = Math.max(0, Math.min(1, v));
+      var c = v * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = v - c;
+      var r = 0, g = 0, b = 0;
+      if (h < 60) { r = c; g = x; }
+      else if (h < 120) { r = x; g = c; }
+      else if (h < 180) { g = c; b = x; }
+      else if (h < 240) { g = x; b = c; }
+      else if (h < 300) { r = x; b = c; }
+      else { r = c; b = x; }
+      return '#' + zwei((r + m) * 255) + zwei((g + m) * 255) + zwei((b + m) * 255)
+           + zwei(Math.max(0, Math.min(1, a)) * 255);
+    }
+    function hexNachHsv(hex) {
+      var m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})?$/i.exec(hex || '');
+      if (!m) return { h: 0, s: 0, v: 0, a: 1 };
+      var r = parseInt(m[1], 16) / 255, g = parseInt(m[2], 16) / 255, b = parseInt(m[3], 16) / 255;
+      var a = m[4] === undefined ? 1 : parseInt(m[4], 16) / 255;
+      var max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+      var h = 0;
+      if (d) {
+        if (max === r) h = 60 * (((g - b) / d) % 6);
+        else if (max === g) h = 60 * ((b - r) / d + 2);
+        else h = 60 * ((r - g) / d + 4);
+      }
+      if (h < 0) h += 360;
+      return { h: h, s: max ? d / max : 0, v: max, a: a };
+    }
+    function istFarbe(w) { return typeof w === 'string' && /^#[0-9a-f]{6}([0-9a-f]{2})?$/i.test(w); }
+    function achtStellig(w) {
+      w = String(w).toLowerCase();
+      return w.length === 7 ? w + 'ff' : w;
+    }
+
+    function vorgabeStand() {
+      var f = {};
+      FARBEN.forEach(function (x) { f[x.key] = x.vorgabe; });
+      return { farben: f, schrift: 'arial', groesse: 100 };
+    }
+    function norm(s) {
+      var v = vorgabeStand();
+      if (!s || typeof s !== 'object') return v;
+      if (s.farben && typeof s.farben === 'object') {
+        FARBEN.forEach(function (x) {
+          var w = s.farben[x.key];
+          if (istFarbe(w)) v.farben[x.key] = achtStellig(w);
+        });
+      }
+      /* Alter Stand: ein gemeinsamer Regler "staerke" statt eigener
+         Farben fuer Flaechen und Linien. Wird einmalig umgerechnet,
+         damit nichts verlorengeht. */
+      var st = parseInt(s.staerke, 10);
+      if (isFinite(st) && st >= 20 && st <= 260) {
+        [['panel', 0.055], ['panel-strong', 0.095], ['line', 0.105]].forEach(function (p) {
+          if (s.farben && istFarbe(s.farben[p[0]])) return;   // schon eigene Farbe
+          v.farben[p[0]] = '#ffffff' + zwei(Math.min(255, p[1] * (st / 100) * 255));
+        });
+      }
+      var gefunden = false;
+      SCHRIFTEN.forEach(function (x) { if (x.id === s.schrift) gefunden = true; });
+      if (gefunden) v.schrift = s.schrift;
+      var gr = parseInt(s.groesse, 10);
+      if (isFinite(gr) && gr >= 85 && gr <= 130) v.groesse = gr;
+      return v;
+    }
+    function schriftWert(id) {
+      var w = SCHRIFTEN[0].wert;
+      SCHRIFTEN.forEach(function (x) { if (x.id === id) w = x.wert; });
+      return w;
+    }
+
+    function bauStil(s) {
+      var z = [];
+      FARBEN.forEach(function (x) { z.push('  --' + x.key + ': ' + s.farben[x.key] + ';'); });
+      z.push('  font-family: ' + schriftWert(s.schrift) + ';');
+      var stil = ':root {\n' + z.join('\n') + '\n}\n';
+      stil += 'body { font-family: ' + schriftWert(s.schrift) + '; }\n';
+      if (s.groesse !== 100) stil += 'html { font-size: ' + (16 * s.groesse / 100).toFixed(2) + 'px; }\n';
+      return stil;
+    }
+    function anwenden(s) {
+      var el = document.getElementById('fv-gestaltung');
+      if (!el) {
+        el = document.createElement('style');
+        el.id = 'fv-gestaltung';
+        (document.head || document.documentElement).appendChild(el);
+      }
+      el.textContent = bauStil(s);
+    }
+
+    var stand = vorgabeStand();
+    try {
+      var roh = sessionStorage.getItem(SPEICHER);
+      if (roh) { stand = norm(JSON.parse(roh)); anwenden(stand); }
+    } catch (e) {}
+
+    function laden() {
+      return fetch('/api/content?page=system', { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var w = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'c0') w = it.value || ''; });
+          if (!w) return null;
+          try { return norm(JSON.parse(w)); } catch (e) { return null; }
+        }).catch(function () { return null; });
+    }
+    function speichern(pw) {
+      try { sessionStorage.setItem(SPEICHER, JSON.stringify(stand)); } catch (e) {}
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: 'system', block: 'c0', type: 'text',
+                               value: JSON.stringify(stand), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* ---- Farbwaehler ------------------------------------------------
+       Farbflaeche (S/V), Farbton-Regler, Durchsichtigkeit, Hex-Feld.
+       Alles vier haengt am selben Wert und schreibt zurueck ueber den
+       Rueckruf. */
+    function farbwaehlerBauen(startHex, aendern) {
+      var f = hexNachHsv(startHex);
+
+      var wurzel = document.createElement('div');
+      wurzel.className = 'fv-cp';
+      wurzel.innerHTML =
+        '<div class="fv-cp__flaeche" data-a="flaeche"><span class="fv-cp__punkt" data-a="punkt"></span></div>'
+      + '<div class="fv-cp__regler">'
+      + '  <input type="range" min="0" max="360" step="1" class="fv-cp__ton" data-a="ton" aria-label="Farbton">'
+      + '  <div class="fv-cp__klarbahn" data-a="klarbahn">'
+      + '    <input type="range" min="0" max="100" step="1" class="fv-cp__klar" data-a="klar" aria-label="Deckkraft">'
+      + '  </div>'
+      + '</div>'
+      + '<div class="fv-cp__fuss">'
+      + '  <span class="fv-cp__probe" data-a="probe"></span>'
+      + '  <input type="text" class="fv-cp__hex" data-a="hex" maxlength="9" spellcheck="false">'
+      + '  <span class="fv-cp__deck" data-a="deck"></span>'
+      + '</div>';
+
+      var flaeche = wurzel.querySelector('[data-a="flaeche"]');
+      var punkt = wurzel.querySelector('[data-a="punkt"]');
+      var ton = wurzel.querySelector('[data-a="ton"]');
+      var klar = wurzel.querySelector('[data-a="klar"]');
+      var klarbahn = wurzel.querySelector('[data-a="klarbahn"]');
+      var probe = wurzel.querySelector('[data-a="probe"]');
+      var hexFeld = wurzel.querySelector('[data-a="hex"]');
+      var deck = wurzel.querySelector('[data-a="deck"]');
+
+      function jetzt() { return hsvNachHex(f.h, f.s, f.v, f.a); }
+      function zeichnen(auchHex) {
+        var voll = hsvNachHex(f.h, 1, 1, 1).slice(0, 7);
+        flaeche.style.background =
+          'linear-gradient(to top, #000, rgba(0,0,0,0)), '
+        + 'linear-gradient(to right, #fff, ' + voll + ')';
+        punkt.style.left = (f.s * 100) + '%';
+        punkt.style.top = ((1 - f.v) * 100) + '%';
+        punkt.style.background = jetzt().slice(0, 7);
+        ton.value = String(Math.round(f.h));
+        klar.value = String(Math.round(f.a * 100));
+        klarbahn.style.background =
+          'linear-gradient(to right, rgba(0,0,0,0), ' + jetzt().slice(0, 7) + ')';
+        probe.style.background = jetzt();
+        deck.textContent = Math.round(f.a * 100) + '\u2009%';
+        if (auchHex !== false) hexFeld.value = jetzt();
+      }
+      function melden() { zeichnen(); aendern(jetzt()); }
+
+      function ausFlaeche(x, y) {
+        var r = flaeche.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        f.s = Math.max(0, Math.min(1, (x - r.left) / r.width));
+        f.v = Math.max(0, Math.min(1, 1 - (y - r.top) / r.height));
+        melden();
+      }
+      function ziehen(startX, startY) {
+        ausFlaeche(startX, startY);
+        function mv(ev) {
+          ev.preventDefault();
+          var p = ev.touches && ev.touches[0] ? ev.touches[0] : ev;
+          ausFlaeche(p.clientX, p.clientY);
+        }
+        function up() {
+          document.removeEventListener('mousemove', mv);
+          document.removeEventListener('mouseup', up);
+          document.removeEventListener('touchmove', mv);
+          document.removeEventListener('touchend', up);
+        }
+        document.addEventListener('mousemove', mv);
+        document.addEventListener('mouseup', up);
+        document.addEventListener('touchmove', mv, { passive: false });
+        document.addEventListener('touchend', up);
+      }
+      flaeche.addEventListener('mousedown', function (e) { e.preventDefault(); ziehen(e.clientX, e.clientY); });
+      flaeche.addEventListener('touchstart', function (e) {
+        if (!e.touches || !e.touches[0]) return;
+        e.preventDefault(); ziehen(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: false });
+
+      ton.addEventListener('input', function () { f.h = parseInt(ton.value, 10) || 0; melden(); });
+      klar.addEventListener('input', function () { f.a = (parseInt(klar.value, 10) || 0) / 100; melden(); });
+      hexFeld.addEventListener('change', function () {
+        var w = (hexFeld.value || '').trim();
+        if (w && w.charAt(0) !== '#') w = '#' + w;
+        if (!istFarbe(w)) { zeichnen(); return; }      // Unsinn -> zurueck auf den Wert
+        f = hexNachHsv(achtStellig(w));
+        melden();
+      });
+
+      zeichnen();
+      return { el: wurzel, setzen: function (hex) { f = hexNachHsv(achtStellig(hex)); zeichnen(); } };
+    }
+
+    function verwaltung() {
+      var pw = '';
+      try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+      var editAn = false;
+      try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+      if (!pw || !editAn) return;
+      var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+      if (pfad !== '/programme') return;
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-gest-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-gest-box';
+      var schriftHtml = '';
+      SCHRIFTEN.forEach(function (x) {
+        schriftHtml += '<option value="' + x.id + '"' + (stand.schrift === x.id ? ' selected' : '') + '>'
+                    + x.name + '</option>';
+      });
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83C\uDFA8 Gestaltung <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Jede Farbe der Webseite mit eigenem W\u00e4hler: Farbfl\u00e4che f\u00fcr '
+      + 'S\u00e4ttigung und Helligkeit, Regler f\u00fcr den Farbton, und darunter die Deckkraft. '
+      + '\u00c4nderungen siehst du <strong>sofort</strong>, gespeichert werden sie erst mit '
+      + '\u201eSpeichern\u201c \u2013 bis dahin kannst du gefahrlos ausprobieren.</p>'
+      + '<div class="fv-gest-netz"></div>'
+      + '<div class="fv-gest-regler">'
+      + '  <label>Schriftart<select data-a="schrift">' + schriftHtml + '</select></label>'
+      + '  <label>Schriftgr\u00f6\u00dfe <b data-a="groesseWert">' + stand.groesse + '\u2009%</b>'
+      + '    <input type="range" min="85" max="130" step="5" value="' + stand.groesse + '" data-a="groesse"></label>'
+      + '</div>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" data-a="save">Speichern</button>'
+      + '  <button type="button" class="fv-prog-weg" data-a="undo" style="margin-left:0">Verwerfen</button>'
+      + '  <button type="button" class="fv-prog-weg" data-a="reset" style="margin-left:0">Auf Vorgabe zur\u00fccksetzen</button>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>';
+      ziel.appendChild(box);
+
+      var netz = box.querySelector('.fv-gest-netz');
+      var waehler = {};
+      FARBEN.forEach(function (x) {
+        var karte = document.createElement('div');
+        karte.className = 'fv-gest-karte';
+        karte.setAttribute('data-farbe', x.key);
+        var titel = document.createElement('div');
+        titel.className = 'fv-gest-karte__name';
+        titel.textContent = x.name;
+        karte.appendChild(titel);
+        var w = farbwaehlerBauen(stand.farben[x.key], function (hex) {
+          stand.farben[x.key] = hex;
+          anwenden(stand);
+        });
+        waehler[x.key] = w;
+        karte.appendChild(w.el);
+        netz.appendChild(karte);
+      });
+
+      var gespeichert = JSON.parse(JSON.stringify(stand));
+      function sagen(t, gut) {
+        var m = box.querySelector('.fv-prog-melde');
+        m.textContent = t;
+        m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 6000);
+      }
+      function felderSetzen() {
+        FARBEN.forEach(function (x) { waehler[x.key].setzen(stand.farben[x.key]); });
+        box.querySelector('[data-a="schrift"]').value = stand.schrift;
+        box.querySelector('[data-a="groesse"]').value = stand.groesse;
+        box.querySelector('[data-a="groesseWert"]').textContent = stand.groesse + '\u2009%';
+      }
+
+      box.querySelector('[data-a="groesse"]').addEventListener('input', function (e) {
+        stand.groesse = parseInt(e.target.value, 10) || 100;
+        box.querySelector('[data-a="groesseWert"]').textContent = stand.groesse + '\u2009%';
+        anwenden(stand);
+      });
+      box.querySelector('[data-a="schrift"]').addEventListener('change', function (e) {
+        stand.schrift = e.target.value;
+        anwenden(stand);
+      });
+      box.querySelector('[data-a="save"]').addEventListener('click', function () {
+        speichern(pw).then(function (ok) {
+          if (!ok) { sagen('\u2717 Speichern fehlgeschlagen.', false); return; }
+          gespeichert = JSON.parse(JSON.stringify(stand));
+          sagen('\u2713 Gespeichert \u2013 gilt ab sofort f\u00fcr alle Besucher.', true);
+        });
+      });
+      box.querySelector('[data-a="undo"]').addEventListener('click', function () {
+        stand = norm(JSON.parse(JSON.stringify(gespeichert)));
+        anwenden(stand); felderSetzen();
+        sagen('\u2713 Verworfen \u2013 zur\u00fcck auf den gespeicherten Stand.', true);
+      });
+      box.querySelector('[data-a="reset"]').addEventListener('click', function () {
+        if (!window.confirm('Farben und Schrift auf die Vorgabe zur\u00fccksetzen?\n\n'
+            + 'Das wirkt sofort f\u00fcr alle Besucher.')) return;
+        stand = vorgabeStand();
+        anwenden(stand); felderSetzen();
+        speichern(pw).then(function () { sagen('\u2713 Auf Vorgabe zur\u00fcckgesetzt.', true); });
+      });
+    }
+
+    function start() {
+      laden().then(function (s) {
+        if (s) {
+          stand = s; anwenden(stand);
+          try { sessionStorage.setItem(SPEICHER, JSON.stringify(stand)); } catch (e) {}
+        }
+        verwaltung();
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Bilder verwalten
+ * ---------------------------------------------------------------------
+ * Hochgeladene Bilder liegen in einer eigenen Tabelle und waren bisher
+ * nirgends sichtbar. Man konnte weder nachsehen, was da liegt, noch
+ * etwas entfernen - unbenutzte Bilder sammelten sich still an.
+ *
+ * Welches Bild wo benutzt wird, sagt der Server (/api/images). Er sucht
+ * dafuer im gesamten Inhalt nach /api/image/<kennung> und findet damit
+ * auch Bilder in Sammellisten wie der Galerie.
  * ===================================================================== */
 (function () {
   'use strict';
@@ -3599,60 +5310,1122 @@
     var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
     if (pfad !== '/programme') return;
 
-    function kb(n) { return n < 1024 ? n + ' B' : (n < 1024 * 1024 ? Math.round(n / 1024) + ' KB' : (n / 1024 / 1024).toFixed(1) + ' MB'); }
+    var bilder = [];
+    var nurFreie = false;
 
-    function holen() {
-      return fetch('/api/bilder', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ password: pw })
-      }).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    function kb(n) {
+      if (n > 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + ' MB';
+      return Math.round(n / 1024) + ' KB';
+    }
+    function datum(ms) {
+      var d = new Date(Number(ms) || 0);
+      if (!isFinite(d.getTime()) || !ms) return '';
+      return ('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear();
     }
 
-    function bauen(res) {
+    function laden() {
+      return fetch('/api/images', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (a) { return (a && a.bilder) || []; })
+        .catch(function () { return []; });
+    }
+
+    function bauen() {
       var ziel = document.querySelector('main');
-      if (!ziel || !res || document.querySelector('.fv-bild-box')) return;
+      if (!ziel || document.querySelector('.fv-bild-box')) return;
+
       var box = document.createElement('section');
       box.className = 'fv-prog-box fv-bild-box';
       box.innerHTML =
-        '<h3 class="fv-prog-titel">\uD83D\uDDBC\uFE0F Hochgeladene Bilder <span>(nur f\u00fcr dich sichtbar)</span></h3>'
-      + '<p class="fv-prog-hilfe">' + res.anzahl + ' Bilder, zusammen ' + kb(res.gesamt) + '. '
-      + 'Bilder mit dem Vermerk <strong>ungenutzt</strong> werden auf keiner Seite mehr verwendet \u2013 '
-      + 'die kannst du gefahrlos entfernen.</p>'
-      + '<div class="fv-bild-gitter" id="fvBListe"></div>';
+        '<h3 class="fv-prog-titel">\uD83D\uDDBC\uFE0F Bilder <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Alle hochgeladenen Bilder. Unter jedem steht, auf welcher Seite '
+      + 'und in welchem Feld es benutzt wird. Bilder ohne Verwendung stehen nur noch in der '
+      + 'Datenbank und vergr\u00f6\u00dfern jede Sicherung.</p>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" data-a="neu">Neu laden</button>'
+      + '  <label class="fv-bild-filter"><input type="checkbox" data-a="filter"> nur unbenutzte zeigen</label>'
+      + '  <span class="fv-bild-summe" data-a="summe"></span>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>'
+      + '<div class="fv-bild-netz" data-a="netz"></div>';
       ziel.appendChild(box);
 
-      var listeEl = box.querySelector('#fvBListe');
-      function zeigen(bilder) {
-        listeEl.innerHTML = '';
-        if (!bilder.length) { listeEl.innerHTML = '<p class="fv-prog-leer">Noch keine Bilder hochgeladen.</p>'; return; }
-        bilder.forEach(function (b) {
-          var k = document.createElement('div');
-          k.className = 'fv-bild' + (b.benutzt ? '' : ' fv-bild--frei');
-          k.innerHTML =
-            '<img src="/api/image/' + b.id + '" alt="" loading="lazy">'
-          + '<span class="fv-bild__info">' + kb(b.groesse) + ' \u00b7 '
-          + (b.benutzt ? '<span class="fv-bild__ja">in Benutzung</span>'
-                       : '<span class="fv-bild__nein">ungenutzt</span>') + '</span>';
-          if (!b.benutzt) {
-            var weg = document.createElement('button');
-            weg.type = 'button'; weg.className = 'fv-bild__weg'; weg.textContent = 'entfernen';
-            weg.addEventListener('click', function () {
-              if (!window.confirm('Dieses Bild endg\u00fcltig entfernen?')) return;
-              fetch('/api/bilder', {
-                method: 'POST', headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ password: pw, aktion: 'entfernen', id: b.id })
-              }).then(function (r) { if (r.ok) k.parentNode.removeChild(k); });
-            });
-            k.appendChild(weg);
-          }
-          listeEl.appendChild(k);
+      var netz = box.querySelector('[data-a="netz"]');
+      function sagen(t, gut) {
+        var m = box.querySelector('.fv-prog-melde');
+        m.textContent = t;
+        m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 8000);
+      }
+
+      function zeigen() {
+        var zeigeListe = nurFreie
+          ? bilder.filter(function (b) { return !b.benutzt.length; })
+          : bilder;
+        var frei = bilder.filter(function (b) { return !b.benutzt.length; });
+        var freiByte = 0;
+        frei.forEach(function (b) { freiByte += b.groesse; });
+        var alleByte = 0;
+        bilder.forEach(function (b) { alleByte += b.groesse; });
+        box.querySelector('[data-a="summe"]').textContent =
+          bilder.length + ' Bilder, ' + kb(alleByte) + ' \u2013 davon ' + frei.length
+          + ' unbenutzt (' + kb(freiByte) + ')';
+
+        netz.innerHTML = '';
+        if (!zeigeListe.length) {
+          netz.innerHTML = '<p class="fv-prog-hilfe">Keine Bilder in dieser Ansicht.</p>';
+          return;
+        }
+        zeigeListe.forEach(function (b) {
+          var karte = document.createElement('figure');
+          karte.className = 'fv-bild-karte' + (b.benutzt.length ? '' : ' fv-bild-karte--frei');
+          karte.setAttribute('data-bild', b.id);
+
+          var wo = b.benutzt.length
+            ? b.benutzt.map(function (v) { return v.page + ' / ' + v.block; }).join('<br>')
+            : 'wird nirgends verwendet';
+
+          karte.innerHTML =
+            '<div class="fv-bild-vorschau"><img src="/api/image/' + b.id + '" alt="" loading="lazy"></div>'
+          + '<figcaption>'
+          + '  <code>' + b.id + '</code>'
+          + '  <div class="fv-bild-fakt">' + kb(b.groesse) + ' \u00b7 ' + b.mime.split('/')[1]
+          + (datum(b.created) ? ' \u00b7 ' + datum(b.created) : '') + '</div>'
+          + '  <div class="fv-bild-wo' + (b.benutzt.length ? '' : ' frei') + '">' + wo + '</div>'
+          + '  <button type="button" class="fv-bild-weg" data-a="weg">Entfernen</button>'
+          + '</figcaption>';
+
+          karte.querySelector('[data-a="weg"]').addEventListener('click', function () {
+            /* Zwei verschiedene Rueckfragen: ein unbenutztes Bild
+               wegzunehmen ist harmlos, ein benutztes reisst ein Loch in
+               die Seite. Das muss man vorher wissen. */
+            var frage = b.benutzt.length
+              ? ('Dieses Bild wird noch BENUTZT:\n\n'
+                 + b.benutzt.map(function (v) { return '\u2022 ' + v.page + ' / ' + v.block; }).join('\n')
+                 + '\n\nWird es entfernt, bleiben dort leere Stellen.\nTrotzdem entfernen?')
+              : ('Dieses Bild wirklich entfernen?\n\n' + b.id + ' \u00b7 ' + kb(b.groesse)
+                 + '\n\nEs wird nirgends verwendet. Zur\u00fcckholen l\u00e4sst es sich nur\n'
+                 + 'aus einer Sicherung, die es noch enth\u00e4lt.');
+            if (!window.confirm(frage)) return;
+            fetch('/api/images/entfernen', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ password: pw, ids: [b.id] })
+            }).then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (a) {
+                if (!a || !a.ok) { sagen('\u2717 Entfernen fehlgeschlagen.', false); return; }
+                bilder = bilder.filter(function (x) { return x.id !== b.id; });
+                zeigen();
+                sagen('\u2713 Entfernt.', true);
+              })
+              .catch(function () { sagen('\u2717 Entfernen fehlgeschlagen.', false); });
+          });
+
+          netz.appendChild(karte);
         });
       }
-      zeigen(res.bilder || []);
+
+      box.querySelector('[data-a="filter"]').addEventListener('change', function (e) {
+        nurFreie = !!e.target.checked;
+        zeigen();
+      });
+      box.querySelector('[data-a="neu"]').addEventListener('click', function () {
+        laden().then(function (a) { bilder = a; zeigen(); sagen('\u2713 Neu geladen.', true); });
+      });
+
+      laden().then(function (a) { bilder = a; zeigen(); });
     }
 
-    function start() { holen().then(bauen); }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
+    else bauen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Handy-Vorschau
+ * ---------------------------------------------------------------------
+ * Zeigt die aktuelle Seite in einem schmalen Rahmen. Wichtig: ein
+ * RAHMEN, keine schmal gerechnete Seite. Media Queries haengen an der
+ * Fensterbreite - eine per CSS verkleinerte Seite wuerde sie NICHT
+ * ausloesen, und die Vorschau zeigte etwas, das es so nie gibt.
+ *
+ * Im Rahmen laeuft die Seite als Besuchersicht (siehe Sperre ganz oben
+ * in dieser Datei), sonst saehe man die eigene Werkzeugleiste.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    if (!pw) return;
+    if (/[?&]fv-vorschau=1(&|$)/.test(location.search || '')) return;   // nie im Rahmen selbst
+
+    var BREITEN = [
+      { id: 'handy',  name: '\uD83D\uDCF1 Handy',  breit: 390,  hoch: 760 },
+      { id: 'tablet', name: '\uD83D\uDCDF Tablet', breit: 768,  hoch: 900 },
+      { id: 'klein',  name: '\uD83D\uDDA5\uFE0F Schmal', breit: 1024, hoch: 760 }
+    ];
+
+    function adresse() {
+      var p = location.pathname + (location.search || '');
+      return p + (location.search ? '&' : '?') + 'fv-vorschau=1';
+    }
+
+    function oeffnen() {
+      if (document.querySelector('.fv-vorschau')) return;
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-vorschau';
+
+      var knoepfe = '';
+      BREITEN.forEach(function (b, i) {
+        knoepfe += '<button type="button" class="fv-vorschau__mass' + (i === 0 ? ' an' : '') + '" '
+                +  'data-breit="' + b.breit + '" data-hoch="' + b.hoch + '">' + b.name + '</button>';
+      });
+
+      huelle.innerHTML =
+        '<div class="fv-vorschau__kasten">'
+      + '  <div class="fv-vorschau__kopf">'
+      + '    <span class="fv-vorschau__titel">Vorschau</span>'
+      + knoepfe
+      + '    <span class="fv-vorschau__mass-anzeige" data-a="anzeige"></span>'
+      + '    <button type="button" class="fv-vorschau__zu" data-a="zu" aria-label="Schlie\u00dfen">\u2715</button>'
+      + '  </div>'
+      + '  <div class="fv-vorschau__buehne">'
+      + '    <iframe class="fv-vorschau__rahmen" data-a="rahmen" title="Vorschau"></iframe>'
+      + '  </div>'
+      + '  <p class="fv-vorschau__hinweis">So sehen Besucher die Seite bei dieser Breite. '
+      + 'Deine Werkzeuge sind hier bewusst ausgeblendet.</p>'
+      + '</div>';
+      document.body.appendChild(huelle);
+      /* Abzeichen und schwebende Knoepfe der Seite liegen hoeher als die
+         Vorschau und wuerden ueber ihr kleben. Solange sie offen ist,
+         bleiben sie weg. */
+      document.body.classList.add('fv-vorschau-an');
+
+      var rahmen = huelle.querySelector('[data-a="rahmen"]');
+      var anzeige = huelle.querySelector('[data-a="anzeige"]');
+      rahmen.setAttribute('src', adresse());
+
+      function setzen(breit, hoch) {
+        rahmen.style.width = breit + 'px';
+        rahmen.style.height = hoch + 'px';
+        anzeige.textContent = breit + ' \u00d7 ' + hoch + ' px';
+      }
+      setzen(BREITEN[0].breit, BREITEN[0].hoch);
+
+      huelle.querySelectorAll('.fv-vorschau__mass').forEach(function (k) {
+        k.addEventListener('click', function () {
+          huelle.querySelectorAll('.fv-vorschau__mass').forEach(function (x) { x.classList.remove('an'); });
+          k.classList.add('an');
+          setzen(parseInt(k.getAttribute('data-breit'), 10), parseInt(k.getAttribute('data-hoch'), 10));
+        });
+      });
+
+      function zu() {
+        if (huelle.parentNode) huelle.parentNode.removeChild(huelle);
+        document.body.classList.remove('fv-vorschau-an');
+        document.removeEventListener('keydown', beiTaste);
+      }
+      function beiTaste(e) { if (e.key === 'Escape') zu(); }
+      huelle.querySelector('[data-a="zu"]').addEventListener('click', zu);
+      huelle.addEventListener('click', function (e) { if (e.target === huelle) zu(); });
+      document.addEventListener('keydown', beiTaste);
+    }
+
+    document.addEventListener('fv:vorschau-oeffnen', oeffnen);
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Abschnitte: eigene anlegen und ganze ausblenden
+ * ---------------------------------------------------------------------
+ * Bisher liess sich nur IN vorhandene Abschnitte etwas einsetzen, und
+ * ausblenden ging nur Feld fuer Feld. Ein Bereich mit eigener
+ * Ueberschrift war ohne Aenderung der HTML-Datei nicht moeglich.
+ *
+ *   Block w0 (je Seite)  eigene Abschnitte  [{id, titel}]
+ *                        (NICHT y0 - das gehoert den Ein-/Ausschaltern
+ *                         der Download-Bereiche, siehe renderBereiche)
+ *   Block h1 (je Seite)  ausgeblendete Abschnitte  ["kennung", ...]
+ *
+ * Die Ueberschrift eines eigenen Abschnitts wird NICHT ueber die
+ * t-Nummerierung gefuehrt, sondern liegt im Abschnitt selbst. Sonst
+ * haette jeder neue Abschnitt alle Textnummern dahinter verschoben und
+ * gespeicherte Texte waeren auf falsche Felder gerutscht.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    function seite() {
+      var p = (location.pathname || '').toLowerCase();
+      var datei = p.substring(p.lastIndexOf('/') + 1) || 'index.html';
+      var name = datei.replace(/\.html?$/, '');
+      if (!name || name === 'index') name = 'start';
+      return name;
+    }
+    var SLUG = seite();
+
+    /* Wo die Abschnitte haengen: auf Programmseiten im eigenen Traeger,
+       sonst direkt im Hauptteil. */
+    function traeger() {
+      var haupt = document.querySelector('main');
+      if (!haupt) return null;
+      return haupt.querySelector('.program-detail__body') || haupt;
+    }
+    function alleAbschnitte() {
+      var t = traeger(); if (!t) return [];
+      return Array.prototype.slice.call(t.children).filter(function (el) {
+        return el.nodeType === 1 && el.matches && el.matches('section[aria-labelledby]');
+      });
+    }
+    function kennung(sec) {
+      var eigen = sec.getAttribute('data-fv-sektion');
+      return eigen ? ('eigen:' + eigen) : (sec.getAttribute('aria-labelledby') || '');
+    }
+    function titelVon(sec) {
+      var id = sec.getAttribute('aria-labelledby');
+      var h = id ? document.getElementById(id) : null;
+      return h ? (h.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    }
+
+    var eigene = [], verborgen = [];
+
+    function holen(block) {
+      return fetch('/api/content?page=' + encodeURIComponent(SLUG), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var w = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === block) w = it.value || ''; });
+          if (!w) return [];
+          try { var a = JSON.parse(w); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+    function legen(block, wert) {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: SLUG, block: block, type: 'text',
+                               value: JSON.stringify(wert), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* ---- Eigene Abschnitte in die Seite setzen --------------------- */
+    function eigeneBauen() {
+      var t = traeger(); if (!t) return;
+      eigene.forEach(function (e) {
+        if (!e || !e.id) return;
+        if (t.querySelector('[data-fv-sektion="' + e.id + '"]')) return;
+        var sec = document.createElement('section');
+        sec.className = 'program-info-block fv-sektion-eigen';
+        sec.setAttribute('data-fv-sektion', e.id);
+        sec.setAttribute('data-fv-text-extra', '');
+        var hid = 'fvsek-' + e.id;
+        sec.setAttribute('aria-labelledby', hid);
+        var h = document.createElement('h2');
+        h.id = hid;
+        h.textContent = e.titel || 'Neuer Abschnitt';
+        sec.appendChild(h);
+        t.appendChild(sec);
+      });
+    }
+
+    /* ---- Ausblenden ------------------------------------------------ */
+    function istWeg(k) { return verborgen.indexOf(k) !== -1; }
+    function ausblendenAnwenden() {
+      alleAbschnitte().forEach(function (sec) {
+        var k = kennung(sec);
+        var weg = istWeg(k);
+        sec.classList.toggle('fv-sektion-weg', weg && editAn);
+        // eigene Klasse - siehe renderGallery(): style.display teilen sich
+        // sonst zwei Bausteine und ueberschreiben einander
+        sec.classList.toggle('fv-sektion-versteckt', weg && !editAn);
+      });
+    }
+
+    /* ---- Bedienung im Bearbeiten-Modus ----------------------------- */
+    function werkzeugBauen() {
+      alleAbschnitte().forEach(function (sec) {
+        if (sec.querySelector(':scope > .fv-sek-leiste')) return;
+        var k = kennung(sec);
+        var eigen = !!sec.getAttribute('data-fv-sektion');
+
+        var leiste = document.createElement('div');
+        leiste.className = 'fv-sek-leiste';
+
+        function knopf(zeichen, titel, tun, klasse) {
+          var b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'fv-sek-k' + (klasse ? ' ' + klasse : '');
+          b.innerHTML = zeichen;
+          b.setAttribute('title', titel);
+          b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); tun(); });
+          leiste.appendChild(b);
+          return b;
+        }
+
+        if (istWeg(k)) {
+          knopf('\u21BA wieder einblenden', 'Diesen Abschnitt wieder zeigen', function () {
+            verborgen = verborgen.filter(function (x) { return x !== k; });
+            legen('h1', verborgen).then(function () { ausblendenAnwenden(); werkzeugNeu(); });
+          }, 'fv-sek-k--zurueck');
+        } else {
+          knopf('\u2715 Abschnitt ausblenden', 'Den ganzen Abschnitt f\u00fcr Besucher verbergen', function () {
+            var name = titelVon(sec) || 'dieser Abschnitt';
+            if (!window.confirm('Ganzen Abschnitt ausblenden?\n\n' + name
+                + '\n\nBesucher sehen ihn dann nicht mehr. Du kannst ihn hier\n'
+                + 'jederzeit wieder einblenden.')) return;
+            verborgen.push(k);
+            legen('h1', verborgen).then(function () { ausblendenAnwenden(); werkzeugNeu(); });
+          });
+        }
+
+        if (eigen) {
+          knopf('\u2715 Abschnitt l\u00f6schen', 'Diesen selbst angelegten Abschnitt entfernen', function () {
+            var id = sec.getAttribute('data-fv-sektion');
+            var name = titelVon(sec) || 'dieser Abschnitt';
+            if (!window.confirm('Selbst angelegten Abschnitt l\u00f6schen?\n\n' + name
+                + '\n\nDas l\u00e4sst sich nicht \u00fcber \u201ewieder einblenden\u201c zur\u00fcckholen.\n'
+                + 'Felder, die darin liegen, wandern ans Seitenende.')) return;
+            eigene = eigene.filter(function (x) { return x.id !== id; });
+            legen('w0', eigene).then(function () { location.reload(); });
+          }, 'fv-sek-k--weg');
+        }
+
+        sec.insertBefore(leiste, sec.firstChild);
+
+        /* Ueberschrift eigener Abschnitte bearbeitbar machen - der Text
+           landet im Abschnitt selbst, nicht in der t-Nummerierung. */
+        if (eigen) {
+          var h = sec.querySelector(':scope > h2');
+          if (h && !h.hasAttribute('contenteditable')) {
+            h.setAttribute('contenteditable', 'true');
+            h.setAttribute('spellcheck', 'false');
+            h.classList.add('fv-editable');
+            var alt = h.textContent;
+            h.addEventListener('blur', function () {
+              var neu = (h.textContent || '').replace(/\s+/g, ' ').trim();
+              if (!neu) { h.textContent = alt; return; }
+              if (neu === alt) return;
+              alt = neu;
+              var id = sec.getAttribute('data-fv-sektion');
+              eigene.forEach(function (x) { if (x.id === id) x.titel = neu; });
+              legen('w0', eigene);
+            });
+          }
+        }
+      });
+    }
+    function werkzeugNeu() {
+      Array.prototype.slice.call(document.querySelectorAll('.fv-sek-leiste'))
+        .forEach(function (l) { if (l.parentNode) l.parentNode.removeChild(l); });
+      werkzeugBauen();
+    }
+
+    function anlegenKnopf() {
+      var t = traeger(); if (!t) return;
+      if (document.querySelector('.fv-sek-neu')) return;
+      var box = document.createElement('div');
+      box.className = 'fv-sek-neu';
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'fv-extra-add';
+      b.innerHTML = '<span aria-hidden="true">+</span> Abschnitt';
+      b.setAttribute('title', 'Einen neuen Bereich mit eigener \u00dcberschrift anlegen');
+      b.addEventListener('click', function () {
+        var titel = window.prompt('\u00dcberschrift des neuen Abschnitts:', 'Neuer Abschnitt');
+        if (titel === null) return;
+        titel = String(titel).replace(/\s+/g, ' ').trim();
+        if (!titel) return;
+        if (eigene.length >= 20) { window.alert('Mehr als zwanzig eigene Abschnitte sind zu viel.'); return; }
+        eigene.push({ id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+                      titel: titel });
+        legen('w0', eigene).then(function () { location.reload(); });
+      });
+      box.appendChild(b);
+      var hinweis = document.createElement('span');
+      hinweis.className = 'fv-extra-add__wo';
+      hinweis.textContent = 'am Seitenende \u2013 danach l\u00e4sst sich alles hineinsetzen';
+      box.appendChild(hinweis);
+      t.appendChild(box);
+    }
+
+    function start() {
+      Promise.all([holen('w0'), holen('h1')]).then(function (a) {
+        eigene = a[0].filter(function (x) { return x && typeof x.id === 'string'; });
+        verborgen = a[1].filter(function (x) { return typeof x === 'string'; });
+        eigeneBauen();
+        ausblendenAnwenden();
+        if (pw && editAn) { werkzeugBauen(); anlegenKnopf(); }
+      });
+    }
+
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
     else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Vorhandene Felder verschieben
+ * ---------------------------------------------------------------------
+ * Bisher liessen sich nur selbst angelegte Felder bewegen. Die Felder
+ * aus der HTML-Datei standen fest.
+ *
+ * WARUM DAS HEIKEL IST: Die Schluessel (t0, i0, s0 ...) werden nach der
+ * Reihenfolge im Dokument vergeben. Wuerde man ein Feld verschieben und
+ * DANACH nummerieren, bekaemen alle Felder dahinter neue Nummern - und
+ * jeder gespeicherte Text saesse auf einem fremden Feld.
+ *
+ * DER AUSWEG: Die HTML-Datei aendert sich nie. Also erst nummerieren,
+ * dann umstellen. Dieses Modul wartet auf "fv:felder-bereit" - das
+ * Zeichen, dass alle Schluessel vergeben und alle Texte eingesetzt
+ * sind. Was danach passiert, kann die Nummerierung nicht mehr stoeren.
+ *
+ * Gespeichert wird je Seite in Block z0:
+ *   [{ feld: "t5", anker: "t9", wo: "vor" }, ...]
+ * "anker" ist der Schluessel des Feldes, neben das es soll. Also keine
+ * Pixel und keine Indizes, sondern eine Beziehung - die haelt auch,
+ * wenn sich sonst etwas aendert.
+ *
+ * Die Umstellung gilt fuer ALLE Besucher, nicht nur im Bearbeiten-Modus.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+
+    function seite() {
+      var p = (location.pathname || '').toLowerCase();
+      var datei = p.substring(p.lastIndexOf('/') + 1) || 'index.html';
+      var name = datei.replace(/\.html?$/, '');
+      if (!name || name === 'index') name = 'start';
+      return name;
+    }
+    var SLUG = seite();
+    var zuege = [];
+
+    function haupt() { return document.querySelector('main'); }
+    function feldVon(k) {
+      var h = haupt(); if (!h || !k) return null;
+      return h.querySelector('[data-fvk="' + k + '"]');
+    }
+
+    function holen() {
+      return fetch('/api/content?page=' + encodeURIComponent(SLUG), { method: 'GET' })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (res) {
+          var w = '';
+          if (res && res.items) res.items.forEach(function (it) { if (it.block === 'z0') w = it.value || ''; });
+          if (!w) return [];
+          try { var a = JSON.parse(w); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+        }).catch(function () { return []; });
+    }
+    function legen() {
+      return fetch('/api/content', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ page: SLUG, block: 'z0', type: 'text',
+                               value: JSON.stringify(zuege), password: pw })
+      }).then(function (r) { return r.ok; }).catch(function () { return false; });
+    }
+
+    /* Umstellen. Reihenfolge der Eintraege wird eingehalten - so lassen
+       sich auch mehrere Felder hintereinander an dieselbe Stelle legen. */
+    function anwenden() {
+      zuege.forEach(function (z) {
+        if (!z || !z.feld || !z.anker) return;
+        var el = feldVon(z.feld), an = feldVon(z.anker);
+        if (!el || !an || el === an) return;
+        if (el.contains(an)) return;               // sich selbst nicht verschlucken
+        if (!an.parentNode) return;
+        el.setAttribute('data-fv-verschoben', '');
+        if (z.wo === 'vor') an.parentNode.insertBefore(el, an);
+        else an.parentNode.insertBefore(el, an.nextSibling);
+      });
+    }
+
+    /* ---- Bedienung -------------------------------------------------- */
+    function bedienung() {
+      if (!pw || !editAn) return;
+      var h = haupt(); if (!h) return;
+      if (document.querySelector('.fv-zieh-feld')) return;
+
+      var griff = document.createElement('button');
+      griff.type = 'button';
+      griff.className = 'fv-zieh-feld';
+      griff.innerHTML = '\u2807\u2807';
+      griff.setAttribute('title', 'Dieses Feld an eine andere Stelle ziehen');
+      griff.style.display = 'none';
+      document.body.appendChild(griff);
+
+      var linie = document.createElement('div');
+      linie.className = 'fv-zieh-linie';
+      linie.style.display = 'none';
+      document.body.appendChild(linie);
+
+      var ziel = null, weg = null, zieht = null;
+
+      function zeigen(el) {
+        if (!el) { verstecken(); return; }
+        var r = el.getBoundingClientRect();
+        if (r.width < 12 || r.height < 10) { verstecken(); return; }
+        ziel = el;
+        griff.style.display = 'block';
+        griff.style.top = (r.top + window.scrollY - 10) + 'px';
+        griff.style.left = Math.max(4, r.left + window.scrollX - 26) + 'px';
+      }
+      function verstecken() {
+        clearTimeout(weg);
+        weg = setTimeout(function () {
+          if (!zieht) { griff.style.display = 'none'; ziel = null; }
+        }, 260);
+      }
+      document.addEventListener('mouseover', function (e) {
+        if (zieht) return;
+        if (!e.target || !e.target.closest) return;
+        if (e.target.closest('.fv-zieh-feld') || e.target.closest('.fv-admin-bar')
+            || e.target.closest('.fv-weg-btn')) { clearTimeout(weg); return; }
+        var el = e.target.closest('[data-fvk]');
+        if (el && haupt() && haupt().contains(el)) { clearTimeout(weg); zeigen(el); }
+        else verstecken();
+      });
+      griff.addEventListener('mouseenter', function () { clearTimeout(weg); });
+
+      /* Naechste Einfuegestelle zum Zeiger suchen: das Feld, dessen Mitte
+         am dichtesten liegt, davor oder dahinter. */
+      function stelleSuchen(x, y) {
+        var h2 = haupt(); if (!h2) return null;
+        var beste = null, abstand = Infinity;
+        Array.prototype.slice.call(h2.querySelectorAll('[data-fvk]')).forEach(function (el) {
+          if (el === zieht.el || zieht.el.contains(el)) return;
+          if (el.closest('.fv-extra')) return;
+          var r = el.getBoundingClientRect();
+          if (r.width < 8 || r.height < 6) return;
+          [['vor', r.top], ['nach', r.bottom]].forEach(function (p) {
+            var d = Math.abs(y - p[1]) + Math.abs(x - (r.left + r.width / 2)) * 0.12;
+            if (d < abstand) { abstand = d; beste = { el: el, wo: p[0], y: p[1], r: r }; }
+          });
+        });
+        return beste;
+      }
+      function linieZeigen(s) {
+        if (!s) { linie.style.display = 'none'; return; }
+        linie.style.display = 'block';
+        linie.style.top = (s.y + window.scrollY - 1) + 'px';
+        linie.style.left = (s.r.left + window.scrollX) + 'px';
+        linie.style.width = s.r.width + 'px';
+      }
+
+      function anfang(x, y) {
+        if (!ziel) return;
+        var k = ziel.getAttribute('data-fvk');
+        if (!k) return;
+        zieht = { el: ziel, key: k, stelle: null };
+        ziel.classList.add('fv-feld-zieht');
+        document.body.classList.add('fv-zieht');
+        bewegen(x, y);
+      }
+      function bewegen(x, y) {
+        if (!zieht) return;
+        zieht.stelle = stelleSuchen(x, y);
+        linieZeigen(zieht.stelle);
+      }
+      function ende() {
+        if (!zieht) return;
+        var z = zieht; zieht = null;
+        linie.style.display = 'none';
+        document.body.classList.remove('fv-zieht');
+        if (z.el) z.el.classList.remove('fv-feld-zieht');
+        if (!z.stelle) return;
+        var ankerKey = z.stelle.el.getAttribute('data-fvk');
+        if (!ankerKey || ankerKey === z.key) return;
+
+        zuege = zuege.filter(function (e) { return e.feld !== z.key; });
+        zuege.push({ feld: z.key, anker: ankerKey, wo: z.stelle.wo });
+        if (z.stelle.wo === 'vor') z.stelle.el.parentNode.insertBefore(z.el, z.stelle.el);
+        else z.stelle.el.parentNode.insertBefore(z.el, z.stelle.el.nextSibling);
+        z.el.setAttribute('data-fv-verschoben', '');
+        legen();
+      }
+
+      griff.addEventListener('mousedown', function (e) {
+        if (e.button !== 0) return;
+        e.preventDefault();
+        anfang(e.clientX, e.clientY);
+        function mv(ev) { ev.preventDefault(); bewegen(ev.clientX, ev.clientY); }
+        function up() {
+          document.removeEventListener('mousemove', mv);
+          document.removeEventListener('mouseup', up);
+          ende();
+        }
+        document.addEventListener('mousemove', mv);
+        document.addEventListener('mouseup', up);
+      });
+      griff.addEventListener('touchstart', function (e) {
+        if (!e.touches || !e.touches[0]) return;
+        e.preventDefault();
+        anfang(e.touches[0].clientX, e.touches[0].clientY);
+        function mv(ev) {
+          if (!ev.touches || !ev.touches[0]) return;
+          ev.preventDefault();
+          bewegen(ev.touches[0].clientX, ev.touches[0].clientY);
+        }
+        function up() {
+          griff.removeEventListener('touchmove', mv);
+          griff.removeEventListener('touchend', up);
+          ende();
+        }
+        griff.addEventListener('touchmove', mv, { passive: false });
+        griff.addEventListener('touchend', up);
+      }, { passive: false });
+
+      /* Zuruecksetzen - ohne das waere ein verrutschtes Feld nur ueber
+         die Datenbank zu retten. */
+      document.addEventListener('fv:zuege-zuruecksetzen', function () {
+        if (!zuege.length) { window.alert('Auf dieser Seite wurde nichts verschoben.'); return; }
+        if (!window.confirm('Alle ' + zuege.length + ' Verschiebungen auf dieser Seite zur\u00fccksetzen?\n\n'
+            + 'Die Felder stehen danach wieder dort, wo sie in der Datei stehen.')) return;
+        zuege = [];
+        legen().then(function () { location.reload(); });
+      });
+    }
+
+    function start() {
+      holen().then(function (a) {
+        zuege = a.filter(function (z) { return z && typeof z.feld === 'string' && typeof z.anker === 'string'; });
+        anwenden();
+        bedienung();
+      });
+    }
+
+    document.addEventListener('fv:felder-bereit', start);
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Altlasten: verwaiste Fassungsangaben
+ * ---------------------------------------------------------------------
+ * Eine Fassungsangabe ist nur erreichbar, wenn eine Adresse auf ihren
+ * Schluessel zeigt. Zeigt nichts darauf, liest sie kein Programm mehr -
+ * sie steht nur noch im Weg und taucht in jeder Sicherung auf.
+ *
+ * Der Server entscheidet, was verwaist ist (/api/altlasten), nicht diese
+ * Seite: nur er kennt die feste Routentabelle UND die selbst angelegten
+ * Routen. Geraten wird hier nichts.
+ *
+ * Bewusst ENG: nur Fassungsangaben ohne Route. Texte und Bilder bleiben
+ * aussen vor - bei denen laesst sich nicht sicher sagen, dass sie
+ * niemand mehr braucht.
+ *
+ * Der bisherige Stand wandert beim Entfernen in den Verlauf.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var pw = '';
+    try { pw = sessionStorage.getItem('fv_admin_pw') || ''; } catch (e) {}
+    var editAn = false;
+    try { editAn = sessionStorage.getItem('fv_edit') === '1'; } catch (e) {}
+    if (!pw || !editAn) return;
+    var pfad = (location.pathname || '').toLowerCase().replace(/\.html?$/, '').replace(/\/+$/, '');
+    if (pfad !== '/programme') return;
+
+    var funde = [], erreichbar = [];
+
+    function laden() {
+      return fetch('/api/altlasten', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: pw })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (a) {
+          funde = (a && a.altlasten) || [];
+          erreichbar = (a && a.erreichbar) || [];
+        })
+        .catch(function () { funde = []; erreichbar = []; });
+    }
+
+    function bauen() {
+      var ziel = document.querySelector('main');
+      if (!ziel || document.querySelector('.fv-alt-box')) return;
+
+      var box = document.createElement('section');
+      box.className = 'fv-prog-box fv-alt-box';
+      box.innerHTML =
+        '<h3 class="fv-prog-titel">\uD83E\uDDF9 Altlasten <span>(nur f\u00fcr dich sichtbar)</span></h3>'
+      + '<p class="fv-prog-hilfe">Fassungsangaben, auf die <strong>keine Adresse mehr zeigt</strong>. '
+      + 'Kein Programm kann sie abfragen \u2013 sie stehen nur noch in der Datenbank und in jeder '
+      + 'Sicherung. Beim Entfernen wandert der bisherige Stand in den Verlauf, du kannst ihn also '
+      + 'nachlesen.</p>'
+      + '<div class="fv-prog-zeile">'
+      + '  <button type="button" class="fv-prog-btn" data-a="neu">Erneut suchen</button>'
+      + '  <span class="fv-prog-melde"></span>'
+      + '</div>'
+      + '<div data-a="liste"></div>'
+      + '<details class="fv-alt-details"><summary>Welche Schl\u00fcssel sind erreichbar?</summary>'
+      + '<div class="fv-alt-erreichbar" data-a="erreichbar"></div></details>';
+      ziel.appendChild(box);
+
+      var liste = box.querySelector('[data-a="liste"]');
+      function sagen(t, gut) {
+        var m = box.querySelector('.fv-prog-melde');
+        m.textContent = t;
+        m.className = 'fv-prog-melde ' + (gut ? 'gut' : 'schlecht');
+        if (gut) setTimeout(function () { m.textContent = ''; m.className = 'fv-prog-melde'; }, 8000);
+      }
+
+      function zeigen() {
+        box.querySelector('[data-a="erreichbar"]').textContent = erreichbar.join(' \u00b7 ');
+        liste.innerHTML = '';
+        if (!funde.length) {
+          liste.innerHTML = '<p class="fv-prog-hilfe">\u2713 Keine verwaisten Fassungsangaben. '
+                          + 'Alles, was gespeichert ist, wird auch abgefragt.</p>';
+          return;
+        }
+        funde.forEach(function (f) {
+          var karte = document.createElement('div');
+          karte.className = 'fv-alt-karte';
+          karte.setAttribute('data-alt', f.page);
+          karte.innerHTML =
+            '<div class="fv-alt-kopf"><code>' + f.page + '</code>'
+          + (f.versionName ? '<span class="fv-alt-fassung">Fassung ' + f.versionName
+             + (f.versionCode ? ' \u00b7 ' + f.versionCode : '') + '</span>' : '')
+          + '</div>'
+          + '<div class="fv-alt-grund">' + f.grund + '</div>'
+          + '<pre class="fv-alt-inhalt">' + String(f.vorschau || '')
+              .replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</pre>'
+          + '<button type="button" class="fv-bild-weg" data-a="weg">Entfernen</button>';
+
+          karte.querySelector('[data-a="weg"]').addEventListener('click', function () {
+            if (!window.confirm('Diese verwaiste Fassungsangabe entfernen?\n\n'
+                + f.page + (f.versionName ? '  \u2013  Fassung ' + f.versionName : '')
+                + '\n\nAuf diesen Schl\u00fcssel zeigt keine Adresse; kein Programm fragt ihn ab.\n'
+                + 'Der bisherige Stand bleibt im Verlauf nachlesbar.')) return;
+            fetch('/api/altlasten/entfernen', {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ password: pw, eintraege: [{ page: f.page, block: f.block }] })
+            }).then(function (r) { return r.ok ? r.json() : null; })
+              .then(function (a) {
+                if (!a || !a.ok || !a.entfernt) { sagen('\u2717 Entfernen fehlgeschlagen.', false); return; }
+                funde = funde.filter(function (x) { return x.page !== f.page; });
+                zeigen();
+                sagen('\u2713 ' + f.page + ' entfernt.', true);
+              })
+              .catch(function () { sagen('\u2717 Entfernen fehlgeschlagen.', false); });
+          });
+
+          liste.appendChild(karte);
+        });
+      }
+
+      box.querySelector('[data-a="neu"]').addEventListener('click', function () {
+        laden().then(function () { zeigen(); sagen('\u2713 Erneut gesucht.', true); });
+      });
+
+      laden().then(zeigen);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
+    else bauen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Datenschutzseite - ERZEUGT, NICHT GESCHRIEBEN
+ * ---------------------------------------------------------------------
+ * Nach der FINNVELO-Vorlage vom 24.08.2026.
+ *
+ * Der Grundsatz: Ein von Hand getippter Datenschutztext ist am Tag der
+ * Auslieferung richtig und danach nie wieder. Der bisherige Text auf
+ * dieser Seite war dafuer das Muster - er stammte vom 27.05.2026 und
+ * behauptete "keine Benutzerkonten, kein Kontaktformular", waehrend es
+ * laengst Kommentare, einen Admin-Zugang und 25 Kanaele gab.
+ *
+ * Deshalb steht hier EINE Tabelle aller Stellen, an die etwas
+ * hinausgeht oder wo etwas liegen bleibt. Der Text wird daraus gebaut.
+ * Kommt etwas dazu, wird es hier eingetragen - und die Seite stimmt im
+ * selben Moment wieder.
+ *
+ * Jede Zeile unten wurde am Quelltext geprueft, nicht angenommen. Wo es
+ * herkommt, steht als Fundstelle dabei.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var FASSUNG = '24.08.2026';
+
+    /* ---- Empfaenger: wohin etwas hinausgeht --------------------------
+       an:  ist es gerade eingeschaltet? Abgeschaltetes bleibt STEHEN und
+            wird als abgeschaltet gekennzeichnet - wegzulassen waere
+            falsch, der Mensch soll sehen was es gibt und was ruht.
+       ohneZutun: geschieht es ohne bewusste Handlung?                 */
+    var EMPFAENGER = [
+      {
+        id: 'cloudflare',
+        name: 'Cloudflare',
+        traeger: 'Cloudflare, Inc.',
+        adresse: 'finnveloprogramme.com',
+        wo: 'USA (Server weltweit verteilt)',
+        sendet: 'IP-Adresse, Zeitpunkt, aufgerufene Adresse, Browserkennung',
+        wann: 'bei JEDEM Aufruf dieser Seite',
+        ohneZutun: true,
+        an: true,
+        fund: 'Die Webseite laeuft als Cloudflare Worker; jede Anfrage geht durch deren Netz.'
+      },
+      {
+        id: 'ytimg',
+        name: 'YouTube-Vorschaubild',
+        traeger: 'Google LLC',
+        adresse: 'i.ytimg.com',
+        wo: 'USA',
+        sendet: 'IP-Adresse, Kennung des Videos',
+        wann: 'beim Laden einer Seite MIT Video \u2013 ohne dass du klickst',
+        ohneZutun: true,
+        an: true,
+        fund: 'stats.js: das Standbild wird als Hintergrund gesetzt, sobald die Seite aufbaut.'
+      },
+      {
+        id: 'youtube',
+        name: 'YouTube',
+        traeger: 'Google LLC',
+        adresse: 'www.youtube-nocookie.com',
+        wo: 'USA',
+        sendet: 'IP-Adresse, Kennung des Videos, Browserkennung',
+        wann: 'erst wenn du auf das Video klickst',
+        ohneZutun: false,
+        an: true,
+        fund: 'stats.js: der Rahmen wird erst beim Klick eingesetzt (\u201eZwei-Klick-L\u00f6sung\u201c).'
+      },
+      {
+        id: 'github',
+        name: 'GitHub',
+        traeger: 'GitHub, Inc. (Microsoft)',
+        adresse: 'github.com',
+        wo: 'USA',
+        sendet: 'IP-Adresse, welche Datei du herunterl\u00e4dst',
+        wann: 'erst wenn du einen Download anklickst',
+        ohneZutun: false,
+        an: true,
+        fund: 'Alle Programmdateien liegen dort; die Webseite verlinkt nur.'
+      },
+      {
+        id: 'paypal',
+        name: 'PayPal',
+        traeger: 'PayPal (Europe) S.\u00e0 r.l. et Cie, S.C.A.',
+        adresse: 'www.paypal.me',
+        wo: 'Luxemburg',
+        sendet: 'IP-Adresse; alles Weitere geschieht dort, nicht hier',
+        wann: 'erst wenn du auf den Spendenknopf klickst',
+        ohneZutun: false,
+        an: true,
+        fund: 'Spendenknopf auf einzelnen Programmseiten.'
+      }
+    ];
+
+    /* ---- Was auf dem Gerät bleibt ---------------------------------- */
+    var LOKAL = [
+      { was: 'Merker \u201eschon gez\u00e4hlt\u201c', wo: 'localStorage',
+        zweck: 'damit derselbe Browser nicht mehrfach als Besucher z\u00e4hlt',
+        inhalt: 'nur eine 1 \u2013 keine Kennung, kein Zeitpunkt' },
+      { was: 'Lage des Besucher-Schilds', wo: 'localStorage',
+        zweck: 'merkt sich, wohin du das Schild geschoben hast',
+        inhalt: 'zwei Zahlen' },
+      { was: 'Zeitpunkt zuletzt gesehener Kommentare', wo: 'localStorage',
+        zweck: 'zeigt an, was seit deinem letzten Besuch neu ist',
+        inhalt: 'ein Zeitstempel' },
+      { was: 'Admin-Passwort', wo: 'sessionStorage',
+        zweck: 'nur f\u00fcr den Betreiber; wird beim Schlie\u00dfen des Fensters gel\u00f6scht',
+        inhalt: 'nur beim Betreiber vorhanden, nie bei Besuchern' }
+    ];
+
+    /* ---- Was auf dem Server liegt ---------------------------------- */
+    var SERVER = [
+      { was: 'Z\u00e4hlerst\u00e4nde', inhalt: 'nur Zahlen je Seite \u2013 keine Zuordnung zu Personen',
+        dauer: 'dauerhaft' },
+      { was: 'Kommentare', inhalt: 'der Text und der Name, den du selbst eintr\u00e4gst (darf leer bleiben)',
+        dauer: 'bis sie entfernt werden' },
+      { was: 'Seiteninhalte', inhalt: 'Texte und Bilder, die der Betreiber eintr\u00e4gt',
+        dauer: 'dauerhaft' },
+      { was: 'Kan\u00e4le (Listen und Chat)', inhalt: 'VERSCHL\u00dcSSELTE Pakete \u2013 der Server kann sie nicht lesen',
+        dauer: 'bis der Kanal gel\u00f6scht wird' },
+      { was: 'Fehlversuche bei der Kanal-Anmeldung',
+        inhalt: 'die IP-ADRESSE im Klartext, als Sperre gegen Durchprobieren',
+        dauer: 'bis zur n\u00e4chsten erfolgreichen Anmeldung' }
+    ];
+
+    /* ---- Was nie \u00fcbertragen wird -------------------------------- */
+    var NIEMALS = [
+      'Der Inhalt deiner Listen und Nachrichten \u2013 der ist verschl\u00fcsselt, bevor er den Server erreicht.',
+      'Deine E-Mail-Adresse \u2013 es gibt kein Anmeldeformular und keinen Newsletter.',
+      'Dein Name, au\u00dfer du schreibst ihn selbst in einen Kommentar.',
+      'Dein Verhalten auf der Seite \u2013 es gibt keine Analysewerkzeuge, keine Werbung, keine Z\u00e4hlpixel.',
+      'Dein Standort \u2013 er wird nicht abgefragt.'
+    ];
+
+    /* ---- Was du selbst in der Hand hast ---------------------------- */
+    var SCHALTER = [
+      { was: 'Videos', wie: 'Das Video l\u00e4dt erst, wenn du es anklickst. Das Standbild kommt allerdings '
+             + 'schon vorher von Google \u2013 wenn du das nicht willst, blockiere <code>i.ytimg.com</code> '
+             + 'in deinem Browser.' },
+      { was: 'Besucherz\u00e4hlung', wie: 'L\u00f6sche die Daten dieser Webseite in deinem Browser, dann ist '
+             + 'der Merker weg. Ohne JavaScript wird gar nicht gez\u00e4hlt.' },
+      { was: 'Kommentare', wie: 'Den Namen kannst du weglassen. Zum Entfernen eines Kommentars gen\u00fcgt '
+             + 'eine kurze Nachricht \u00fcber die Kontaktseite.' },
+      { was: 'Downloads', wie: 'Sie f\u00fchren zu GitHub. Wer das vermeiden will, l\u00e4dt dort nicht herunter.' }
+    ];
+
+    /* ================================================================= */
+    function sicher(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+    function zeile(was, wert) {
+      return '<div class="ds-zeile"><div class="ds-was">' + was
+           + '</div><div class="ds-wert">' + wert + '</div></div>';
+    }
+    function gruppe(titel, innen) {
+      return '<section class="ds-gruppe"><h2>' + sicher(titel) + '</h2>' + innen + '</section>';
+    }
+    function absatz(t) { return '<p class="ds-text">' + t + '</p>'; }
+
+    function malen() {
+      var ziel = document.querySelector('[data-fv-datenschutz]');
+      if (!ziel) return;
+
+      var aktive = EMPFAENGER.filter(function (e) { return e.an; });
+      var draussen = aktive.filter(function (e) { return e.wo.indexOf('Deutschland') === -1; });
+      var ohneZutun = EMPFAENGER.filter(function (e) { return e.an && e.ohneZutun; });
+      var aufKlick = EMPFAENGER.filter(function (e) { return e.an && !e.ohneZutun; });
+
+      var h = '';
+
+      /* 1 - Kurz gesagt */
+      h += gruppe('1 \u00b7 Kurz gesagt',
+          absatz('Diese Webseite setzt <strong>keine Cookies</strong>, benutzt keine Analysewerkzeuge, '
+               + 'zeigt keine Werbung und verlangt von dir keine Anmeldung. Gez\u00e4hlt wird nur, '
+               + '<em>wie viele</em> Besucher da waren \u2013 nicht, wer.')
+        + absatz('Es gibt aber sehr wohl einen <strong>Server</strong>: Die Seite l\u00e4uft bei Cloudflare, '
+               + 'und dort liegen die Seiteninhalte, die Kommentare, die Z\u00e4hlerst\u00e4nde und die '
+               + 'verschl\u00fcsselten Daten der Listen- und Chat-Kan\u00e4le. Bei jedem Aufruf geht deine '
+               + 'IP-Adresse dorthin \u2013 das l\u00e4sst sich technisch nicht vermeiden.')
+        + absatz('Wenn du eine Seite mit Video \u00f6ffnest, l\u00e4dt <strong>ohne dein Zutun</strong> ein '
+               + 'Vorschaubild von Google. Das Video selbst startet erst auf Klick.'));
+
+      /* 2 - Was auf dem Ger\u00e4t bleibt */
+      var l = absatz('Diese Seite legt vier Dinge im Speicher deines Browsers ab. Alle vier lassen sich '
+                   + 'l\u00f6schen, indem du die Daten dieser Webseite im Browser entfernst.');
+      LOKAL.forEach(function (x) {
+        l += zeile(sicher(x.was) + '<br><span class="ds-klein">' + sicher(x.wo) + '</span>',
+                   sicher(x.zweck) + '<br><span class="ds-klein">Inhalt: ' + sicher(x.inhalt) + '</span>');
+      });
+      h += gruppe('2 \u00b7 Was auf dem Ger\u00e4t bleibt', l);
+
+      /* 3 - Was das Ger\u00e4t verl\u00e4sst */
+      var e = absatz('Je Empf\u00e4nger eine Zeile. \u00dcbertragen wird immer auch \u2013 wie bei jedem Aufruf '
+                   + 'im Netz \u2013 deine <strong>IP-Adresse</strong>. Empf\u00e4nger au\u00dferhalb Deutschlands '
+                   + 'sind ausdr\u00fccklich als solche genannt.');
+      EMPFAENGER.forEach(function (x) {
+        e += zeile(sicher(x.name) + (x.an ? '' : ' <span class="ds-aus">(abgeschaltet)</span>')
+                 + '<br><span class="ds-klein">' + sicher(x.traeger) + '</span>',
+                   sicher(x.sendet) + '<br><span class="ds-klein">'
+                 + sicher(x.adresse) + ' \u00b7 ' + sicher(x.wo) + ' \u00b7 ' + sicher(x.wann)
+                 + '</span>');
+      });
+      h += gruppe('3 \u00b7 Was das Ger\u00e4t verl\u00e4sst', e);
+
+      /* 4 - Auch ohne dein Zutun */
+      var o = absatz('Das Heikelste und am h\u00e4ufigsten Vergessene: Was passiert, <strong>ohne</strong> '
+                   + 'dass du etwas anklickst.');
+      ohneZutun.forEach(function (x) {
+        o += zeile(sicher(x.name), sicher(x.wann) + '<br><span class="ds-klein">'
+                 + sicher(x.adresse) + ' \u00b7 ' + sicher(x.wo) + '</span>');
+      });
+      o += absatz('Zum Vergleich \u2013 diese Stellen werden <strong>erst auf Klick</strong> angesprochen: '
+                + aufKlick.map(function (x) { return sicher(x.name); }).join(', ') + '.');
+      h += gruppe('4 \u00b7 Auch ohne dein Zutun', o);
+
+      /* 5 - Was auf dem Server liegt */
+      var s = absatz('Was in der Datenbank bei Cloudflare gespeichert wird.');
+      SERVER.forEach(function (x) {
+        s += zeile(sicher(x.was), sicher(x.inhalt) + '<br><span class="ds-klein">Bleibt: '
+                 + sicher(x.dauer) + '</span>');
+      });
+      s += absatz('<strong>Zur letzten Zeile:</strong> Wer sich bei einem Kanal mit falschem Kennwort '
+                + 'anmeldet, dessen IP-Adresse wird im Klartext vermerkt, damit ein Durchprobieren '
+                + 'gebremst werden kann. Nach der n\u00e4chsten richtigen Anmeldung wird der Eintrag '
+                + 'gel\u00f6scht. Bei Kommentaren ist es anders geregelt: dort wird die IP-Adresse '
+                + '<em>gehasht</em> und nur im Arbeitsspeicher gehalten, nicht gespeichert.');
+      h += gruppe('5 \u00b7 Was auf dem Server liegt', s);
+
+      /* 6 - Was nie \u00fcbertragen wird */
+      var n = '<ul class="ds-liste">';
+      NIEMALS.forEach(function (x) { n += '<li>' + x + '</li>'; });
+      n += '</ul>';
+      h += gruppe('6 \u00b7 Was nie \u00fcbertragen wird', n);
+
+      /* 7 - Was du selbst in der Hand hast */
+      var w = '';
+      SCHALTER.forEach(function (x) { w += zeile(sicher(x.was), x.wie); });
+      h += gruppe('7 \u00b7 Was du selbst in der Hand hast', w);
+
+      /* 8 - Stand */
+      h += gruppe('8 \u00b7 Stand',
+          absatz('Fassung ' + FASSUNG + ' \u00b7 <strong>' + aktive.length + ' von '
+               + EMPFAENGER.length + '</strong> Empf\u00e4ngern angeschaltet, davon <strong>'
+               + draussen.length + '</strong> au\u00dferhalb Deutschlands, davon <strong>'
+               + ohneZutun.length + '</strong> ohne dein Zutun.')
+        + absatz('Diese Seite wird aus dem Verzeichnis der Empf\u00e4nger <strong>erzeugt</strong>, nicht '
+               + 'von Hand geschrieben. Kommt eine Stelle dazu oder f\u00e4llt eine weg, steht es hier '
+               + 'sofort richtig \u2013 genau darum wird der Text nicht gepflegt, sondern gebaut.')
+        + absatz('<strong>Das ist eine ehrliche Auskunft, keine Datenschutzerkl\u00e4rung im Rechtssinn.</strong> '
+               + 'F\u00fcr eine solche fehlen Rechtsgrundlagen je Verarbeitung, Speicherdauern, '
+               + 'Betroffenenrechte, das Beschwerderecht bei der Aufsichtsbeh\u00f6rde und Angaben zur '
+               + '\u00dcbermittlung in Drittl\u00e4nder. Verantwortlicher und ladungsf\u00e4hige Anschrift '
+               + 'stehen im <a href="/impressum">Impressum</a>.'));
+
+      ziel.innerHTML = h;
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', malen);
+    else malen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
+ * Werkzeug ansteuern
+ * ---------------------------------------------------------------------
+ * Das Werkzeug-Menue schickt einen mit #werkzeug=<klasse> auf die
+ * Programme-Seite. Die Kaesten werden erst nachtraeglich gebaut - also
+ * warten, bis der gesuchte da ist, dann hinrollen und kurz hervorheben.
+ * Ohne das Hervorheben landet man mitten in neun aehnlichen Kaesten und
+ * sucht weiter.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var treffer = /(?:^|[#&])werkzeug=([a-z0-9-]+)/.exec(location.hash || '');
+    if (!treffer) return;
+    var klasse = treffer[1];
+    var versuche = 0;
+
+    function suchen() {
+      var el = document.querySelector('.' + klasse);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.add('fv-werkzeug-treffer');
+        setTimeout(function () { el.classList.remove('fv-werkzeug-treffer'); }, 2600);
+        try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+        return;
+      }
+      if (++versuche > 40) return;            // nach ~8 Sekunden aufgeben
+      setTimeout(suchen, 200);
+    }
+
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', suchen);
+    else suchen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();

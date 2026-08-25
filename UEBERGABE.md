@@ -382,6 +382,245 @@ dort, wo das Ziel ohnehin gepflegt wird. Die tote Funktion ist entfernt.
 * Schlägt das Speichern des Ziels fehl, steht die Adresse trotzdem im
   Feld und die Meldung sagt, dass „Ziel speichern" noch fehlt.
 
+## 5Q. Vorschau zeigte beide Fassungen (22.08.2026)
+
+**Die Dateien auf dem Server waren bereits richtig getrennt** - vom
+Nutzer hochgeladene `version.json` und `pc.json` belegen es. Verwirrend
+war nur die **Vorschau** in der Kachel: sie zeigte
+`ausFeldern()` - die Arbeitsform der Kachel mit App-Feldern **und**
+Block `pc`. Das ist nicht, was auf dem Server liegt.
+
+**Geaendert:** Die Rohansicht zeigt jetzt nur noch die Datei, die zur
+gewaehlten Fassung gehoert - beim PC-Reiter also nur den PC-Teil, mit
+eigenem Schluessel.
+
+Der veraltete Warntext in der PC-Kachel ("schreibt derzeit noch einen
+Block pc in DIESELBE version.json") ist ersetzt.
+
+**Merke:** Die Kachel arbeitet intern mit **einem** Objekt, damit die
+Reiter funktionieren. Gespeichert und angezeigt wird getrennt. Wer die
+Vorschau aendert, muss beide Stellen anfassen: beim Aufklappen und beim
+Reiterwechsel.
+
+---
+
+## 5P. Einheitliches Verfahren fuer PC-Aktualisierungen (22.08.2026)
+
+Alle fuenf PC-Fassungsdateien liefern jetzt **denselben Aufbau**:
+
+```json
+{ "schluessel": "...-PC", "versionCode": 0, "versionName": "",
+  "apk": "", "hinweise": "" }
+```
+
+| Programm | Adresse |
+|---|---|
+| Aufgabenplaner | `/FinnVelo/Aufgabenplaner/pc.json` |
+| Einkaufsplaner | `/einkaufsliste/pc.json` |
+| Mischwaldrechner | `/mischwaldrechner/pc.json` |
+| Lesezeit | `/lesezeit/pc.json` |
+| Tourenplaner | `/tourenplaner/pc.json` |
+
+Alle mit `no-store`, ohne `etag`, `access-control-allow-origin: *`.
+Auch ohne Eintrag kommt gueltiges JSON (`versionCode: 0`) - nie ein 404.
+
+Die vollstaendige Beschreibung fuer die Entwickler-Chats liegt als
+`ANWEISUNG-PC-Aktualisierung.md` im Ausgabeordner.
+
+**Das Feld heisst `apk`, auch beim PC.** Grund: dieselbe Eingabemaske
+fuer beide Fassungen. Nicht umbenennen.
+
+---
+
+## 5O. Eine Datei je Fassung - erledigt (22.08.2026)
+
+**Gemeldet:** App und PC-Fassung ueberschrieben sich gegenseitig.
+
+**Ursache:** Beide lagen in **einer** Datei - die App-Felder oben, die
+PC-Angaben als Block `pc` darin.
+
+**Geloest ohne Umbau der Kacheln:** Getrennt wird beim **Speichern**.
+
+```
+<ablage>       ->  nur die App-Felder   (Aufbau UNVERAENDERT)
+<ablage>-pc    ->  nur der PC-Teil, mit eigenem Schluessel "...-PC"
+```
+
+Beim **Laden** werden beide Dateien wieder zu einem Objekt
+zusammengefuehrt, damit die Kachel mit ihren Reitern unveraendert
+weiterarbeitet.
+
+**Die App-Dateien bleiben, wie sie sind** - kein Programm muss angepasst
+werden. Sie verlieren nur den `pc`-Block, den nie eine App gelesen hat.
+
+**Ein schwerer Fehler unterwegs:** Ich hatte zusaetzliche
+PC-Definitionen in `APPS` eingefuegt - und bei Lesezeit stand die
+PC-Definition **vor** der App-Definition. Da die Schleife die erste
+passende nimmt (`break`), fragte die Android-Kachel `/lesezeit/pc.json`
+ab und haette dorthin geschrieben. Die vier ueberzaehligen Definitionen
+sind entfernt.
+
+**Merke:** In `APPS` gewinnt die **erste** Definition, deren `seite` im
+Pfad vorkommt. Zwei Definitionen fuer dieselbe Seite sind eine Falle -
+ausser bei getrennten Adressen wie beim Tourenplaner, wo beide
+ausdruecklich gebraucht werden.
+
+---
+
+## 5O. Je Fassung eine eigene Datei (22.08.2026)
+
+**Gemeldet:** "Wenn ich im Computerprogramm etwas aendere, wird es auch
+in der App geaendert - und umgekehrt."
+
+**Ursache:** App und PC-Fassung teilten sich **dieselbe version.json**.
+Die PC-Angaben lagen als Block `pc` darin. Beim Speichern ueberschrieb
+eine Fassung die andere.
+
+**Behoben - zwei getrennte Dateien**, wie beim Tourenplaner:
+
+| Fassung | Adresse | Schluessel |
+|---|---|---|
+| App | `/FinnVelo/Aufgabenplaner/version.json` | `FINNVELO-AUFGABENPLANER` |
+| PC | `/FinnVelo/Aufgabenplaner/pc.json` | `FINNVELO-AUFGABENPLANER-PC` |
+
+**Die App-Adresse bleibt unveraendert** - die verteilten Apps fragen
+genau sie ab.
+
+**Stolperstein:** Der Routenvergleich laeuft ueber
+`url.pathname.toLowerCase()`. Ein Schluessel mit Grossbuchstaben
+(`/FinnVelo/...`) trifft deshalb nie. Alle Schluessel in
+`VERSION_ROUTEN` muessen **klein** geschrieben sein.
+
+**Fuer ALLE Programme umgesetzt.** Jede Fassung hat jetzt ihre eigene
+Datei:
+
+| Programm | App | PC |
+|---|---|---|
+| Aufgabenplaner | `/FinnVelo/Aufgabenplaner/version.json` | `.../pc.json` |
+| Einkaufsplaner | `/einkaufsliste/version.json` | `/einkaufsliste/pc.json` |
+| Mischwaldrechner | `/mischwaldrechner/version.json` | `/mischwaldrechner/pc.json` |
+| Lesezeit | `/lesezeit/version.json` | `/lesezeit/pc.json` |
+| Tourenplaner | `/tourenplaner/android.json` | `/tourenplaner/pc.json` |
+
+**Alle App-Adressen sind unveraendert** - die verteilten Apps fragen
+genau sie ab.
+
+**Regel fuer neue Programme:** Kommt eine zweite Fassung dazu, bekommt
+sie eine **eigene Datei** - niemals einen Block in der bestehenden.
+
+---
+
+## 5N-a. FALLE: Blockschluessel n0 gehoert der Navigation (22.08.2026)
+
+**Ein schwerer Fehler von mir.** Ich hatte `n0` fuer die Statusliste
+gewaehlt und vorher geprueft, ob der Schluessel in `stats.js` und
+`worker.js` vorkommt - er kam nicht vor.
+
+**Das war die falsche Pruefung.** Die Schluessel werden **laufend
+vergeben**:
+
+```js
+t.forEach(... 't' + idx);   i.forEach(... 'i' + idx);
+s.forEach(... 's' + idx);   d.forEach(... 'd' + idx);
+n.forEach(... 'n' + idx);   // <- NAVIGATION
+```
+
+`n0` ist damit der **erste Menuepunkt**. Mein JSON landete im
+Kopfbereich der Seite und war dort in Grossbuchstaben zu lesen.
+
+Umgestellt auf **`z0`**. Die Warnung steht jetzt direkt an `keyed()`.
+
+**Merke:** Die Buchstaben **t i s d n b** sind fuer laufende Schluessel
+reserviert. Ein eigener Block darf keinen davon nutzen. Frei sind:
+**a c e f j k l m o p r u z**.
+
+---
+
+## 5N. Statuszeichen: Auswahlliste und einmal pflegen (22.08.2026)
+
+Dasselbe Zeichen ("Vollversion", "In Entwicklung" ...) stand an **drei
+Stellen**: Programmseite, Kachel der Startseite, Zeile der Uebersicht.
+Es musste dreimal einzeln gepflegt werden - und lief regelmaessig
+auseinander.
+
+**Jetzt liegt es einmal** in der globalen Ablage, Block **`z0`**, als
+Zuordnung `{ programm: zeichen }`. Alle drei Stellen lesen daraus, auch
+fuer Besucher.
+
+**Auswahlliste:** kleiner Pfeil rechts am Zeichen (nur im
+Bearbeiten-Modus) mit *In Entwicklung* / *Vollversion* / *Vollversion
+Weiterentwicklung*. Freies Tippen bleibt moeglich und wirkt ebenso
+ueberall.
+
+**Wie das Programm erkannt wird:**
+
+* Auf einer Programmseite: die Seite selbst (`SLUG`).
+* In Kachel oder Zeile: das Ziel des umgebenden Links (`href="/xyz"`).
+
+Damit braucht es keine Zuordnungstabelle, die man pflegen muesste.
+
+Geprueft: setzen -> Startseite und Uebersicht uebernehmen es, andere
+Programme bleiben unberuehrt, Besucher sehen den Wert ohne Pfeil.
+
+---
+
+## 5M. Zaehlerleiste auf der Startseite verschlankt (22.08.2026)
+
+Die Leiste zeigte "Besucher gesamt · Planer · Mischwald". Die beiden
+letzten zaehlten Aufrufe der **Web-Fassungen** - die gibt es seit dem
+Ausbau nicht mehr, sie standen dauerhaft auf "-".
+
+Jetzt nur noch **Besucher gesamt**. Die Zaehler selbst bleiben im Server
+erhalten, nur die Anzeige ist fort - falls die Zahlen spaeter wieder
+gebraucht werden.
+
+Auf den **Programmseiten** bleibt die Leiste unveraendert: Besucher,
+Video-Klicks, Downloads.
+
+---
+
+## 5L. Konstruktor entlastet - die Wurzel der Abbrueche (22.08.2026)
+
+Nach `AUFTRAG-Durable-Object-Speicher.md`.
+
+**Zuerst der geforderte Nachweis:** Zeile 1875 liegt tatsaechlich im
+**Konstruktor** von `class Kanal`, mitten in der Tabellenanlage. Die
+Vermutung des Auftrags war richtig.
+
+**Der Befund:** 16 Anweisungen liefen bei **jedem Aufwachen** - elf
+CREATE TABLE, zwei CREATE INDEX, drei ALTER TABLE. Die drei ALTER warfen
+dabei jedes Mal eine Ausnahme, die verschluckt wurde: die Spalten gibt es
+laengst. Ein Durable Object wird nicht dauerhaft gehalten; nach jeder
+Ruhephase lief das alles erneut, **bevor die Anfrage ueberhaupt begann**.
+
+**Behoben ueber `PRAGMA user_version`:**
+
+```js
+const KANAL_STAND = 1;   // bei Aenderung an tabellenAnlegen() erhoehen
+```
+
+Der Konstruktor liest nur noch den Stand. Liegt er zurueck, laeuft
+`tabellenAnlegen()` einmal - sonst gar nichts.
+
+**Gemessen:**
+
+| | vorher | jetzt |
+|---|---|---|
+| Erstes Aufwachen | 16+ | 19 (Einrichtung) |
+| Jedes weitere | 16+ | **1** |
+
+**Abnahmepruefung des Auftrags, alle Punkte:**
+
+* Liste loeschen -> nach Neustart nicht zurueck ✓
+* 200 Nachrichten: Verbinden in **2 ms** (verlangt: unter 1 s) ✓
+* 20 Listen: Speichern in **13 ms**, Holen in **2 ms** ✓
+
+**WICHTIG fuer spaeter:** Wer `tabellenAnlegen()` erweitert, muss
+`KANAL_STAND` erhoehen - sonst laeuft die Erweiterung bei bestehenden
+Kanaelen nie.
+
+---
+
 ## 5K. Der listen-Weg war zu teuer (22.08.2026)
 
 **Fehlerbuch 22.08., 16:36:** `Internal error in Durable Object storage

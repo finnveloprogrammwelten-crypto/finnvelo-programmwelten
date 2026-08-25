@@ -122,6 +122,38 @@ function b64ToBytes(b64) {
   return out;
 }
 
+/* Welche Update-Adresse auf welchen Ablage-Schluessel fuehrt.
+   EINE Quelle fuer beide Seiten: der Worker beantwortet damit die
+   Anfragen, der Zaehler erkennt damit verwaiste Fassungsangaben.
+   Zwei Kopien waeren mit der Zeit auseinandergelaufen. */
+const VERSION_ABLAGEN = {
+  "/mischwaldrechner/version.json": "mischwald",
+  "/finnvelo/aufgabenplaner/version.json": "aufgabenplaner",
+  // Der Einkaufsplaner fragt genau diese Adresse ab. Sie MUSS vom Worker
+  // kommen - lag hier eine echte Datei im Ordner, lieferte Cloudflare
+  // die aus, bevor der Worker ueberhaupt gefragt wurde. Die Update-
+  // Kachel im Admin speicherte dann ins Leere: "Gespeichert" gemeldet,
+  // ausgeliefert wurde weiter die alte Datei.
+  "/einkaufsliste/version.json": "einkaufsliste",
+  /* Tourenplaner: zwei getrennte Dateien mit je eigenem Schluessel.
+     Kommen vom WORKER, gepflegt ueber die Kacheln - wie beim
+     Aufgabenplaner. Im Ordner /tourenplaner/ darf keine gleichnamige
+     Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
+     dann still ins Leere. */
+  // Aufgabenplaner PC - eigene Datei, damit App und PC-Programm sich
+  // nicht mehr gegenseitig ueberschreiben.
+  "/finnvelo/aufgabenplaner/pc.json": "aufgabenplaner-pc",
+  // Je Fassung eine eigene Datei - sonst ueberschreiben sich App und
+  // PC-Programm gegenseitig. Schluessel IMMER klein schreiben!
+  "/einkaufsliste/pc.json": "einkaufsliste-pc",
+  "/mischwaldrechner/pc.json": "mischwald-pc",
+  "/lesezeit/pc.json": "lesezeit-pc",   // klein! der Vergleich nutzt toLowerCase()
+  "/tourenplaner/android.json": "tourenplaner-android",
+  "/tourenplaner/pc.json": "tourenplaner-pc",
+  // Lesezeit: die App fragt /lesezeit/version.json ab.
+  "/lesezeit/version.json": "lesezeit"
+};
+
 export class Counter extends DurableObject {
   constructor(ctx, env) {
     super(ctx, env);
@@ -356,6 +388,149 @@ export class Counter extends DurableObject {
       const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
       this.sql.exec("INSERT INTO images (id, mime, data, created) VALUES (?, ?, ?, ?)", id, mime, b64, Date.now());
       return json({ id, url: "/api/image/" + id });
+    }
+
+    /* --- Bilder verzeichnen -------------------------------------------
+     * Liefert zu jedem Bild seine Kennung, Groesse und WO es benutzt
+     * wird. Die Bilddaten selbst bleiben draussen - die Uebersicht waere
+     * sonst viele Megabyte gross; die Vorschau holt jedes Bild einzeln
+     * ueber /api/image/<id>.
+     * Wo benutzt: der Inhalt wird nach /api/image/<id> durchsucht. Das
+     * findet auch Bilder in Sammellisten wie der Galerie, wo sie nicht
+     * als eigener Eintrag stehen.
+     * ------------------------------------------------------------------ */
+    if (url.pathname === "/api/images" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+
+      const bilder = this.sql.exec(
+        "SELECT id, mime, LENGTH(data) AS n, created FROM images ORDER BY created DESC"
+      ).toArray();
+      const inhalte = this.sql.exec("SELECT page, block, value FROM content").toArray();
+
+      const benutzt = {};
+      for (const z of inhalte) {
+        const wert = String(z.value || "");
+        if (wert.indexOf("/api/image/") === -1) continue;
+        const treffer = wert.match(/\/api\/image\/([A-Za-z0-9]+)/g) || [];
+        for (const t of treffer) {
+          const id = t.slice("/api/image/".length);
+          if (!benutzt[id]) benutzt[id] = [];
+          if (!benutzt[id].some((e) => e.page === z.page && e.block === z.block)) {
+            benutzt[id].push({ page: z.page, block: z.block });
+          }
+        }
+      }
+
+      return json({
+        bilder: bilder.map((b) => ({
+          id: b.id,
+          mime: b.mime,
+          // LENGTH() zaehlt Base64-Zeichen; die echte Groesse ist drei Viertel davon
+          groesse: Math.round(Number(b.n) * 0.75),
+          created: b.created,
+          benutzt: benutzt[b.id] || []
+        }))
+      });
+    }
+
+    /* --- Altlasten suchen ----------------------------------------------
+     * Eine Fassungsangabe (Block u0) ist nur dann erreichbar, wenn eine
+     * Adresse auf ihren Schluessel zeigt - entweder aus der festen
+     * Routentabelle oder aus den selbst angelegten Routen (system/v0).
+     * Zeigt nichts darauf, liest sie kein Programm mehr.
+     *
+     * Bewusst ENG gefasst: nur u0-Bloecke ohne Route. Texte, Bilder und
+     * Einstellungen bleiben aussen vor - bei denen kann ich nicht sicher
+     * sagen, dass sie niemand mehr braucht, und dann loesche ich lieber
+     * gar nichts.
+     * ------------------------------------------------------------------ */
+    if (url.pathname === "/api/altlasten" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+
+      const erreichbar = {};
+      for (const p in VERSION_ABLAGEN) erreichbar[VERSION_ABLAGEN[p]] = p;
+      const rows = this.sql.exec(
+        "SELECT value FROM content WHERE page = 'system' AND block = 'v0'"
+      ).toArray();
+      if (rows.length && rows[0].value) {
+        try {
+          const eigene = JSON.parse(rows[0].value) || {};
+          for (const p in eigene) {
+            if (typeof eigene[p] === "string") erreichbar[eigene[p]] = p;
+            // eine eigene Route zeigt auch auf die PC-Fassung desselben Namens
+            if (typeof eigene[p] === "string") erreichbar[eigene[p] + "-pc"] = p + " (PC)";
+          }
+        } catch (_e) {}
+      }
+
+      const u0 = this.sql.exec(
+        "SELECT page, value, updated FROM content WHERE block = 'u0' ORDER BY page"
+      ).toArray();
+      const funde = [];
+      for (const z of u0) {
+        if (erreichbar[z.page]) continue;
+        let name = "", nummer = "";
+        try {
+          const v = JSON.parse(z.value);
+          name = String(v.versionName || v.version || "");
+          nummer = String(v.versionCode || v.versionsCode || "");
+        } catch (_e) {}
+        funde.push({
+          page: z.page, block: "u0", updated: z.updated,
+          versionName: name, versionCode: nummer,
+          grund: "Keine Adresse zeigt auf diesen Schl\u00fcssel",
+          vorschau: String(z.value || "").slice(0, 400)
+        });
+      }
+      return json({ altlasten: funde, erreichbar: Object.keys(erreichbar).sort() });
+    }
+
+    if (url.pathname === "/api/altlasten/entfernen" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      const liste = Array.isArray(body.eintraege) ? body.eintraege : [];
+      let weg = 0;
+      for (const e of liste) {
+        const page = String(e && e.page || "");
+        const block = String(e && e.block || "");
+        if (!PAGE_RE.test(page) || block !== "u0") continue;
+        // Der bisherige Stand bleibt im Verlauf - Zuruecknehmen bleibt moeglich.
+        const alt = this.sql.exec(
+          "SELECT type, value FROM content WHERE page = ? AND block = ?", page, block
+        ).toArray();
+        if (!alt.length) continue;
+        try {
+          this.sql.exec(
+            "INSERT INTO verlauf (seite, block, art, wert, zeit) VALUES (?, ?, ?, ?, ?)",
+            page, block, alt[0].type, alt[0].value, Date.now()
+          );
+        } catch (_e) { /* Verlauf ist Beiwerk, kein Grund abzubrechen */ }
+        this.sql.exec("DELETE FROM content WHERE page = ? AND block = ?", page, block);
+        weg++;
+      }
+      if (weg) this.spurLegen("/api/altlasten/entfernen", weg + " verwaiste Fassungsangabe(n) entfernt");
+      return json({ ok: true, entfernt: weg });
+    }
+
+    if (url.pathname === "/api/images/entfernen" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      const ids = Array.isArray(body.ids) ? body.ids : [];
+      let weg = 0;
+      for (const roh of ids) {
+        const id = String(roh || "");
+        if (!/^[A-Za-z0-9]{1,40}$/.test(id)) continue;
+        this.sql.exec("DELETE FROM images WHERE id = ?", id);
+        weg++;
+      }
+      if (weg) this.spurLegen("/api/images/entfernen", weg + " Bild(er) entfernt");
+      return json({ ok: true, entfernt: weg });
     }
 
     if (url.pathname.startsWith("/api/image/") && method === "GET") {
@@ -705,44 +880,6 @@ export class Counter extends DurableObject {
     }
 
     // --- Bilder: Uebersicht und Entfernen (nur Admin) ------------------
-    if (url.pathname === "/api/bilder" && method === "POST") {
-      let body = {};
-      try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
-
-      if (body.aktion === "entfernen") {
-        const id = String(body.id || "");
-        if (!id) return json({ error: "bad_request" }, 400);
-        this.sql.exec("DELETE FROM images WHERE id = ?", id);
-        return json({ ok: true });
-      }
-
-      // Uebersicht: Groesse und Alter, aber nicht die Bilddaten selbst
-      const rows = this.sql.exec(
-        "SELECT id, mime, LENGTH(data) AS groesse, created FROM images ORDER BY created DESC LIMIT 300"
-      ).toArray();
-      // Welche Bilder werden noch irgendwo verwendet?
-      const benutzt = {};
-      const inhalte = this.sql.exec("SELECT value FROM content").toArray();
-      for (const z of inhalte) {
-        const v = String(z.value || "");
-        let m;
-        const re = /\/api\/image\/([A-Za-z0-9_-]+)/g;
-        while ((m = re.exec(v)) !== null) benutzt[m[1]] = true;
-      }
-      let gesamt = 0;
-      const liste = rows.map((r) => {
-        gesamt += r.groesse || 0;
-        return {
-          id: r.id, mime: r.mime,
-          groesse: r.groesse || 0,
-          erstellt: new Date(r.created).toISOString(),
-          benutzt: !!benutzt[r.id]
-        };
-      });
-      return json({ bilder: liste, anzahl: liste.length, gesamt: gesamt });
-    }
-
     // --- Sicherung: alle Inhalte ausgeben (nur Admin) ------------------
     // Liefert saemtliche gespeicherten Inhalte als eine Datei. Damit laesst
     // sich alles, was ueber den Bearbeiten-Modus eingetragen wurde, sichern.
@@ -753,12 +890,65 @@ export class Counter extends DurableObject {
       const rows = this.sql.exec(
         "SELECT page, block, type, value, updated FROM content ORDER BY page, block"
       ).toArray();
+      /* Bilder liegen in einer EIGENEN Tabelle, nicht im Inhalt. Wer sie
+         weglaesst, hat nach dem Zurueckspielen zwar alle Texte, aber nur
+         noch tote Bildverweise. Deshalb gehoeren sie dazu.
+         Sie koennen gross sein - wer nur die Texte will, schickt
+         {bilder:false}. */
+      let bilder = [];
+      if (body.bilder !== false) {
+        bilder = this.sql.exec("SELECT id, mime, data, created FROM images ORDER BY created").toArray();
+      }
+
+      /* Vollsicherung: alle uebrigen Tabellen dieses Objekts. Vorher
+         enthielt eine Sicherung nur Texte und Bilder - Kommentare,
+         Zaehlerstaende, Verlauf und Zugang waeren im Ernstfall verloren
+         gewesen.
+         "bremse" und "fehler" bleiben draussen: Sperrzeiten und
+         Fehlermeldungen sind nach dem Zurueckspielen wertlos.       */
+      const tabellen = {};
+      const mit = ["counter_values", "comments", "apps", "kanalliste", "verlauf", "marken", "zugang"];
+      for (const t of mit) {
+        try { tabellen[t] = this.sql.exec("SELECT * FROM " + t).toArray(); }
+        catch (_e) { tabellen[t] = []; }
+      }
+
+      /* Kanaele liegen in EIGENEN Objekten - der Zaehler kann sie nicht
+         direkt lesen, aber ueber die Bindung fragen. Jeder Kanal liefert
+         seine Tabellen selbst. Ohne das waeren Chat und Listen weg. */
+      const kanaele = [];
+      if (body.kanaele !== false && env && env.KANAELE) {
+        const liste = tabellen.kanalliste || [];
+        for (const k of liste) {
+          const code = String(k && k.code || "");
+          if (!code) continue;
+          try {
+            const stub = env.KANAELE.get(env.KANAELE.idFromName(code));
+            const a = await stub.fetch("https://kanal/kanal-sicherung");
+            if (!a.ok) { kanaele.push({ code: code, fehler: "nicht erreichbar" }); continue; }
+            const erg = await a.json();
+            kanaele.push({ code: code, angelegt: k.angelegt, tabellen: (erg && erg.tabellen) || {} });
+          } catch (_e) {
+            kanaele.push({ code: code, fehler: "nicht erreichbar" });
+          }
+        }
+      }
+
+      let zeilen = 0;
+      for (const t in tabellen) zeilen += tabellen[t].length;
+
       return new Response(JSON.stringify({
         art: "finnvelo-sicherung",
-        fassung: 1,
+        fassung: 3,
         erstellt: new Date().toISOString(),
         anzahl: rows.length,
-        inhalte: rows
+        anzahlBilder: bilder.length,
+        anzahlTabellenzeilen: zeilen,
+        anzahlKanaele: kanaele.length,
+        inhalte: rows,
+        bilder: bilder,
+        tabellen: tabellen,
+        kanaele: kanaele
       }, null, 2), {
         status: 200,
         headers: {
@@ -794,7 +984,91 @@ export class Counter extends DurableObject {
         );
         uebernommen++;
       }
-      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen });
+      /* Bilder zurueckspielen (Sicherungen ab Fassung 2). Vorhandene
+         bleiben, wie sie sind - eine Kennung wird nie neu vergeben, also
+         ist gleiche Kennung auch gleiches Bild. */
+      let bilder = 0;
+      if (Array.isArray(daten.bilder)) {
+        for (const b of daten.bilder) {
+          const id = String(b && b.id || "");
+          const mime = String(b && b.mime || "");
+          const dat = String(b && b.data || "").replace(/\s+/g, "");
+          if (!id || !/^[a-z0-9]{1,40}$/i.test(id)) continue;
+          if (!/^image\/(png|jpeg|webp|gif)$/.test(mime)) continue;
+          if (!dat || !/^[A-Za-z0-9+/=]+$/.test(dat)) continue;
+          if (dat.length * 0.75 > MAX_IMG_BYTES) continue;
+          const da = this.sql.exec("SELECT id FROM images WHERE id = ?", id).toArray();
+          if (da.length) continue;
+          this.sql.exec("INSERT INTO images (id, mime, data, created) VALUES (?, ?, ?, ?)",
+                        id, mime, dat, Number(b.created) || Date.now());
+          bilder++;
+        }
+      }
+      /* Uebrige Tabellen zurueckspielen (Sicherungen ab Fassung 3).
+         INSERT OR REPLACE: was in der Sicherung steht, gewinnt; was
+         seither dazukam, bleibt stehen. */
+      let zeilen = 0;
+      const erlaubt = ["counter_values", "comments", "apps", "kanalliste", "verlauf", "marken"];
+      const tab = (daten && daten.tabellen) || {};
+      for (const name of erlaubt) {
+        const liste = Array.isArray(tab[name]) ? tab[name] : [];
+        for (const z of liste) {
+          if (!z || typeof z !== "object") continue;
+          const spalten = Object.keys(z).filter((c) => /^[a-z_0-9]{1,30}$/.test(c));
+          if (!spalten.length) continue;
+          try {
+            this.sql.exec(
+              "INSERT OR REPLACE INTO " + name + " (" + spalten.join(", ") + ") VALUES (" +
+              spalten.map(() => "?").join(", ") + ")",
+              ...spalten.map((c) => z[c])
+            );
+            zeilen++;
+          } catch (_e) { /* Spalte kennt diese Fassung nicht - weiter */ }
+        }
+      }
+
+      /* Zugang: NUR wenn noch keiner eingerichtet ist. Ein altes Passwort
+         ueber ein neueres zu schreiben wuerde aussperren, wer es seither
+         geaendert hat. Auf einer leeren Datenbank ist es genau das, was
+         den Wiederanlauf moeglich macht. */
+      let zugang = "unberuehrt";
+      const zTeil = Array.isArray(tab.zugang) ? tab.zugang[0] : null;
+      if (zTeil && zTeil.passwort && !this.gesetztesPasswort()) {
+        try {
+          this.sql.exec(
+            "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
+            "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
+            "pin = excluded.pin, geaendert = excluded.geaendert",
+            String(zTeil.passwort), String(zTeil.pin || ""), Number(zTeil.geaendert) || Date.now()
+          );
+          zugang = "aus der Sicherung gesetzt";
+        } catch (_e) { zugang = "fehlgeschlagen"; }
+      }
+
+      /* Kanaele: jeder in sein eigenes Objekt zurueck. */
+      let kanaele = 0, kanalZeilen = 0;
+      if (Array.isArray(daten.kanaele) && env && env.KANAELE) {
+        for (const k of daten.kanaele) {
+          const code = String(k && k.code || "");
+          if (!code || !k.tabellen) continue;
+          try {
+            const stub = env.KANAELE.get(env.KANAELE.idFromName(code));
+            const a = await stub.fetch("https://kanal/kanal-einspielen", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ tabellen: k.tabellen })
+            });
+            if (a.ok) {
+              const erg = await a.json();
+              kanaele++; kanalZeilen += Number(erg && erg.zeilen) || 0;
+            }
+          } catch (_e) { /* Kanal nicht erreichbar - weiter */ }
+        }
+      }
+
+      return json({ ok: true, uebernommen: uebernommen, uebersprungen: uebersprungen,
+                    bilder: bilder, zeilen: zeilen, zugang: zugang,
+                    kanaele: kanaele, kanalZeilen: kanalZeilen });
     }
 
     // --- Verzeichnis der Update-Adressen (oeffentlich) -----------------
@@ -975,6 +1249,10 @@ export class Counter extends DurableObject {
       const leer = {
         aufgabenplaner: { schluessel: "FINNVELO-AUFGABENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         einkaufsliste: { schluessel: "FINNVELO-EINKAUFSPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "aufgabenplaner-pc": { schluessel: "FINNVELO-AUFGABENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "einkaufsliste-pc": { schluessel: "FINNVELO-EINKAUFSPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "mischwald-pc": { schluessel: "FINNVELO-MISCHWALD-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "lesezeit-pc": { schluessel: "FINNVELO-LESEZEIT-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         /* Vorbelegt mit der gelieferten Fassung, damit die App sofort etwas
@@ -1143,7 +1421,7 @@ ${KOPFZEILE}
           <p>Hier steht die ausf&uuml;hrliche Beschreibung. Im Bearbeiten-Modus anklicken und &auml;ndern.</p>
         </section>
 
-        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title">
+        <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfl&auml;che</h2>
           <p>Bildschirmfotos werden hier erg&auml;nzt.</p>
           <div class="fv-gallery" data-fv-gallery></div>
@@ -1168,26 +1446,21 @@ ${KOPFZEILE}
           <p>F&uuml;r wen ist das Programm gedacht?</p>
         </section>
 
-        <section class="program-info-block program-download-block program-download-block--web" aria-labelledby="download-web-title">
-          <h2 id="download-web-title">Web-Version</h2>
-          <div class="download-slot">
-            <h3>Im Browser &ouml;ffnen</h3>
-            <p>L&auml;uft ohne Installation direkt im Browser. Immer die neueste Fassung &ndash; es gibt nichts zu aktualisieren.</p>
-            <a class="button" href="/apps/" target="_blank" rel="noopener">Web-Version &ouml;ffnen</a>
-          </div>
-        </section>
-
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
-          <h2 id="download-title">Download (Android)</h2>
+          <h2 id="download-title">Download (Android-App)</h2>
           <div class="download-slot">
-            <h3>App herunterladen</h3>
+            <h3>Hauptdatei</h3>
             <p>Sobald es eine Datei gibt, hier den Knopf anklicken und die Adresse eintragen.</p>
             <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">Download starten</a>
+          </div>
+          <div class="download-slot download-slot--muted">
+            <h3>Weitere Versionen und Patches</h3>
+            <p>Platzhalter f&uuml;r sp&auml;tere Updates, Patchdateien und &auml;ltere Versionen.</p>
           </div>
         </section>
 
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
-          <h2 id="download-pc-title">Download (PC)</h2>
+          <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
             <h3>Programm herunterladen</h3>
             <p>Die Fassung f&uuml;r Windows. Sie l&auml;uft eigenst&auml;ndig, eine Installation ist nicht n&ouml;tig.</p>
@@ -1632,25 +1905,7 @@ export default {
     // Versionsdateien der Android-Apps (feste Adressen, die in den Apps stecken).
     const versionPfad = url.pathname.toLowerCase().replace(/\/+$/, "");
     // Fest eingebaute Update-Adressen (bleiben immer erreichbar)
-    const VERSION_ROUTEN = {
-      "/mischwaldrechner/version.json": "mischwald",
-      "/finnvelo/aufgabenplaner/version.json": "aufgabenplaner",
-      // Der Einkaufsplaner fragt genau diese Adresse ab. Sie MUSS vom Worker
-      // kommen - lag hier eine echte Datei im Ordner, lieferte Cloudflare
-      // die aus, bevor der Worker ueberhaupt gefragt wurde. Die Update-
-      // Kachel im Admin speicherte dann ins Leere: "Gespeichert" gemeldet,
-      // ausgeliefert wurde weiter die alte Datei.
-      "/einkaufsliste/version.json": "einkaufsliste",
-      /* Tourenplaner: zwei getrennte Dateien mit je eigenem Schluessel.
-         Kommen vom WORKER, gepflegt ueber die Kacheln - wie beim
-         Aufgabenplaner. Im Ordner /tourenplaner/ darf keine gleichnamige
-         Datei liegen: eine Datei gewinnt immer, und die Kachel speicherte
-         dann still ins Leere. */
-      "/tourenplaner/android.json": "tourenplaner-android",
-      "/tourenplaner/pc.json": "tourenplaner-pc",
-      // Lesezeit: die App fragt /lesezeit/version.json ab.
-      "/lesezeit/version.json": "lesezeit"
-    };
+    const VERSION_ROUTEN = VERSION_ABLAGEN;
     if (versionPfad.endsWith("/version.json") || versionPfad.endsWith("/android.json")
         || versionPfad.endsWith("/pc.json")) {
       let ablage = VERSION_ROUTEN[versionPfad];
@@ -1819,6 +2074,7 @@ function echteGroesse(sql) {
   } catch (_e) { return 0; }
 }
 
+const KANAL_STAND = 1;   // bei jeder Aenderung an tabellenAnlegen() erhoehen
 const NACHRICHTEN_ALTER = 90 * 24 * 60 * 60 * 1000;   // Chat: nach 90 Tagen weg
 const STEMPEL_TAKT = 60 * 60 * 1000;               // Aktivitaetsstempel hoechstens stuendlich
 const AUFRAEUM_TAKT = 10 * 60 * 1000;              // hoechstens alle 10 Minuten aufraeumen
@@ -1869,6 +2125,38 @@ export class Kanal extends DurableObject {
     this.ctx = ctx;
     this.env = env;
     this.sql = ctx.storage.sql;
+
+    /* Tabellen NUR anlegen, wenn noetig.
+       ------------------------------------------------------------------
+       Frueher liefen hier bei JEDEM Aufwachen 16 Anweisungen - elf
+       CREATE TABLE, zwei CREATE INDEX und drei ALTER TABLE. Die drei
+       ALTER warfen dabei jedes Mal eine Ausnahme, die verschluckt wurde:
+       die Spalten gibt es laengst.
+
+       Ein Durable Object wird nicht dauerhaft gehalten. Nach jeder
+       Ruhephase lief das alles erneut, bevor die eigentliche Anfrage
+       ueberhaupt begann - und trieb den Speicher in die Zeitgrenze
+       ("Internal error in Durable Object storage", zuletzt 22.8. 16:36
+       genau an dieser Stelle).
+
+       PRAGMA user_version merkt sich, was schon angelegt ist. Ein
+       Aufwachen kostet jetzt eine einzige Abfrage. */
+    let stand = 0;
+    try {
+      const r = this.sql.exec("PRAGMA user_version").toArray()[0];
+      stand = Number(r && (r.user_version !== undefined ? r.user_version : Object.values(r)[0])) || 0;
+    } catch (_e) { stand = 0; }
+
+    if (stand < KANAL_STAND) {
+      this.tabellenAnlegen();
+      try { this.sql.exec("PRAGMA user_version = " + KANAL_STAND); } catch (_e) {}
+    }
+  }
+
+  /* Einmalige Einrichtung. Laeuft nur, wenn user_version zurueckliegt -
+     also beim allerersten Mal und nach einer Erweiterung. Bei einer
+     Aenderung hier KANAL_STAND erhoehen, sonst greift sie nie. */
+  tabellenAnlegen() {
 
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS kanal (" +
@@ -2327,6 +2615,47 @@ export class Kanal extends DurableObject {
     const url = new URL(request.url);
     // Die offene Leitung fuer den Chat hat einen eigenen Weg
     if (url.pathname === "/draht") return this.draht(request);
+
+    /* Sicherung eines Kanals. Erreichbar nur ueber diesen Pfad, den der
+       Zaehler ausschliesslich nach Admin-Pruefung setzt - oeffentliche
+       Anfragen landen auf /dv und koennen ihn nicht treffen. */
+    if (url.pathname === "/kanal-sicherung") {
+      const tabellen = ["kanal", "mitglieder", "nachrichten", "listen", "freigaben",
+                        "einladungen", "takt", "anhaenge", "anhang_geholt", "marken"];
+      const aus = {};
+      for (const t of tabellen) {
+        try { aus[t] = this.sql.exec("SELECT * FROM " + t).toArray(); }
+        catch (_e) { aus[t] = []; }   // Tabelle gibt es in diesem Kanal nicht
+      }
+      // "bremse" bleibt bewusst draussen: reine Sperrzeiten, nach dem
+      // Zurueckspielen falsch und ohne Wert.
+      return jsonAntwort({ ok: true, tabellen: aus });
+    }
+
+    if (url.pathname === "/kanal-einspielen") {
+      let rumpf = {};
+      try { rumpf = await request.json(); } catch (_e) { rumpf = {}; }
+      const tab = (rumpf && rumpf.tabellen) || {};
+      let zeilen = 0;
+      for (const name of Object.keys(tab)) {
+        if (!/^[a-z_]{3,20}$/.test(name)) continue;
+        const liste = Array.isArray(tab[name]) ? tab[name] : [];
+        for (const z of liste) {
+          if (!z || typeof z !== "object") continue;
+          const spalten = Object.keys(z).filter((s) => /^[a-z_0-9]{1,30}$/.test(s));
+          if (!spalten.length) continue;
+          const platz = spalten.map(() => "?").join(", ");
+          try {
+            this.sql.exec(
+              "INSERT OR REPLACE INTO " + name + " (" + spalten.join(", ") + ") VALUES (" + platz + ")",
+              ...spalten.map((s) => z[s])
+            );
+            zeilen++;
+          } catch (_e) { /* Spalte kennt diese Fassung nicht - weiter */ }
+        }
+      }
+      return jsonAntwort({ ok: true, zeilen: zeilen });
+    }
     // Kennzahlen fuer die Aufsicht. Erreichbar nur ueber diesen Pfad, den der
     // Worker ausschliesslich nach Admin-Pruefung setzt - oeffentliche Anfragen
     // landen immer auf /dv und koennen ihn nicht treffen.
