@@ -981,3 +981,62 @@ Geprueft: stats.js, worker.js und styles.css unveraendert (Pruefsummen
 stimmen), wrangler.jsonc und sitemap.xml gueltig, alle vierzehn
 Pruefsammlungen gegen den bereinigten Ordner: 495 Pruefungen, keine
 fehlgeschlagen.
+
+
+-----------------------------------------------------------------------
+25.08.2026 - CHAT AUSGEBAUT
+-----------------------------------------------------------------------
+Der Chat ist aus App und PC-Fassung entfernt und kommt nicht zurueck.
+Serverseitig ausgebaut, um das Durable Object zu entlasten.
+
+WAS BLEIBT - das war der heikle Teil:
+Die Kanaele tragen nicht nur den Chat, sondern auch die LISTEN (70 in
+25 Kanaelen) und den Aufgabenabgleich. Die Kanaele selbst bleiben also.
+Geprueft ist ausdruecklich, dass alle 28 uebrigen Wege da sind, darunter
+  senden / holen        Aufgabenabgleich  (heissen nur aehnlich!)
+  listen/*              die Listen
+  anhang/*              Anhaenge
+  mitglieder, einladung, beitreten, salz, rettung ...
+
+ENTFERNT
+  worker.js, class Kanal:
+    draht()             WebSocket-Aufbau
+    webSocketMessage / Close / Error
+    raumErlaubt()       Rechte je Chatraum
+    Tabelle nachrichten wird nicht mehr angelegt
+    alle Zugriffe darauf (schreiben, lesen, aufraeumen)
+    NACHRICHTEN_MINUTE, MAX_NACHRICHTEN, NACHRICHTEN_ALTER
+  worker.js, class Counter:
+    die Weiterleitung von /api/kanal/draht an das Kanal-Objekt
+  serverstatus.html:
+    Kacheln "offene Chatleitungen" und "Chatnachrichten",
+    Spalten Leitungen und Nachrichten (Koepfe UND Zellen - sonst waere
+    die Tabelle verrutscht)
+
+DIE ENTLASTUNG steckt im Zaehler: /api/kanal/draht wird jetzt DORT mit
+410 beantwortet. Eine alte App-Fassung weckt damit kein Durable Object
+mehr auf. Genau die Aufwachvorgaenge standen als 503 im Fehlerbuch
+(20.8., zweimal "Durable Object storage operation exceeded timeout").
+
+410 statt 404: "gab es, gibt es nicht mehr". Eine alte App bekommt eine
+eindeutige Auskunft statt "Diesen Kanal gibt es nicht" - und findet den
+Grund im Text.
+
+VORHANDENE DATEN BLEIBEN
+Kein DROP TABLE, kein DELETE. Die 18 Nachrichten in 10 Kanaelen stehen
+weiter in ihren Tabellen; sie werden nur nicht mehr angefasst. Loeschen
+waere unumkehrbar - wer sie noch braucht, findet sie in der Sicherung
+vom 25.08. Aus kuenftigen Sicherungen fallen sie heraus.
+
+worker.js: 167 257 -> 152 709 Zeichen (14 548 weniger).
+
+Geprueft: 33 Pruefungen zum Ausbau, dazu alle vierzehn Sammlungen der
+Webseite gegen den geaenderten Stand - 495 Pruefungen, keine
+fehlgeschlagen.
+
+NOCH OFFEN aus den Serverunterlagen (nicht Teil dieses Auftrags):
+  - AUFTRAG-Anhaenge.md      App wartet seit 7.72 auf die Serverwege
+  - AUFTRAG-Salzauskunft.md  GET /api/kanal/salz - blockiert Beitritte
+  - unbekannte Routen unter /api/kanal/ melden "Diesen Kanal gibt es
+    nicht" statt "Diese Auskunft gibt es nicht"
+  - AUFTRAG-Chatfreigaben.md ist mit diesem Ausbau HINFAELLIG

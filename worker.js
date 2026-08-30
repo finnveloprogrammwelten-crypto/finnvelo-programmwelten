@@ -1737,7 +1737,7 @@ export default {
       // gemeldet, nicht als fehlender Kanal. Sonst sucht man an der falschen Stelle.
       const WEGE = [
         "salz", "beitreten", "rettung", "passwortNeu", "senden", "holen",
-        "schliessen", "oeffnen", "behalten", "zustand", "draht",
+        "schliessen", "oeffnen", "behalten", "zustand", "draht",   // draht wird oben mit 410 beantwortet
         "mitglieder", "mitglieder/rolle",
         "listen", "listen/neu", "listen/freigeben", "listen/sperren",
         "listen/rechte", "listen/senden", "listen/holen", "listen/loeschen",
@@ -1777,36 +1777,16 @@ export default {
 
       /* --- Die offene Leitung fuer den Chat -------------------------- */
       if (weg === "draht") {
-        if ((request.headers.get("upgrade") || "").toLowerCase() !== "websocket") {
-          return json({ fehler: "Für diesen Weg wird eine WebSocket-Verbindung erwartet." }, 426);
-        }
-        // Die Angaben aus der Adresse mitnehmen (raum, kennung, pruefwert,
-        // seit). Frueher gingen sie hier verloren - dadurch konnte das
-        // Kanal-Objekt weder Raum noch Freigabe erkennen.
-        const drahtZiel = new URL("https://kanal/draht");
-        for (const [n, v] of url.searchParams) drahtZiel.searchParams.set(n, v);
-        /* Abgesichert weiterreichen. Ohne das landet jeder Fehler des
-           Kanal-Objekts als nacktes "internal error; reference = ..." im
-           Fehlerbuch - eine Meldung, mit der niemand etwas anfangen kann.
-           Jetzt steht wenigstens dabei, welcher Raum betroffen war. */
-        try {
-          return await stub.fetch(new Request(drahtZiel.toString(), { headers: request.headers }));
-        } catch (fehler) {
-          const raum = url.searchParams.get("raum") || "allgemein";
-          try {
-            const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
-            ctx.waitUntil(g.fetch(new Request("https://zaehler/api/kanalliste", {
-              method: "POST", headers: { "content-type": "application/json" },
-              body: JSON.stringify({
-                aktion: "fehler", weg: "/api/kanal/draht", lage: 503,
-                text: "Leitung nicht aufgebaut, Raum \"" + raum + "\": " +
-                      String((fehler && fehler.message) || fehler).slice(0, 200)
-              })
-            })));
-          } catch (_e) { /* eine fehlende Notiz darf nichts weiter kaputtmachen */ }
-          return json({ fehler: "Die Leitung liess sich gerade nicht aufbauen. " +
-                                "Bitte in einem Moment erneut versuchen." }, 503);
-        }
+        /* Der Chat ist ausgebaut (25.08.2026). Die Anfrage wird hier
+           beantwortet und NICHT mehr an den Kanal durchgereicht - damit
+           weckt eine alte App-Fassung kein Durable Object mehr auf.
+           Genau das war die Entlastung, um die es ging.
+           410 statt 404: "gab es, gibt es nicht mehr" - eine alte App
+           bekommt eine eindeutige Auskunft statt "Kanal unbekannt". */
+        return json({
+          fehler: "Der Chat wurde eingestellt.",
+          hinweis: "Listen und Aufgaben laufen unveraendert weiter."
+        }, 410);
       }
 
       /* --- Alles Uebrige an das Kanal-Objekt weiterreichen ----------- */
@@ -2075,12 +2055,15 @@ function echteGroesse(sql) {
 }
 
 const KANAL_STAND = 1;   // bei jeder Aenderung an tabellenAnlegen() erhoehen
-const NACHRICHTEN_ALTER = 90 * 24 * 60 * 60 * 1000;   // Chat: nach 90 Tagen weg
+/* Der Chat wurde am 25.08.2026 ausgebaut. Die Tabelle "nachrichten"
+   wird nicht mehr angelegt, nicht mehr beschrieben und nicht mehr
+   gelesen. Bei bestehenden Kanaelen BLEIBT sie stehen - sie wird nur
+   nicht mehr angefasst. Loeschen waere unumkehrbar; wer die alten
+   Nachrichten noch braucht, findet sie in einer Sicherung. */
 const STEMPEL_TAKT = 60 * 60 * 1000;               // Aktivitaetsstempel hoechstens stuendlich
 const AUFRAEUM_TAKT = 10 * 60 * 1000;              // hoechstens alle 10 Minuten aufraeumen
 const GERAET_VERWAIST = 30 * 24 * 60 * 60 * 1000;  // ein Monat ohne Abgleich
 const MAX_NACHRICHT = 4 * 1024;         // 4 KB je Chatnachricht
-const MAX_NACHRICHTEN = 2000;           // aeltere fallen hinten heraus
 /* Beim Verbinden mitgeschickte Nachrichten. Frueher 200 - das bedeutet bei
    JEDEM Verbindungsaufbau 200 Datenbankzeilen lesen und einzeln senden.
    Bei einem Handy, das unterwegs staendig neu verbindet, ist das genau die
@@ -2089,7 +2072,6 @@ const MAX_NACHRICHTEN = 2000;           // aeltere fallen hinten heraus
 const NACHHOLEN = 50;
 const MAX_FEHLER = 5;                   // dann zehn Minuten Sperre
 const ANFRAGEN_MINUTE = 60;             // HTTP-Anfragen je Kanal und Minute
-const NACHRICHTEN_MINUTE = 20;          // Chatnachrichten je Leitung und Minute
 
 function jsonAntwort(daten, code) {
   return new Response(JSON.stringify(daten), {
@@ -2182,20 +2164,7 @@ export class Kanal extends DurableObject {
       "CREATE TABLE IF NOT EXISTS bremse (" +
       "herkunft TEXT PRIMARY KEY, versuche INTEGER DEFAULT 0, bis INTEGER)"
     );
-    this.sql.exec(
-      "CREATE TABLE IF NOT EXISTS nachrichten (" +
-      "stand INTEGER PRIMARY KEY, kennung TEXT NOT NULL, " +
-      "paket TEXT NOT NULL, zeit INTEGER NOT NULL)"
-    );
-    // Chatraeume: "allgemein" fuer alle, sonst die Listen-Kennung.
-    // Nachtraeglich ergaenzt - bei bestehenden Kanaelen fehlt die Spalte sonst.
-    try { this.sql.exec("ALTER TABLE nachrichten ADD COLUMN raum TEXT NOT NULL DEFAULT 'allgemein'"); }
-    catch (_e) { /* gibt es schon */ }
-    try { this.sql.exec("CREATE INDEX IF NOT EXISTS nachrichten_raum ON nachrichten (raum, stand)"); }
-    catch (_e) {}
-    this.sql.exec(
-      "CREATE UNIQUE INDEX IF NOT EXISTS nachrichten_kennung ON nachrichten (kennung)"
-    );
+    /* Tabelle "nachrichten" entfaellt - der Chat ist ausgebaut. */
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS listen (" +
       "liste TEXT PRIMARY KEY, ersteller TEXT NOT NULL, name TEXT NOT NULL, " +
@@ -2482,145 +2451,17 @@ export class Kanal extends DurableObject {
     }
     if (jetzt - k.warnung_ab >= WOCHE) {
       // Woche abgelaufen - alles loeschen
-      for (const ws of this.ctx.getWebSockets()) {
-        try { ws.close(4410, "Kanal geloescht"); } catch (_e) {}
-      }
       await this.ctx.storage.deleteAll();
     }
   }
 
   /* ---------- Chat: offene Leitung ---------------------------------- */
 
-  async webSocketMessage(ws, roh) {
-    let m = {};
-    try { m = JSON.parse(String(roh)); } catch (_e) { return; }
-    if (!m || m.art !== "nachricht") return;
-
-    const k = this.kanalZeile();
-    if (!k) { try { ws.close(4404, "Diesen Kanal gibt es nicht"); } catch (_e) {} return; }
-
-    // 20 Nachrichten je Minute und Leitung
-    let zustand = {};
-    try { zustand = ws.deserializeAttachment() || {}; } catch (_e) { zustand = {}; }
-    const fenster = Math.floor(Date.now() / 60000);
-    if (zustand.fenster !== fenster) { zustand.fenster = fenster; zustand.anzahl = 0; }
-    zustand.anzahl = (zustand.anzahl || 0) + 1;
-    try { ws.serializeAttachment(zustand); } catch (_e) {}
-    if (zustand.anzahl > NACHRICHTEN_MINUTE) {
-      try { ws.send(JSON.stringify({ art: "fehler", fehler: "Zu viele Nachrichten in kurzer Zeit. Bitte einen Moment warten." })); } catch (_e) {}
-      return;
-    }
-
-    const kennung = String(m.kennung || "").slice(0, 200);
-    const paket = String(m.paket == null ? "" : m.paket);
-    if (!kennung || !paket) return;
-    if (paket.length > MAX_NACHRICHT) {
-      try { ws.send(JSON.stringify({ art: "fehler", kennung: kennung, fehler: "Die Nachricht ist zu lang." })); } catch (_e) {}
-      return;
-    }
-
-    // Schon bekannt? Dann nur noch einmal quittieren, nicht doppelt ablegen.
-    const da = this.sql.exec("SELECT stand FROM nachrichten WHERE kennung = ?", kennung).toArray();
-    if (da.length) {
-      try { ws.send(JSON.stringify({ art: "quittung", kennung: kennung, stand: da[0].stand })); } catch (_e) {}
-      return;
-    }
-
-    const hoechste = this.sql.exec("SELECT MAX(stand) AS m FROM nachrichten").toArray();
-    const stand = ((hoechste.length && hoechste[0].m) || 0) + 1;
-    // Raum der sendenden Leitung. Aeltere Fassungen ohne Raum landen in
-    // "allgemein" - genau dort, wo sie frueher auch gelandet sind.
-    const raum = String(zustand.raum || "allgemein");
-    try {
-      this.sql.exec(
-        "INSERT INTO nachrichten (stand, kennung, paket, zeit, raum) VALUES (?, ?, ?, ?, ?)",
-        stand, kennung, paket, Date.now(), raum
-      );
-    } catch (_e) {
-      // Kanal von vor der Raum-Spalte
-      this.sql.exec(
-        "INSERT INTO nachrichten (stand, kennung, paket, zeit) VALUES (?, ?, ?, ?)",
-        stand, kennung, paket, Date.now()
-      );
-    }
-
-    /* Alte Nachrichten wegraeumen - beim SCHREIBEN, nie beim Verbinden.
-       Dort zaehlt jede Millisekunde; hier stoert es niemanden. Gedrosselt,
-       damit nicht jede Nachricht einen Loeschlauf ausloest. */
-    try {
-      const jetzt = Date.now();
-      if (jetzt - (this._letztesAufraeumen || 0) > 60 * 60 * 1000) {
-        this._letztesAufraeumen = jetzt;
-        this.sql.exec("DELETE FROM nachrichten WHERE zeit < ?",
-                      jetzt - NACHRICHTEN_ALTER);
-      }
-    } catch (_e) { /* Aufraeumen darf das Senden nie kippen */ }
-
-    // aelteste Nachrichten fallen hinten heraus
-    const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
-    if (anzahl > MAX_NACHRICHTEN) {
-      this.sql.exec(
-        "DELETE FROM nachrichten WHERE stand <= (SELECT MIN(stand) + ? FROM nachrichten)",
-        anzahl - MAX_NACHRICHTEN - 1
-      );
-    }
-    this.zugriffMerken();
-
-    // Quittung an den Absender
-    try { ws.send(JSON.stringify({ art: "quittung", kennung: kennung, stand: stand })); } catch (_e) {}
-    // Unveraendert an die anderen Leitungen - aber nur an die im SELBEN Raum.
-    // Der Riegel sitzt hier beim Ausliefern: alle im Kanal haben denselben
-    // Schluessel, Verschluesselung hilft also nicht.
-    const weiter = JSON.stringify({ art: "nachricht", paket: paket, stand: stand, raum: raum });
-    for (const andere of this.ctx.getWebSockets()) {
-      if (andere === ws) continue;
-      let zu = {};
-      try { zu = andere.deserializeAttachment() || {}; } catch (_e) { zu = {}; }
-      if (String(zu.raum || "allgemein") !== raum) continue;
-      try { andere.send(weiter); } catch (_e) {}
-    }
-  }
-
-  /* Kurze Meldung an alle anderen: an dieser Liste hat sich etwas getan.
-   * Kein Inhalt - nur der Anstoss, selbst zu holen. Wer nicht freigegeben
-   * ist, bekommt nichts: sonst verriete schon die Meldung, dass es die
-   * Liste gibt. */
-  listenMeldung(liste, stand, ausser) {
-    let l = null;
-    try { l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", liste).toArray()[0]; }
-    catch (_e) { return; }
-    if (!l) return;
-    const nachricht = JSON.stringify({ art: "listen", liste: liste, stand: stand });
-    for (const ws of this.ctx.getWebSockets()) {
-      let zu = {};
-      try { zu = ws.deserializeAttachment() || {}; } catch (_e) { zu = {}; }
-      const wer = String(zu.kennung || "");
-      // Nicht an den Absender - der weiss es schon.
-      if (wer && ausser && gleich(wer, ausser)) continue;
-      // Dieselbe Freigabepruefung wie ueberall.
-      if (!this.darfListe(l, wer)) continue;
-      try { ws.send(nachricht); } catch (_e) {}
-    }
-  }
-
-  async webSocketClose(ws, code, grund, sauber) {
-    try { ws.close(code === 1006 ? 1000 : code, grund); } catch (_e) {}
-  }
-
-  async webSocketError(ws) { /* nichts zu tun - die Leitung faellt weg */ }
-
-  /* ---------- HTTP ---------------------------------------------------- */
-
-  async fetch(request) {
-    const url = new URL(request.url);
-    // Die offene Leitung fuer den Chat hat einen eigenen Weg
-    if (url.pathname === "/draht") return this.draht(request);
-
-    /* Sicherung eines Kanals. Erreichbar nur ueber diesen Pfad, den der
+  /* Sicherung eines Kanals. Erreichbar nur ueber diesen Pfad, den der
        Zaehler ausschliesslich nach Admin-Pruefung setzt - oeffentliche
        Anfragen landen auf /dv und koennen ihn nicht treffen. */
     if (url.pathname === "/kanal-sicherung") {
-      const tabellen = ["kanal", "mitglieder", "nachrichten", "listen", "freigaben",
+      const tabellen = ["kanal", "mitglieder", "listen", "freigaben",
                         "einladungen", "takt", "anhaenge", "anhang_geholt", "marken"];
       const aus = {};
       for (const t of tabellen) {
@@ -2663,10 +2504,8 @@ export class Kanal extends DurableObject {
       const k = this.kanalZeile();
       if (!k) return jsonAntwort({ da: false });
       const m = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
-      const n = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
       const l = this.sql.exec("SELECT COUNT(*) AS n FROM listen").toArray()[0].n;
       const lb = this.sql.exec("SELECT COALESCE(SUM(LENGTH(daten)),0) AS n FROM listen").toArray()[0].n;
-      const nb = this.sql.exec("SELECT COALESCE(SUM(LENGTH(paket)),0) AS n FROM nachrichten").toArray()[0].n;
       // Anhaenge mitzaehlen - sonst zeigt der Serverstatus zu wenig Platzbedarf.
       let ah = 0, ahb = 0;
       try {
@@ -2677,11 +2516,11 @@ export class Kanal extends DurableObject {
       } catch (_e) { /* alte Kanaele ohne Tabelle */ }
       return jsonAntwort({
         da: true, code: k.code, offen: !!k.offen, stand: k.stand,
-        mitglieder: m, nachrichten: n, listen: l,
+        mitglieder: m, nachrichten: 0, listen: l,
         anhaenge: ah, anhaengeBytes: ahb,
         dbBytes: echteGroesse(this.sql),
-        bytes: (k.daten || "").length + lb + nb + ahb,
-        leitungen: this.ctx.getWebSockets().length,
+        bytes: (k.daten || "").length + lb + ahb,
+        leitungen: 0,
         angelegt: new Date(k.angelegt).toISOString(),
         letzterZugriff: new Date(k.letzter_zugriff).toISOString(),
         warnung: !!k.warnung_ab
@@ -3017,10 +2856,9 @@ export class Kanal extends DurableObject {
     }
     if (teil === "zustand" && method === "GET") {
       const anzahl = this.sql.exec("SELECT COUNT(*) AS n FROM mitglieder").toArray()[0].n;
-      const nachr = this.sql.exec("SELECT COUNT(*) AS n FROM nachrichten").toArray()[0].n;
       return jsonAntwort({
         name: k.name, offen: !!k.offen, stand: k.stand, mitglieder: anzahl,
-        nachrichten: nachr, groesse: (k.daten || "").length, warnung: warnung
+        nachrichten: 0, groesse: (k.daten || "").length, warnung: warnung
       });
     }
 
@@ -3212,10 +3050,6 @@ export class Kanal extends DurableObject {
         this.sql.exec("DELETE FROM anhang_weg WHERE liste = ?", liste);
       } catch (_e) { /* Kanal von vor den Anhaengen */ }
       this.sql.exec("DELETE FROM listen WHERE liste = ?", liste);
-      // Nachrichten des Listen-Chatraums gehen ebenfalls mit - der Raum
-      // existiert ohne seine Liste nicht mehr.
-      try { this.sql.exec("DELETE FROM nachrichten WHERE raum = ?", liste); }
-      catch (_e) { /* Kanal von vor den Raeumen */ }
       return jsonAntwort({ ok: true });
     }
 
@@ -3392,146 +3226,5 @@ export class Kanal extends DurableObject {
     }
 
     return jsonAntwort({ fehler: "Diese Auskunft gibt es nicht." }, 404);
-  }
-
-  /* ---------- Leitung annehmen --------------------------------------- */
-
-  /* ---------- Chatraeume ---------------------------------------------
-   * "allgemein" erreicht jedes Mitglied. Jeder weitere Raum traegt die
-   * Kennung einer Liste und erbt deren Freigabe - dieselbe Pruefung wie bei
-   * listen/holen, ueber dieselbe Methode. Keine zweite Rechteverwaltung.
-   * "ohne" und "stamm" bekommen keinen Raum.
-   * -------------------------------------------------------------------- */
-  raumErlaubt(raum, kennung) {
-    if (!raum || raum === "allgemein") return { ok: true, seit: 0 };
-    if (raum === "ohne" || raum === "stamm") {
-      return { ok: false, grund: "Für diese Ansicht gibt es keinen Chat." };
-    }
-    const l = this.sql.exec("SELECT * FROM listen WHERE liste = ?", raum).toArray()[0];
-    if (!l) return { ok: false, grund: "Diesen Chatraum gibt es nicht." };
-    if (!this.darfListe(l, kennung)) {
-      return { ok: false, grund: "Für diese Liste fehlt die Freigabe." };
-    }
-    // Ab wann darf mitgelesen werden? Wer neu freigegeben wird, bekommt
-    // nur Neueres - nicht rueckwirkend den ganzen Verlauf.
-    let seit = 0;
-    if (!l.offen) {
-      const f = this.sql.exec(
-        "SELECT seit FROM freigaben WHERE liste = ? AND kennung = ?", raum, kennung
-      ).toArray();
-      if (f.length) seit = Number(f[0].seit) || 0;
-    }
-    return { ok: true, seit: seit };
-  }
-
-  async draht(request) {
-    const url = new URL(request.url);
-    const k = this.kanalZeile();
-    const paar = new WebSocketPair();
-    const [zumBesucher, meins] = Object.values(paar);
-    // Ruhezustand erlaubt: das Objekt darf einschlafen, ohne die Leitung zu verlieren
-    this.ctx.acceptWebSocket(meins);
-
-    if (!k) {
-      try { meins.close(4404, "Diesen Kanal gibt es nicht"); } catch (_e) {}
-      return new Response(null, { status: 101, webSocket: zumBesucher });
-    }
-
-    const raum = String(url.searchParams.get("raum") || "allgemein").slice(0, 120);
-    const kennung = String(url.searchParams.get("kennung") || "").slice(0, 200);
-    const pruefwert = String(url.searchParams.get("pruefwert") || "");
-    const seitWunsch = Number(url.searchParams.get("seit") || 0) || 0;
-
-    /* Aeltere App-Fassungen verbinden sich ohne diese Angaben und erwarten
-     * den bisherigen Ablauf. Deshalb: fuer "allgemein" bleibt alles wie
-     * gehabt, sobald aber ein Listenraum gewuenscht wird, sind Kennung und
-     * Pruefwert Pflicht. Alte Fassungen fragen solche Raeume nie an. */
-    const listenRaum = raum && raum !== "allgemein";
-
-    if (listenRaum) {
-      if (!gleich(pruefwert, k.pruefwert)) {
-        try { meins.close(4401, "Passwort stimmt nicht"); } catch (_e) {}
-        return new Response(null, { status: 101, webSocket: zumBesucher });
-      }
-      if (!this.mitglied(kennung)) {
-        try { meins.close(4403, "Dieses Gerät gehört nicht zum Kanal"); } catch (_e) {}
-        return new Response(null, { status: 101, webSocket: zumBesucher });
-      }
-    }
-
-    // Ohne Freigabe ausdruecklich ablehnen - nicht stillschweigend einen
-    // leeren Raum liefern. Sonst sucht spaeter jemand einen Fehler, den es
-    // nicht gibt.
-    const erlaubt = this.raumErlaubt(raum, kennung);
-    if (!erlaubt.ok) {
-      try {
-        meins.send(JSON.stringify({ art: "fehler", raum: raum, fehler: erlaubt.grund }));
-      } catch (_e) {}
-      try { meins.close(4403, erlaubt.grund); } catch (_e) {}
-      return new Response(null, { status: 101, webSocket: zumBesucher });
-    }
-
-    // Raum und Kennung an der Leitung merken - beim Verteilen wird beides
-    // gebraucht, und die Leitung ueberlebt den Ruhezustand des Objekts.
-    try { meins.serializeAttachment({ fenster: 0, anzahl: 0, raum: raum, kennung: kennung }); }
-    catch (_e) {}
-    this.zugriffMerken();
-    // Stempel nur setzen, wenn er wirklich veraltet ist. Frueher schrieb
-    // JEDER Verbindungsaufbau in die Datenbank - bei einem Handy, das
-    // unterwegs staendig neu verbindet, sind das hunderte Schreibvorgaenge
-    // am Tag. Genau daran ist das Objekt in die Zeitueberschreitung
-    // gelaufen ("storage operation exceeded timeout"). Die Fristen, an
-    // denen der Stempel haengt, sind 7 und 30 Tage - eine Genauigkeit von
-    // einer Stunde genuegt dafuer bei weitem.
-    this.stempelWennNoetig(kennung);
-
-    // Nachholen: ab dem spaeteren von Freigabezeitpunkt und Wunsch,
-    // hoechstens NACHHOLEN Stueck.
-    /* Nachzustellung NACH dem Annehmen der Leitung.
-     * ----------------------------------------------------------------
-     * Frueher wurde hier zuerst gelesen und gesendet, und erst danach die
-     * 101-Antwort geschickt. Bei einem gewachsenen Kanal reichte das aus,
-     * um in die Zeitgrenze des Durable Object zu laufen: das Objekt wurde
-     * zurueckgesetzt, die Leitung kam nie zustande, und im Fehlerbuch
-     * stand "storage operation exceeded timeout" (am 12., 13., 14., 15.,
-     * 16. und 20. August).
-     *
-     * Jetzt geht die Antwort sofort raus. Das Lesen laeuft danach ueber
-     * waitUntil - dauert es zu lange, steht die Leitung trotzdem, und der
-     * Besucher bekommt die alten Nachrichten eben ein paar Hundertstel
-     * spaeter. */
-    const ab = Math.max(erlaubt.seit || 0, seitWunsch);
-    const nachreichen = async () => {
-      /* Erst die Antwort rausgehen lassen. Ohne dieses Warten laeuft die
-         Funktion synchron durch (sie hat sonst keinen Haltepunkt) und
-         blockiert die 101-Antwort genauso wie vorher - gemessen: 50
-         Nachrichten gingen vor der Antwort raus. */
-      await new Promise((f) => setTimeout(f, 0));
-      let alt = [];
-      try {
-        alt = this.sql.exec(
-          "SELECT stand, paket, zeit FROM nachrichten WHERE raum = ? AND zeit > ? " +
-          "ORDER BY stand DESC LIMIT ?", raum, ab, NACHHOLEN
-        ).toArray().reverse();
-      } catch (_e) {
-        // Kanal von vor der Raum-Spalte: dann wie frueher, ohne Raumfilter.
-        try {
-          alt = this.sql.exec(
-            "SELECT stand, paket, zeit FROM nachrichten ORDER BY stand DESC LIMIT ?", NACHHOLEN
-          ).toArray().reverse();
-        } catch (_e2) { alt = []; }
-      }
-      for (const n of alt) {
-        try {
-          meins.send(JSON.stringify({
-            art: "nachricht", paket: n.paket, stand: n.stand, raum: raum
-          }));
-        } catch (_e) { break; }   // Leitung schon zu: nicht weiter versuchen
-      }
-    };
-    try { this.ctx.waitUntil(nachreichen()); }
-    catch (_e) { nachreichen().catch(() => {}); }
-
-    return new Response(null, { status: 101, webSocket: zumBesucher });
   }
 }

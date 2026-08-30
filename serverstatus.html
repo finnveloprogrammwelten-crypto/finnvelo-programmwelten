@@ -201,10 +201,8 @@
       document.getElementById('zeit').textContent = 'Stand: ' + datum(d.zeit);
 
       var kanaele = d.kanaele || [];
-      var leitungen = 0, nachrichten = 0, mitglieder = 0, kanalBytes = 0, gewarnt = 0;
+      var mitglieder = 0, kanalBytes = 0, gewarnt = 0;
       kanaele.forEach(function (k) {
-        leitungen += k.leitungen || 0;
-        nachrichten += k.nachrichten || 0;
         mitglieder += k.mitglieder || 0;
         kanalBytes += k.bytes || 0;
         if (k.warnung) gewarnt++;
@@ -216,9 +214,7 @@
 
       var html = '<div class="fvs-reihe">'
         + kachel(kanaele.length, 'Kanäle', gewarnt ? (gewarnt + ' mit Löschwarnung') : 'alle aktiv', gewarnt ? 'warn' : '')
-        + kachel(leitungen, 'offene Chatleitungen', 'gerade verbunden', leitungen ? 'gut' : '')
         + kachel(mitglieder, 'Geräte in Kanälen', '')
-        + kachel(nachrichten, 'Chatnachrichten', kb(kanalBytes) + ' gesamt')
         + kachel(schwer, 'schwere Fehler', schwer ? 'siehe unten' : 'nichts Auffälliges', schwer ? 'warn' : 'gut')
         + speicherKachel(d.dbBytes || gesamtBytes, d.speicherGrenzeMB || 1024, !!d.dbBytes)
         + '</div>';
@@ -275,8 +271,8 @@
         html += '<p class="fvs-leer">Noch keine Kanäle angelegt.</p>';
       } else {
         html += '<table class="fvs-tabelle"><thead><tr><th>Code</th><th>Zustand</th>'
-          + '<th style="text-align:right">Geräte</th><th style="text-align:right">Leitungen</th>'
-          + '<th style="text-align:right">Listen</th><th style="text-align:right">Nachrichten</th>'
+          + '<th style="text-align:right">Geräte</th>'
+          + '<th style="text-align:right">Listen</th>'
           + '<th style="text-align:right">Anhänge</th>'
           + '<th style="text-align:right">Belegt</th><th>Letzter Zugriff</th></tr></thead><tbody>';
         kanaele.forEach(function (k) {
@@ -286,9 +282,7 @@
             + '<td>' + (k.warnung ? '<span class="fvs-lage fvs-lage--4">Löschwarnung</span>'
                                   : (k.offen ? 'offen' : 'geschlossen')) + '</td>'
             + '<td class="zahl">' + (k.mitglieder || 0) + '</td>'
-            + '<td class="zahl">' + (k.leitungen || 0) + '</td>'
             + '<td class="zahl">' + (k.listen || 0) + '</td>'
-            + '<td class="zahl">' + (k.nachrichten || 0) + '</td>'
             + '<td class="zahl">' + (k.anhaenge || 0)
             + (k.anhaengeBytes ? '<div class="fvs-kachel__zusatz">' + kb(k.anhaengeBytes) + '</div>' : '')
             + '</td>'
