@@ -7,7 +7,21 @@
     "directory": ".",
     "binding": "ASSETS",
     // Unbekannte Adressen zeigen die freundliche Fehlerseite 404.html
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    /* Nur fuer .html-Adressen zuerst den Worker fragen.
+       Grund: Cloudflare liefert ein passendes Asset normalerweise AUS,
+       BEVOR der Worker laeuft. Fuer /kontakt.html gibt es eine Datei -
+       also griff die Asset-Auslieferung mit ihrem 307 ("voruebergehend"),
+       und der 301-Block im Worker wurde nie erreicht. Gemessen nach dem
+       Deploy am 07.09.2026: /mischwald und /apps/einkaufsliste/ (keine
+       Dateien) lieferten 301, /index.html und /kontakt.html weiter 307.
+       Google laesst eine 307-Adresse im Bestand stehen - genau deshalb
+       stand sie dauerhaft unter "Seite mit Weiterleitung".
+       Bewusst nur "/*.html" statt true: alles andere - Bilder, CSS, die
+       sauberen Seitenadressen - wird weiter direkt ausgeliefert, ohne
+       Umweg und ohne Zusatzkosten. Echte Besucher rufen .html praktisch
+       nie auf; das kommt fast nur noch von Suchmaschinen. */
+    "run_worker_first": ["/*.html"]
   },
   // Durable Object fuer die Zaehler - wird beim Deploy automatisch angelegt.
   // KEIN KV-Namespace, KEINE ID noetig.
