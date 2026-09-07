@@ -1312,6 +1312,16 @@ function esc(t) {
     .replace(/"/g, "&quot;");
 }
 
+/* Kopfzeile fuer selbst angelegte Programmseiten.
+   Das Ausklappmenue "Web-Apps" stand hier bis zum 07.09.2026 mit zwei
+   fest eingebauten Eintraegen: /planer/haus-und-gartenplaner/ und
+   /mischwald. Beide Web-Fassungen wurden am 13.08.2026 entfernt, die
+   Links blieben stehen und liefen ins Leere.
+   Nebeneffekt des Ausbaus: Diese Kopfzeile hatte einen Nav-Eintrag mehr
+   als die der festen HTML-Seiten (den Knopf "Web-Apps"). Da die
+   n-Schluessel in Dokumentreihenfolge vergeben werden, sassen
+   "Kommentare" und "Kontakt" auf generierten Seiten um eins verschoben.
+   Jetzt stimmen beide Kopfzeilen ueberein. */
 const KOPFZEILE = `  <header class="site-header">
     <a class="brand" href="/" aria-label="Finnvelo Programmwelten Startseite">
       <img class="brand-logo" src="/assets/images/finnvelo-plakette.webp" alt="Finnvelo Plakette">
@@ -1320,13 +1330,6 @@ const KOPFZEILE = `  <header class="site-header">
     <nav aria-label="Hauptnavigation">
       <a href="/">Start</a>
       <a href="/programme">Programme</a>
-      <span class="nav-apps">
-        <a class="nav-apps__btn" href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" aria-haspopup="true" aria-expanded="false">Web-Apps</a>
-        <span class="nav-apps__menu" hidden>
-          <a href="/planer/haus-und-gartenplaner/" target="_blank" rel="noopener" data-fv-nav-extra>Haus- und Gartenplaner</a>
-          <a href="/mischwald" target="_blank" rel="noopener" data-fv-nav-extra>Mischwaldrechner</a>
-        </span>
-      </span>
       <a href="/kommentare">Kommentare</a>
       <a href="/kontakt">Kontakt</a>
     </nav>
@@ -1604,12 +1607,13 @@ async function eigeneProgramme(env) {
   } catch (_e) { return []; }
 }
 
-function webAppKey(pathname) {
-  const p = String(pathname || "").toLowerCase().replace(/\/+$/, "");
-  if (p === "/mischwald" || p === "/mischwald.html") return "open:mischwald";
-  if (p === "/planer/haus-und-gartenplaner" || p === "/planer/haus-und-gartenplaner/index.html") return "open:planer";
-  return "";
-}
+/* webAppKey() ist am 07.09.2026 entfallen. Die Funktion ordnete
+   /mischwald und /planer/haus-und-gartenplaner einem Zaehlerschluessel
+   zu ("open:mischwald", "open:planer"). Beide Web-Fassungen gibt es seit
+   dem 13.08.2026 nicht mehr, und beide Adressen werden jetzt weiter oben
+   in bearbeiten() mit 301 beantwortet - sie erreichten diese Stelle
+   ohnehin nie wieder. Die bereits gezaehlten Werte bleiben unangetastet
+   in der Datenbank stehen. */
 
 // Nur echte Seitenaufrufe zaehlen - keine Bilder, Suchmaschinen oder Messdienste.
 function isEchterAufruf(request) {
@@ -1651,6 +1655,59 @@ export default {
 
   async bearbeiten(request, env, ctx) {
     const url = new URL(request.url);
+
+    /* =================================================================
+     * DAUERHAFTE WEITERLEITUNGEN (301)
+     * -----------------------------------------------------------------
+     * Warum ueberhaupt: Die Asset-Auslieferung von Cloudflare leitet
+     * /kontakt.html von sich aus auf /kontakt um - aber mit 307, also
+     * "voruebergehend". Google behaelt eine solche Adresse dann im
+     * Bestand und uebertraegt ihre Wertung NICHT auf das Ziel. Im
+     * Indexierungsbericht steht sie dauerhaft unter "Seite mit
+     * Weiterleitung"; die Validierung schlaegt zwangslaeufig fehl.
+     * Gemessen am 07.09.2026: /index.html und /kontakt.html, beide 307,
+     * Validierung "Fehlgeschlagen", seit dem 13.06.2026 unveraendert.
+     * Der SEO-Umbau vom 11.08. konnte daran nichts aendern - die
+     * Weiterleitung kommt gar nicht aus dem Projekt.
+     * Ein 301 sagt "endgueltig". Erst damit raeumt Google auf.
+     *
+     * Bewusst eng gefasst - jede Erweiterung braucht einen Befund:
+     *   - nur GET/HEAD; Schnittstellenwege bleiben unberuehrt
+     *   - nur .html direkt in der Wurzel. Unterordner bleiben aussen
+     *     vor: /FinnVelo/Aufgabenplaner/index.html leitet Cloudflare
+     *     auf den Ordner MIT Schraegstrich um, und diese Adresse kennt
+     *     keine Suchmaschine.
+     *   - der Schraegstrich am Ende wird NICHT angefasst. Dazu gibt es
+     *     keinen Befund, und /FinnVelo/Aufgabenplaner/ muss so bleiben.
+     * ================================================================= */
+    if (request.method === "GET" || request.method === "HEAD") {
+      const p = url.pathname;
+      const dauerhaft = (nach) => new Response(null, {
+        status: 301,
+        headers: { location: nach + url.search, "cache-control": "no-store" }
+      });
+
+      /* Abgeraeumte Web-Fassungen. Entfernt am 13.08.2026 (Commit
+         9123644) - das war Absicht. Die Adressen stehen aber weiter in
+         fremden Verzeichnissen und in Lesezeichen; Google hat sie am
+         03./04.09.2026 noch angefragt. Statt der Fehlerseite jetzt der
+         Verweis auf die jeweilige Programmseite. */
+      const ABGERAEUMT = {
+        "/mischwald": "/mischwaldrechner",
+        "/mischwald.html": "/mischwaldrechner",
+        "/planer/haus-und-gartenplaner": "/haus-und-gartenplaner",
+        "/planer/haus-und-gartenplaner/index.html": "/haus-und-gartenplaner",
+        "/apps/einkaufsliste": "/einkaufsliste"
+      };
+      const ohneStrich = p.length > 1 ? p.replace(/\/+$/, "") : p;
+      if (ABGERAEUMT[ohneStrich]) return dauerhaft(ABGERAEUMT[ohneStrich]);
+
+      // /kontakt.html -> /kontakt , /index.html -> /
+      if (/^\/[a-z0-9][a-z0-9.\-]*\.html$/i.test(p)) {
+        const rein = p.replace(/\.html$/i, "");
+        return dauerhaft(rein === "/index" ? "/" : rein);
+      }
+    }
 
     /* =================================================================
      * ZUERST die beiden eigenstaendigen Dienste - noch VOR allem anderen.
@@ -1972,20 +2029,6 @@ export default {
         }
         return antwort;
       }
-    }
-
-    // Wurde eine Web-App geoeffnet? Dann leise mitzaehlen (blockiert nichts).
-    const appKey = webAppKey(url.pathname);
-    if (appKey && env && env.COUNTERS && isEchterAufruf(request)) {
-      try {
-        const stub = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
-        const zaehlen = stub.fetch(new Request("https://zaehler/api/hit", {
-          method: "POST",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ key: appKey })
-        }));
-        if (ctx && ctx.waitUntil) ctx.waitUntil(zaehlen);
-      } catch (_e) { /* Zaehlen darf die Seite nie stoeren */ }
     }
 
     // Alles andere: statische Datei ausliefern.
