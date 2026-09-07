@@ -2498,9 +2498,24 @@ export class Kanal extends DurableObject {
     }
   }
 
-  /* ---------- Chat: offene Leitung ---------------------------------- */
+  /* ---------- HTTP ---------------------------------------------------- */
 
-  /* Sicherung eines Kanals. Erreichbar nur ueber diesen Pfad, den der
+  /* Einstiegspunkt des Kanal-Objekts.
+     Dieser Methodenkopf ist beim Chat-Ausbau am 30.08.2026 (Commit
+     7ec266d) versehentlich mit entfernt worden - zusammen mit den drei
+     Leitungs-Rueckrufen, die direkt darueber standen. Ohne ihn stand
+     alles ab "/kanal-sicherung" lose im Klassenrumpf; der Erbauer las
+     "if (...)" als Methodennamen und brach ab ("Expected ')' but found
+     '.'"). Der Commit liess sich deshalb nie veroeffentlichen - genau
+     das war die Luecke zwischen dem eingesetzten Stand vom 25.08. und
+     GitHub.
+     Wiederhergestellt am 07.09.2026, ohne die Chat-Zeile, die den Weg
+     "/draht" an eine eigene Methode weiterreichte. Die gehoerte zum
+     ausgebauten Chat und bleibt weg. */
+  async fetch(request) {
+    const url = new URL(request.url);
+
+    /* Sicherung eines Kanals. Erreichbar nur ueber diesen Pfad, den der
        Zaehler ausschliesslich nach Admin-Pruefung setzt - oeffentliche
        Anfragen landen auf /dv und koennen ihn nicht treffen. */
     if (url.pathname === "/kanal-sicherung") {
