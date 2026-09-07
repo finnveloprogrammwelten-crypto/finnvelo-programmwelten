@@ -7,21 +7,31 @@
     "directory": ".",
     "binding": "ASSETS",
     // Unbekannte Adressen zeigen die freundliche Fehlerseite 404.html
-    "not_found_handling": "404-page",
-    /* Nur fuer .html-Adressen zuerst den Worker fragen.
-       Grund: Cloudflare liefert ein passendes Asset normalerweise AUS,
-       BEVOR der Worker laeuft. Fuer /kontakt.html gibt es eine Datei -
-       also griff die Asset-Auslieferung mit ihrem 307 ("voruebergehend"),
-       und der 301-Block im Worker wurde nie erreicht. Gemessen nach dem
-       Deploy am 07.09.2026: /mischwald und /apps/einkaufsliste/ (keine
-       Dateien) lieferten 301, /index.html und /kontakt.html weiter 307.
-       Google laesst eine 307-Adresse im Bestand stehen - genau deshalb
-       stand sie dauerhaft unter "Seite mit Weiterleitung".
-       Bewusst nur "/*.html" statt true: alles andere - Bilder, CSS, die
-       sauberen Seitenadressen - wird weiter direkt ausgeliefert, ohne
-       Umweg und ohne Zusatzkosten. Echte Besucher rufen .html praktisch
-       nie auf; das kommt fast nur noch von Suchmaschinen. */
-    "run_worker_first": ["/*.html"]
+    "not_found_handling": "404-page"
+    /* NICHT "run_worker_first" setzen. Am 07.09.2026 einmal versucht und
+       binnen Minuten zurueckgerollt - hier steht, warum, damit es niemand
+       ein zweites Mal probiert.
+
+       Wie die Auslieferung heute laeuft:
+         echter Dateitreffer (/kontakt.html, /styles.css, /assets/...)
+             -> direkt aus dem Dateispeicher, der Worker wird nie gefragt
+         alles andere (/kontakt, /mischwald, /api/..., /tourenapi/...)
+             -> der Worker, der Dateien am Ende ueber env.ASSETS weiterreicht
+
+       "run_worker_first": ["/*.html"] kehrt das um: die Liste ist keine
+       Ergaenzung, sondern eine BESCHRAENKUNG. Nur noch die genannten Muster
+       erreichen den Worker; alles uebrige wird rein aus Dateien bedient und
+       laeuft, wenn dort nichts liegt, in die 404-Seite. Gemessen: saemtliche
+       /api/-Wege lieferten die 404-Seite statt JSON - Aufgabenplaner,
+       Einkaufsliste, Tourenplaner und der Bearbeiten-Modus standen still.
+
+       "run_worker_first": true waere technisch richtig und wuerde nebenbei
+       den 301 auch bei .html greifen lassen. Dann laeuft aber JEDE Anfrage
+       durch den Worker, auch jedes Bild und jede CSS-Datei. Dafuer ist der
+       Gewinn zu klein: es geht um zwei Adressen (/index.html, /kontakt.html),
+       die kein Besucher aufruft. Falls es doch einmal sein soll - nur zu
+       einem Zeitpunkt, an dem ein Ausfall nichts kostet, und mit
+       "npx wrangler rollback" griffbereit. */
   },
   // Durable Object fuer die Zaehler - wird beim Deploy automatisch angelegt.
   // KEIN KV-Namespace, KEINE ID noetig.
