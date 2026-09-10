@@ -61,7 +61,9 @@ const RESERVIERT = [
   "einkaufsliste", // Programmseite der Einkaufsliste
   "tourenplaner",  // Programmseite des Tourenplaners
   "lesezeit",      // Programmseite Lesezeit
-  "lesezeit"       // Ordner mit APK und Fassungsdatei
+  "lesezeit",      // Ordner mit APK und Fassungsdatei
+  "klarschiff"     // Programmseite + Ordner mit APK; die Fassungsdatei
+                   // kommt vom Worker, im Ordner darf keine liegen
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
@@ -148,6 +150,10 @@ const VERSION_ABLAGEN = {
   "/einkaufsliste/pc.json": "einkaufsliste-pc",
   "/mischwaldrechner/pc.json": "mischwald-pc",
   "/lesezeit/pc.json": "lesezeit-pc",   // klein! der Vergleich nutzt toLowerCase()
+  /* Klarschiff: reine Android-App, daher nur eine Datei. Im Ordner
+     /klarschiff/ darf KEINE version.json liegen - eine echte Datei
+     gewinnt immer, und die Update-Kachel speicherte dann ins Leere. */
+  "/klarschiff/version.json": "klarschiff",
   "/tourenplaner/android.json": "tourenplaner-android",
   "/tourenplaner/pc.json": "tourenplaner-pc",
   // Lesezeit: die App fragt /lesezeit/version.json ab.
@@ -1249,6 +1255,7 @@ export class Counter extends DurableObject {
       const leer = {
         aufgabenplaner: { schluessel: "FINNVELO-AUFGABENPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         einkaufsliste: { schluessel: "FINNVELO-EINKAUFSPLANER", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        klarschiff: { schluessel: "FINNVELO-KLARSCHIFF", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "aufgabenplaner-pc": { schluessel: "FINNVELO-AUFGABENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "einkaufsliste-pc": { schluessel: "FINNVELO-EINKAUFSPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "mischwald-pc": { schluessel: "FINNVELO-MISCHWALD-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
