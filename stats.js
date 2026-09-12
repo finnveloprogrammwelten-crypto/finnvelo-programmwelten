@@ -633,6 +633,21 @@
           });
         }
       }
+      /* ---- Spaltenmodus der Seite (Block q2) ----------------------
+         Bisher stand in der HTML-Datei, ob eine Seite ein- oder
+         zweispaltig ist (Klasse program-detail__body--archivar). Das
+         laesst sich jetzt im Bearbeiten-Modus umschalten, ohne die Datei
+         anzufassen. Ohne Eintrag gilt weiter, was in der Datei steht.
+         Muss auch fuer Besucher laufen. */
+      var vorgabeSpalten = (traeger.classList.contains('program-detail__body--archivar')
+                         || traeger.classList.contains('program-detail__body--command-control'))
+                         ? 'ein' : 'zwei';
+      var spalten = vorgabeSpalten;
+      var qs = map['q2'];
+      if (qs && qs.type === 'text' && (qs.value === 'ein' || qs.value === 'zwei')) spalten = qs.value;
+      traeger.classList.remove('fv-spalten-ein', 'fv-spalten-zwei');
+      traeger.classList.add('fv-spalten-' + spalten);
+
       /* ---- Breite je Abschnitt (Block q1) -------------------------
          Ablage: { "download-title": "halb", ... }. Ohne Eintrag gilt
          "voll". Sobald mindestens ein Abschnitt auf "halb" steht, wird
@@ -656,6 +671,37 @@
       traeger.classList.toggle('fv-sec-spalten', halbe > 0);
 
       if (!EDITING) return;
+
+      /* Umschalter fuer den Spaltenmodus - eine schmale Leiste ueber den
+         Abschnitten. Bewusst dort und nicht in der Admin-Leiste: die
+         Einstellung gilt nur fuer diese eine Seite. */
+      if (!traeger.parentNode.querySelector(':scope > .fv-spalten-leiste')) {
+        var sl = document.createElement('div');
+        sl.className = 'fv-spalten-leiste';
+        var sb = document.createElement('button');
+        sb.type = 'button'; sb.className = 'fv-spalten-k';
+        var st = document.createElement('span');
+        st.className = 'fv-spalten-hilfe';
+        st.textContent = 'Gilt nur f\u00fcr diese Seite. Auf schmalen Fenstern steht immer alles untereinander.';
+        function slZeichnen() {
+          var zwei = traeger.classList.contains('fv-spalten-zwei');
+          sb.innerHTML = zwei ? '\u25A5 Zweispaltig' : '\u25A4 Einspaltig';
+          sb.setAttribute('title', zwei
+            ? 'Umschalten auf einspaltig - alles untereinander'
+            : 'Umschalten auf zweispaltig - Abschnitte f\u00fcllen links und rechts');
+        }
+        slZeichnen();
+        sb.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var neuWert = traeger.classList.contains('fv-spalten-zwei') ? 'ein' : 'zwei';
+          traeger.classList.remove('fv-spalten-ein', 'fv-spalten-zwei');
+          traeger.classList.add('fv-spalten-' + neuWert);
+          slZeichnen();
+          save('q2', 'text', neuWert);
+        });
+        sl.appendChild(sb); sl.appendChild(st);
+        traeger.parentNode.insertBefore(sl, traeger);
+      }
 
       function breiteSetzen(sec, wert) {
         var id = sec.getAttribute('aria-labelledby');

@@ -757,6 +757,8 @@ footer a {
   .program-row,
   .program-detail__top,
   .program-detail__body,
+  .program-detail__body.fv-spalten-zwei,
+  .program-detail__body.fv-spalten-ein,
   .program-detail__body.fv-sec-spalten,
   .program-detail__body--archivar.fv-sec-spalten,
   .program-detail__body--command-control.fv-sec-spalten {
@@ -859,6 +861,50 @@ footer a {
 
 .program-info-block--wide {
   max-width: 1180px;
+}
+
+/* ---------------------------------------------------------------------
+   Spaltenmodus der Seite - im Bearbeiten-Modus ueber die Leiste ueber
+   den Abschnitten gesetzt, gespeichert im Block q2.
+
+   Ohne Eintrag gilt, was in der HTML-Datei steht. Zwei Klassen am
+   selben Element schlagen die eine Klasse von
+   program-detail__body--archivar, deshalb kein !important.
+
+   Diese Regeln stehen bewusst VOR den fv-sec-spalten-Regeln: sobald ein
+   einzelner Abschnitt auf halbe Breite steht, soll dessen Regel gewinnen.
+   --------------------------------------------------------------------- */
+.program-detail__body.fv-spalten-ein {
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(28px, 3.8vw, 58px);
+}
+
+.program-detail__body.fv-spalten-zwei {
+  grid-template-columns: minmax(0, 1.1fr) minmax(300px, 0.9fr);
+}
+
+/* Leiste mit dem Umschalter - nur im Bearbeiten-Modus im Dokument. */
+.fv-spalten-leiste {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: clamp(40px, 5vw, 80px);
+  margin-bottom: -18px;
+}
+.fv-spalten-k {
+  padding: 7px 13px;
+  border-radius: 9px;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  background-color: #101827;
+  color: #eaf1ff;
+  font: 700 13px/1.2 inherit;
+  cursor: pointer;
+}
+.fv-spalten-k:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+.fv-spalten-hilfe {
+  font-size: 12px;
+  color: rgba(226, 236, 255, 0.55);
 }
 
 /* ---------------------------------------------------------------------
