@@ -766,8 +766,8 @@ footer a {
   }
 
   /* Halbe Abschnitte gibt es auf schmalen Fenstern nicht. */
-  .program-detail__body.fv-sec-spalten > section.fv-sec-halb,
-  .program-detail__body.fv-sec-spalten > section.fv-sec-voll {
+  .program-detail__body > section.fv-sec-halb,
+  .program-detail__body > section.fv-sec-voll {
     grid-column: 1 / -1;
   }
 
@@ -871,8 +871,10 @@ footer a {
    selben Element schlagen die eine Klasse von
    program-detail__body--archivar, deshalb kein !important.
 
-   Diese Regeln stehen bewusst VOR den fv-sec-spalten-Regeln: sobald ein
-   einzelner Abschnitt auf halbe Breite steht, soll dessen Regel gewinnen.
+   Spaltenmodus und Abschnittsbreite streiten NICHT mehr miteinander:
+   der Modus bestimmt, wie viele Spalten das Raster hat, die Breite
+   bestimmt, ueber wie viele Spalten ein Abschnitt laeuft. fv-sec-spalten
+   greift nur noch auf einspaltigen Seiten ein.
    --------------------------------------------------------------------- */
 .program-detail__body.fv-spalten-ein {
   grid-template-columns: minmax(0, 1fr);
@@ -902,6 +904,15 @@ footer a {
   cursor: pointer;
 }
 .fv-spalten-k:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+/* Traegt seit dem 12.09.2026 Text statt nur ein Zeichen. */
+.fv-sec-k--breite {
+  width: auto;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .fv-spalten-hilfe {
   font-size: 12px;
   color: rgba(226, 236, 255, 0.55);
@@ -927,11 +938,19 @@ footer a {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.program-detail__body.fv-sec-spalten > section.fv-sec-voll {
+/* Diese beiden Regeln gelten IMMER, nicht nur zusammen mit
+   fv-sec-spalten. Vorher hingen sie an der Klasse - dadurch war der
+   Knopf "volle Breite" auf den von Haus aus zweispaltigen Seiten
+   (Finanzmanager, Medienstudio) wirkungslos, solange kein Abschnitt auf
+   "halb" stand. Genau das war der Fehler vom 12.09.2026.
+
+   Auf einer einspaltigen Seite schaden sie nicht: 1 / -1 und span 1
+   zeigen dort beide auf dieselbe einzige Spalte. */
+.program-detail__body > section.fv-sec-voll {
   grid-column: 1 / -1;
 }
 
-.program-detail__body.fv-sec-spalten > section.fv-sec-halb {
+.program-detail__body > section.fv-sec-halb {
   grid-column: span 1;
 }
 

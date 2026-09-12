@@ -660,15 +660,27 @@
       if (qb && qb.type === 'text' && qb.value) {
         try { var o2 = JSON.parse(qb.value); if (o2 && typeof o2 === 'object') breiten = o2; } catch (e) {}
       }
+      /* Die Vorgabe richtet sich nach dem Spaltenmodus der Seite, damit
+         sich ohne Eintrag nichts am heutigen Aussehen aendert:
+           zweispaltige Seite -> "halb"  (ein Abschnitt fuellt eine Spalte)
+           einspaltige Seite  -> "voll"  (ein Abschnitt fuellt die Zeile)
+         Genau das macht das Raster von sich aus auch ohne Klasse. */
+      var vorgabeBreite = (spalten === 'zwei') ? 'halb' : 'voll';
       var halbe = 0;
       abschnitte().forEach(function (sec) {
         var id = sec.getAttribute('aria-labelledby');
-        var b = breiten[id] === 'halb' ? 'halb' : 'voll';
+        var w = breiten[id];
+        var b = (w === 'halb' || w === 'voll') ? w : vorgabeBreite;
         sec.classList.remove('fv-sec-halb', 'fv-sec-voll');
         sec.classList.add('fv-sec-' + b);
         if (b === 'halb') halbe++;
       });
-      traeger.classList.toggle('fv-sec-spalten', halbe > 0);
+      /* fv-sec-spalten ist nur der Notbehelf fuer EINSPALTIGE Seiten:
+         dort gibt es sonst keine zweite Spalte, in die ein halber
+         Abschnitt rutschen koennte. Auf zweispaltigen Seiten darf die
+         Klasse nicht gesetzt werden - sie wuerde die Spaltenbreiten
+         1.1fr/0.9fr platt auf 1fr/1fr ziehen. */
+      traeger.classList.toggle('fv-sec-spalten', halbe > 0 && spalten === 'ein');
 
       if (!EDITING) return;
 
@@ -696,8 +708,13 @@
           var neuWert = traeger.classList.contains('fv-spalten-zwei') ? 'ein' : 'zwei';
           traeger.classList.remove('fv-spalten-ein', 'fv-spalten-zwei');
           traeger.classList.add('fv-spalten-' + neuWert);
+          /* Abschnitte ohne eigenen Eintrag folgen der neuen Vorgabe,
+             sonst haengt die Seite zwischen beiden Zustaenden. */
+          traeger.classList.toggle('fv-sec-spalten',
+            !!traeger.querySelector(':scope > section.fv-sec-halb') && neuWert === 'ein');
           slZeichnen();
           save('q2', 'text', neuWert);
+          setTimeout(function () { location.reload(); }, 250);
         });
         sl.appendChild(sb); sl.appendChild(st);
         traeger.parentNode.insertBefore(sl, traeger);
@@ -739,12 +756,16 @@
            regelst du mit den Pfeilen darueber. */
         var bk = document.createElement('button');
         bk.type = 'button'; bk.className = 'fv-sec-k fv-sec-k--breite';
+        /* Beschriftung zeigt den ZUSTAND, nicht die Aktion - genau wie
+           der Umschalter fuer den Spaltenmodus. Vorher stand hier das
+           Gegenteil, und zwei Knoepfe direkt uebereinander lasen sich
+           entgegengesetzt. */
         function bkZeichnen() {
           var halb = sec.classList.contains('fv-sec-halb');
-          bk.innerHTML = halb ? '\u25AD' : '\u25E7';
+          bk.innerHTML = halb ? '\u25E7 Halbe Breite' : '\u25AD Volle Breite';
           bk.setAttribute('title', halb
-            ? 'Auf volle Breite setzen'
-            : 'Auf halbe Breite setzen \u2013 zwei halbe stehen nebeneinander');
+            ? 'Steht auf halber Breite \u2013 klicken f\u00fcr volle Breite'
+            : 'Steht auf voller Breite \u2013 klicken f\u00fcr halbe Breite');
         }
         bkZeichnen();
         bk.addEventListener('click', function (e) {
@@ -754,7 +775,8 @@
           sec.classList.add('fv-sec-' + neuWert);
           var traeger2 = sec.parentNode;
           traeger2.classList.toggle('fv-sec-spalten',
-            !!traeger2.querySelector(':scope > section.fv-sec-halb'));
+            !!traeger2.querySelector(':scope > section.fv-sec-halb')
+            && traeger2.classList.contains('fv-spalten-ein'));
           bkZeichnen();
           breiteSetzen(sec, neuWert);
         });
