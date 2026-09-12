@@ -633,7 +633,35 @@
           });
         }
       }
+      /* ---- Breite je Abschnitt (Block q1) -------------------------
+         Ablage: { "download-title": "halb", ... }. Ohne Eintrag gilt
+         "voll". Sobald mindestens ein Abschnitt auf "halb" steht, wird
+         der Traeger zweispaltig - sonst haette "halb" auf den
+         einspaltigen Seiten (Archivar, Command Control) gar keine
+         Wirkung und der Knopf schiene kaputt.
+         Muss auch fuer Besucher laufen, nicht nur im Bearbeiten-Modus. */
+      var breiten = {};
+      var qb = map['q1'];
+      if (qb && qb.type === 'text' && qb.value) {
+        try { var o2 = JSON.parse(qb.value); if (o2 && typeof o2 === 'object') breiten = o2; } catch (e) {}
+      }
+      var halbe = 0;
+      abschnitte().forEach(function (sec) {
+        var id = sec.getAttribute('aria-labelledby');
+        var b = breiten[id] === 'halb' ? 'halb' : 'voll';
+        sec.classList.remove('fv-sec-halb', 'fv-sec-voll');
+        sec.classList.add('fv-sec-' + b);
+        if (b === 'halb') halbe++;
+      });
+      traeger.classList.toggle('fv-sec-spalten', halbe > 0);
+
       if (!EDITING) return;
+
+      function breiteSetzen(sec, wert) {
+        var id = sec.getAttribute('aria-labelledby');
+        if (wert === 'halb') breiten[id] = 'halb'; else delete breiten[id];
+        return save('q1', 'text', JSON.stringify(breiten));
+      }
 
       // Pfeile zum Verschieben einsetzen
       abschnitte().forEach(function (sec) {
@@ -659,6 +687,33 @@
         }
         knopf('\u2191', 'Abschnitt nach oben', -1);
         knopf('\u2193', 'Abschnitt nach unten', 1);
+
+        /* Halbe oder volle Breite. Zwei Abschnitte auf "halb" stehen
+           nebeneinander; die Reihenfolge - und damit links/rechts -
+           regelst du mit den Pfeilen darueber. */
+        var bk = document.createElement('button');
+        bk.type = 'button'; bk.className = 'fv-sec-k fv-sec-k--breite';
+        function bkZeichnen() {
+          var halb = sec.classList.contains('fv-sec-halb');
+          bk.innerHTML = halb ? '\u25AD' : '\u25E7';
+          bk.setAttribute('title', halb
+            ? 'Auf volle Breite setzen'
+            : 'Auf halbe Breite setzen \u2013 zwei halbe stehen nebeneinander');
+        }
+        bkZeichnen();
+        bk.addEventListener('click', function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var neuWert = sec.classList.contains('fv-sec-halb') ? 'voll' : 'halb';
+          sec.classList.remove('fv-sec-halb', 'fv-sec-voll');
+          sec.classList.add('fv-sec-' + neuWert);
+          var traeger2 = sec.parentNode;
+          traeger2.classList.toggle('fv-sec-spalten',
+            !!traeger2.querySelector(':scope > section.fv-sec-halb'));
+          bkZeichnen();
+          breiteSetzen(sec, neuWert);
+        });
+        leiste.appendChild(bk);
+
         sec.appendChild(leiste);
       });
     }

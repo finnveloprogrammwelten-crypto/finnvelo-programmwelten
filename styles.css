@@ -756,8 +756,17 @@ footer a {
 @media (max-width: 980px) {
   .program-row,
   .program-detail__top,
-  .program-detail__body {
+  .program-detail__body,
+  .program-detail__body.fv-sec-spalten,
+  .program-detail__body--archivar.fv-sec-spalten,
+  .program-detail__body--command-control.fv-sec-spalten {
     grid-template-columns: 1fr;
+  }
+
+  /* Halbe Abschnitte gibt es auf schmalen Fenstern nicht. */
+  .program-detail__body.fv-sec-spalten > section.fv-sec-halb,
+  .program-detail__body.fv-sec-spalten > section.fv-sec-voll {
+    grid-column: 1 / -1;
   }
 
   .program-detail__label {
@@ -851,6 +860,38 @@ footer a {
 .program-info-block--wide {
   max-width: 1180px;
 }
+
+/* ---------------------------------------------------------------------
+   Breite je Abschnitt - im Bearbeiten-Modus ueber den Knopf in der
+   Abschnittsleiste gesetzt, gespeichert im Block q1.
+
+   Vorgabe ist "voll". Erst wenn mindestens ein Abschnitt auf "halb"
+   steht, bekommt der Traeger die Klasse fv-sec-spalten und wird
+   zweispaltig. Ohne diesen Schalter haette "halb" auf den einspaltigen
+   Seiten (Archivar, Command Control, Lesezeit, Tourenplaner,
+   Einkaufsplaner, Klarschiff) gar keine Wirkung, weil dort nur eine
+   Spalte existiert - der Knopf schiene kaputt.
+
+   Die beiden Sonderfaelle werden mit eigener Regel ueberschrieben statt
+   mit !important, damit die Spezifitaet nachvollziehbar bleibt.
+   --------------------------------------------------------------------- */
+.program-detail__body.fv-sec-spalten,
+.program-detail__body--archivar.fv-sec-spalten,
+.program-detail__body--command-control.fv-sec-spalten {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.program-detail__body.fv-sec-spalten > section.fv-sec-voll {
+  grid-column: 1 / -1;
+}
+
+.program-detail__body.fv-sec-spalten > section.fv-sec-halb {
+  grid-column: span 1;
+}
+
+/* Schmale Fenster: immer untereinander. Die Regel unten im
+   Medienblock bei 980px setzt den Traeger auf eine Spalte zurueck. */
+
 
 .feature-grid {
   display: grid;
@@ -2294,6 +2335,12 @@ body.fv-admin-on .site-header { top: 44px; }
   cursor: pointer;
 }
 .fv-sec-k:hover { background-color: #2a6adf; border-color: #2a6adf; color: #fff; }
+
+/* Breitenknopf: etwas breiter, weil das Zeichen breiter ist als ein Pfeil. */
+.fv-sec-k--breite {
+  width: 33px;
+  font-size: 15px;
+}
 
 /* Schalter "Aktiv / Nicht aktiv" fuer die Update-Pruefung */
 .fv-update-schalter {
