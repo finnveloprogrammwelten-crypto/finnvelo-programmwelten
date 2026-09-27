@@ -46,13 +46,17 @@
       // Die Klasse heisst TourenKanal, NICHT Kanal - der Name ist oben
       // schon vom Aufgabenplaner belegt.
       { "name": "TOUREN_KANAL", "class_name": "TourenKanal" },
-      { "name": "TOUREN_KOPPLUNG", "class_name": "TourenKopplung" }
+      { "name": "TOUREN_KOPPLUNG", "class_name": "TourenKopplung" },
+      // Finanzmanager: Geraeteabgleich (finanzapi-modul.js, 27.09.2026)
+      { "name": "FINANZ_KANAL", "class_name": "FinanzKanal" },
+      { "name": "FINANZ_KOPPLUNG", "class_name": "FinanzKopplung" }
     ]
   },
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["Counter"] },
     { "tag": "v2", "new_sqlite_classes": ["Kanal"] },
     { "tag": "v3", "new_sqlite_classes": ["EinkaufSpeicher"] },
-    { "tag": "v4", "new_sqlite_classes": ["TourenKanal", "TourenKopplung"] }
+    { "tag": "v4", "new_sqlite_classes": ["TourenKanal", "TourenKopplung"] },
+    { "tag": "v5", "new_sqlite_classes": ["FinanzKanal", "FinanzKopplung"] }
   ]
 }

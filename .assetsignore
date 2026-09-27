@@ -12,6 +12,8 @@ node_modules
 # Worker-Quellcode + Source-Maps (gehoeren nicht ins oeffentliche Hosting)
 worker.js
 *.map
+# Geraeteabgleich des Finanzmanagers (27.09.2026) - Servercode
+finanzapi-modul.js
 
 # Konfiguration
 wrangler.jsonc

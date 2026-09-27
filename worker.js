@@ -26,10 +26,11 @@
 import { DurableObject } from "cloudflare:workers";
 import { behandleEinkauf, EinkaufSpeicher } from "./einkauf-modul.js";
 import { behandleTourenapi, TourenKanal, TourenKopplung } from "./tourenapi-modul.js";
+import { behandleFinanzapi, FinanzKanal, FinanzKopplung } from "./finanzapi-modul.js";
 
 // Durable Objects der beiden zugekauften Dienste weiterreichen - Cloudflare
 // findet sie sonst nicht, obwohl sie in der wrangler.jsonc stehen.
-export { EinkaufSpeicher, TourenKanal, TourenKopplung };
+export { EinkaufSpeicher, TourenKanal, TourenKopplung, FinanzKanal, FinanzKopplung };
 
 const KEY_RE = /^[a-z]+:[a-z0-9-]{1,40}$/;
 const ALLOWED_PREFIXES = ["views", "video", "download"];
@@ -58,6 +59,7 @@ const RESERVIERT = [
   // liefert eigene Programmseiten VOR dem Rueckgriff auf die Dateien.
   "apps",          // /apps/einkaufsliste/ - die Web-Fassung samt APK
   "tourenapi",     // Kopplungsdienst des Tourenplaners
+  "finanzapi",     // Geraeteabgleich des Finanzmanagers (27.09.2026)
   "einkaufsliste", // Programmseite der Einkaufsliste
   "tourenplaner",  // Programmseite des Tourenplaners
   "lesezeit",      // Programmseite Lesezeit
@@ -1742,6 +1744,17 @@ export default {
                               "(Bindungen TOUREN_KANAL und TOUREN_KOPPLUNG fehlen)." }, 503);
       }
       return behandleTourenapi(request, env);
+    }
+
+    /* Geraeteabgleich des Finanzmanagers (27.09.2026) - aus demselben Grund
+       wie /tourenapi/ vor allem anderen: Die Dateiauslieferung antwortet auf
+       PUT und POST mit 405. */
+    if (url.pathname === "/finanzapi" || url.pathname.startsWith("/finanzapi/")) {
+      if (!env || !env.FINANZ_KANAL || !env.FINANZ_KOPPLUNG) {
+        return json({ fehler: "Der Abgleichdienst ist nicht eingerichtet " +
+                              "(Bindungen FINANZ_KANAL und FINANZ_KOPPLUNG fehlen)." }, 503);
+      }
+      return behandleFinanzapi(request, env);
     }
 
     /* =================================================================
