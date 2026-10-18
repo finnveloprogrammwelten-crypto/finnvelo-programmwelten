@@ -57,3 +57,8 @@ _vorlage-programm.html
 #   downloads/  Downloads liegen auf GitHub und werden von dort verlinkt
 tess
 downloads
+
+# Godot-Spiel "Sternenhandel" (Quellprojekt, keine Webseite)
+sternenhandel
+# Arbeitsnotizen fuer Claude (nicht oeffentlich)
+CLAUDE.md
