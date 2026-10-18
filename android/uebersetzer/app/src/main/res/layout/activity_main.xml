@@ -1,112 +1,197 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/status"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#FFF4E5"
-        android:padding="12dp"
-        android:textSize="15sp" />
+    android:background="@color/hintergrund"
+    android:fillViewport="true">
 
     <LinearLayout
-        android:id="@+id/einschalten_bereich"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
+        <!-- Kopf -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:background="@color/icon_hintergrund"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="28dp">
 
-            <Button
-                android:id="@+id/knopf_einschalten"
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:contentDescription="@null"
+                android:src="@mipmap/ic_launcher" />
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
                 android:layout_weight="1"
-                android:text="@string/knopf_einschalten" />
+                android:orientation="vertical">
 
-            <Button
-                android:id="@+id/knopf_app_info"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/knopf_app_info" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/app_name"
+                    android:textColor="#FFFFFF"
+                    android:textSize="23sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/untertitel"
+                    android:textColor="@color/primaer_hell"
+                    android:textSize="14sp" />
+            </LinearLayout>
         </LinearLayout>
 
-        <TextView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/hinweis_eingeschraenkt"
-            android:textSize="12sp" />
+            android:layout_marginTop="-16dp"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- Schritt 1: Knopf einschalten -->
+            <LinearLayout
+                android:id="@+id/karte_status"
+                style="@style/Karte"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    android:id="@+id/status_titel"
+                    style="@style/KartenTitel" />
+
+                <TextView
+                    android:id="@+id/status_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:id="@+id/einschalten_bereich"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="4dp"
+                        android:text="@string/schritte"
+                        android:textColor="@color/text"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/knopf_einschalten"
+                        style="@style/KnopfPrimaer"
+                        android:text="@string/knopf_einschalten" />
+
+                    <Button
+                        android:id="@+id/knopf_app_info"
+                        style="@style/KnopfUmriss"
+                        android:text="@string/knopf_app_info" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Einstellungen -->
+            <LinearLayout style="@style/Karte">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/titel_einstellungen" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_sprache" />
+
+                <Spinner
+                    android:id="@+id/sprache"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_modus" />
+
+                <RadioGroup
+                    android:id="@+id/modus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/modus_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/modus_text"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/modus_ocr"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/modus_ocr"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+                <Button
+                    android:id="@+id/knopf_vorladen"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/knopf_vorladen" />
+            </LinearLayout>
+
+            <!-- Apps -->
+            <LinearLayout style="@style/Karte">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/titel_apps" />
+
+                <EditText
+                    android:id="@+id/suche"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/suchfeld"
+                    android:drawableStart="@drawable/ic_suche"
+                    android:drawablePadding="10dp"
+                    android:hint="@string/suche_hinweis"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:singleLine="true"
+                    android:textColor="@color/text"
+                    android:textColorHint="@color/text_leise"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:id="@+id/apps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:text="@string/titel_sprache"
-        android:textStyle="bold" />
-
-    <Spinner
-        android:id="@+id/sprache"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/titel_modus"
-        android:textStyle="bold" />
-
-    <RadioGroup
-        android:id="@+id/modus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <RadioButton
-            android:id="@+id/modus_text"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/modus_text" />
-
-        <RadioButton
-            android:id="@+id/modus_ocr"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/modus_ocr" />
-    </RadioGroup>
-
-    <Button
-        android:id="@+id/knopf_vorladen"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/knopf_vorladen" />
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="@string/titel_apps"
-        android:textStyle="bold" />
-
-    <EditText
-        android:id="@+id/suche"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="@string/suche_hinweis"
-        android:inputType="text"
-        android:singleLine="true" />
-
-    <ListView
-        android:id="@+id/apps"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-</LinearLayout>
+</ScrollView>

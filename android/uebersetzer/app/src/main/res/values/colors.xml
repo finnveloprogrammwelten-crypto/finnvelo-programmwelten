@@ -1,4 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="icon_hintergrund">#1E3A8A</color>
+    <color name="primaer">#1E3A8A</color>
+    <color name="primaer_hell">#C7D2FE</color>
+    <color name="auf_primaer">#FFFFFF</color>
+    <color name="hintergrund">#F1F4FA</color>
+    <color name="karte">#FFFFFF</color>
+    <color name="text">#14181F</color>
+    <color name="text_leise">#5B6472</color>
+    <color name="rand">#D6DCE8</color>
+    <color name="status_aus">#FFF1DC</color>
+    <color name="status_an">#E3F4E8</color>
+    <color name="akzent">#FFCC00</color>
 </resources>

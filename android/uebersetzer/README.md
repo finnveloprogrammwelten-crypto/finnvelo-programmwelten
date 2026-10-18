@@ -8,10 +8,15 @@ wird einmalig geladen, danach geht es auch ohne Internet.
 ## So wird sie benutzt
 
 1. APK installieren und **Finnvelo Übersetzer** öffnen.
-2. **Bedienungshilfe öffnen** → „Finnvelo Übersetzer (DE-Knopf)“ einschalten.
-   *Ist der Schalter grau?* Zurück in die App → **App-Info** → ⋮ oben rechts →
-   **„Eingeschränkte Einstellungen zulassen“**, dann nochmal versuchen.
-   (Das verlangt Android ab Version 13 bei Apps, die nicht aus dem Play Store kommen.)
+2. Den DE-Knopf einschalten (die App zeigt die Schritte auch an):
+   1. **Bedienungshilfen öffnen** → „Finnvelo Übersetzer“ antippen.
+   2. Kommt „App wurde Zugriff verweigert“ → **Schließen**.
+   3. **App-Info öffnen** → ⋮ oben rechts → **„Eingeschränkte Einstellungen zulassen“**.
+   4. Schritt 1 wiederholen – jetzt lässt sich der Schalter einschalten.
+
+   Android verlangt das ab Version 13 bei Apps, die nicht aus dem Play Store
+   kommen. Der Menüpunkt unter ⋮ erscheint erst, **nachdem** man einmal
+   versucht hat, den Schalter einzuschalten.
 3. Unten in der Liste die gewünschte App antippen (z. B. *Bonjour RATP*).
 4. Am Rand schwebt ein runder **DE**-Knopf:
    - **antippen** → Text wird übersetzt und genau über das Original gelegt

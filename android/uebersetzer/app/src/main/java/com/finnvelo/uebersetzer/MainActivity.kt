@@ -15,12 +15,11 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import android.widget.BaseAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ImageView
+import android.content.res.ColorStateList
 import android.widget.LinearLayout
-import android.widget.ListView
 import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
@@ -32,16 +31,13 @@ class MainActivity : Activity() {
     private data class App(val name: String, val paket: String, val symbol: Drawable)
 
     private var alleApps = emptyList<App>()
-    private var sichtbareApps = emptyList<App>()
-    private lateinit var appListe: AppAdapter
+    private lateinit var appRaster: LinearLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        findViewById<Button>(R.id.knopf_einschalten).setOnClickListener {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-        }
+        findViewById<Button>(R.id.knopf_einschalten).setOnClickListener { oeffneBedienungshilfe() }
         findViewById<Button>(R.id.knopf_app_info).setOnClickListener {
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }
@@ -71,10 +67,7 @@ class MainActivity : Activity() {
 
         findViewById<Button>(R.id.knopf_vorladen).setOnClickListener { ladeSprachpaket() }
 
-        appListe = AppAdapter()
-        val liste = findViewById<ListView>(R.id.apps)
-        liste.adapter = appListe
-        liste.setOnItemClickListener { _, _, pos, _ -> oeffneApp(sichtbareApps[pos]) }
+        appRaster = findViewById(R.id.apps)
 
         findViewById<EditText>(R.id.suche).addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
@@ -88,11 +81,24 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         val an = dienstAktiv()
-        findViewById<TextView>(R.id.status).apply {
-            setText(if (an) R.string.status_an else R.string.status_aus)
-            setBackgroundColor(if (an) 0xFFE6F4EA.toInt() else 0xFFFFF4E5.toInt())
-        }
+        findViewById<TextView>(R.id.status_titel).setText(if (an) R.string.status_an_titel else R.string.status_aus_titel)
+        findViewById<TextView>(R.id.status_text).setText(if (an) R.string.status_an else R.string.status_aus)
+        findViewById<View>(R.id.karte_status).backgroundTintList =
+            ColorStateList.valueOf(getColor(if (an) R.color.status_an else R.color.status_aus))
         findViewById<View>(R.id.einschalten_bereich).visibility = if (an) View.GONE else View.VISIBLE
+    }
+
+    /** Springt ab Android 11 direkt zur Seite dieser App, sonst zur Liste der Bedienungshilfen. */
+    private fun oeffneBedienungshilfe() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+            val direkt = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")
+                .putExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName(this, UebersetzerDienst::class.java).flattenToString())
+            try {
+                return startActivity(direkt)
+            } catch (_: android.content.ActivityNotFoundException) {
+            }
+        }
+        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
     private fun dienstAktiv(): Boolean {
@@ -117,10 +123,47 @@ class MainActivity : Activity() {
         }.start()
     }
 
+    /** Zeigt die Apps als Raster mit 4 Spalten - wie auf dem Startbildschirm. */
     private fun filtere(suche: String) {
-        sichtbareApps = if (suche.isBlank()) alleApps else alleApps.filter { it.name.contains(suche.trim(), ignoreCase = true) }
-        appListe.notifyDataSetChanged()
+        val treffer = if (suche.isBlank()) alleApps else alleApps.filter { it.name.contains(suche.trim(), ignoreCase = true) }
+        appRaster.removeAllViews()
+        if (treffer.isEmpty() && alleApps.isNotEmpty()) {
+            appRaster.addView(TextView(this).apply {
+                text = "Keine App gefunden"
+                setTextColor(getColor(R.color.text_leise))
+                setPadding(0, dp(16), 0, dp(16))
+            })
+            return
+        }
+        treffer.chunked(SPALTEN).forEach { reihe ->
+            val zeile = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+            reihe.forEach { zeile.addView(appKachel(it), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)) }
+            repeat(SPALTEN - reihe.size) { zeile.addView(View(this), LinearLayout.LayoutParams(0, 0, 1f)) }
+            appRaster.addView(zeile)
+        }
     }
+
+    private fun appKachel(app: App) = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        gravity = Gravity.CENTER_HORIZONTAL
+        setPadding(dp(4), dp(12), dp(4), dp(8))
+        val welle = obtainStyledAttributes(intArrayOf(android.R.attr.selectableItemBackground))
+        background = welle.getDrawable(0)
+        welle.recycle()
+        addView(ImageView(context).apply { setImageDrawable(app.symbol) }, LinearLayout.LayoutParams(dp(52), dp(52)))
+        addView(TextView(context).apply {
+            text = app.name
+            textSize = 12f
+            gravity = Gravity.CENTER
+            maxLines = 2
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setTextColor(getColor(R.color.text))
+            setPadding(0, dp(6), 0, 0)
+        })
+        setOnClickListener { oeffneApp(app) }
+    }
+
+    private fun dp(wert: Int) = (wert * resources.displayMetrics.density).toInt()
 
     private fun oeffneApp(app: App) {
         val start = packageManager.getLaunchIntentForPackage(app.paket) ?: return
@@ -128,7 +171,7 @@ class MainActivity : Activity() {
             AlertDialog.Builder(this)
                 .setTitle("„DE“-Knopf ist noch aus")
                 .setMessage("Ohne den Knopf kann nichts übersetzt werden. Jetzt in den Bedienungshilfen einschalten?")
-                .setPositiveButton("Einschalten") { _, _ -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)) }
+                .setPositiveButton("Einschalten") { _, _ -> oeffneBedienungshilfe() }
                 .setNegativeButton("Trotzdem öffnen") { _, _ -> startActivity(start) }
                 .show()
             return
@@ -153,29 +196,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private inner class AppAdapter : BaseAdapter() {
-        private val dichte = resources.displayMetrics.density
-
-        override fun getCount() = sichtbareApps.size
-        override fun getItem(position: Int) = sichtbareApps[position]
-        override fun getItemId(position: Int) = position.toLong()
-
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-            val zeile = convertView as? LinearLayout ?: LinearLayout(this@MainActivity).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                val p = (8 * dichte).toInt()
-                setPadding(p, p, p, p)
-                addView(ImageView(context), LinearLayout.LayoutParams((40 * dichte).toInt(), (40 * dichte).toInt()))
-                addView(TextView(context).apply {
-                    textSize = 17f
-                    setPadding((12 * dichte).toInt(), 0, 0, 0)
-                })
-            }
-            val app = sichtbareApps[position]
-            (zeile.getChildAt(0) as ImageView).setImageDrawable(app.symbol)
-            (zeile.getChildAt(1) as TextView).text = app.name
-            return zeile
-        }
+    private companion object {
+        const val SPALTEN = 4
     }
 }
