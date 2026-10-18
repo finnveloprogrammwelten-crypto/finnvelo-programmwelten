@@ -72,6 +72,8 @@ class UebersetzerDienst : AccessibilityService() {
     private var letzteTexte: List<Pair<String, Rect>> = emptyList()
     private var veraendert = false
     private var zweiterDurchlauf = false
+    /** Leisten-Ansicht (lange gedrueckt) ist offen - Automatik pausiert solange */
+    private var interaktiv = false
 
     /** Paket der App, die gerade im Vordergrund ist (nicht die eigene) */
     private var vordergrund: String? = null
@@ -132,21 +134,34 @@ class UebersetzerDienst : AccessibilityService() {
                 vordergrund = paket
                 entferneEbene()
                 aktualisiereKnopf()
-                if (automatikHier()) plane(400)
+                if (automatikHier()) plane(250)
                 return
             }
         }
         if (paket != vordergrund) return
 
         if (automatikHier()) {
-            // Beim Scrollen sofort ausblenden (die Kaesten wuerden sonst daneben liegen),
-            // nach kurzer Ruhe neu uebersetzen
-            if (typ == AccessibilityEvent.TYPE_VIEW_SCROLLED) ebene?.visibility = View.INVISIBLE
-            plane(450)
+            if (interaktiv) return
+            // Beim Scrollen die Kaesten mitbewegen (oder ausblenden, wenn die App nicht
+            // meldet, wie weit), nach kurzer Ruhe neu uebersetzen
+            if (typ == AccessibilityEvent.TYPE_VIEW_SCROLLED) folgeScrollen(event)
+            plane(300)
         } else if (arbeitet &&
             (typ == AccessibilityEvent.TYPE_VIEW_SCROLLED || typ == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
         ) {
             veraendert = true
+        }
+    }
+
+    private fun folgeScrollen(event: AccessibilityEvent) {
+        val sichtbar = ebene ?: return
+        val dx = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) event.scrollDeltaX else -1
+        val dy = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) event.scrollDeltaY else -1
+        val bereich = event.source?.let { Rect().also(it::getBoundsInScreen) }
+        if (bereich == null || (dx == -1 && dy == -1) || (dx == 0 && dy == 0)) {
+            sichtbar.visibility = View.INVISIBLE
+        } else {
+            sichtbar.verschiebe(bereich, dx, dy)
         }
     }
 
@@ -157,8 +172,8 @@ class UebersetzerDienst : AccessibilityService() {
 
     /** Automatik: nur dann neu uebersetzen, wenn sich am Bildschirm etwas geaendert hat. */
     private fun frischeAuf() {
-        if (!automatikHier()) return
-        if (arbeitet) return plane(300)
+        if (!automatikHier() || interaktiv) return
+        if (arbeitet) return plane(250)
         val jetzt = sammleBildschirmtext().map { it.text to it.ort }
         if (jetzt == letzteTexte) {
             // Nichts Neues (z.B. nur eine Animation): bisherige Uebersetzung wieder zeigen
@@ -237,7 +252,7 @@ class UebersetzerDienst : AccessibilityService() {
         // Ziehen verschiebt den Knopf, kurzes Tippen uebersetzt, langes Druecken oeffnet die App
         val schwelle = ViewConfiguration.get(this).scaledTouchSlop
         var warLang = false
-        val langDruck = Runnable { warLang = true; sicher { oeffneEinstellungen() } }
+        val langDruck = Runnable { warLang = true; sicher { langGedrueckt() } }
         var startX = 0f
         var startY = 0f
         var knopfX = 0
@@ -298,7 +313,48 @@ class UebersetzerDienst : AccessibilityService() {
         startActivity(Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
+    /** Lange gedrueckt: einmal mit Leiste uebersetzen (Liste, Vorlesen, Korrigieren, Einstellungen). */
+    private fun langGedrueckt() {
+        entferneEbene()
+        interaktiv = true
+        zweiterDurchlauf = false
+        starte(automatik = false)
+    }
+
+    /** Eigene Uebersetzung eintragen - gilt ab sofort immer fuer diesen Text. */
+    private fun korrigiere(original: String, bisher: String, fertig: (String) -> Unit) {
+        val thema = android.view.ContextThemeWrapper(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+        val feld = android.widget.EditText(thema).apply {
+            setText(bisher)
+            setSelection(text.length)
+        }
+        val rahmen = FrameLayout(thema).apply {
+            val p = (20 * resources.displayMetrics.density).toInt()
+            setPadding(p, 0, p, 0)
+            addView(feld)
+        }
+        val dialog = android.app.AlertDialog.Builder(thema)
+            .setTitle("Übersetzung korrigieren")
+            .setMessage(original)
+            .setView(rahmen)
+            .setPositiveButton("Speichern") { _, _ ->
+                val neu = feld.text.toString().trim()
+                Woerterbuch.speichereKorrektur(this, original, neu)
+                if (neu.isNotEmpty()) fertig(neu)
+                meldung("Gemerkt – wird ab jetzt immer so übersetzt")
+            }
+            .setNeutralButton("Zurücksetzen") { _, _ ->
+                Woerterbuch.speichereKorrektur(this, original, "")
+                meldung("Eigene Korrektur entfernt")
+            }
+            .setNegativeButton("Abbrechen", null)
+            .create()
+        dialog.window?.setType(WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY)
+        dialog.show()
+    }
+
     private fun knopfGetippt() {
+        if (interaktiv) return entferneEbene()
         if (Einstellungen.automatik(this)) {
             val app = vordergrund ?: return meldung("Erst eine App öffnen")
             val an = app !in Einstellungen.autoApps(this)
@@ -440,10 +496,15 @@ class UebersetzerDienst : AccessibilityService() {
             if (automatik) entferneEbene(nurAnzeige = true) else meldung("Kein Text gefunden")
             return fertig()
         }
-        val neu = Ebene(this, funde, List(funde.size) { null }, automatik, vorleser) { entferneEbene() }
+        val neu = Ebene(
+            this, funde, List(funde.size) { null }, automatik, vorleser,
+            korrigieren = ::korrigiere,
+            einstellungen = ::oeffneEinstellungen,
+        ) { entferneEbene() }
         zeigeEbene(neu, automatik)
 
         uebersetzer.uebersetzeAlle(
+            this,
             funde.map { it.text },
             Einstellungen.quelle(this),
             { if (!automatik || !neu.hatInhalt()) meldung(it) },
@@ -496,6 +557,11 @@ class UebersetzerDienst : AccessibilityService() {
         ebene?.let { runCatching { fenster.removeView(it) } }
         ebene = null
         if (!nurAnzeige) {
+            if (interaktiv) {
+                interaktiv = false
+                // Zurueck zur Automatik, falls sie fuer diese App an ist
+                if (automatikHier()) plane(150)
+            }
             handler.removeCallbacks(auffrischen)
             auftrag++
             arbeitet = false

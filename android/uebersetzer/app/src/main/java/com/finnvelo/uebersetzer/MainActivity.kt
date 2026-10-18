@@ -93,6 +93,29 @@ class MainActivity : Activity() {
         }
         findViewById<Button>(R.id.knopf_kachel).setOnClickListener { kachelHinzufuegen() }
 
+        val deeplBereich = findViewById<View>(R.id.bereich_deepl)
+        findViewById<android.widget.Switch>(R.id.schalter_online).apply {
+            isChecked = Einstellungen.online(this@MainActivity)
+            deeplBereich.visibility = if (isChecked) View.VISIBLE else View.GONE
+            setOnCheckedChangeListener { _, an ->
+                Einstellungen.setzeOnline(this@MainActivity, an)
+                deeplBereich.visibility = if (an) View.VISIBLE else View.GONE
+            }
+        }
+        findViewById<EditText>(R.id.deepl_schluessel).apply {
+            setText(Einstellungen.deeplSchluessel(this@MainActivity))
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                override fun afterTextChanged(s: Editable?) =
+                    Einstellungen.setzeDeeplSchluessel(this@MainActivity, s.toString())
+            })
+        }
+        findViewById<Button>(R.id.knopf_korrekturen).setOnClickListener {
+            Woerterbuch.loescheKorrekturen(this)
+            zeigeKorrekturen()
+        }
+
         Aktualisierung.pruefe(this) { neu ->
             if (neu == null || isDestroyed) return@pruefe
             findViewById<View>(R.id.karte_update).visibility = View.VISIBLE
@@ -122,11 +145,22 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.einschalten_bereich).visibility = if (an) View.GONE else View.VISIBLE
         zeigeAbsturz()
         sprachpakete.start()
+        zeigeKorrekturen()
     }
 
     override fun onPause() {
         sprachpakete.stopp()
         super.onPause()
+    }
+
+    private fun zeigeKorrekturen() {
+        val anzahl = Woerterbuch.korrekturen(this).size
+        findViewById<TextView>(R.id.korrekturen_text).text = if (anzahl == 0) {
+            "Falsche Übersetzung? DE-Knopf gedrückt halten → Kasten antippen → ✏️. Das merkt sich die App."
+        } else {
+            "$anzahl eigene Korrektur${if (anzahl == 1) "" else "en"} gespeichert."
+        }
+        findViewById<View>(R.id.knopf_korrekturen).visibility = if (anzahl == 0) View.GONE else View.VISIBLE
     }
 
     private fun zeigeAbsturz() {

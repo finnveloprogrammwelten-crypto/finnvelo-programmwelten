@@ -177,6 +177,7 @@ class KameraActivity : ComponentActivity() {
         }
         val deutsch = arrayOfNulls<String>(funde.size)
         uebersetzer.uebersetzeAlle(
+            this,
             funde.map { it.text },
             Einstellungen.quelle(this),
             { status.text = it },

@@ -1,5 +1,6 @@
 package com.finnvelo.uebersetzer
 
+import android.content.Context
 import com.google.android.gms.tasks.Task
 import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.common.model.DownloadConditions
@@ -61,8 +62,49 @@ class Uebersetzer {
      *    (sonst wuerde eine Fehlerkennung 30 MB Download ausloesen).
      * [einzeln] meldet jede fertige Uebersetzung sofort (null = Original lassen),
      * damit die Kaesten nach und nach erscheinen.
+     *
+     * Vorher: feste Begriffe und eigene Korrekturen aus dem [Woerterbuch], und -
+     * wenn eingeschaltet - DeepL online. Klappt DeepL nicht (kein Netz ...),
+     * uebernimmt ML Kit offline.
      */
     fun uebersetzeAlle(
+        ctx: Context,
+        texte: List<String>,
+        bevorzugt: String,
+        status: (String) -> Unit,
+        einzeln: (Int, String?) -> Unit,
+        fertig: (Exception?) -> Unit,
+    ) {
+        val offen = ArrayList<Int>()
+        texte.forEachIndexed { i, text ->
+            val fest = Woerterbuch.nachschlagen(ctx, text)
+            if (fest != null) einzeln(i, fest) else offen += i
+        }
+        if (offen.isEmpty()) return fertig(null)
+        val weiterOffline = { liste: List<Int> ->
+            offline(liste.map { texte[it] }, bevorzugt, status, { j, d -> einzeln(liste[j], d) }, fertig)
+        }
+
+        val schluessel = Einstellungen.deeplSchluessel(ctx)
+        if (!Einstellungen.online(ctx) || schluessel.isBlank()) return weiterOffline(offen)
+        val unbekannt = offen.filter { zwischenspeicher["deepl|${texte[it]}"] == null }
+        offen.filter { it !in unbekannt }.forEach { einzeln(it, zwischenspeicher["deepl|${texte[it]}"]) }
+        if (unbekannt.isEmpty()) return fertig(null)
+        DeepL.uebersetze(schluessel, unbekannt.map { texte[it] }) { ergebnis ->
+            ergebnis.onSuccess { deutsch ->
+                unbekannt.forEachIndexed { j, i ->
+                    zwischenspeicher["deepl|${texte[i]}"] = deutsch[j]
+                    einzeln(i, deutsch[j])
+                }
+                fertig(null)
+            }.onFailure {
+                status("${it.message} – übersetze offline")
+                weiterOffline(unbekannt)
+            }
+        }
+    }
+
+    private fun offline(
         texte: List<String>,
         bevorzugt: String,
         status: (String) -> Unit,

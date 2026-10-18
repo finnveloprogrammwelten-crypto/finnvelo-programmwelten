@@ -52,6 +52,16 @@ Schließen. Grünen Knopf antippen = für diese App wieder aus.
 Wer lieber von Hand übersetzt (mit Leiste Liste/Vorlesen/Kopieren), schaltet
 „Automatisch übersetzen“ in den Einstellungen aus.
 
+### Bessere Übersetzung
+
+- **Eingebautes Wörterbuch** für App- und Verkehrsbegriffe (Lines → Linien,
+  Schedules → Fahrpläne, Traffic → Verkehrslage …) – gilt nur für ganze Kästen.
+- **Eigene Korrekturen:** DE-Knopf **gedrückt halten** → Kasten antippen → ✏️ →
+  richtige Übersetzung eintragen. Gilt ab dann immer (auch in der Automatik).
+- **DeepL online** (Einstellungen): deutlich bessere Qualität, kostenloser
+  Schlüssel von https://www.deepl.com/pro-api. Die Texte gehen dann an DeepL;
+  ohne Netz wird automatisch offline übersetzt.
+
 ## Einstellungen
 
 | Einstellung | Bedeutung |

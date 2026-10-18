@@ -62,4 +62,17 @@ object Einstellungen {
 
     fun setzeKnopfZeigen(ctx: Context, an: Boolean) =
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("knopf", an).apply()
+
+    /** Online mit DeepL uebersetzen (nur mit eigenem Schluessel) */
+    fun online(ctx: Context): Boolean =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("online", false)
+
+    fun setzeOnline(ctx: Context, an: Boolean) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("online", an).apply()
+
+    fun deeplSchluessel(ctx: Context): String =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getString("deepl", "") ?: ""
+
+    fun setzeDeeplSchluessel(ctx: Context, schluessel: String) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putString("deepl", schluessel.trim()).apply()
 }

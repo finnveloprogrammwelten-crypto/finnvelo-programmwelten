@@ -36,6 +36,19 @@ class StartTest {
     }
 
     @Test
+    fun woerterbuchUndKorrekturen() {
+        val ctx = RuntimeEnvironment.getApplication()
+        org.junit.Assert.assertEquals("Linien", Woerterbuch.nachschlagen(ctx, "Lines"))
+        org.junit.Assert.assertEquals("Fahrpläne", Woerterbuch.nachschlagen(ctx, " Schedules "))
+        org.junit.Assert.assertEquals("Welche Linie?", Woerterbuch.nachschlagen(ctx, "Which line?"))
+        org.junit.Assert.assertNull(Woerterbuch.nachschlagen(ctx, "Paper tickets are being phased out"))
+        Woerterbuch.speichereKorrektur(ctx, "My alerts", "Meine Warnmeldungen")
+        org.junit.Assert.assertEquals("Meine Warnmeldungen", Woerterbuch.nachschlagen(ctx, "my alerts"))
+        Woerterbuch.loescheKorrekturen(ctx)
+        org.junit.Assert.assertEquals("Meine Meldungen", Woerterbuch.nachschlagen(ctx, "My alerts"))
+    }
+
+    @Test
     fun ortsnamenWerdenErkannt() {
         org.junit.Assert.assertTrue(istOrtsname("Rue de Bicêtre"))
         org.junit.Assert.assertTrue(istOrtsname("Place de la Concorde"))
@@ -61,6 +74,7 @@ class StartTest {
         val funde = listOf(Fund("Where are you going?", android.graphics.Rect(40, 800, 900, 900)))
         for (live in listOf(false, true)) {
             val ebene = Ebene(ctx, funde, listOf("Wohin gehst du?"), live, Vorleser(ctx)) {}
+            ebene.verschiebe(android.graphics.Rect(0, 0, 1080, 2400), 0, 120)
             ebene.setze(0, "Wohin gehst du?")
             ebene.measure(
                 android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),

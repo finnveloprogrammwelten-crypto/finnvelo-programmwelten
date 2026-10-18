@@ -34,4 +34,9 @@
     <string name="schalter_knopf">Schwebenden Knopf zeigen</string>
     <string name="knopf_kachel">Kachel „DE übersetzen“ hinzufügen</string>
     <string name="knopf_update">Herunterladen</string>
+    <string name="titel_qualitaet">Übersetzungsqualität</string>
+    <string name="schalter_online">Online mit DeepL übersetzen – deutlich besser</string>
+    <string name="deepl_hinweis_feld">DeepL-API-Schlüssel einfügen</string>
+    <string name="deepl_hinweis">Kostenlosen Schlüssel holen (500.000 Zeichen/Monat frei): https://www.deepl.com/pro-api\nDie Texte werden dann an DeepL geschickt. Ohne Netz wird automatisch offline übersetzt.</string>
+    <string name="knopf_korrekturen">Eigene Korrekturen löschen</string>
 </resources>

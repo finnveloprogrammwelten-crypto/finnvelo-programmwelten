@@ -3,6 +3,7 @@ package com.finnvelo.uebersetzer
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
@@ -63,6 +64,9 @@ class Ebene(
     uebersetzungen: List<String?>,
     live: Boolean,
     private val vorleser: Vorleser,
+    /** Eigene Uebersetzung eintragen: (Original, bisher, neu uebernehmen) */
+    private val korrigieren: ((String, String, (String) -> Unit) -> Unit)? = null,
+    einstellungen: (() -> Unit)? = null,
     schliessen: () -> Unit,
 ) : ViewGroup(context) {
 
@@ -70,6 +74,11 @@ class Ebene(
     private val tafelTitel = TextView(context)
     private val tafelText = TextView(context)
     private var tafelInhalt = ""
+    private var tafelNummer = -1
+    private lateinit var stift: TextView
+    /** Kaesten etwas groesser als das Original, damit keine Reste durchschauen */
+    private val rand = dp(2)
+    private val verschoben = IntArray(funde.size * 2)
     private val tafel: LinearLayout
     private val leiste: LinearLayout?
     private val deutsch = uebersetzungen.toTypedArray()
@@ -81,7 +90,7 @@ class Ebene(
             addView(uebersetzungsKasten(context, "", fund).apply {
                 if (!live) setOnClickListener {
                     val d = deutsch[i] ?: return@setOnClickListener
-                    zeigeTafel("Übersetzung", "$d\n\nOriginal:\n${fund.text}", d)
+                    zeigeTafel("Übersetzung", "$d\n\nOriginal:\n${fund.text}", d, i)
                 }
             })
             setze(i, deutsch[i])
@@ -100,6 +109,8 @@ class Ebene(
                     setTextColor(Color.parseColor("#C7D2FE"))
                     textSize = 13f
                 }, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f))
+                stift = symbolKnopf("✏️") { korrigiereTafel() }
+                addView(stift)
                 addView(symbolKnopf("🔊") { vorleser.sprich(tafelInhalt) })
                 addView(symbolKnopf("📋") { kopiere(context, tafelInhalt) })
                 addView(symbolKnopf("✕") { vorleser.stopp(); visibility = GONE })
@@ -124,6 +135,7 @@ class Ebene(
             addView(leistenKnopf("☰  Liste") { zeigeListe() })
             addView(leistenKnopf("🔊  Vorlesen") { vorleser.sprich(alles()) })
             addView(leistenKnopf("📋") { kopiere(context, alles()) })
+            einstellungen?.let { e -> addView(leistenKnopf("⚙") { schliessen(); e() }) }
             addView(leistenKnopf("✕") { vorleser.stopp(); schliessen() })
         }
         leiste?.let { addView(it) }
@@ -152,7 +164,36 @@ class Ebene(
         zeigeTafel("Alle Übersetzungen (${paare.size})", liste, alles())
     }
 
-    private fun zeigeTafel(titel: String, anzeige: String, inhalt: String) {
+    private fun korrigiereTafel() {
+        val i = tafelNummer.takeIf { it >= 0 } ?: return
+        val original = funde[i].text
+        korrigieren?.invoke(original, deutsch[i] ?: "") { neu ->
+            // Gleicher Text kann mehrmals auf dem Bildschirm stehen
+            funde.indices.filter { funde[it].text == original }.forEach { setze(it, neu) }
+            zeigeTafel("Übersetzung", "$neu\n\nOriginal:\n$original", neu, i)
+        }
+    }
+
+    /**
+     * Beim Scrollen die Kaesten im gescrollten Bereich mitbewegen, damit sie auf
+     * ihrem Text bleiben. Was dabei aus dem Bereich rutscht, wird ausgeblendet.
+     */
+    fun verschiebe(bereich: Rect, dx: Int, dy: Int) {
+        funde.forEachIndexed { i, fund ->
+            if (!Rect.intersects(bereich, fund.ort)) return@forEachIndexed
+            verschoben[2 * i] -= dx
+            verschoben[2 * i + 1] -= dy
+            val kasten = getChildAt(i)
+            kasten.translationX = verschoben[2 * i].toFloat()
+            kasten.translationY = verschoben[2 * i + 1].toFloat()
+            val jetzt = Rect(fund.ort).apply { offset(verschoben[2 * i], verschoben[2 * i + 1]) }
+            if (deutsch[i] != null) kasten.visibility = if (bereich.contains(jetzt)) VISIBLE else INVISIBLE
+        }
+    }
+
+    private fun zeigeTafel(titel: String, anzeige: String, inhalt: String, nummer: Int = -1) {
+        tafelNummer = nummer
+        stift.visibility = if (nummer >= 0 && korrigieren != null) VISIBLE else GONE
         tafelTitel.text = titel
         tafelText.text = anzeige
         tafelInhalt = inhalt
@@ -191,8 +232,8 @@ class Ebene(
         setMeasuredDimension(breite, hoehe)
         funde.forEachIndexed { i, fund ->
             getChildAt(i).measure(
-                MeasureSpec.makeMeasureSpec(fund.ort.width(), MeasureSpec.EXACTLY),
-                MeasureSpec.makeMeasureSpec(fund.ort.height(), MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(fund.ort.width() + 2 * rand, MeasureSpec.EXACTLY),
+                MeasureSpec.makeMeasureSpec(fund.ort.height() + 2 * rand, MeasureSpec.EXACTLY),
             )
         }
         tafel.measure(
@@ -212,7 +253,10 @@ class Ebene(
         getLocationOnScreen(position)
         funde.forEachIndexed { i, fund ->
             val o = fund.ort
-            getChildAt(i).layout(o.left - position[0], o.top - position[1], o.right - position[0], o.bottom - position[1])
+            getChildAt(i).layout(
+                o.left - rand - position[0], o.top - rand - position[1],
+                o.right + rand - position[0], o.bottom + rand - position[1],
+            )
         }
         val breite = r - l
         var unten = b - t - dp(56)
