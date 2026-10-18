@@ -43,7 +43,3 @@ fun kopiere(context: Context, text: String) {
         .setPrimaryClip(ClipData.newPlainText("Übersetzung", text))
     Toast.makeText(context, "Kopiert", Toast.LENGTH_SHORT).show()
 }
-
-/** Bringt Texte grob in Lesereihenfolge: Zeile fuer Zeile, links nach rechts. */
-fun lesereihenfolge(funde: List<Fund>, uebersetzungen: List<String>): List<Pair<Fund, String>> =
-    funde.zip(uebersetzungen).sortedWith(compareBy({ it.first.ort.top / 24 }, { it.first.ort.left }))

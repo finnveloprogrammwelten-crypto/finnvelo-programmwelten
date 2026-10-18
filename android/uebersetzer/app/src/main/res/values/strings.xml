@@ -12,10 +12,11 @@
     <string name="schritte">1.  „Bedienungshilfen öffnen“ → „Finnvelo Übersetzer“ antippen.\n2.  Meldung „App wurde Zugriff verweigert“? → „Schließen“.\n3.  „App-Info öffnen“ → ⋮ oben rechts → „Eingeschränkte Einstellungen zulassen“.\n4.  Schritt 1 wiederholen – jetzt lässt sich der Schalter einschalten.</string>
     <string name="knopf_app_info">App-Info öffnen</string>
     <string name="titel_einstellungen">Einstellungen</string>
-    <string name="titel_sprache">Ausgangssprache</string>
+    <string name="titel_sprache">Hauptsprache</string>
+    <string name="sprache_hinweis">Andere Sprachen auf dem Bildschirm werden zusätzlich erkannt, wenn ihr Sprachpaket geladen ist. Straßennamen bleiben unübersetzt.</string>
     <string name="titel_modus">Texte finden über</string>
-    <string name="modus_text">Bildschirmtext – schnell &amp; genau</string>
-    <string name="modus_ocr">Texterkennung – auch Karten &amp; Bilder</string>
+    <string name="modus_text">Nur Bildschirmtext – am schnellsten</string>
+    <string name="modus_ocr">Bildschirmtext + Karten &amp; Bilder</string>
     <string name="titel_sprachpakete">Sprachpakete</string>
     <string name="sprachpakete_hinweis">Je Sprache ca. 30 MB. Einmal im WLAN laden, danach klappt es auch offline. Gedrückt halten zum Löschen.</string>
     <string name="titel_apps">App öffnen &amp; übersetzen</string>

@@ -26,7 +26,6 @@ import android.widget.FrameLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.annotation.RequiresApi
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
@@ -55,10 +54,14 @@ class UebersetzerDienst : AccessibilityService() {
     private var knopfRahmen: FrameLayout? = null
     private var ring: ProgressBar? = null
     private var knopfParameter: WindowManager.LayoutParams? = null
-    private var ebene: View? = null
+    private var ebene: Ebene? = null
     private var arbeitet = false
     private var liveAktiv = false
     private var letzteFunde: List<Fund> = emptyList()
+    private var letzteTexte: List<Pair<String, Rect>> = emptyList()
+    private var veraendert = false
+    private var zweiterDurchlauf = false
+    private var auftrag = 0
     private var inEigenerApp = false
     private lateinit var vorleser: Vorleser
     private val liveAuffrischen = Runnable { sicher { frischeLiveAuf() } }
@@ -71,6 +74,7 @@ class UebersetzerDienst : AccessibilityService() {
             zeigeKnopf()
             instanz = this
             aktualisiereKnopf()
+            uebersetzer.aufwaermen(Einstellungen.quelle(this))
         }
     }
 
@@ -100,6 +104,12 @@ class UebersetzerDienst : AccessibilityService() {
                 inEigenerApp = false
             }
             aktualisiereKnopf()
+        }
+        // Hat sich der Bildschirm bewegt, waehrend noch uebersetzt wird? Dann passen die Orte nicht mehr
+        if (arbeitet && !liveAktiv && paket != packageName &&
+            (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED || event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+        ) {
+            veraendert = true
         }
         // Live-Modus: nach Scrollen oder neuem Inhalt kurz warten, dann neu uebersetzen
         if (liveAktiv && ebene != null && paket != packageName) {
@@ -240,15 +250,18 @@ class UebersetzerDienst : AccessibilityService() {
     private fun knopfGetippt() {
         if (ebene != null) return entferneEbene()
         if (arbeitet) return
-        arbeitet = true
-        ring?.visibility = View.VISIBLE
-        // Live laeuft immer mit Bildschirmtext - ein Bildschirmfoto wuerde die eigene Ebene mitfotografieren
+        // Live laeuft ohne Bildschirmfoto - es wuerde die eigene Ebene mitfotografieren
         liveAktiv = Einstellungen.live(this)
-        if (!liveAktiv && Einstellungen.texterkennung(this) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            sammleMitTexterkennung { funde -> sicher { uebersetzeFunde(funde) } }
-        } else {
-            uebersetzeFunde(sammleBildschirmtext())
-        }
+        zweiterDurchlauf = false
+        starte()
+    }
+
+    private fun starte() {
+        arbeitet = true
+        veraendert = false
+        ring?.visibility = View.VISIBLE
+        val nr = ++auftrag
+        sammle(mitFoto = !liveAktiv) { funde -> sicher { if (nr == auftrag) uebersetzeFunde(funde, nr) } }
     }
 
     private fun fertig() {
@@ -265,14 +278,38 @@ class UebersetzerDienst : AccessibilityService() {
     /** Live-Modus: neu lesen und nur dann neu uebersetzen, wenn sich etwas geaendert hat. */
     private fun frischeLiveAuf() {
         if (!liveAktiv || ebene == null || arbeitet) return
-        val funde = sammleBildschirmtext()
+        val funde = sammleBildschirmtext().inLesereihenfolge()
         if (funde == letzteFunde) return
         arbeitet = true
         ring?.visibility = View.VISIBLE
-        uebersetzeFunde(funde, still = true)
+        uebersetzeFunde(funde, ++auftrag, still = true)
     }
 
     // ------------------------------------------------------- Texte finden
+
+    /**
+     * Sammelt die Texte. Mit Bildschirmfoto (ab Android 11) kommen die Farben dazu
+     * und - bei eingeschalteter Texterkennung - Text in Karten und Bildern, wo die
+     * App selbst keinen Text meldet.
+     */
+    private fun sammle(mitFoto: Boolean, weiter: (List<Fund>) -> Unit) {
+        val text = sammleBildschirmtext()
+        letzteTexte = text.map { it.text to it.ort }
+        if (!mitFoto || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return weiter(text)
+        machFoto { bild ->
+            if (bild == null) return@machFoto weiter(text)
+            if (!Einstellungen.texterkennung(this)) {
+                weiter(faerbe(text, bild))
+                bild.recycle()
+                return@machFoto
+            }
+            erkenneText(bild) { erkannt ->
+                val zusaetzlich = erkannt.filter { neu -> text.none { ueberlappt(it.ort, neu.ort) } }
+                weiter(faerbe(text + zusaetzlich, bild))
+                bild.recycle()
+            }
+        }
+    }
 
     /** Liest die Texte direkt aus der App (wie es auch Vorlese-Programme tun). */
     private fun sammleBildschirmtext(): List<Fund> {
@@ -302,81 +339,100 @@ class UebersetzerDienst : AccessibilityService() {
         return text?.takeIf { t -> t.any { it.isLetter() } }
     }
 
-    /** Macht ein Bildschirmfoto und sucht darin Text - findet auch Text in Karten und Bildern. */
-    @RequiresApi(Build.VERSION_CODES.R)
-    private fun sammleMitTexterkennung(weiter: (List<Fund>) -> Unit) {
+    /** Bildschirmfoto ohne den eigenen Knopf (null, wenn es nicht klappt). */
+    private fun machFoto(fertig: (Bitmap?) -> Unit) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return fertig(null)
         knopfRahmen?.visibility = View.INVISIBLE
         handler.postDelayed({
             takeScreenshot(Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
                 override fun onSuccess(foto: ScreenshotResult) {
-                    knopfRahmen?.visibility = View.VISIBLE
+                    aktualisiereKnopf()
                     val hardware = Bitmap.wrapHardwareBuffer(foto.hardwareBuffer, foto.colorSpace)
                     val bild = hardware?.copy(Bitmap.Config.ARGB_8888, false)
                     hardware?.recycle()
                     foto.hardwareBuffer.close()
-                    if (bild == null) return weiter(emptyList())
-                    texterkenner.process(InputImage.fromBitmap(bild, 0))
-                        .addOnSuccessListener { ergebnis ->
-                            weiter(ergebnis.textBlocks.mapNotNull { block ->
-                                val text = block.text.replace('\n', ' ').trim()
-                                val ort = block.boundingBox
-                                if (ort != null && text.any { it.isLetter() }) Fund(text, ort) else null
-                            })
-                        }
-                        .addOnFailureListener { weiter(emptyList()) }
-                        .addOnCompleteListener { bild.recycle() }
+                    fertig(bild)
                 }
 
                 override fun onFailure(fehlercode: Int) {
-                    knopfRahmen?.visibility = View.VISIBLE
-                    meldung("Bildschirmfoto nicht möglich (Fehler $fehlercode)")
-                    weiter(emptyList())
+                    aktualisiereKnopf()
+                    fertig(null)
                 }
             })
-        }, 150)
+        }, 80)
+    }
+
+    /** Texterkennung im Bildschirmfoto - findet auch Beschriftungen in Karten und Bildern. */
+    private fun erkenneText(bild: Bitmap, fertig: (List<Fund>) -> Unit) {
+        val mindestHoehe = 8 * resources.displayMetrics.density
+        texterkenner.process(InputImage.fromBitmap(bild, 0))
+            .addOnSuccessListener { ergebnis ->
+                fertig(ergebnis.textBlocks.mapNotNull { block ->
+                    val text = block.text.replace('\n', ' ').trim()
+                    val ort = block.boundingBox ?: return@mapNotNull null
+                    // Bruchstuecke und Fehlerkennungen weglassen
+                    val sicherheit = block.lines.map { it.confidence }.average()
+                    if (text.count { it.isLetter() } < 3 || ort.height() < mindestHoehe || sicherheit < 0.5) null
+                    else Fund(text, ort, zeilen = block.lines.size)
+                })
+            }
+            .addOnFailureListener { fertig(emptyList()) }
     }
 
     // ---------------------------------------------------------- Uebersetzen
 
-    /** [still] = im Live-Modus keine Meldungen bei jedem Scrollen */
-    private fun uebersetzeFunde(funde: List<Fund>, still: Boolean = false) {
-        letzteFunde = funde
-        val meldung: (String) -> Unit = { if (!still) meldung(it) }
+    /**
+     * Uebersetzt und zeigt die Kaesten nach und nach. [still] = Live-Auffrischung:
+     * keine Meldungen, und die neue Ebene ersetzt die alte erst, wenn alles fertig ist.
+     */
+    private fun uebersetzeFunde(alle: List<Fund>, nr: Int, still: Boolean = false) {
+        val funde = alle.inLesereihenfolge().filter { !istOrtsname(it.text) }
+        letzteFunde = if (still) alle.inLesereihenfolge() else funde
         if (funde.isEmpty()) {
-            meldung("Kein Text gefunden")
-            if (still) zeigeEbene(emptyList(), emptyList(), still = true)
+            if (still) zeigeEbene(Ebene(this, emptyList(), emptyList(), true, vorleser, ::entferneEbene))
+            else meldung("Kein Text gefunden")
             return fertig()
         }
-        val los = { code: String ->
-            when {
-                code == "de" -> { meldung("Der Text ist schon auf Deutsch"); fertig() }
-                !uebersetzer.istUnterstuetzt(code) -> { meldung("Sprache „$code“ wird nicht unterstützt"); fertig() }
-                else -> uebersetzer.uebersetze(code, funde.map { it.text }, meldung) { ergebnis ->
-                    ergebnis
-                        .onSuccess { sicher { zeigeEbene(funde, it, still) } }
-                        .onFailure { meldung("Übersetzung fehlgeschlagen: ${it.message}") }
-                    fertig()
+        val neu = Ebene(this, funde, List(funde.size) { null }, liveAktiv, vorleser, ::entferneEbene)
+        if (!still) zeigeEbene(neu)
+
+        val meldung: (String) -> Unit = { if (!still) meldung(it) }
+        uebersetzer.uebersetzeAlle(
+            funde.map { it.text },
+            Einstellungen.quelle(this),
+            meldung,
+            einzeln = { i, deutsch -> if (nr == auftrag) neu.setze(i, deutsch) },
+        ) { fehler ->
+            if (nr != auftrag) return@uebersetzeAlle
+            sicher {
+                if (still) {
+                    zeigeEbene(neu)
+                } else if (!neu.hatInhalt()) {
+                    meldung(fehler?.let { "Übersetzung fehlgeschlagen: ${it.message}" } ?: "Nichts zu übersetzen – schon Deutsch?")
+                    entferneEbene()
                 }
-            }
-        }
-        val quelle = Einstellungen.quelle(this)
-        if (quelle != "auto") return los(quelle)
-        uebersetzer.erkenneSprache(funde.joinToString("\n") { it.text }.take(3000)) { code ->
-            if (code == null) {
-                meldung("Sprache nicht erkannt – bitte in der App die Ausgangssprache wählen")
                 fertig()
-            } else {
-                sicher { los(code) }
+                pruefeVeraltet()
             }
         }
     }
 
-    private fun zeigeEbene(funde: List<Fund>, uebersetzungen: List<String>, still: Boolean = false) {
-        // Unveraenderte Texte (Namen, Zahlen ...) weglassen, damit das Original sichtbar bleibt
-        val paare = funde.zip(uebersetzungen).filter { (f, d) -> !f.text.equals(d.trim(), ignoreCase = true) }
-        if (paare.isEmpty() && !liveAktiv) return meldung("Nichts zu übersetzen")
+    /**
+     * Hat sich der Bildschirm waehrend des Uebersetzens bewegt (z.B. gescrollt),
+     * stimmen die Orte nicht mehr. Dann einmal neu - das geht schnell, weil die
+     * Uebersetzungen gemerkt sind.
+     */
+    private fun pruefeVeraltet() {
+        if (liveAktiv || zweiterDurchlauf || ebene == null) return
+        val jetzt = sammleBildschirmtext().map { it.text to it.ort }
+        if (!veraendert && jetzt == letzteTexte) return
+        zweiterDurchlauf = true
+        entferneEbene(behalteLive = true)
+        starte()
+    }
+
+    private fun zeigeEbene(neu: Ebene) {
         val alt = ebene
-        val neu = Ebene(this, paare.map { it.first }, paare.map { it.second }, liveAktiv, vorleser, ::entferneEbene)
         val parameter = overlayParameter(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
         // Live: Beruehrungen gehen durch zur App darunter, damit man weiter scrollen kann
         if (liveAktiv) parameter.flags = parameter.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
@@ -390,11 +446,16 @@ class UebersetzerDienst : AccessibilityService() {
         }
     }
 
-    private fun entferneEbene() {
+    private fun entferneEbene(behalteLive: Boolean = false) {
         handler.removeCallbacks(liveAuffrischen)
         ebene?.let { runCatching { fenster.removeView(it) } }
         ebene = null
-        liveAktiv = false
+        if (!behalteLive) {
+            liveAktiv = false
+            auftrag++
+            arbeitet = false
+            ring?.visibility = View.GONE
+        }
         letzteFunde = emptyList()
         if (::vorleser.isInitialized) vorleser.stopp()
         if (!arbeitet) {

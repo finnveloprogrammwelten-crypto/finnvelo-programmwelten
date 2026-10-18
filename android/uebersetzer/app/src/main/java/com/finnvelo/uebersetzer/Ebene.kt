@@ -3,7 +3,6 @@ package com.finnvelo.uebersetzer
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.graphics.Rect
 import android.graphics.drawable.GradientDrawable
 import android.util.TypedValue
 import android.view.Gravity
@@ -13,23 +12,39 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 
-/** Ein gefundener Text und wo er auf dem Bildschirm steht. */
-data class Fund(val text: String, val ort: Rect)
-
-/** Gelber Kasten mit der Uebersetzung - genutzt ueber Apps und im Kamera-Modus. */
-fun uebersetzungsKasten(context: Context, deutsch: String) = TextView(context).apply {
+/**
+ * Kasten mit der Uebersetzung - genutzt ueber Apps und im Kamera-Modus.
+ * Mit Farben aus dem Bildschirmfoto sieht er aus wie die App selbst, sonst
+ * wie ein heller Zettel. Die Schrift ist hoechstens so gross wie die des
+ * Originals und wird bei laengerem deutschen Text kleiner.
+ */
+fun uebersetzungsKasten(context: Context, deutsch: String, fund: Fund) = TextView(context).apply {
     val dichte = resources.displayMetrics.density
     text = deutsch
-    setTextColor(Color.parseColor("#111111"))
     gravity = Gravity.CENTER_VERTICAL
+    includeFontPadding = false
+    setLineSpacing(0f, 0.92f)
     val p = (2 * dichte).toInt()
     setPadding(p, 0, p, 0)
-    background = GradientDrawable().apply {
-        setColor(Color.parseColor("#F5FFFDE7"))
-        setStroke((1 * dichte).toInt(), Color.parseColor("#C9A227"))
-        cornerRadius = 4 * dichte
+    if (fund.hintergrund != null) {
+        setTextColor(fund.schrift ?: Color.BLACK)
+        background = GradientDrawable().apply {
+            setColor(fund.hintergrund)
+            cornerRadius = 3 * dichte
+        }
+    } else {
+        setTextColor(Color.parseColor("#14181F"))
+        background = GradientDrawable().apply {
+            setColor(Color.parseColor("#F7FFFCEB"))
+            setStroke(dichte.toInt().coerceAtLeast(1), Color.parseColor("#66C9A227"))
+            cornerRadius = 4 * dichte
+        }
+        elevation = 2 * dichte
     }
-    setAutoSizeTextTypeUniformWithConfiguration(6, 28, 1, TypedValue.COMPLEX_UNIT_SP)
+    val zeilenHoehe = fund.ort.height().toFloat() / fund.geschaetzteZeilen()
+    val groesste = (zeilenHoehe * 0.78f).toInt().coerceIn((9 * dichte).toInt(), (30 * dichte).toInt())
+    val kleinste = (8 * dichte).toInt().coerceAtMost(groesste - 1)
+    setAutoSizeTextTypeUniformWithConfiguration(kleinste, groesste, 1, TypedValue.COMPLEX_UNIT_PX)
 }
 
 /**
@@ -45,7 +60,7 @@ fun uebersetzungsKasten(context: Context, deutsch: String) = TextView(context).a
 class Ebene(
     context: Context,
     private val funde: List<Fund>,
-    private val uebersetzungen: List<String>,
+    uebersetzungen: List<String?>,
     live: Boolean,
     private val vorleser: Vorleser,
     schliessen: () -> Unit,
@@ -57,16 +72,19 @@ class Ebene(
     private var tafelInhalt = ""
     private val tafel: LinearLayout
     private val leiste: LinearLayout?
+    private val deutsch = uebersetzungen.toTypedArray()
 
     init {
         setBackgroundColor(Color.parseColor(if (live) "#00000000" else "#22000000"))
         if (!live) setOnClickListener { schliessen() }
         funde.forEachIndexed { i, fund ->
-            addView(uebersetzungsKasten(context, uebersetzungen[i]).apply {
+            addView(uebersetzungsKasten(context, "", fund).apply {
                 if (!live) setOnClickListener {
-                    zeigeTafel("Übersetzung", "${uebersetzungen[i]}\n\nOriginal:\n${fund.text}", uebersetzungen[i])
+                    val d = deutsch[i] ?: return@setOnClickListener
+                    zeigeTafel("Übersetzung", "$d\n\nOriginal:\n${fund.text}", d)
                 }
             })
+            setze(i, deutsch[i])
         }
 
         tafel = LinearLayout(context).apply {
@@ -111,11 +129,27 @@ class Ebene(
         leiste?.let { addView(it) }
     }
 
-    private fun alles() = lesereihenfolge(funde, uebersetzungen).joinToString("\n") { it.second }
+    /** Zeigt die fertige Uebersetzung eines Kastens (null oder unveraendert = Original sichtbar lassen). */
+    fun setze(i: Int, uebersetzung: String?) {
+        val sinnvoll = uebersetzung?.trim()?.takeIf { it.isNotEmpty() && !it.equals(funde[i].text.trim(), ignoreCase = true) }
+        deutsch[i] = sinnvoll
+        (getChildAt(i) as TextView).apply {
+            text = sinnvoll ?: ""
+            visibility = if (sinnvoll == null) GONE else VISIBLE
+        }
+    }
+
+    /** Gibt es mindestens eine sichtbare Uebersetzung? */
+    fun hatInhalt() = deutsch.any { it != null }
+
+    private fun paare() = funde.indices.mapNotNull { i -> deutsch[i]?.let { funde[i] to it } }
+
+    private fun alles() = paare().joinToString("\n") { it.second }
 
     private fun zeigeListe() {
-        val liste = lesereihenfolge(funde, uebersetzungen).joinToString("\n\n") { (f, d) -> "$d\n   ↳ ${f.text}" }
-        zeigeTafel("Alle Übersetzungen (${funde.size})", liste, alles())
+        val paare = paare()
+        val liste = paare.joinToString("\n\n") { (f, d) -> "$d\n   ↳ ${f.text}" }
+        zeigeTafel("Alle Übersetzungen (${paare.size})", liste, alles())
     }
 
     private fun zeigeTafel(titel: String, anzeige: String, inhalt: String) {

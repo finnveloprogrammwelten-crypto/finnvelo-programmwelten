@@ -72,6 +72,7 @@ class KameraActivity : ComponentActivity() {
         knopfAnhalten = findViewById(R.id.knopf_anhalten)
 
         uebersetzer = Uebersetzer()
+        uebersetzer.aufwaermen(Einstellungen.quelle(this))
         vorleser = Vorleser(this)
         arbeiter = Executors.newSingleThreadExecutor()
 
@@ -142,7 +143,11 @@ class KameraActivity : ComponentActivity() {
                 val funde = ergebnis.textBlocks.mapNotNull { block ->
                     val text = block.text.replace('\n', ' ').trim()
                     val ort = block.boundingBox
-                    if (ort != null && text.count { it.isLetter() } >= 2) Fund(text, umrechnen(ort, breite, hoehe)) else null
+                    if (ort != null && text.count { it.isLetter() } >= 3) {
+                        Fund(text, umrechnen(ort, breite, hoehe), zeilen = block.lines.size)
+                    } else {
+                        null
+                    }
                 }
                 uebersetze(funde)
             }
@@ -161,40 +166,34 @@ class KameraActivity : ComponentActivity() {
         )
     }
 
-    private fun uebersetze(funde: List<Fund>) {
+    private fun uebersetze(alle: List<Fund>) {
         if (angehalten) return run { beschaeftigt = false }
+        val funde = alle.inLesereihenfolge().filter { !istOrtsname(it.text) }
         if (funde.isEmpty()) {
             zeige(emptyList())
             status.setText(R.string.kamera_suche)
             beschaeftigt = false
             return
         }
-        val los = { code: String ->
-            if (code == "de" || !uebersetzer.istUnterstuetzt(code)) {
-                status.text = if (code == "de") "Schon Deutsch" else "Sprache „$code“ nicht unterstützt"
-                beschaeftigt = false
-            } else {
-                uebersetzer.uebersetze(code, funde.map { it.text }, { status.text = it }) { ergebnis ->
-                    ergebnis.onSuccess { deutsch ->
-                        if (!angehalten) {
-                            zeige(lesereihenfolge(funde, deutsch).filter { (f, d) -> !f.text.equals(d.trim(), true) })
-                            val name = Einstellungen.SPRACHEN.firstOrNull { it.first == code }?.second ?: code
-                            status.text = "$name → Deutsch"
-                        }
-                    }.onFailure { status.text = "Übersetzung fehlgeschlagen" }
-                    beschaeftigt = false
+        val deutsch = arrayOfNulls<String>(funde.size)
+        uebersetzer.uebersetzeAlle(
+            funde.map { it.text },
+            Einstellungen.quelle(this),
+            { status.text = it },
+            einzeln = { i, d -> deutsch[i] = d },
+        ) { fehler ->
+            if (!angehalten) {
+                val paare = funde.indices.mapNotNull { i ->
+                    deutsch[i]?.takeIf { !it.trim().equals(funde[i].text.trim(), true) }?.let { funde[i] to it }
+                }
+                zeige(paare)
+                status.text = when {
+                    paare.isNotEmpty() -> "→ Deutsch"
+                    fehler != null -> fehler.message ?: "Übersetzung fehlgeschlagen"
+                    else -> "Schon Deutsch?"
                 }
             }
-        }
-        val quelle = Einstellungen.quelle(this)
-        if (quelle != "auto") return los(quelle)
-        uebersetzer.erkenneSprache(funde.joinToString("\n") { it.text }) { code ->
-            if (code == null) {
-                status.text = "Sprache nicht erkannt"
-                beschaeftigt = false
-            } else {
-                los(code)
-            }
+            beschaeftigt = false
         }
     }
 
@@ -203,7 +202,7 @@ class KameraActivity : ComponentActivity() {
         kaesten.removeAllViews()
         eintraege.forEach { (fund, deutsch) ->
             val o = fund.ort
-            kaesten.addView(uebersetzungsKasten(this, deutsch).apply {
+            kaesten.addView(uebersetzungsKasten(this, deutsch, fund).apply {
                 translationX = o.left.toFloat()
                 translationY = o.top.toFloat()
                 setOnClickListener { vorleser.sprich(deutsch) }
