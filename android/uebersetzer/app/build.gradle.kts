@@ -17,9 +17,25 @@ android {
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
 
+    // Release-Signatur mit dem Finnvelo-Schluessel. Der Schluessel liegt NIE im
+    // Repository: er kommt ueber Umgebungsvariablen (lokal oder aus den
+    // GitHub-Secrets im Workflow .github/workflows/uebersetzer-apk.yml).
+    val schluesselDatei = System.getenv("FINNVELO_KEYSTORE")
+    signingConfigs {
+        if (schluesselDatei != null) {
+            create("finnvelo") {
+                storeFile = file(schluesselDatei)
+                storePassword = System.getenv("FINNVELO_KEYSTORE_PASSWORT")
+                keyAlias = System.getenv("FINNVELO_KEY_ALIAS")
+                keyPassword = System.getenv("FINNVELO_KEY_PASSWORT") ?: System.getenv("FINNVELO_KEYSTORE_PASSWORT")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            if (schluesselDatei != null) signingConfig = signingConfigs.getByName("finnvelo")
         }
     }
     compileOptions {

@@ -79,9 +79,59 @@ echo "sdk.dir=/pfad/zum/android-sdk" > local.properties
 # Ergebnis: app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Für ein Release mit dem Finnvelo-Schlüssel (siehe Abschnitt 9 der Haupt-README)
-`./gradlew assembleRelease` und die APK mit `apksigner` signieren. Die APK
-kommt wie bei den anderen Apps als GitHub-Release, **nicht** auf die Webseite.
+## Signieren mit dem Finnvelo-Schlüssel
+
+Die signierte APK baut GitHub automatisch (Workflow `.github/workflows/uebersetzer-apk.yml`).
+Der Schlüssel `finnvelo-release.jks` kommt dabei **nicht** ins Repository, sondern
+verschlüsselt in die GitHub-Secrets. Nur Workflows dieses Repositorys können sie
+lesen, niemand kann sie dort wieder anzeigen.
+
+### Einmalig: Secrets eintragen
+
+1. Den Schlüssel in Text umwandeln. Am Windows-PC in **PowerShell** im Ordner
+   mit der Datei:
+
+   ```
+   [Convert]::ToBase64String([IO.File]::ReadAllBytes("finnvelo-release.jks")) | Set-Clipboard
+   ```
+
+   Jetzt steht ein langer Text in der Zwischenablage.
+2. GitHub → Repository **finnvelo-programmwelten** → **Settings** →
+   **Secrets and variables** → **Actions** → **New repository secret**.
+   Vier Einträge anlegen:
+
+   | Name | Inhalt |
+   |---|---|
+   | `FINNVELO_KEYSTORE_BASE64` | der Text aus Schritt 1 (einfügen) |
+   | `FINNVELO_KEYSTORE_PASSWORT` | Passwort der Schlüsseldatei |
+   | `FINNVELO_KEY_ALIAS` | Name (Alias) des Schlüssels |
+   | `FINNVELO_KEY_PASSWORT` | Passwort des Schlüssels (oft dasselbe; dann trotzdem eintragen) |
+
+   Passwörter und Alias stehen in `SCHLUESSEL-WICHTIG.txt`.
+
+### Neue Version veröffentlichen
+
+1. GitHub → **Actions** → **Übersetzer-APK** → **Run workflow** →
+   Haken bei **veroeffentlichen** → **Run workflow**.
+2. Nach ca. 5 Minuten liegt die APK im Release **FinnveloUebersetzer**:
+   `https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloUebersetzer/FinnveloUebersetzer.apk`
+   Die Adresse bleibt bei jeder Version gleich (die alte Datei wird ersetzt).
+3. Diese Adresse ist die **Download-Adresse** im Feld „App-Aktualisierung“
+   (siehe oben); dort den **Versions-Code** erhöhen.
+
+Ohne Haken baut der Workflow nur und legt die APK unter **Artifacts** des Laufs ab.
+Er läuft außerdem bei jeder Änderung unter `android/uebersetzer` und prüft
+Lint und Tests.
+
+> **Wichtig beim Umstieg:** Die bisherigen Test-APKs sind mit einem
+> Entwicklungsschlüssel signiert. Die erste signierte Version lässt sich
+> nicht darüber installieren: Testversion **deinstallieren**, signierte
+> installieren, „Eingeschränkte Einstellungen zulassen“ einmal wiederholen.
+> Danach klappen alle weiteren Updates direkt.
+
+Lokal geht es auch: Umgebungsvariablen `FINNVELO_KEYSTORE` (Pfad zur .jks),
+`FINNVELO_KEYSTORE_PASSWORT`, `FINNVELO_KEY_ALIAS`, `FINNVELO_KEY_PASSWORT`
+setzen und `./gradlew assembleRelease` ausführen.
 
 ## Aufbau
 
