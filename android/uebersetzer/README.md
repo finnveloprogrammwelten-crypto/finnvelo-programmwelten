@@ -20,10 +20,31 @@ wird einmalig geladen, danach geht es auch ohne Internet.
 3. Unten in der Liste die gewünschte App antippen (z. B. *Bonjour RATP*).
 4. Am Rand schwebt ein runder **DE**-Knopf:
    - **antippen** → Text wird übersetzt und genau über das Original gelegt
-   - einen übersetzten Kasten antippen → ganzer Text + Original unten groß
+     (gelber Ring = arbeitet gerade)
+   - unten erscheint eine Leiste: **☰ Liste** (alle Übersetzungen untereinander),
+     **🔊 Vorlesen**, **📋 Kopieren**, **✕**
+   - einen Kasten antippen → ganzer Text + Original groß, mit Vorlesen/Kopieren
    - daneben tippen oder **✕** → Übersetzung schließen
-   - Knopf **ziehen** → verschieben
-   - Knopf **gedrückt halten** → Einstellungen öffnen
+   - Knopf **ziehen** → verschieben, **gedrückt halten** → Einstellungen
+
+### Kamera-Übersetzer
+
+Große blaue Karte oben im Hauptbildschirm. Kamera auf Schild, Speisekarte oder
+Fahrplan halten – die Übersetzung erscheint direkt im Bild.
+**⏸** friert das Bild ein, dann einen Kasten antippen zum Vorlesen.
+**🔊** liest alles vor, **📋** kopiert, **🔦** schaltet die Taschenlampe.
+
+### Kachel „DE übersetzen“
+
+Statt (oder zusätzlich zum) schwebenden Knopf: Leiste von oben herunterziehen →
+Kachel antippen. Hinzufügen über „Kachel hinzufügen“ im Hauptbildschirm.
+Wer den Knopf nicht mag, schaltet „Schwebenden Knopf zeigen“ aus.
+
+### Live-Modus
+
+Mit eingeschaltetem Live-Modus bleibt die fremde App bedienbar: scrollen,
+tippen – die Übersetzung läuft nach kurzer Pause mit. Beenden über den
+Knopf (zeigt dann „● ✕“) oder die Kachel. Live nutzt immer „Bildschirmtext“.
 
 ## Einstellungen
 
@@ -32,7 +53,20 @@ wird einmalig geladen, danach geht es auch ohne Internet.
 | Ausgangssprache | „Automatisch erkennen“ reicht meistens. Bei gemischten Seiten (z. B. englische App mit französischen Ortsnamen) die Sprache fest wählen. |
 | Bildschirmtext | Liest den Text direkt aus der App. Schnell und genau. Standard. |
 | Texterkennung | Macht ein Bildschirmfoto und erkennt den Text darin – findet auch Beschriftungen in **Karten und Bildern**. Ab Android 11. |
-| Sprachpaket jetzt laden | Vor einer Reise im WLAN laden, dann klappt es unterwegs offline. |
+| Sprachpakete | Je Sprache „Laden“ – mehrere werden nacheinander geladen (Warteschlange). Vor einer Reise im WLAN laden, dann klappt es unterwegs offline. Gedrückt halten löscht ein Paket. |
+
+## Update-Prüfung über die Webseite
+
+Die App fragt beim Start `https://finnveloprogramme.com/uebersetzer/version.json` ab
+(siehe Abschnitt 5 der Haupt-README). Einrichten:
+
+1. Programmseite `/uebersetzer` anlegen → **Bearbeiten: AN** → Feld
+   **„App-Aktualisierung“** auf **Aktiv**
+2. Adresse `/uebersetzer/version.json`, Aufbau *Wie Mischwaldrechner*
+3. Versions-Code muss größer sein als `versionCode` in `app/build.gradle.kts`,
+   Download-Adresse = GitHub-Release der APK
+
+Solange die Seite nicht aktiv ist, zeigt die App einfach keine Update-Karte.
 
 ## Bauen
 
@@ -56,5 +90,11 @@ kommt wie bei den anderen Apps als GitHub-Release, **nicht** auf die Webseite.
 | `MainActivity.kt` | Hauptbildschirm: Einschalten, Sprache, App-Liste |
 | `UebersetzerDienst.kt` | Bedienungshilfe mit DE-Knopf, sammelt die Texte |
 | `Uebersetzer.kt` | Spracherkennung + Übersetzung (ML Kit, offline) |
-| `Ebene.kt` | Legt die Übersetzungen über die fremde App |
+| `Ebene.kt` | Legt die Übersetzungen über die fremde App (mit Leiste) |
+| `KameraActivity.kt` | Kamera-Übersetzer |
+| `KachelDienst.kt` | Kachel „DE übersetzen“ in den Schnelleinstellungen |
+| `Vorleser.kt` | Vorlesen und Kopieren |
+| `Sprachpakete.kt`, `SprachpaketListe.kt` | Ladestatus und Warteschlange |
+| `Aktualisierung.kt` | Update-Prüfung über finnveloprogramme.com |
+| `UebersetzerApp.kt` | Fehlerbericht nach Absturz |
 | `Einstellungen.kt` | Gespeicherte Auswahl |

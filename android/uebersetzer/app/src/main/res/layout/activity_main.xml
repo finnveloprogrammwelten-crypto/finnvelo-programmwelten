@@ -61,6 +61,33 @@
             android:paddingEnd="16dp"
             android:paddingBottom="24dp">
 
+            <!-- Nur sichtbar, wenn auf der Webseite eine neuere Version liegt -->
+            <LinearLayout
+                android:id="@+id/karte_update"
+                style="@style/Karte"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="@color/status_an"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/update_titel"
+                    style="@style/KartenTitel" />
+
+                <TextView
+                    android:id="@+id/update_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/text"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/knopf_update"
+                    style="@style/KnopfPrimaer"
+                    android:text="@string/knopf_update" />
+            </LinearLayout>
+
             <!-- Nur sichtbar, wenn die App beim letzten Mal abgestuerzt ist -->
             <LinearLayout
                 android:id="@+id/karte_absturz"
@@ -150,6 +177,56 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- Kamera-Modus -->
+            <LinearLayout
+                android:id="@+id/karte_kamera"
+                style="@style/Karte"
+                android:background="@drawable/karte_kamera"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/kamera_ausloeser"
+                    android:gravity="center"
+                    android:text="📷"
+                    android:textSize="26sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="@string/kamera_titel"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/kamera_text"
+                        android:textColor="#C7D2FE"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textColor="#FFFFFF"
+                    android:textSize="32sp" />
+            </LinearLayout>
+
             <!-- Einstellungen -->
             <LinearLayout style="@style/Karte">
 
@@ -166,6 +243,33 @@
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
                     android:layout_marginTop="4dp" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_knopf" />
+
+                <Switch
+                    android:id="@+id/schalter_live"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/schalter_live"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <Switch
+                    android:id="@+id/schalter_knopf"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/schalter_knopf"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <Button
+                    android:id="@+id/knopf_kachel"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/knopf_kachel" />
 
                 <TextView
                     style="@style/Beschriftung"

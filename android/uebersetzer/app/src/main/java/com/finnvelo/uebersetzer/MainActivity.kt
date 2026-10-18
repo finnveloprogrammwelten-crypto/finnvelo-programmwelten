@@ -72,6 +72,34 @@ class MainActivity : Activity() {
 
         appRaster = findViewById(R.id.apps)
 
+        findViewById<View>(R.id.karte_kamera).setOnClickListener {
+            startActivity(Intent(this, KameraActivity::class.java))
+        }
+
+        findViewById<android.widget.Switch>(R.id.schalter_live).apply {
+            isChecked = Einstellungen.live(this@MainActivity)
+            setOnCheckedChangeListener { _, an -> Einstellungen.setzeLive(this@MainActivity, an) }
+        }
+        findViewById<android.widget.Switch>(R.id.schalter_knopf).apply {
+            isChecked = Einstellungen.knopfZeigen(this@MainActivity)
+            setOnCheckedChangeListener { _, an ->
+                Einstellungen.setzeKnopfZeigen(this@MainActivity, an)
+                UebersetzerDienst.instanz?.aktualisiereKnopf()
+                if (!an) Toast.makeText(this@MainActivity, "Übersetzen dann über die Kachel „DE übersetzen“", Toast.LENGTH_LONG).show()
+            }
+        }
+        findViewById<Button>(R.id.knopf_kachel).setOnClickListener { kachelHinzufuegen() }
+
+        Aktualisierung.pruefe(this) { neu ->
+            if (neu == null || isDestroyed) return@pruefe
+            findViewById<View>(R.id.karte_update).visibility = View.VISIBLE
+            findViewById<TextView>(R.id.update_titel).text = "⬆️  Version ${neu.versionName} ist da"
+            findViewById<TextView>(R.id.update_text).text = neu.hinweis.ifBlank { "Eine neue Version des Übersetzers steht bereit." }
+            findViewById<Button>(R.id.knopf_update).setOnClickListener {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(neu.download)))
+            }
+        }
+
         findViewById<EditText>(R.id.suche).addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = filtere(s.toString())
@@ -127,6 +155,24 @@ class MainActivity : Activity() {
             startActivity(liste)
         } catch (_: RuntimeException) {
             startActivity(Intent(Settings.ACTION_SETTINGS))
+        }
+    }
+
+    /** Ab Android 13 kann die App selbst fragen, ob die Kachel hinzugefuegt werden soll. */
+    private fun kachelHinzufuegen() {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+            getSystemService(android.app.StatusBarManager::class.java).requestAddTileService(
+                ComponentName(this, KachelDienst::class.java),
+                getString(R.string.kachel_name),
+                android.graphics.drawable.Icon.createWithResource(this, R.drawable.ic_kachel),
+                mainExecutor,
+            ) { }
+        } else {
+            AlertDialog.Builder(this)
+                .setTitle("Kachel hinzufügen")
+                .setMessage("Leiste oben zweimal herunterziehen → Stift-Symbol (Bearbeiten) → „DE übersetzen“ in die Kacheln ziehen.")
+                .setPositiveButton("OK", null)
+                .show()
         }
     }
 

@@ -34,4 +34,18 @@ class StartTest {
         verbinden.isAccessible = true
         verbinden.invoke(dienst)
     }
+
+    @Test
+    fun ebeneMitLeisteBautSichAuf() {
+        val ctx = RuntimeEnvironment.getApplication()
+        val funde = listOf(Fund("Where are you going?", android.graphics.Rect(40, 800, 900, 900)))
+        for (live in listOf(false, true)) {
+            val ebene = Ebene(ctx, funde, listOf("Wohin gehst du?"), live, Vorleser(ctx)) {}
+            ebene.measure(
+                android.view.View.MeasureSpec.makeMeasureSpec(1080, android.view.View.MeasureSpec.EXACTLY),
+                android.view.View.MeasureSpec.makeMeasureSpec(2400, android.view.View.MeasureSpec.EXACTLY),
+            )
+            ebene.layout(0, 0, 1080, 2400)
+        }
+    }
 }

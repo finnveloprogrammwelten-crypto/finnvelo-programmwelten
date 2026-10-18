@@ -36,4 +36,18 @@ object Einstellungen {
 
     fun setzeTexterkennung(ctx: Context, an: Boolean) =
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("ocr", an).apply()
+
+    /** Live-Modus: Uebersetzung laeuft beim Scrollen mit, die App darunter bleibt bedienbar. */
+    fun live(ctx: Context): Boolean =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("live", false)
+
+    fun setzeLive(ctx: Context, an: Boolean) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("live", an).apply()
+
+    /** Schwebenden DE-Knopf zeigen (sonst nur ueber die Schnelleinstellungs-Kachel). */
+    fun knopfZeigen(ctx: Context): Boolean =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("knopf", true)
+
+    fun setzeKnopfZeigen(ctx: Context, an: Boolean) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("knopf", an).apply()
 }

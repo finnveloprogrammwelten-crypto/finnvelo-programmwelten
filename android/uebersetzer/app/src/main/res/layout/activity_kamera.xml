@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000000">
+
+    <androidx.camera.view.PreviewView
+        android:id="@+id/vorschau"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Standbild, solange angehalten ist -->
+    <ImageView
+        android:id="@+id/standbild"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:contentDescription="@null"
+        android:scaleType="fitXY"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/kaesten"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Oben: Schliessen, Status, Taschenlampe -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/verlauf_oben"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="8dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="24dp">
+
+        <TextView
+            android:id="@+id/knopf_zurueck"
+            style="@style/KameraSymbol"
+            android:text="✕" />
+
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:text="@string/kamera_suche"
+            android:textColor="#FFFFFF"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/knopf_licht"
+            style="@style/KameraSymbol"
+            android:text="🔦" />
+    </LinearLayout>
+
+    <!-- Unten: Vorlesen, Anhalten, Kopieren -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/verlauf_unten"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingTop="32dp"
+        android:paddingBottom="36dp">
+
+        <TextView
+            android:id="@+id/knopf_vorlesen"
+            style="@style/KameraSymbol"
+            android:text="🔊" />
+
+        <TextView
+            android:id="@+id/knopf_anhalten"
+            android:layout_width="76dp"
+            android:layout_height="76dp"
+            android:layout_marginStart="36dp"
+            android:layout_marginEnd="36dp"
+            android:background="@drawable/kamera_ausloeser"
+            android:gravity="center"
+            android:text="⏸"
+            android:textColor="#1E3A8A"
+            android:textSize="28sp" />
+
+        <TextView
+            android:id="@+id/knopf_kopieren"
+            style="@style/KameraSymbol"
+            android:text="📋" />
+    </LinearLayout>
+</FrameLayout>

@@ -24,4 +24,13 @@
     <string name="absturz_text">Die App ist zuletzt abgestürzt. Bitte den Bericht teilen (z. B. als Screenshot oder Text an Claude), damit der Fehler behoben werden kann.</string>
     <string name="absturz_teilen">Bericht teilen</string>
     <string name="absturz_weg">Ausblenden</string>
+    <string name="kamera_suche">Kamera auf Text richten …</string>
+    <string name="kachel_name">DE übersetzen</string>
+    <string name="kamera_titel">Kamera-Übersetzer</string>
+    <string name="kamera_text">Schilder, Speisekarten, Fahrpläne …</string>
+    <string name="titel_knopf">DE-Knopf</string>
+    <string name="schalter_live">Live-Modus – übersetzt beim Scrollen mit</string>
+    <string name="schalter_knopf">Schwebenden Knopf zeigen</string>
+    <string name="knopf_kachel">Kachel „DE übersetzen“ hinzufügen</string>
+    <string name="knopf_update">Herunterladen</string>
 </resources>
