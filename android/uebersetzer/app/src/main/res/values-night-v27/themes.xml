@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Thema" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/hintergrund</item>
+        <item name="android:statusBarColor">@color/icon_hintergrund</item>
+        <item name="android:navigationBarColor">@color/hintergrund</item>
+        <item name="android:colorAccent">@color/primaer</item>
+        <item name="android:colorPrimary">@color/primaer</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/text_leise</item>
+    </style>
+</resources>

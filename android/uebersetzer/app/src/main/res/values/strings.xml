@@ -19,4 +19,8 @@
     <string name="knopf_vorladen">Sprachpaket laden (für offline)</string>
     <string name="titel_apps">App öffnen &amp; übersetzen</string>
     <string name="suche_hinweis">App suchen</string>
+    <string name="absturz_titel">🐞  Fehlerbericht</string>
+    <string name="absturz_text">Die App ist zuletzt abgestürzt. Bitte den Bericht teilen (z. B. als Screenshot oder Text an Claude), damit der Fehler behoben werden kann.</string>
+    <string name="absturz_teilen">Bericht teilen</string>
+    <string name="absturz_weg">Ausblenden</string>
 </resources>

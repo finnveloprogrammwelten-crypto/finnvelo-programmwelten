@@ -11,8 +11,8 @@ android {
         applicationId = "com.finnvelo.uebersetzer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        versionCode = 3
+        versionName = "1.2"
         // Nur Handy-Prozessoren - spart rund die Haelfte der App-Groesse
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
@@ -25,6 +25,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
     kotlinOptions {
         jvmTarget = "17"
@@ -39,4 +42,7 @@ dependencies {
     implementation("com.google.mlkit:language-id:17.0.6")
     // Texterkennung ueber Google-Play-Dienste: das Modell wird nicht in die App gepackt
     implementation("com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

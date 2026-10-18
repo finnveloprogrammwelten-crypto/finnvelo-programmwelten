@@ -47,8 +47,22 @@ class UebersetzerDienst : AccessibilityService() {
 
     override fun onServiceConnected() {
         fenster = getSystemService(WindowManager::class.java)
-        uebersetzer = Uebersetzer()
-        zeigeKnopf()
+        sicher {
+            uebersetzer = Uebersetzer()
+            zeigeKnopf()
+        }
+    }
+
+    /** Ein Fehler soll nur gemeldet werden und nicht die Bedienungshilfe in eine Absturzschleife schicken. */
+    private fun sicher(aktion: () -> Unit) {
+        try {
+            aktion()
+        } catch (fehler: Exception) {
+            Absturzbericht.speichere(this, fehler)
+            arbeitet = false
+            runCatching { knopf?.text = "!" }
+            meldung("Fehler im Übersetzer – Details in der App")
+        }
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
@@ -56,10 +70,10 @@ class UebersetzerDienst : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
-        entferneEbene()
-        knopf?.let { fenster.removeView(it) }
+        runCatching { entferneEbene() }
+        knopf?.let { k -> runCatching { fenster.removeView(k) } }
         knopf = null
-        uebersetzer.schliessen()
+        if (::uebersetzer.isInitialized) uebersetzer.schliessen()
         super.onDestroy()
     }
 
@@ -91,7 +105,7 @@ class UebersetzerDienst : AccessibilityService() {
         // Ziehen verschiebt den Knopf, kurzes Tippen uebersetzt, langes Druecken oeffnet die App
         val schwelle = ViewConfiguration.get(this).scaledTouchSlop
         var warLang = false
-        val langDruck = Runnable { warLang = true; oeffneEinstellungen() }
+        val langDruck = Runnable { warLang = true; sicher { oeffneEinstellungen() } }
         var startX = 0f
         var startY = 0f
         var knopfX = 0
@@ -114,12 +128,12 @@ class UebersetzerDienst : AccessibilityService() {
                         handler.removeCallbacks(langDruck)
                         parameter.x = knopfX + dx.toInt()
                         parameter.y = knopfY + dy.toInt()
-                        fenster.updateViewLayout(ansicht, parameter)
+                        sicher { fenster.updateViewLayout(ansicht, parameter) }
                     }
                 }
                 MotionEvent.ACTION_UP -> {
                     handler.removeCallbacks(langDruck)
-                    if (!gezogen && !warLang) knopfGetippt()
+                    if (!gezogen && !warLang) sicher { knopfGetippt() }
                 }
                 MotionEvent.ACTION_CANCEL -> handler.removeCallbacks(langDruck)
             }
@@ -156,7 +170,7 @@ class UebersetzerDienst : AccessibilityService() {
         arbeitet = true
         knopf?.text = "…"
         if (Einstellungen.texterkennung(this) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            sammleMitTexterkennung(::uebersetzeFunde)
+            sammleMitTexterkennung { funde -> sicher { uebersetzeFunde(funde) } }
         } else {
             uebersetzeFunde(sammleBildschirmtext())
         }
@@ -244,7 +258,7 @@ class UebersetzerDienst : AccessibilityService() {
                 !uebersetzer.istUnterstuetzt(code) -> { meldung("Sprache „$code“ wird nicht unterstützt"); fertig() }
                 else -> uebersetzer.uebersetze(code, funde.map { it.text }, ::meldung) { ergebnis ->
                     ergebnis
-                        .onSuccess { zeigeEbene(funde, it) }
+                        .onSuccess { sicher { zeigeEbene(funde, it) } }
                         .onFailure { meldung("Übersetzung fehlgeschlagen: ${it.message}") }
                     fertig()
                 }
@@ -257,7 +271,7 @@ class UebersetzerDienst : AccessibilityService() {
                 meldung("Sprache nicht erkannt – bitte in der App die Ausgangssprache wählen")
                 fertig()
             } else {
-                los(code)
+                sicher { los(code) }
             }
         }
     }

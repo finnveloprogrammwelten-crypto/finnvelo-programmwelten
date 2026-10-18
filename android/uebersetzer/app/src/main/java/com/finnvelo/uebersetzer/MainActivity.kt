@@ -86,6 +86,22 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.karte_status).backgroundTintList =
             ColorStateList.valueOf(getColor(if (an) R.color.status_an else R.color.status_aus))
         findViewById<View>(R.id.einschalten_bereich).visibility = if (an) View.GONE else View.VISIBLE
+        zeigeAbsturz()
+    }
+
+    private fun zeigeAbsturz() {
+        val bericht = Absturzbericht.lies(this)
+        findViewById<View>(R.id.karte_absturz).visibility = if (bericht == null) View.GONE else View.VISIBLE
+        if (bericht == null) return
+        findViewById<TextView>(R.id.absturz_bericht).text = bericht
+        findViewById<Button>(R.id.knopf_absturz_teilen).setOnClickListener {
+            val senden = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, bericht)
+            startActivity(Intent.createChooser(senden, getString(R.string.absturz_teilen)))
+        }
+        findViewById<Button>(R.id.knopf_absturz_weg).setOnClickListener {
+            Absturzbericht.loesche(this)
+            zeigeAbsturz()
+        }
     }
 
     /** Springt ab Android 11 direkt zur Seite dieser App, sonst zur Liste der Bedienungshilfen. */

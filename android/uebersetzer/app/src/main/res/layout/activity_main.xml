@@ -61,6 +61,49 @@
             android:paddingEnd="16dp"
             android:paddingBottom="24dp">
 
+            <!-- Nur sichtbar, wenn die App beim letzten Mal abgestuerzt ist -->
+            <LinearLayout
+                android:id="@+id/karte_absturz"
+                style="@style/Karte"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="@color/status_aus"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/absturz_titel" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/absturz_text"
+                    android:textColor="@color/text"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/absturz_bericht"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="monospace"
+                    android:maxLines="12"
+                    android:textColor="@color/text_leise"
+                    android:textIsSelectable="true"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/knopf_absturz_teilen"
+                    style="@style/KnopfPrimaer"
+                    android:text="@string/absturz_teilen" />
+
+                <Button
+                    android:id="@+id/knopf_absturz_weg"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/absturz_weg" />
+            </LinearLayout>
+
             <!-- Schritt 1: Knopf einschalten -->
             <LinearLayout
                 android:id="@+id/karte_status"
