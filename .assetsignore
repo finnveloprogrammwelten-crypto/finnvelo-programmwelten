@@ -57,3 +57,6 @@ _vorlage-programm.html
 #   downloads/  Downloads liegen auf GitHub und werden von dort verlinkt
 tess
 downloads
+
+# Quellcode der Android-Apps (APKs kommen als GitHub-Release)
+android

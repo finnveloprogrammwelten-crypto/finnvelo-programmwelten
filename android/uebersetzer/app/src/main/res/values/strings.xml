@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Finnvelo Übersetzer</string>
+    <string name="dienst_name">Finnvelo Übersetzer (DE-Knopf)</string>
+    <string name="dienst_beschreibung">Zeigt einen schwebenden „DE“-Knopf. Erst wenn du ihn antippst, wird der Text der gerade geöffneten App gelesen und auf deinem Gerät ins Deutsche übersetzt. Es werden keine Texte an einen Server geschickt; nur die Sprachpakete werden einmalig heruntergeladen.</string>
+    <string name="status_aus">Schritt 1: Den „DE“-Knopf einschalten.\nDazu in den Bedienungshilfen „Finnvelo Übersetzer“ aktivieren.</string>
+    <string name="status_an">✓ Der „DE“-Knopf ist eingeschaltet.\nÖffne unten eine App und tippe dann auf den runden „DE“-Knopf am Rand.</string>
+    <string name="knopf_einschalten">Bedienungshilfe öffnen</string>
+    <string name="hinweis_eingeschraenkt">Ist der Schalter grau („Eingeschränkte Einstellung“)? Dann über „App-Info“ → ⋮ (oben rechts) → „Eingeschränkte Einstellungen zulassen“ freigeben.</string>
+    <string name="knopf_app_info">App-Info</string>
+    <string name="titel_sprache">Ausgangssprache</string>
+    <string name="titel_modus">Texte finden über</string>
+    <string name="modus_text">Bildschirmtext (schnell, genau)</string>
+    <string name="modus_ocr">Texterkennung (auch Karten &amp; Bilder)</string>
+    <string name="knopf_vorladen">Sprachpaket jetzt laden (für unterwegs ohne Internet)</string>
+    <string name="titel_apps">App öffnen</string>
+    <string name="suche_hinweis">App suchen …</string>
+</resources>
