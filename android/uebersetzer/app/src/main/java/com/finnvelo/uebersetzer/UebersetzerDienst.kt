@@ -20,6 +20,10 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
+import android.content.res.ColorStateList
+import android.provider.Settings
+import android.widget.FrameLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -41,6 +45,8 @@ class UebersetzerDienst : AccessibilityService() {
     private val texterkenner by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     private var knopf: TextView? = null
+    private var knopfRahmen: FrameLayout? = null
+    private var ring: ProgressBar? = null
     private var knopfParameter: WindowManager.LayoutParams? = null
     private var ebene: View? = null
     private var arbeitet = false
@@ -65,13 +71,24 @@ class UebersetzerDienst : AccessibilityService() {
         }
     }
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent?) = Unit
+    /** Im eigenen Hauptbildschirm stoert der Knopf nur - dort ausblenden. */
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event?.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+        val paket = event.packageName?.toString() ?: return
+        val eigeneApp = paket == packageName && event.className == MainActivity::class.java.name
+        val tastatur = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
+            ?.substringBefore('/')
+        when {
+            eigeneApp -> knopfRahmen?.visibility = View.GONE
+            paket != packageName && paket != tastatur -> knopfRahmen?.visibility = View.VISIBLE
+        }
+    }
 
     override fun onInterrupt() = Unit
 
     override fun onDestroy() {
         runCatching { entferneEbene() }
-        knopf?.let { k -> runCatching { fenster.removeView(k) } }
+        knopfRahmen?.let { k -> runCatching { fenster.removeView(k) } }
         knopf = null
         if (::uebersetzer.isInitialized) uebersetzer.schliessen()
         super.onDestroy()
@@ -96,6 +113,16 @@ class UebersetzerDienst : AccessibilityService() {
             }
             elevation = 6 * dichte
         }
+        // Drehender Ring um den Knopf, solange gelesen, geladen oder uebersetzt wird
+        val ladering = ProgressBar(this).apply {
+            isIndeterminate = true
+            indeterminateTintList = ColorStateList.valueOf(Color.parseColor("#FFCC00"))
+            visibility = View.GONE
+        }
+        val rahmen = FrameLayout(this).apply {
+            addView(ansicht, FrameLayout.LayoutParams(groesse - (8 * dichte).toInt(), groesse - (8 * dichte).toInt(), Gravity.CENTER))
+            addView(ladering, FrameLayout.LayoutParams(groesse, groesse))
+        }
         val parameter = overlayParameter(groesse, groesse).apply {
             gravity = Gravity.TOP or Gravity.START
             x = resources.displayMetrics.widthPixels - groesse - (8 * dichte).toInt()
@@ -111,7 +138,7 @@ class UebersetzerDienst : AccessibilityService() {
         var knopfX = 0
         var knopfY = 0
         var gezogen = false
-        ansicht.setOnTouchListener { _, e ->
+        rahmen.setOnTouchListener { _, e ->
             when (e.action) {
                 MotionEvent.ACTION_DOWN -> {
                     startX = e.rawX; startY = e.rawY
@@ -128,7 +155,7 @@ class UebersetzerDienst : AccessibilityService() {
                         handler.removeCallbacks(langDruck)
                         parameter.x = knopfX + dx.toInt()
                         parameter.y = knopfY + dy.toInt()
-                        sicher { fenster.updateViewLayout(ansicht, parameter) }
+                        sicher { fenster.updateViewLayout(rahmen, parameter) }
                     }
                 }
                 MotionEvent.ACTION_UP -> {
@@ -139,8 +166,10 @@ class UebersetzerDienst : AccessibilityService() {
             }
             true
         }
-        fenster.addView(ansicht, parameter)
+        fenster.addView(rahmen, parameter)
         knopf = ansicht
+        knopfRahmen = rahmen
+        ring = ladering
         knopfParameter = parameter
     }
 
@@ -168,7 +197,7 @@ class UebersetzerDienst : AccessibilityService() {
         if (ebene != null) return entferneEbene()
         if (arbeitet) return
         arbeitet = true
-        knopf?.text = "…"
+        ring?.visibility = View.VISIBLE
         if (Einstellungen.texterkennung(this) && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             sammleMitTexterkennung { funde -> sicher { uebersetzeFunde(funde) } }
         } else {
@@ -178,6 +207,7 @@ class UebersetzerDienst : AccessibilityService() {
 
     private fun fertig() {
         arbeitet = false
+        ring?.visibility = View.GONE
         knopf?.text = if (ebene != null) "✕" else "DE"
     }
 
@@ -214,11 +244,11 @@ class UebersetzerDienst : AccessibilityService() {
     /** Macht ein Bildschirmfoto und sucht darin Text - findet auch Text in Karten und Bildern. */
     @RequiresApi(Build.VERSION_CODES.R)
     private fun sammleMitTexterkennung(weiter: (List<Fund>) -> Unit) {
-        knopf?.visibility = View.INVISIBLE
+        knopfRahmen?.visibility = View.INVISIBLE
         handler.postDelayed({
             takeScreenshot(Display.DEFAULT_DISPLAY, mainExecutor, object : TakeScreenshotCallback {
                 override fun onSuccess(foto: ScreenshotResult) {
-                    knopf?.visibility = View.VISIBLE
+                    knopfRahmen?.visibility = View.VISIBLE
                     val hardware = Bitmap.wrapHardwareBuffer(foto.hardwareBuffer, foto.colorSpace)
                     val bild = hardware?.copy(Bitmap.Config.ARGB_8888, false)
                     hardware?.recycle()
@@ -237,7 +267,7 @@ class UebersetzerDienst : AccessibilityService() {
                 }
 
                 override fun onFailure(fehlercode: Int) {
-                    knopf?.visibility = View.VISIBLE
+                    knopfRahmen?.visibility = View.VISIBLE
                     meldung("Bildschirmfoto nicht möglich (Fehler $fehlercode)")
                     weiter(emptyList())
                 }
@@ -285,7 +315,7 @@ class UebersetzerDienst : AccessibilityService() {
         fenster.addView(neu, overlayParameter(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT))
         ebene = neu
         // Knopf wieder nach oben holen, damit er ueber der Ebene liegt
-        knopf?.let { k ->
+        knopfRahmen?.let { k ->
             fenster.removeView(k)
             fenster.addView(k, knopfParameter)
         }

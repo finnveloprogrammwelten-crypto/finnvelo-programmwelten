@@ -32,6 +32,7 @@ class MainActivity : Activity() {
 
     private var alleApps = emptyList<App>()
     private lateinit var appRaster: LinearLayout
+    private lateinit var sprachpakete: SprachpaketListe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,14 +43,18 @@ class MainActivity : Activity() {
             startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }
 
+        sprachpakete = SprachpaketListe(this, findViewById(R.id.sprachpakete))
+
         val sprache = findViewById<Spinner>(R.id.sprache)
         sprache.adapter = ArrayAdapter(
             this, android.R.layout.simple_spinner_dropdown_item, Einstellungen.SPRACHEN.map { it.second },
         )
         sprache.setSelection(Einstellungen.SPRACHEN.indexOfFirst { it.first == Einstellungen.quelle(this) }.coerceAtLeast(0))
         sprache.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) =
+            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
                 Einstellungen.setzeQuelle(this@MainActivity, Einstellungen.SPRACHEN[pos].first)
+                sprachpakete.aktualisiere()
+            }
 
             override fun onNothingSelected(p: AdapterView<*>?) = Unit
         }
@@ -64,8 +69,6 @@ class MainActivity : Activity() {
                 Einstellungen.setzeTexterkennung(this, id == R.id.modus_ocr)
             }
         }
-
-        findViewById<Button>(R.id.knopf_vorladen).setOnClickListener { ladeSprachpaket() }
 
         appRaster = findViewById(R.id.apps)
 
@@ -87,6 +90,12 @@ class MainActivity : Activity() {
             ColorStateList.valueOf(getColor(if (an) R.color.status_an else R.color.status_aus))
         findViewById<View>(R.id.einschalten_bereich).visibility = if (an) View.GONE else View.VISIBLE
         zeigeAbsturz()
+        sprachpakete.start()
+    }
+
+    override fun onPause() {
+        sprachpakete.stopp()
+        super.onPause()
     }
 
     private fun zeigeAbsturz() {
@@ -198,22 +207,6 @@ class MainActivity : Activity() {
         }
         Toast.makeText(this, "Tippe auf den „DE“-Knopf, um ${app.name} zu übersetzen", Toast.LENGTH_LONG).show()
         startActivity(start)
-    }
-
-    private fun ladeSprachpaket() {
-        val code = Einstellungen.quelle(this).let { if (it == "auto") "en" else it }
-        val name = Einstellungen.SPRACHEN.first { it.first == code }.second
-        val knopf = findViewById<Button>(R.id.knopf_vorladen)
-        knopf.isEnabled = false
-        knopf.text = "$name wird geladen …"
-        val uebersetzer = Uebersetzer()
-        uebersetzer.ladeSprachpaket(code, {}) { fehler ->
-            knopf.isEnabled = true
-            knopf.setText(R.string.knopf_vorladen)
-            val text = if (fehler == null) "Sprachpaket $name → Deutsch ist bereit" else "Laden fehlgeschlagen: ${fehler.message}"
-            Toast.makeText(this, text, Toast.LENGTH_LONG).show()
-            uebersetzer.schliessen()
-        }
     }
 
     private companion object {

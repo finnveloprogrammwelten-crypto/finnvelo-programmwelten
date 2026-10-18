@@ -197,10 +197,30 @@
                         android:textSize="15sp" />
                 </RadioGroup>
 
-                <Button
-                    android:id="@+id/knopf_vorladen"
-                    style="@style/KnopfUmriss"
-                    android:text="@string/knopf_vorladen" />
+
+            </LinearLayout>
+
+            <!-- Sprachpakete -->
+            <LinearLayout style="@style/Karte">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/titel_sprachpakete" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/sprachpakete_hinweis"
+                    android:textColor="@color/text_leise"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/sprachpakete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
             </LinearLayout>
 
             <!-- Apps -->

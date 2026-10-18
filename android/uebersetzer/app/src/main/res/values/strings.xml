@@ -16,7 +16,8 @@
     <string name="titel_modus">Texte finden über</string>
     <string name="modus_text">Bildschirmtext – schnell &amp; genau</string>
     <string name="modus_ocr">Texterkennung – auch Karten &amp; Bilder</string>
-    <string name="knopf_vorladen">Sprachpaket laden (für offline)</string>
+    <string name="titel_sprachpakete">Sprachpakete</string>
+    <string name="sprachpakete_hinweis">Je Sprache ca. 30 MB. Einmal im WLAN laden, danach klappt es auch offline. Gedrückt halten zum Löschen.</string>
     <string name="titel_apps">App öffnen &amp; übersetzen</string>
     <string name="suche_hinweis">App suchen</string>
     <string name="absturz_titel">🐞  Fehlerbericht</string>

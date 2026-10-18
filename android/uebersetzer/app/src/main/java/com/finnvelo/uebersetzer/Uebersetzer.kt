@@ -39,11 +39,14 @@ class Uebersetzer {
             ?: return fertig(IllegalArgumentException("Sprache „$code“ wird nicht unterstützt"))
         val modell = TranslateRemoteModel.Builder(quelle).build()
         RemoteModelManager.getInstance().isModelDownloaded(modell).addOnSuccessListener { vorhanden ->
-            if (!vorhanden) status("Sprachpaket wird geladen (einmalig, ca. 30 MB) …")
+            if (!vorhanden) {
+                Sprachpakete.ladeStart(code)
+                status("Sprachpaket wird geladen (einmalig, ca. 30 MB) …")
+            }
         }
         holeUebersetzer(quelle).downloadModelIfNeeded(DownloadConditions.Builder().build())
-            .addOnSuccessListener { fertig(null) }
-            .addOnFailureListener { fertig(it) }
+            .addOnSuccessListener { Sprachpakete.ladeEnde(code); fertig(null) }
+            .addOnFailureListener { Sprachpakete.ladeEnde(code); fertig(it) }
     }
 
     /** Uebersetzt alle Texte; misslingt einer, bleibt dort das Original stehen. */

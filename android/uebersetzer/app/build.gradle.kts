@@ -11,8 +11,8 @@ android {
         applicationId = "com.finnvelo.uebersetzer"
         minSdk = 26
         targetSdk = 34
-        versionCode = 4
-        versionName = "1.3"
+        versionCode = 5
+        versionName = "1.4"
         // Nur Handy-Prozessoren - spart rund die Haelfte der App-Groesse
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
     }
