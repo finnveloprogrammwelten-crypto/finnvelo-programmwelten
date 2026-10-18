@@ -94,13 +94,30 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.knopf_kachel).setOnClickListener { kachelHinzufuegen() }
 
         val deeplBereich = findViewById<View>(R.id.bereich_deepl)
-        findViewById<android.widget.Switch>(R.id.schalter_online).apply {
-            isChecked = Einstellungen.online(this@MainActivity)
-            deeplBereich.visibility = if (isChecked) View.VISIBLE else View.GONE
-            setOnCheckedChangeListener { _, an ->
-                Einstellungen.setzeOnline(this@MainActivity, an)
-                deeplBereich.visibility = if (an) View.VISIBLE else View.GONE
+        val mymemoryBereich = findViewById<View>(R.id.bereich_mymemory)
+        val dienste = mapOf(R.id.dienst_offline to "offline", R.id.dienst_mymemory to "mymemory", R.id.dienst_deepl to "deepl")
+        val zeigeDienst = { dienst: String ->
+            deeplBereich.visibility = if (dienst == "deepl") View.VISIBLE else View.GONE
+            mymemoryBereich.visibility = if (dienst == "mymemory") View.VISIBLE else View.GONE
+        }
+        findViewById<RadioGroup>(R.id.dienst).apply {
+            val jetzt = Einstellungen.dienst(this@MainActivity)
+            check(dienste.entries.first { it.value == jetzt }.key)
+            zeigeDienst(jetzt)
+            setOnCheckedChangeListener { _, id ->
+                val dienst = dienste[id] ?: "offline"
+                Einstellungen.setzeDienst(this@MainActivity, dienst)
+                zeigeDienst(dienst)
             }
+        }
+        findViewById<EditText>(R.id.mymemory_email).apply {
+            setText(Einstellungen.mymemoryEmail(this@MainActivity))
+            addTextChangedListener(object : TextWatcher {
+                override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) = Unit
+                override fun afterTextChanged(s: Editable?) =
+                    Einstellungen.setzeMymemoryEmail(this@MainActivity, s.toString())
+            })
         }
         findViewById<EditText>(R.id.deepl_schluessel).apply {
             setText(Einstellungen.deeplSchluessel(this@MainActivity))

@@ -58,6 +58,9 @@ Wer lieber von Hand übersetzt (mit Leiste Liste/Vorlesen/Kopieren), schaltet
   Schedules → Fahrpläne, Traffic → Verkehrslage …) – gilt nur für ganze Kästen.
 - **Eigene Korrekturen:** DE-Knopf **gedrückt halten** → Kasten antippen → ✏️ →
   richtige Übersetzung eintragen. Gilt ab dann immer (auch in der Automatik).
+- **Online ohne Schlüssel (MyMemory)** (Einstellungen): besser als offline,
+  kostenlos 5.000 Zeichen am Tag, mit freiwilliger E-Mail 50.000. Die Texte gehen
+  an MyMemory (translated.net); ist das Kontingent leer, wird offline übersetzt.
 - **DeepL online** (Einstellungen): deutlich bessere Qualität, kostenloser
   Schlüssel von https://www.deepl.com/pro-api. Die Texte gehen dann an DeepL;
   ohne Netz wird automatisch offline übersetzt.

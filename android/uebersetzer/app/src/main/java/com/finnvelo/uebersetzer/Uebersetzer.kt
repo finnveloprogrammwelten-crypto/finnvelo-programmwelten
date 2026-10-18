@@ -81,12 +81,15 @@ class Uebersetzer {
             if (fest != null) einzeln(i, fest) else offen += i
         }
         if (offen.isEmpty()) return fertig(null)
+        val dienst = Einstellungen.dienst(ctx)
+        // MyMemory braucht die Sprache je Text - laeuft daher nach der Spracherkennung
+        val email = if (dienst == "mymemory" && MyMemory.verfuegbar()) Einstellungen.mymemoryEmail(ctx) else null
         val weiterOffline = { liste: List<Int> ->
-            offline(liste.map { texte[it] }, bevorzugt, status, { j, d -> einzeln(liste[j], d) }, fertig)
+            offline(liste.map { texte[it] }, bevorzugt, email, status, { j, d -> einzeln(liste[j], d) }, fertig)
         }
 
         val schluessel = Einstellungen.deeplSchluessel(ctx)
-        if (!Einstellungen.online(ctx) || schluessel.isBlank()) return weiterOffline(offen)
+        if (dienst != "deepl" || schluessel.isBlank()) return weiterOffline(offen)
         val unbekannt = offen.filter { zwischenspeicher["deepl|${texte[it]}"] == null }
         offen.filter { it !in unbekannt }.forEach { einzeln(it, zwischenspeicher["deepl|${texte[it]}"]) }
         if (unbekannt.isEmpty()) return fertig(null)
@@ -104,9 +107,11 @@ class Uebersetzer {
         }
     }
 
+    /** [mymemory] = E-Mail (auch leer), wenn MyMemory genutzt werden soll; null = nur offline */
     private fun offline(
         texte: List<String>,
         bevorzugt: String,
+        mymemory: String?,
         status: (String) -> Unit,
         einzeln: (Int, String?) -> Unit,
         fertig: (Exception?) -> Unit,
@@ -127,7 +132,7 @@ class Uebersetzer {
             val haeufigste = erkannt.filterNotNull().filter { it != "de" && istUnterstuetzt(it) }
                 .groupingBy { it }.eachCount().maxByOrNull { it.value }?.key
             val weiter = { standard: String? ->
-                verteile(texte, erkannt, standard, vorhanden, status, einzeln, fertig)
+                verteile(texte, erkannt, standard, vorhanden, mymemory, status, einzeln, fertig)
             }
             when {
                 bevorzugt != "auto" -> weiter(bevorzugt)
@@ -145,16 +150,19 @@ class Uebersetzer {
         erkannt: List<String?>,
         standard: String?,
         vorhanden: Set<String>,
+        mymemory: String?,
         status: (String) -> Unit,
         einzeln: (Int, String?) -> Unit,
         fertig: (Exception?) -> Unit,
     ) {
+        // Online braucht es kein Sprachpaket - dann gilt jede erkannte Sprache
+        val nutzbar = { code: String -> mymemory != null || code in vorhanden }
         // Sprache je Text festlegen; null = nicht uebersetzen (Deutsch, unbekannt, nicht unterstuetzt)
         val sprache = texte.indices.map { i ->
             val eigene = erkannt[i]
             val code = when {
                 eigene == "de" -> "de"
-                eigene != null && eigene != standard && eigene in vorhanden && istUnterstuetzt(eigene) -> eigene
+                eigene != null && eigene != standard && nutzbar(eigene) && istUnterstuetzt(eigene) -> eigene
                 else -> standard
             }
             code?.takeIf { it != "de" && istUnterstuetzt(it) }
@@ -174,23 +182,47 @@ class Uebersetzer {
         }
         // Haeufigste Sprache zuerst; innerhalb in Lesereihenfolge
         gruppen.entries.sortedByDescending { it.value.size }.forEach { (code, nummern) ->
-            ladeSprachpaket(code, status) { fehler ->
-                if (fehler != null) {
-                    ersterFehler = ersterFehler ?: fehler
-                    return@ladeSprachpaket nummern.forEach { einerFertig(it, null) }
-                }
-                val quelle = TranslateLanguage.fromLanguageTag(code)!!
-                val translator = holeUebersetzer(quelle)
-                nummern.forEach { i ->
-                    val schluessel = "$quelle|${texte[i]}"
-                    val gemerkt = zwischenspeicher[schluessel]
-                    if (gemerkt != null) {
-                        einerFertig(i, gemerkt)
-                    } else {
-                        translator.translate(texte[i])
-                            .addOnSuccessListener { zwischenspeicher[schluessel] = it; einerFertig(i, it) }
-                            .addOnFailureListener { einerFertig(i, null) }
+            if (mymemory == null) return@forEach mitMlKit(code, nummern, texte, status, einerFertig) { ersterFehler = ersterFehler ?: it }
+            nummern.forEach { i ->
+                val gemerkt = zwischenspeicher["mm|$code|${texte[i]}"]
+                if (gemerkt != null) return@forEach einerFertig(i, gemerkt)
+                MyMemory.uebersetze(texte[i], code, mymemory) { ergebnis ->
+                    ergebnis.onSuccess {
+                        zwischenspeicher["mm|$code|${texte[i]}"] = it
+                        einerFertig(i, it)
+                    }.onFailure {
+                        // Kein Netz, Kontingent leer, Text zu lang: offline weiter
+                        mitMlKit(code, listOf(i), texte, status, einerFertig) { f -> ersterFehler = ersterFehler ?: f }
                     }
+                }
+            }
+        }
+    }
+
+    private fun mitMlKit(
+        code: String,
+        nummern: List<Int>,
+        texte: List<String>,
+        status: (String) -> Unit,
+        einerFertig: (Int, String?) -> Unit,
+        fehlerMerken: (Exception) -> Unit,
+    ) {
+        ladeSprachpaket(code, status) { fehler ->
+            if (fehler != null) {
+                fehlerMerken(fehler)
+                return@ladeSprachpaket nummern.forEach { einerFertig(it, null) }
+            }
+            val quelle = TranslateLanguage.fromLanguageTag(code)!!
+            val translator = holeUebersetzer(quelle)
+            nummern.forEach { i ->
+                val schluessel = "$quelle|${texte[i]}"
+                val gemerkt = zwischenspeicher[schluessel]
+                if (gemerkt != null) {
+                    einerFertig(i, gemerkt)
+                } else {
+                    translator.translate(texte[i])
+                        .addOnSuccessListener { zwischenspeicher[schluessel] = it; einerFertig(i, it) }
+                        .addOnFailureListener { einerFertig(i, null) }
                 }
             }
         }

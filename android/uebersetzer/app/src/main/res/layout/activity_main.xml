@@ -255,14 +255,71 @@
                     style="@style/Beschriftung"
                     android:text="@string/titel_qualitaet" />
 
-                <Switch
-                    android:id="@+id/schalter_online"
+                <RadioGroup
+                    android:id="@+id/dienst"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/dienst_offline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/dienst_offline"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/dienst_mymemory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/dienst_mymemory"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/dienst_deepl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/dienst_deepl"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+                <LinearLayout
+                    android:id="@+id/bereich_mymemory"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:text="@string/schalter_online"
-                    android:textColor="@color/text"
-                    android:textSize="15sp" />
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/mymemory_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/suchfeld"
+                        android:hint="@string/mymemory_feld"
+                        android:importantForAutofill="no"
+                        android:inputType="textEmailAddress"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:singleLine="true"
+                        android:textColor="@color/text"
+                        android:textColorHint="@color/text_leise"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/mymemory_hinweis"
+                        android:textColor="@color/text_leise"
+                        android:textSize="13sp" />
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/bereich_deepl"

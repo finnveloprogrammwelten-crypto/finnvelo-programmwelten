@@ -35,7 +35,11 @@
     <string name="knopf_kachel">Kachel „DE übersetzen“ hinzufügen</string>
     <string name="knopf_update">Herunterladen</string>
     <string name="titel_qualitaet">Übersetzungsqualität</string>
-    <string name="schalter_online">Online mit DeepL übersetzen – deutlich besser</string>
+    <string name="dienst_offline">Offline – geht immer, einfache Qualität</string>
+    <string name="dienst_mymemory">Online ohne Schlüssel (MyMemory) – besser</string>
+    <string name="dienst_deepl">Online mit DeepL-Schlüssel – am besten</string>
+    <string name="mymemory_feld">E-Mail (freiwillig, für mehr Kontingent)</string>
+    <string name="mymemory_hinweis">Kostenlos: 5.000 Zeichen am Tag, mit E-Mail 50.000. Schon Übersetztes zählt nicht nochmal. Die Texte gehen an MyMemory (translated.net). Ist das Kontingent leer oder kein Netz da, wird offline übersetzt.</string>
     <string name="deepl_hinweis_feld">DeepL-API-Schlüssel einfügen</string>
     <string name="deepl_hinweis">Kostenlosen Schlüssel holen (500.000 Zeichen/Monat frei): https://www.deepl.com/pro-api\nDie Texte werden dann an DeepL geschickt. Ohne Netz wird automatisch offline übersetzt.</string>
     <string name="knopf_korrekturen">Eigene Korrekturen löschen</string>

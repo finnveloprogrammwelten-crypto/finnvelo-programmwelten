@@ -63,12 +63,21 @@ object Einstellungen {
     fun setzeKnopfZeigen(ctx: Context, an: Boolean) =
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("knopf", an).apply()
 
-    /** Online mit DeepL uebersetzen (nur mit eigenem Schluessel) */
-    fun online(ctx: Context): Boolean =
-        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("online", false)
+    /** Uebersetzungsdienst: "offline" (ML Kit), "mymemory" (online ohne Schluessel), "deepl" */
+    fun dienst(ctx: Context): String {
+        val p = ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE)
+        return p.getString("dienst", null) ?: if (p.getBoolean("online", false)) "deepl" else "offline"
+    }
 
-    fun setzeOnline(ctx: Context, an: Boolean) =
-        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("online", an).apply()
+    fun setzeDienst(ctx: Context, dienst: String) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putString("dienst", dienst).apply()
+
+    /** Freiwillige E-Mail fuer MyMemory (mehr Tageskontingent) */
+    fun mymemoryEmail(ctx: Context): String =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getString("mymemoryEmail", "") ?: ""
+
+    fun setzeMymemoryEmail(ctx: Context, email: String) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putString("mymemoryEmail", email.trim()).apply()
 
     fun deeplSchluessel(ctx: Context): String =
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getString("deepl", "") ?: ""

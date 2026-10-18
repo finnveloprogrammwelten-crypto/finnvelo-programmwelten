@@ -104,6 +104,11 @@ class UebersetzerDienst : AccessibilityService() {
         }
     }
 
+    private fun eigeneAppVorne(): Boolean {
+        val vorne = windows.firstOrNull { it.isActive } ?: return false
+        return vorne.type == AccessibilityWindowInfo.TYPE_APPLICATION && vorne.root?.packageName == packageName
+    }
+
     /** Wird die gerade offene App automatisch uebersetzt? */
     private fun automatikHier() =
         Einstellungen.automatik(this) && vordergrund?.let { it in Einstellungen.autoApps(this) } == true
@@ -113,9 +118,9 @@ class UebersetzerDienst : AccessibilityService() {
         val typ = event.eventType
 
         if (paket == packageName) {
-            // Eigener Hauptbildschirm / Kamera: dort keinen Knopf und keine Uebersetzung
-            val eigeneSeiten = setOf(MainActivity::class.java.name, KameraActivity::class.java.name)
-            if (typ == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.className?.toString() in eigeneSeiten) {
+            // Eigener Hauptbildschirm / Kamera: dort keinen Knopf und keine Uebersetzung.
+            // Erkannt am aktiven App-Fenster - eigene Einblendungen (Kaesten, Dialog) zaehlen nicht.
+            if (typ == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && eigeneAppVorne()) {
                 inEigenerApp = true
                 vordergrund = null
                 entferneEbene()
