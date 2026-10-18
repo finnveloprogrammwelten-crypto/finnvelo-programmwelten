@@ -191,8 +191,12 @@ class UebersetzerDienst : AccessibilityService() {
 
     /** Knopf zeigen/verstecken und einfaerben (gruen = Automatik an fuer diese App). */
     fun aktualisiereKnopf() {
-        knopfRahmen?.visibility =
-            if (inEigenerApp || !Einstellungen.knopfZeigen(this)) View.GONE else View.VISIBLE
+        val zeigen = !inEigenerApp && when (Einstellungen.knopfModus(this)) {
+            "immer" -> true
+            "auto" -> automatikHier()
+            else -> false
+        }
+        knopfRahmen?.visibility = if (zeigen) View.VISIBLE else View.GONE
         knopfFarbe.setColor(if (automatikHier()) GRUEN else BLAU)
     }
 
@@ -213,6 +217,7 @@ class UebersetzerDienst : AccessibilityService() {
         handler.removeCallbacksAndMessages(null)
         runCatching { entferneEbene() }
         knopfRahmen?.let { k -> runCatching { fenster.removeView(k) } }
+        runCatching { entferneAblage() }
         knopf = null
         if (::uebersetzer.isInitialized) uebersetzer.schliessen()
         if (::vorleser.isInitialized) vorleser.schliessen()
@@ -280,14 +285,32 @@ class UebersetzerDienst : AccessibilityService() {
                         handler.removeCallbacks(langDruck)
                         parameter.x = knopfX + dx.toInt()
                         parameter.y = knopfY + dy.toInt()
-                        sicher { fenster.updateViewLayout(rahmen, parameter) }
+                        sicher {
+                            fenster.updateViewLayout(rahmen, parameter)
+                            zeigeAblage(ueberAblage(e.rawX, e.rawY))
+                        }
                     }
                 }
                 MotionEvent.ACTION_UP -> {
                     handler.removeCallbacks(langDruck)
-                    if (!gezogen && !warLang) sicher { knopfGetippt() }
+                    val weg = gezogen && ueberAblage(e.rawX, e.rawY)
+                    sicher { entferneAblage() }
+                    if (weg) {
+                        // Auf das ✕ gezogen: Knopf aus (wieder an in der App oder ueber die Kachel)
+                        Einstellungen.setzeKnopfModus(this, "aus")
+                        parameter.x = knopfX
+                        parameter.y = knopfY
+                        sicher { fenster.updateViewLayout(rahmen, parameter) }
+                        aktualisiereKnopf()
+                        meldung("DE-Knopf aus – wieder an im Finnvelo Übersetzer oder über die Kachel")
+                    } else if (!gezogen && !warLang) {
+                        sicher { knopfGetippt() }
+                    }
                 }
-                MotionEvent.ACTION_CANCEL -> handler.removeCallbacks(langDruck)
+                MotionEvent.ACTION_CANCEL -> {
+                    handler.removeCallbacks(langDruck)
+                    sicher { entferneAblage() }
+                }
             }
             true
         }
@@ -296,6 +319,54 @@ class UebersetzerDienst : AccessibilityService() {
         knopfRahmen = rahmen
         ring = ladering
         knopfParameter = parameter
+    }
+
+    // ✕ unten in der Mitte, solange der Knopf gezogen wird
+    private var ablage: TextView? = null
+
+    private fun ablageMitte(): Pair<Float, Float> {
+        val m = resources.displayMetrics
+        return m.widthPixels / 2f to m.heightPixels - 110 * m.density
+    }
+
+    private fun ueberAblage(x: Float, y: Float): Boolean {
+        val (mx, my) = ablageMitte()
+        val radius = 70 * resources.displayMetrics.density
+        return (x - mx) * (x - mx) + (y - my) * (y - my) < radius * radius
+    }
+
+    private fun zeigeAblage(getroffen: Boolean) {
+        val dichte = resources.displayMetrics.density
+        val ansicht = ablage ?: TextView(this).apply {
+            text = "✕"
+            textSize = 26f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            background = GradientDrawable().apply { shape = GradientDrawable.OVAL }
+            val groesse = (64 * dichte).toInt()
+            val (mx, my) = ablageMitte()
+            fenster.addView(this, overlayParameter(groesse, groesse).apply {
+                gravity = Gravity.TOP or Gravity.START
+                x = (mx - groesse / 2).toInt()
+                y = (my - groesse / 2).toInt()
+                flags = flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+            })
+            ablage = this
+        }
+        (ansicht.background as GradientDrawable).setColor(Color.parseColor(if (getroffen) "#E6C62828" else "#99000000"))
+        ansicht.scaleX = if (getroffen) 1.2f else 1f
+        ansicht.scaleY = ansicht.scaleX
+    }
+
+    private fun entferneAblage() {
+        ablage?.let { runCatching { fenster.removeView(it) } }
+        ablage = null
+    }
+
+    /** Bedienungshilfe ganz ausschalten (wie in den Android-Einstellungen). */
+    fun ganzAus() {
+        entferneEbene()
+        disableSelf()
     }
 
     private fun overlayParameter(breite: Int, hoehe: Int) = WindowManager.LayoutParams(

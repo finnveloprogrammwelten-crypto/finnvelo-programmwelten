@@ -150,6 +150,12 @@
                     android:textColor="@color/text"
                     android:textSize="15sp" />
 
+                <Button
+                    android:id="@+id/knopf_ganz_aus"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/knopf_ganz_aus"
+                    android:visibility="gone" />
+
                 <LinearLayout
                     android:id="@+id/einschalten_bereich"
                     android:layout_width="match_parent"
@@ -379,14 +385,56 @@
                     android:textColor="@color/text"
                     android:textSize="15sp" />
 
-                <Switch
-                    android:id="@+id/schalter_knopf"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:minHeight="48dp"
-                    android:text="@string/schalter_knopf"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/knopf_zeigen"
                     android:textColor="@color/text"
                     android:textSize="15sp" />
+
+                <RadioGroup
+                    android:id="@+id/knopf_modus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/knopf_immer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/knopf_immer"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/knopf_auto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/knopf_auto"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/knopf_aus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/knopf_aus"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/knopf_wegziehen"
+                    android:textColor="@color/text_leise"
+                    android:textSize="13sp" />
 
                 <Button
                     android:id="@+id/knopf_kachel"

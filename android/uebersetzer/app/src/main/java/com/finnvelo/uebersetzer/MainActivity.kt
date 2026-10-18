@@ -83,13 +83,27 @@ class MainActivity : Activity() {
                 UebersetzerDienst.instanz?.aktualisiereKnopf()
             }
         }
-        findViewById<android.widget.Switch>(R.id.schalter_knopf).apply {
-            isChecked = Einstellungen.knopfZeigen(this@MainActivity)
-            setOnCheckedChangeListener { _, an ->
-                Einstellungen.setzeKnopfZeigen(this@MainActivity, an)
+        val knopfModi = mapOf(R.id.knopf_immer to "immer", R.id.knopf_auto to "auto", R.id.knopf_aus to "aus")
+        findViewById<RadioGroup>(R.id.knopf_modus).apply {
+            val jetzt = Einstellungen.knopfModus(this@MainActivity)
+            check(knopfModi.entries.first { it.value == jetzt }.key)
+            setOnCheckedChangeListener { _, id ->
+                val modus = knopfModi[id] ?: "immer"
+                Einstellungen.setzeKnopfModus(this@MainActivity, modus)
                 UebersetzerDienst.instanz?.aktualisiereKnopf()
-                if (!an) Toast.makeText(this@MainActivity, "Übersetzen dann über die Kachel „DE übersetzen“", Toast.LENGTH_LONG).show()
+                if (modus == "aus") Toast.makeText(this@MainActivity, "Übersetzen dann über die Kachel „DE übersetzen“", Toast.LENGTH_LONG).show()
             }
+        }
+        findViewById<Button>(R.id.knopf_ganz_aus).setOnClickListener {
+            AlertDialog.Builder(this)
+                .setTitle("DE-Knopf ganz ausschalten?")
+                .setMessage("Die Bedienungshilfe wird beendet – nichts wird mehr gelesen oder übersetzt. Wieder einschalten über „Bedienungshilfen öffnen“.")
+                .setPositiveButton("Ausschalten") { _, _ ->
+                    UebersetzerDienst.instanz?.ganzAus()
+                    findViewById<View>(R.id.status_titel).postDelayed({ onResume() }, 400)
+                }
+                .setNegativeButton("Abbrechen", null)
+                .show()
         }
         findViewById<Button>(R.id.knopf_kachel).setOnClickListener { kachelHinzufuegen() }
 
@@ -160,6 +174,15 @@ class MainActivity : Activity() {
         findViewById<View>(R.id.karte_status).backgroundTintList =
             ColorStateList.valueOf(getColor(if (an) R.color.status_an else R.color.status_aus))
         findViewById<View>(R.id.einschalten_bereich).visibility = if (an) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.knopf_ganz_aus).visibility = if (an) View.VISIBLE else View.GONE
+        // Wurde der Knopf weggezogen, Auswahl auf den aktuellen Stand bringen
+        findViewById<RadioGroup>(R.id.knopf_modus).check(
+            when (Einstellungen.knopfModus(this)) {
+                "auto" -> R.id.knopf_auto
+                "aus" -> R.id.knopf_aus
+                else -> R.id.knopf_immer
+            }
+        )
         zeigeAbsturz()
         sprachpakete.start()
         zeigeKorrekturen()

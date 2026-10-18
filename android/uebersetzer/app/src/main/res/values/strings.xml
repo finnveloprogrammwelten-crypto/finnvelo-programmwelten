@@ -31,7 +31,12 @@
     <string name="kamera_text">Schilder, Speisekarten, Fahrpläne …</string>
     <string name="titel_knopf">DE-Knopf</string>
     <string name="schalter_live">Automatisch übersetzen – bleibt an, auch beim Scrollen und Tippen</string>
-    <string name="schalter_knopf">Schwebenden Knopf zeigen</string>
+    <string name="knopf_zeigen">Schwebenden Knopf zeigen:</string>
+    <string name="knopf_immer">Immer</string>
+    <string name="knopf_auto">Nur in Apps, die übersetzt werden</string>
+    <string name="knopf_aus">Nie – nur über die Kachel</string>
+    <string name="knopf_wegziehen">Tipp: Knopf auf das ✕ unten ziehen blendet ihn sofort aus.</string>
+    <string name="knopf_ganz_aus">DE-Knopf ganz ausschalten</string>
     <string name="knopf_kachel">Kachel „DE übersetzen“ hinzufügen</string>
     <string name="knopf_update">Herunterladen</string>
     <string name="titel_qualitaet">Übersetzungsqualität</string>

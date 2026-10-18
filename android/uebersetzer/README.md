@@ -25,7 +25,10 @@ wird einmalig geladen, danach geht es auch ohne Internet.
      **🔊 Vorlesen**, **📋 Kopieren**, **✕**
    - einen Kasten antippen → ganzer Text + Original groß, mit Vorlesen/Kopieren
    - daneben tippen oder **✕** → Übersetzung schließen
-   - Knopf **ziehen** → verschieben, **gedrückt halten** → Einstellungen
+   - Knopf **ziehen** → verschieben; auf das **✕ unten** ziehen → Knopf aus
+   - **gedrückt halten** → Leisten-Ansicht (Liste, Vorlesen, Korrigieren, ⚙)
+   - Einstellungen: Knopf **immer**, **nur in übersetzten Apps** oder **nie** zeigen;
+     „DE-Knopf ganz ausschalten“ beendet die Bedienungshilfe
 
 ### Kamera-Übersetzer
 

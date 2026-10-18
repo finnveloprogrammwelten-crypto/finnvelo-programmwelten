@@ -56,12 +56,17 @@ object Einstellungen {
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putStringSet("autoApps", neu).apply()
     }
 
-    /** Schwebenden DE-Knopf zeigen (sonst nur ueber die Schnelleinstellungs-Kachel). */
-    fun knopfZeigen(ctx: Context): Boolean =
-        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("knopf", true)
+    /**
+     * Wann der schwebende DE-Knopf zu sehen ist: "immer", "auto" (nur in Apps,
+     * die automatisch uebersetzt werden) oder "aus" (dann nur ueber die Kachel).
+     */
+    fun knopfModus(ctx: Context): String {
+        val p = ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE)
+        return p.getString("knopfModus", null) ?: if (p.getBoolean("knopf", true)) "immer" else "aus"
+    }
 
-    fun setzeKnopfZeigen(ctx: Context, an: Boolean) =
-        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("knopf", an).apply()
+    fun setzeKnopfModus(ctx: Context, modus: String) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putString("knopfModus", modus).apply()
 
     /** Uebersetzungsdienst: "offline" (ML Kit), "mymemory" (online ohne Schluessel), "deepl" */
     fun dienst(ctx: Context): String {
