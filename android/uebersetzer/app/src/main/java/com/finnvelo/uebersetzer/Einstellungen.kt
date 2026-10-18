@@ -37,12 +37,24 @@ object Einstellungen {
     fun setzeTexterkennung(ctx: Context, an: Boolean) =
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("ocr", an).apply()
 
-    /** Live-Modus: Uebersetzung laeuft beim Scrollen mit, die App darunter bleibt bedienbar. */
-    fun live(ctx: Context): Boolean =
-        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("live", false)
+    /**
+     * Automatik: DE einmal antippen (oder App aus der Liste oeffnen), dann wird
+     * diese App immer weiter uebersetzt - auch beim Scrollen und Tippen.
+     */
+    fun automatik(ctx: Context): Boolean =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("automatik", true)
 
-    fun setzeLive(ctx: Context, an: Boolean) =
-        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("live", an).apply()
+    fun setzeAutomatik(ctx: Context, an: Boolean) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("automatik", an).apply()
+
+    /** Apps (Paketnamen), die automatisch uebersetzt werden */
+    fun autoApps(ctx: Context): Set<String> =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getStringSet("autoApps", emptySet())!!.toSet()
+
+    fun setzeAutoApp(ctx: Context, paket: String, an: Boolean) {
+        val neu = if (an) autoApps(ctx) + paket else autoApps(ctx) - paket
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putStringSet("autoApps", neu).apply()
+    }
 
     /** Schwebenden DE-Knopf zeigen (sonst nur ueber die Schnelleinstellungs-Kachel). */
     fun knopfZeigen(ctx: Context): Boolean =

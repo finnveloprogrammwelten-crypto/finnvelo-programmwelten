@@ -32,10 +32,15 @@ import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import kotlin.math.abs
 
 /**
- * Bedienungshilfe mit schwebendem "DE"-Knopf. Antippen liest den Text der
- * gerade sichtbaren App, uebersetzt ihn und legt die Uebersetzung darueber.
- * Gedrueckt halten oeffnet die Einstellungen. Im Live-Modus laeuft die
- * Uebersetzung beim Scrollen mit.
+ * Bedienungshilfe mit schwebendem "DE"-Knopf.
+ *
+ * Automatik (Standard): DE antippen schaltet die Uebersetzung fuer die
+ * gerade offene App dauerhaft ein (Knopf wird gruen). Danach wird nach jedem
+ * Scrollen oder neuen Inhalt neu uebersetzt; die Kaesten lassen alle
+ * Beruehrungen zur App durch. Nochmal antippen schaltet sie fuer diese App aus.
+ *
+ * Ohne Automatik: DE antippen uebersetzt einmal, mit Leiste (Liste,
+ * Vorlesen, Kopieren). Gedrueckt halten oeffnet die Einstellungen.
  */
 class UebersetzerDienst : AccessibilityService() {
 
@@ -43,28 +48,35 @@ class UebersetzerDienst : AccessibilityService() {
         /** Laufende Bedienungshilfe - fuer Kachel und Hauptbildschirm */
         var instanz: UebersetzerDienst? = null
             private set
+
+        private val BLAU = Color.parseColor("#E61E3A8A")
+        private val GRUEN = Color.parseColor("#E62E7D32")
+        private val NICHT_APPS = setOf("com.android.systemui", "android")
     }
 
     private lateinit var fenster: WindowManager
     private lateinit var uebersetzer: Uebersetzer
+    private lateinit var vorleser: Vorleser
     private val handler = Handler(Looper.getMainLooper())
     private val texterkenner by lazy { TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS) }
 
     private var knopf: TextView? = null
+    private val knopfFarbe = GradientDrawable()
     private var knopfRahmen: FrameLayout? = null
     private var ring: ProgressBar? = null
     private var knopfParameter: WindowManager.LayoutParams? = null
+
     private var ebene: Ebene? = null
     private var arbeitet = false
-    private var liveAktiv = false
-    private var letzteFunde: List<Fund> = emptyList()
+    private var auftrag = 0
     private var letzteTexte: List<Pair<String, Rect>> = emptyList()
     private var veraendert = false
     private var zweiterDurchlauf = false
-    private var auftrag = 0
+
+    /** Paket der App, die gerade im Vordergrund ist (nicht die eigene) */
+    private var vordergrund: String? = null
     private var inEigenerApp = false
-    private lateinit var vorleser: Vorleser
-    private val liveAuffrischen = Runnable { sicher { frischeLiveAuf() } }
+    private val auffrischen = Runnable { sicher { frischeAuf() } }
 
     override fun onServiceConnected() {
         fenster = getSystemService(WindowManager::class.java)
@@ -90,49 +102,88 @@ class UebersetzerDienst : AccessibilityService() {
         }
     }
 
+    /** Wird die gerade offene App automatisch uebersetzt? */
+    private fun automatikHier() =
+        Einstellungen.automatik(this) && vordergrund?.let { it in Einstellungen.autoApps(this) } == true
+
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         val paket = event?.packageName?.toString() ?: return
-        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            // Im eigenen Hauptbildschirm stoert der Knopf nur - dort ausblenden
+        val typ = event.eventType
+
+        if (paket == packageName) {
+            // Eigener Hauptbildschirm / Kamera: dort keinen Knopf und keine Uebersetzung
+            val eigeneSeiten = setOf(MainActivity::class.java.name, KameraActivity::class.java.name)
+            if (typ == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && event.className?.toString() in eigeneSeiten) {
+                inEigenerApp = true
+                vordergrund = null
+                entferneEbene()
+                aktualisiereKnopf()
+            }
+            return
+        }
+
+        if (typ == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             val tastatur = Settings.Secure.getString(contentResolver, Settings.Secure.DEFAULT_INPUT_METHOD)
                 ?.substringBefore('/')
-            val eigeneSeiten = setOf(MainActivity::class.java.name, KameraActivity::class.java.name)
-            if (paket == packageName && event.className?.toString() in eigeneSeiten) {
-                inEigenerApp = true
+            if (paket == tastatur || paket in NICHT_APPS) return
+            inEigenerApp = false
+            if (paket != vordergrund) {
+                // Andere App im Vordergrund: alte Uebersetzung weg, ggf. Automatik fuer die neue
+                vordergrund = paket
                 entferneEbene()
-            } else if (paket != packageName && paket != tastatur) {
-                inEigenerApp = false
+                aktualisiereKnopf()
+                if (automatikHier()) plane(400)
+                return
             }
-            aktualisiereKnopf()
         }
-        // Hat sich der Bildschirm bewegt, waehrend noch uebersetzt wird? Dann passen die Orte nicht mehr
-        if (arbeitet && !liveAktiv && paket != packageName &&
-            (event.eventType == AccessibilityEvent.TYPE_VIEW_SCROLLED || event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+        if (paket != vordergrund) return
+
+        if (automatikHier()) {
+            // Beim Scrollen sofort ausblenden (die Kaesten wuerden sonst daneben liegen),
+            // nach kurzer Ruhe neu uebersetzen
+            if (typ == AccessibilityEvent.TYPE_VIEW_SCROLLED) ebene?.visibility = View.INVISIBLE
+            plane(450)
+        } else if (arbeitet &&
+            (typ == AccessibilityEvent.TYPE_VIEW_SCROLLED || typ == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
         ) {
             veraendert = true
         }
-        // Live-Modus: nach Scrollen oder neuem Inhalt kurz warten, dann neu uebersetzen
-        if (liveAktiv && ebene != null && paket != packageName) {
-            handler.removeCallbacks(liveAuffrischen)
-            handler.postDelayed(liveAuffrischen, 700)
-        }
     }
 
-    /** Knopf zeigen oder verstecken - je nach Einstellung und ob gerade die eigene App offen ist. */
+    private fun plane(verzoegerung: Long) {
+        handler.removeCallbacks(auffrischen)
+        handler.postDelayed(auffrischen, verzoegerung)
+    }
+
+    /** Automatik: nur dann neu uebersetzen, wenn sich am Bildschirm etwas geaendert hat. */
+    private fun frischeAuf() {
+        if (!automatikHier()) return
+        if (arbeitet) return plane(300)
+        val jetzt = sammleBildschirmtext().map { it.text to it.ort }
+        if (jetzt == letzteTexte) {
+            // Nichts Neues (z.B. nur eine Animation): bisherige Uebersetzung wieder zeigen
+            ebene?.visibility = View.VISIBLE
+            return
+        }
+        ebene?.visibility = View.INVISIBLE
+        starte(automatik = true)
+    }
+
+    /** Knopf zeigen/verstecken und einfaerben (gruen = Automatik an fuer diese App). */
     fun aktualisiereKnopf() {
         knopfRahmen?.visibility =
             if (inEigenerApp || !Einstellungen.knopfZeigen(this)) View.GONE else View.VISIBLE
+        knopfFarbe.setColor(if (automatikHier()) GRUEN else BLAU)
     }
 
-    /** Antippen der Schnelleinstellungs-Kachel: Leiste einklappen, dann uebersetzen. */
+    /** Antippen der Schnelleinstellungs-Kachel: Leiste einklappen, dann wie DE antippen. */
     fun vonKachel() {
-        if (ebene != null) return entferneEbene()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             performGlobalAction(GLOBAL_ACTION_DISMISS_NOTIFICATION_SHADE)
         } else {
             performGlobalAction(GLOBAL_ACTION_BACK)
         }
-        handler.postDelayed({ sicher { if (ebene == null) knopfGetippt() } }, 600)
+        handler.postDelayed({ sicher { knopfGetippt() } }, 600)
     }
 
     override fun onInterrupt() = Unit
@@ -160,9 +211,9 @@ class UebersetzerDienst : AccessibilityService() {
             setTextColor(Color.WHITE)
             gravity = Gravity.CENTER
             paint.isFakeBoldText = true
-            background = GradientDrawable().apply {
+            background = knopfFarbe.apply {
                 shape = GradientDrawable.OVAL
-                setColor(Color.parseColor("#E61E3A8A"))
+                setColor(BLAU)
                 setStroke((2 * dichte).toInt(), Color.parseColor("#FFCC00"))
             }
             elevation = 6 * dichte
@@ -248,41 +299,39 @@ class UebersetzerDienst : AccessibilityService() {
     }
 
     private fun knopfGetippt() {
+        if (Einstellungen.automatik(this)) {
+            val app = vordergrund ?: return meldung("Erst eine App öffnen")
+            val an = app !in Einstellungen.autoApps(this)
+            Einstellungen.setzeAutoApp(this, app, an)
+            entferneEbene()
+            aktualisiereKnopf()
+            if (an) {
+                meldung("Übersetzt jetzt automatisch – DE nochmal tippen zum Ausschalten")
+                plane(0)
+            } else {
+                meldung("Automatik für diese App aus")
+            }
+            return
+        }
+        // Einmal uebersetzen (mit Leiste)
         if (ebene != null) return entferneEbene()
         if (arbeitet) return
-        // Live laeuft ohne Bildschirmfoto - es wuerde die eigene Ebene mitfotografieren
-        liveAktiv = Einstellungen.live(this)
         zweiterDurchlauf = false
-        starte()
+        starte(automatik = false)
     }
 
-    private fun starte() {
+    private fun starte(automatik: Boolean) {
         arbeitet = true
         veraendert = false
         ring?.visibility = View.VISIBLE
         val nr = ++auftrag
-        sammle(mitFoto = !liveAktiv) { funde -> sicher { if (nr == auftrag) uebersetzeFunde(funde, nr) } }
+        sammle(mitFoto = true) { funde -> sicher { if (nr == auftrag) uebersetzeFunde(funde, nr, automatik) } }
     }
 
     private fun fertig() {
         arbeitet = false
         ring?.visibility = View.GONE
-        knopf?.text = when {
-            ebene == null -> "DE"
-            liveAktiv -> "● ✕"
-            else -> "✕"
-        }
-        knopf?.textSize = if (ebene != null && liveAktiv) 12f else 16f
-    }
-
-    /** Live-Modus: neu lesen und nur dann neu uebersetzen, wenn sich etwas geaendert hat. */
-    private fun frischeLiveAuf() {
-        if (!liveAktiv || ebene == null || arbeitet) return
-        val funde = sammleBildschirmtext().inLesereihenfolge()
-        if (funde == letzteFunde) return
-        arbeitet = true
-        ring?.visibility = View.VISIBLE
-        uebersetzeFunde(funde, ++auftrag, still = true)
+        knopf?.text = if (ebene != null && !automatikHier()) "✕" else "DE"
     }
 
     // ------------------------------------------------------- Texte finden
@@ -382,60 +431,56 @@ class UebersetzerDienst : AccessibilityService() {
     // ---------------------------------------------------------- Uebersetzen
 
     /**
-     * Uebersetzt und zeigt die Kaesten nach und nach. [still] = Live-Auffrischung:
-     * keine Meldungen, und die neue Ebene ersetzt die alte erst, wenn alles fertig ist.
+     * Uebersetzt und zeigt die Kaesten nach und nach. Bei [automatik] lassen sie
+     * alle Beruehrungen zur App durch und es gibt keine Leiste.
      */
-    private fun uebersetzeFunde(alle: List<Fund>, nr: Int, still: Boolean = false) {
+    private fun uebersetzeFunde(alle: List<Fund>, nr: Int, automatik: Boolean) {
         val funde = alle.inLesereihenfolge().filter { !istOrtsname(it.text) }
-        letzteFunde = if (still) alle.inLesereihenfolge() else funde
         if (funde.isEmpty()) {
-            if (still) zeigeEbene(Ebene(this, emptyList(), emptyList(), true, vorleser, ::entferneEbene))
-            else meldung("Kein Text gefunden")
+            if (automatik) entferneEbene(nurAnzeige = true) else meldung("Kein Text gefunden")
             return fertig()
         }
-        val neu = Ebene(this, funde, List(funde.size) { null }, liveAktiv, vorleser, ::entferneEbene)
-        if (!still) zeigeEbene(neu)
+        val neu = Ebene(this, funde, List(funde.size) { null }, automatik, vorleser) { entferneEbene() }
+        zeigeEbene(neu, automatik)
 
-        val meldung: (String) -> Unit = { if (!still) meldung(it) }
         uebersetzer.uebersetzeAlle(
             funde.map { it.text },
             Einstellungen.quelle(this),
-            meldung,
+            { if (!automatik || !neu.hatInhalt()) meldung(it) },
             einzeln = { i, deutsch -> if (nr == auftrag) neu.setze(i, deutsch) },
         ) { fehler ->
             if (nr != auftrag) return@uebersetzeAlle
             sicher {
-                if (still) {
-                    zeigeEbene(neu)
-                } else if (!neu.hatInhalt()) {
-                    meldung(fehler?.let { "Übersetzung fehlgeschlagen: ${it.message}" } ?: "Nichts zu übersetzen – schon Deutsch?")
-                    entferneEbene()
+                if (!neu.hatInhalt()) {
+                    if (!automatik) {
+                        meldung(fehler?.let { "Übersetzung fehlgeschlagen: ${it.message}" } ?: "Nichts zu übersetzen – schon Deutsch?")
+                    }
+                    entferneEbene(nurAnzeige = true)
                 }
                 fertig()
-                pruefeVeraltet()
+                if (automatik) plane(250) else pruefeVeraltet()
             }
         }
     }
 
     /**
-     * Hat sich der Bildschirm waehrend des Uebersetzens bewegt (z.B. gescrollt),
-     * stimmen die Orte nicht mehr. Dann einmal neu - das geht schnell, weil die
-     * Uebersetzungen gemerkt sind.
+     * Ohne Automatik: hat sich der Bildschirm waehrend des Uebersetzens bewegt,
+     * stimmen die Orte nicht mehr. Dann einmal neu (schnell, Uebersetzungen sind gemerkt).
      */
     private fun pruefeVeraltet() {
-        if (liveAktiv || zweiterDurchlauf || ebene == null) return
+        if (zweiterDurchlauf || ebene == null) return
         val jetzt = sammleBildschirmtext().map { it.text to it.ort }
         if (!veraendert && jetzt == letzteTexte) return
         zweiterDurchlauf = true
-        entferneEbene(behalteLive = true)
-        starte()
+        entferneEbene(nurAnzeige = true)
+        starte(automatik = false)
     }
 
-    private fun zeigeEbene(neu: Ebene) {
+    private fun zeigeEbene(neu: Ebene, durchlaessig: Boolean) {
         val alt = ebene
         val parameter = overlayParameter(WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT)
-        // Live: Beruehrungen gehen durch zur App darunter, damit man weiter scrollen kann
-        if (liveAktiv) parameter.flags = parameter.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+        // Beruehrungen gehen durch zur App darunter, damit man sie normal bedienen kann
+        if (durchlaessig) parameter.flags = parameter.flags or WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
         fenster.addView(neu, parameter)
         alt?.let { runCatching { fenster.removeView(it) } }
         ebene = neu
@@ -446,22 +491,19 @@ class UebersetzerDienst : AccessibilityService() {
         }
     }
 
-    private fun entferneEbene(behalteLive: Boolean = false) {
-        handler.removeCallbacks(liveAuffrischen)
+    /** [nurAnzeige] = nur die Kaesten weg, eine laufende Uebersetzung nicht abbrechen. */
+    private fun entferneEbene(nurAnzeige: Boolean = false) {
         ebene?.let { runCatching { fenster.removeView(it) } }
         ebene = null
-        if (!behalteLive) {
-            liveAktiv = false
+        if (!nurAnzeige) {
+            handler.removeCallbacks(auffrischen)
             auftrag++
             arbeitet = false
             ring?.visibility = View.GONE
+            letzteTexte = emptyList()
+            if (::vorleser.isInitialized) vorleser.stopp()
         }
-        letzteFunde = emptyList()
-        if (::vorleser.isInitialized) vorleser.stopp()
-        if (!arbeitet) {
-            knopf?.text = "DE"
-            knopf?.textSize = 16f
-        }
+        if (!arbeitet) knopf?.text = "DE"
     }
 
     private fun meldung(text: String) = Toast.makeText(this, text, Toast.LENGTH_SHORT).show()

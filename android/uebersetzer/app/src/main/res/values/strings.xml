@@ -7,7 +7,7 @@
     <string name="status_aus_titel">⚠️  DE-Knopf ist noch aus</string>
     <string name="status_aus">Einmalig einschalten, dann klappt das Übersetzen in jeder App.</string>
     <string name="status_an_titel">✅  DE-Knopf ist bereit</string>
-    <string name="status_an">Wähle unten eine App. Dort auf den runden „DE“-Knopf am Rand tippen – fertig.</string>
+    <string name="status_an">Wähle unten eine App – sie wird automatisch übersetzt. Der grüne DE-Knopf schaltet das für diese App aus und wieder an.</string>
     <string name="knopf_einschalten">Bedienungshilfen öffnen</string>
     <string name="schritte">1.  „Bedienungshilfen öffnen“ → „Finnvelo Übersetzer“ antippen.\n2.  Meldung „App wurde Zugriff verweigert“? → „Schließen“.\n3.  „App-Info öffnen“ → ⋮ oben rechts → „Eingeschränkte Einstellungen zulassen“.\n4.  Schritt 1 wiederholen – jetzt lässt sich der Schalter einschalten.</string>
     <string name="knopf_app_info">App-Info öffnen</string>
@@ -30,7 +30,7 @@
     <string name="kamera_titel">Kamera-Übersetzer</string>
     <string name="kamera_text">Schilder, Speisekarten, Fahrpläne …</string>
     <string name="titel_knopf">DE-Knopf</string>
-    <string name="schalter_live">Live-Modus – übersetzt beim Scrollen mit</string>
+    <string name="schalter_live">Automatisch übersetzen – bleibt an, auch beim Scrollen und Tippen</string>
     <string name="schalter_knopf">Schwebenden Knopf zeigen</string>
     <string name="knopf_kachel">Kachel „DE übersetzen“ hinzufügen</string>
     <string name="knopf_update">Herunterladen</string>

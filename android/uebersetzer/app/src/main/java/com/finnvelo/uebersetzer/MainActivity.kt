@@ -77,8 +77,11 @@ class MainActivity : Activity() {
         }
 
         findViewById<android.widget.Switch>(R.id.schalter_live).apply {
-            isChecked = Einstellungen.live(this@MainActivity)
-            setOnCheckedChangeListener { _, an -> Einstellungen.setzeLive(this@MainActivity, an) }
+            isChecked = Einstellungen.automatik(this@MainActivity)
+            setOnCheckedChangeListener { _, an ->
+                Einstellungen.setzeAutomatik(this@MainActivity, an)
+                UebersetzerDienst.instanz?.aktualisiereKnopf()
+            }
         }
         findViewById<android.widget.Switch>(R.id.schalter_knopf).apply {
             isChecked = Einstellungen.knopfZeigen(this@MainActivity)
@@ -251,7 +254,13 @@ class MainActivity : Activity() {
                 .show()
             return
         }
-        Toast.makeText(this, "Tippe auf den „DE“-Knopf, um ${app.name} zu übersetzen", Toast.LENGTH_LONG).show()
+        if (Einstellungen.automatik(this)) {
+            // Aus der Liste geoeffnet = soll uebersetzt werden: Automatik gleich an
+            Einstellungen.setzeAutoApp(this, app.paket, true)
+            Toast.makeText(this, "${app.name} wird automatisch übersetzt – grünen DE-Knopf tippen zum Ausschalten", Toast.LENGTH_LONG).show()
+        } else {
+            Toast.makeText(this, "Tippe auf den „DE“-Knopf, um ${app.name} zu übersetzen", Toast.LENGTH_LONG).show()
+        }
         startActivity(start)
     }
 

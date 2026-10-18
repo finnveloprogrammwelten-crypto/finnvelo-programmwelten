@@ -40,11 +40,17 @@ Statt (oder zusätzlich zum) schwebenden Knopf: Leiste von oben herunterziehen �
 Kachel antippen. Hinzufügen über „Kachel hinzufügen“ im Hauptbildschirm.
 Wer den Knopf nicht mag, schaltet „Schwebenden Knopf zeigen“ aus.
 
-### Live-Modus
+### Automatisch übersetzen (Standard)
 
-Mit eingeschaltetem Live-Modus bleibt die fremde App bedienbar: scrollen,
-tippen – die Übersetzung läuft nach kurzer Pause mit. Beenden über den
-Knopf (zeigt dann „● ✕“) oder die Kachel. Live nutzt immer „Bildschirmtext“.
+Eine App aus der Liste öffnen **oder** in der App einmal auf **DE** tippen:
+der Knopf wird **grün** und die App wird ab jetzt automatisch übersetzt.
+Man kann sie ganz normal bedienen – die Kästen lassen alle Berührungen durch.
+Beim Scrollen verschwinden sie kurz und kommen, sobald der Bildschirm ruht,
+neu übersetzt wieder. Die Einstellung merkt sich die App auch nach dem
+Schließen. Grünen Knopf antippen = für diese App wieder aus.
+
+Wer lieber von Hand übersetzt (mit Leiste Liste/Vorlesen/Kopieren), schaltet
+„Automatisch übersetzen“ in den Einstellungen aus.
 
 ## Einstellungen
 
