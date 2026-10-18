@@ -89,4 +89,11 @@ object Einstellungen {
 
     fun setzeDeeplSchluessel(ctx: Context, schluessel: String) =
         ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putString("deepl", schluessel.trim()).apply()
+
+    /** Kamera: true = laufend uebersetzen (Live), false = Foto machen, dann uebersetzen */
+    fun kameraLive(ctx: Context): Boolean =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).getBoolean("kameraLive", false)
+
+    fun setzeKameraLive(ctx: Context, an: Boolean) =
+        ctx.getSharedPreferences(DATEI, Context.MODE_PRIVATE).edit().putBoolean("kameraLive", an).apply()
 }

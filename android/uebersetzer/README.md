@@ -32,10 +32,14 @@ wird einmalig geladen, danach geht es auch ohne Internet.
 
 ### Kamera-Übersetzer
 
-Große blaue Karte oben im Hauptbildschirm. Kamera auf Schild, Speisekarte oder
-Fahrplan halten – die Übersetzung erscheint direkt im Bild.
-**⏸** friert das Bild ein, dann einen Kasten antippen zum Vorlesen.
-**🔊** liest alles vor, **📋** kopiert, **🔦** schaltet die Taschenlampe.
+Große blaue Karte oben im Hauptbildschirm.
+
+- **Foto (Standard):** Text anpeilen, **📷** antippen – das Bild steht, die
+  Übersetzung erscheint darauf (in den Farben des Schildes). Wackeln stört nicht.
+  **↺** = neues Foto.
+- **🖼** übersetzt ein Bild aus der Galerie (z.B. einen Screenshot).
+- **LIVE** schaltet auf laufendes Übersetzen um (⏸ hält an), **FOTO** wieder zurück.
+- Kasten antippen liest ihn vor, **🔊** liest alles, **📋** kopiert, **🔦** Taschenlampe.
 
 ### Kachel „DE übersetzen“
 
