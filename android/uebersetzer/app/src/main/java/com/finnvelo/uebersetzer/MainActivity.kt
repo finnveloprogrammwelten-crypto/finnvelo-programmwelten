@@ -104,17 +104,21 @@ class MainActivity : Activity() {
         }
     }
 
-    /** Springt ab Android 11 direkt zur Seite dieser App, sonst zur Liste der Bedienungshilfen. */
+    /**
+     * Oeffnet die Liste der Bedienungshilfen. Die Detailseite einer einzelnen App darf
+     * nur das System oeffnen (OPEN_ACCESSIBILITY_DETAILS_SETTINGS) - das stuerzte unter
+     * Android 15 ab. Der Zusatz markiert unseren Eintrag in der Liste, wo das unterstuetzt wird.
+     */
     private fun oeffneBedienungshilfe() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            val direkt = Intent("android.settings.ACCESSIBILITY_DETAILS_SETTINGS")
-                .putExtra(Intent.EXTRA_COMPONENT_NAME, ComponentName(this, UebersetzerDienst::class.java).flattenToString())
-            try {
-                return startActivity(direkt)
-            } catch (_: android.content.ActivityNotFoundException) {
-            }
+        val eintrag = ComponentName(this, UebersetzerDienst::class.java).flattenToString()
+        val liste = Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+            .putExtra(":settings:fragment_args_key", eintrag)
+            .putExtra(":settings:show_fragment_args", Bundle().apply { putString(":settings:fragment_args_key", eintrag) })
+        try {
+            startActivity(liste)
+        } catch (_: RuntimeException) {
+            startActivity(Intent(Settings.ACTION_SETTINGS))
         }
-        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
     private fun dienstAktiv(): Boolean {
