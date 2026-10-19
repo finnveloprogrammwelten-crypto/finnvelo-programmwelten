@@ -9,23 +9,91 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Standbild, solange angehalten ist -->
-    <ImageView
-        android:id="@+id/standbild"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:contentDescription="@null"
-        android:background="#000000"
-        android:scaleType="fitCenter"
-        android:visibility="gone" />
-
+    <!-- Foto + Kaesten: zusammen zoom- und verschiebbar -->
     <FrameLayout
-        android:id="@+id/kaesten"
+        android:id="@+id/bildflaeche"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/standbild"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="#000000"
+            android:contentDescription="@null"
+            android:scaleType="fitCenter"
+            android:visibility="gone" />
+
+        <FrameLayout
+            android:id="@+id/kaesten"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- Alle Uebersetzungen als Liste (gut bei Fahrplaenen, Stundenplaenen ...) -->
+    <LinearLayout
+        android:id="@+id/liste_tafel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="150dp"
+        android:background="@drawable/tafel"
+        android:clickable="true"
+        android:orientation="vertical"
+        android:padding="14dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/liste_titel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="#C7D2FE"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/liste_vorlesen"
+                style="@style/TafelSymbol"
+                android:text="🔊" />
+
+            <TextView
+                android:id="@+id/liste_kopieren"
+                style="@style/TafelSymbol"
+                android:text="📋" />
+
+            <TextView
+                android:id="@+id/liste_zu"
+                style="@style/TafelSymbol"
+                android:text="✕" />
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/liste_rollen"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/liste_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineSpacingMultiplier="1.15"
+                android:textColor="#FFFFFF"
+                android:textIsSelectable="true"
+                android:textSize="16sp" />
+        </ScrollView>
+    </LinearLayout>
 
     <!-- Oben: Schliessen, Status, Taschenlampe -->
     <LinearLayout
+        android:id="@+id/leiste_oben"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@drawable/verlauf_oben"
@@ -59,6 +127,7 @@
 
     <!-- Unten: Galerie, Vorlesen, Ausloeser, Kopieren, Foto/Live -->
     <LinearLayout
+        android:id="@+id/leiste_unten"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -98,9 +167,9 @@
                 android:textSize="30sp" />
 
             <TextView
-                android:id="@+id/knopf_kopieren"
+                android:id="@+id/knopf_liste"
                 style="@style/KameraSymbol"
-                android:text="📋" />
+                android:text="☰" />
 
             <TextView
                 android:id="@+id/knopf_modus"

@@ -11,6 +11,9 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.provider.MediaStore
+import android.view.GestureDetector
+import android.view.MotionEvent
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -29,11 +32,14 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.content.ContextCompat
+import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.text.Text
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -50,6 +56,8 @@ class KameraActivity : ComponentActivity() {
 
     private lateinit var vorschau: PreviewView
     private lateinit var standbild: ImageView
+    private lateinit var bildflaeche: FrameLayout
+    private lateinit var listeTafel: View
     private lateinit var kaesten: FrameLayout
     private lateinit var status: TextView
     private lateinit var ausloeser: TextView
@@ -89,6 +97,8 @@ class KameraActivity : ComponentActivity() {
         setContentView(R.layout.activity_kamera)
         vorschau = findViewById(R.id.vorschau)
         standbild = findViewById(R.id.standbild)
+        bildflaeche = findViewById(R.id.bildflaeche)
+        listeTafel = findViewById(R.id.liste_tafel)
         kaesten = findViewById(R.id.kaesten)
         status = findViewById(R.id.status)
         ausloeser = findViewById(R.id.knopf_ausloeser)
@@ -113,8 +123,14 @@ class KameraActivity : ComponentActivity() {
         findViewById<View>(R.id.knopf_vorlesen).setOnClickListener {
             if (aktuell.isEmpty()) hinweis("Noch nichts übersetzt") else vorleser.sprich(aktuell.joinToString("\n") { it.second })
         }
-        findViewById<View>(R.id.knopf_kopieren).setOnClickListener {
-            if (aktuell.isEmpty()) hinweis("Noch nichts übersetzt") else kopiere(this, aktuell.joinToString("\n") { it.second })
+        findViewById<View>(R.id.knopf_liste).setOnClickListener {
+            if (aktuell.isEmpty()) hinweis("Noch nichts übersetzt") else zeigeListe()
+        }
+        findViewById<View>(R.id.liste_vorlesen).setOnClickListener { vorleser.sprich(aktuell.joinToString("\n") { it.second }) }
+        findViewById<View>(R.id.liste_kopieren).setOnClickListener { kopiere(this, aktuell.joinToString("\n") { it.second }) }
+        findViewById<View>(R.id.liste_zu).setOnClickListener {
+            vorleser.stopp()
+            listeTafel.visibility = View.GONE
         }
         zeigeModus()
 
@@ -192,6 +208,8 @@ class KameraActivity : ComponentActivity() {
         beschaeftigt = false
         standbild.visibility = View.GONE
         standbild.setImageDrawable(null)
+        listeTafel.visibility = View.GONE
+        setzeZoomZurueck()
         zeige(emptyList())
         if (!live) {
             ausloeser.text = "📷"
@@ -239,30 +257,162 @@ class KameraActivity : ComponentActivity() {
         }.onFailure { hinweis("Bild konnte nicht geöffnet werden") }
     }
 
-    /** Erkennt den Text im Foto, nimmt die Farben daraus und uebersetzt - Kaesten erscheinen nach und nach. */
+    /**
+     * Erkennt den Text im Foto, nimmt die Farben daraus und uebersetzt - Kaesten
+     * erscheinen nach und nach. Liegt der Text quer (z.B. ein Aushang im
+     * Querformat, hochkant fotografiert), wird das Bild so gedreht, dass er
+     * gerade steht.
+     */
     private fun werteFotoAus(roh: Bitmap) {
-        val bild = verkleinert(roh, 2200)
+        val bild = verkleinert(roh, 3200)
         standbild.setImageBitmap(bild)
         standbild.visibility = View.VISIBLE
+        setzeZoomZurueck()
         status.text = "Text wird erkannt …"
         val nr = ++auftrag
-        texterkenner.process(InputImage.fromBitmap(bild, 0))
-            .addOnSuccessListener(ContextCompat.getMainExecutor(this)) { ergebnis ->
-                if (nr != auftrag) return@addOnSuccessListener
-                val funde = ergebnis.textBlocks.mapNotNull { block ->
-                    val text = block.text.replace('\n', ' ').trim()
-                    val ort = block.boundingBox
-                    if (ort != null && text.count { it.isLetter() } >= 3) Fund(text, ort, zeilen = block.lines.size) else null
-                }
-                if (funde.isEmpty()) {
-                    status.text = "Kein Text gefunden – näher ran oder mehr Licht (🔦)"
-                    return@addOnSuccessListener
-                }
-                // Farben im Foto (Bildkoordinaten) bestimmen, dann auf den Bildschirm umrechnen
-                val aufBildschirm = faerbe(funde, bild).map { it.copy(ort = aufAnzeige(it.ort, bild.width, bild.height)) }
-                uebersetze(aufBildschirm, nr, fortlaufend = true)
+        findeAufrecht(bild, nr) { gerade, ergebnis ->
+            if (nr != auftrag) return@findeAufrecht
+            if (gerade !== bild) {
+                standbild.setImageBitmap(gerade)
+                hinweis("Bild gedreht, damit der Text gerade steht")
             }
-            .addOnFailureListener(ContextCompat.getMainExecutor(this)) { status.text = "Texterkennung fehlgeschlagen" }
+            val funde = ergebnis.textBlocks.mapNotNull { block ->
+                val text = block.text.replace('\n', ' ').trim()
+                val ort = block.boundingBox
+                if (ort != null && text.count { it.isLetter() } >= 2) Fund(text, ort, zeilen = block.lines.size) else null
+            }
+            if (funde.isEmpty()) {
+                status.text = "Kein Text gefunden – näher ran oder mehr Licht (🔦)"
+                return@findeAufrecht
+            }
+            // Farben im Foto (Bildkoordinaten) bestimmen, dann auf den Bildschirm umrechnen
+            val aufBildschirm = faerbe(funde, gerade).map { it.copy(ort = aufAnzeige(it.ort, gerade.width, gerade.height)) }
+            uebersetze(aufBildschirm, nr, fortlaufend = true)
+        }
+    }
+
+    /** Wie viel lesbarer Text steckt in einem Ergebnis? (Buchstaben in sicher erkannten Zeilen) */
+    private fun lesbar(ergebnis: Text) = ergebnis.textBlocks.flatMap { it.lines }
+        .filter { it.confidence >= 0.5f }
+        .sumOf { zeile -> zeile.text.count { it.isLetter() } }
+
+    /**
+     * Probiert das Bild gerade, um 90° und um 270° gedreht und nimmt die Lage, in der
+     * am meisten Text erkannt wird. Gedreht wird nur, wenn die Zeilen ueberwiegend quer
+     * liegen oder kaum etwas erkannt wurde - sonst bleibt es bei einem Durchgang.
+     */
+    private fun findeAufrecht(bild: Bitmap, nr: Int, fertig: (Bitmap, Text) -> Unit) {
+        val haupt = ContextCompat.getMainExecutor(this)
+        texterkenner.process(InputImage.fromBitmap(bild, 0)).addOnSuccessListener(haupt) { gerade ->
+            if (nr != auftrag) return@addOnSuccessListener
+            val winkel = gerade.textBlocks.flatMap { it.lines }.map { abs(it.angle) }
+            val quer = winkel.count { it in 45f..135f }
+            if (quer * 2 <= winkel.size && lesbar(gerade) >= 30) return@addOnSuccessListener fertig(bild, gerade)
+
+            status.text = "Text liegt quer – drehe das Bild …"
+            val links = aufrecht(bild, 270)
+            val rechts = aufrecht(bild, 90)
+            val versuche = listOf(links, rechts).map { texterkenner.process(InputImage.fromBitmap(it, 0)) }
+            Tasks.whenAllComplete(versuche).addOnCompleteListener(haupt) {
+                if (nr != auftrag) return@addOnCompleteListener
+                val kandidaten = listOf(bild to gerade) +
+                    listOf(links, rechts).zip(versuche).filter { it.second.isSuccessful }.map { it.first to it.second.result }
+                val beste = kandidaten.maxBy { lesbar(it.second) }
+                kandidaten.map { it.first }.filter { it !== beste.first && it !== bild }.forEach { it.recycle() }
+                fertig(beste.first, beste.second)
+            }
+        }.addOnFailureListener(haupt) { status.text = "Texterkennung fehlgeschlagen" }
+    }
+
+    // ---------------------------------------------------------- Zoom
+
+    private var zoom = 1f
+    private var zoomX = 0f
+    private var zoomY = 0f
+
+    private val skalierer by lazy {
+        ScaleGestureDetector(this, object : ScaleGestureDetector.SimpleOnScaleGestureListener() {
+            override fun onScale(d: ScaleGestureDetector): Boolean {
+                val vorher = zoom
+                zoom = (zoom * d.scaleFactor).coerceIn(1f, 6f)
+                val f = zoom / vorher
+                zoomX = d.focusX - (d.focusX - zoomX) * f
+                zoomY = d.focusY - (d.focusY - zoomY) * f
+                wendeZoomAn()
+                return true
+            }
+        })
+    }
+
+    private val gesten by lazy {
+        GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onScroll(e1: MotionEvent?, e2: MotionEvent, dx: Float, dy: Float): Boolean {
+                if (zoom <= 1f) return false
+                zoomX -= dx
+                zoomY -= dy
+                wendeZoomAn()
+                return true
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                setzeZoomZurueck()
+                return true
+            }
+        })
+    }
+
+    private fun wendeZoomAn() {
+        val b = bildflaeche.width.toFloat()
+        val h = bildflaeche.height.toFloat()
+        zoomX = zoomX.coerceIn(b - b * zoom, 0f)
+        zoomY = zoomY.coerceIn(h - h * zoom, 0f)
+        bildflaeche.pivotX = 0f
+        bildflaeche.pivotY = 0f
+        bildflaeche.scaleX = zoom
+        bildflaeche.scaleY = zoom
+        bildflaeche.translationX = zoomX
+        bildflaeche.translationY = zoomY
+    }
+
+    private fun setzeZoomZurueck() {
+        zoom = 1f
+        zoomX = 0f
+        zoomY = 0f
+        wendeZoomAn()
+    }
+
+    /** Auf dem Foto: zwei Finger zoomen, ein Finger verschiebt, Doppeltippen = zurueck. */
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+        if (standbild.visibility != View.VISIBLE || aufBedienung(ev)) return super.dispatchTouchEvent(ev)
+        skalierer.onTouchEvent(ev)
+        val verschoben = gesten.onTouchEvent(ev)
+        if (skalierer.isInProgress || ev.pointerCount > 1 || verschoben) {
+            // Kaesten sollen das nicht als Antippen verstehen
+            val abbruch = MotionEvent.obtain(ev).apply { action = MotionEvent.ACTION_CANCEL }
+            super.dispatchTouchEvent(abbruch)
+            abbruch.recycle()
+            return true
+        }
+        return super.dispatchTouchEvent(ev)
+    }
+
+    private fun aufBedienung(ev: MotionEvent): Boolean {
+        val flaeche = Rect()
+        return listOf(R.id.leiste_oben, R.id.leiste_unten, R.id.liste_tafel).any { id ->
+            val v = findViewById<View>(id)
+            v.visibility == View.VISIBLE && v.getGlobalVisibleRect(flaeche) && flaeche.contains(ev.rawX.toInt(), ev.rawY.toInt())
+        }
+    }
+
+    // ---------------------------------------------------------- Liste
+
+    private fun zeigeListe() {
+        findViewById<TextView>(R.id.liste_titel).text = "Alle Übersetzungen (${aktuell.size})"
+        findViewById<TextView>(R.id.liste_text).text =
+            aktuell.joinToString("\n\n") { (fund, deutsch) -> "$deutsch\n   ↳ ${fund.text}" }
+        val rollen = findViewById<View>(R.id.liste_rollen)
+        rollen.layoutParams = rollen.layoutParams.apply { height = (resources.displayMetrics.heightPixels * 0.45).toInt() }
+        listeTafel.visibility = View.VISIBLE
     }
 
     private fun aufrecht(bild: Bitmap, drehung: Int): Bitmap {

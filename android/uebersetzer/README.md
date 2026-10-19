@@ -37,9 +37,14 @@ Große blaue Karte oben im Hauptbildschirm.
 - **Foto (Standard):** Text anpeilen, **📷** antippen – das Bild steht, die
   Übersetzung erscheint darauf (in den Farben des Schildes). Wackeln stört nicht.
   **↺** = neues Foto.
+- Liegt der Text quer (Aushang im Querformat hochkant fotografiert), dreht die
+  App das Bild selbst so, dass er gerade steht.
+- **Zwei Finger** zoomen, **ein Finger** verschiebt, **Doppeltippen** = zurück.
+- **☰** zeigt alle Übersetzungen als Liste (mit Original, Vorlesen, Kopieren) –
+  am besten für Fahrpläne und Stundenpläne mit vielen kleinen Feldern.
 - **🖼** übersetzt ein Bild aus der Galerie (z.B. einen Screenshot).
 - **LIVE** schaltet auf laufendes Übersetzen um (⏸ hält an), **FOTO** wieder zurück.
-- Kasten antippen liest ihn vor, **🔊** liest alles, **📋** kopiert, **🔦** Taschenlampe.
+- Kasten antippen liest ihn vor, **🔊** liest alles, **🔦** Taschenlampe.
 
 ### Kachel „DE übersetzen“
 
