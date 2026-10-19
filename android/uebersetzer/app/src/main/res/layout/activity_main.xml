@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/hintergrund"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Kopf -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/icon_hintergrund"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingStart="20dp"
+            android:paddingTop="20dp"
+            android:paddingEnd="20dp"
+            android:paddingBottom="28dp">
+
+            <ImageView
+                android:layout_width="60dp"
+                android:layout_height="60dp"
+                android:contentDescription="@null"
+                android:src="@mipmap/ic_launcher" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="14dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fontFamily="sans-serif-medium"
+                    android:text="@string/app_name"
+                    android:textColor="#FFFFFF"
+                    android:textSize="23sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/untertitel"
+                    android:textColor="@color/primaer_hell"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-16dp"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- Nur sichtbar, wenn auf der Webseite eine neuere Version liegt -->
+            <LinearLayout
+                android:id="@+id/karte_update"
+                style="@style/Karte"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="@color/status_an"
+                android:visibility="gone">
+
+                <TextView
+                    android:id="@+id/update_titel"
+                    style="@style/KartenTitel" />
+
+                <TextView
+                    android:id="@+id/update_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textColor="@color/text"
+                    android:textSize="14sp" />
+
+                <Button
+                    android:id="@+id/knopf_update"
+                    style="@style/KnopfPrimaer"
+                    android:text="@string/knopf_update" />
+            </LinearLayout>
+
+            <!-- Nur sichtbar, wenn die App beim letzten Mal abgestuerzt ist -->
+            <LinearLayout
+                android:id="@+id/karte_absturz"
+                style="@style/Karte"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="12dp"
+                android:backgroundTint="@color/status_aus"
+                android:visibility="gone">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/absturz_titel" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/absturz_text"
+                    android:textColor="@color/text"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/absturz_bericht"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:fontFamily="monospace"
+                    android:maxLines="12"
+                    android:textColor="@color/text_leise"
+                    android:textIsSelectable="true"
+                    android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/knopf_absturz_teilen"
+                    style="@style/KnopfPrimaer"
+                    android:text="@string/absturz_teilen" />
+
+                <Button
+                    android:id="@+id/knopf_absturz_weg"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/absturz_weg" />
+            </LinearLayout>
+
+            <!-- Schritt 1: Knopf einschalten -->
+            <LinearLayout
+                android:id="@+id/karte_status"
+                style="@style/Karte"
+                android:layout_marginTop="0dp">
+
+                <TextView
+                    android:id="@+id/status_titel"
+                    style="@style/KartenTitel" />
+
+                <TextView
+                    android:id="@+id/status_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <Button
+                    android:id="@+id/knopf_ganz_aus"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/knopf_ganz_aus"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/einschalten_bereich"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:lineSpacingExtra="4dp"
+                        android:text="@string/schritte"
+                        android:textColor="@color/text"
+                        android:textSize="14sp" />
+
+                    <Button
+                        android:id="@+id/knopf_einschalten"
+                        style="@style/KnopfPrimaer"
+                        android:text="@string/knopf_einschalten" />
+
+                    <Button
+                        android:id="@+id/knopf_app_info"
+                        style="@style/KnopfUmriss"
+                        android:text="@string/knopf_app_info" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Kamera-Modus -->
+            <LinearLayout
+                android:id="@+id/karte_kamera"
+                style="@style/Karte"
+                android:background="@drawable/karte_kamera"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?android:attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:background="@drawable/kamera_ausloeser"
+                    android:gravity="center"
+                    android:text="📷"
+                    android:textSize="26sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:fontFamily="sans-serif-medium"
+                        android:text="@string/kamera_titel"
+                        android:textColor="#FFFFFF"
+                        android:textSize="18sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/kamera_text"
+                        android:textColor="#C7D2FE"
+                        android:textSize="14sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="›"
+                    android:textColor="#FFFFFF"
+                    android:textSize="32sp" />
+            </LinearLayout>
+
+            <!-- Einstellungen -->
+            <LinearLayout style="@style/Karte">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/titel_einstellungen" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_sprache" />
+
+                <Spinner
+                    android:id="@+id/sprache"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="4dp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sprache_hinweis"
+                    android:textColor="@color/text_leise"
+                    android:textSize="13sp" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_qualitaet" />
+
+                <RadioGroup
+                    android:id="@+id/dienst"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/dienst_offline"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/dienst_offline"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/dienst_mymemory"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/dienst_mymemory"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/dienst_deepl"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/dienst_deepl"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+                <LinearLayout
+                    android:id="@+id/bereich_mymemory"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/mymemory_email"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/suchfeld"
+                        android:hint="@string/mymemory_feld"
+                        android:importantForAutofill="no"
+                        android:inputType="textEmailAddress"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:singleLine="true"
+                        android:textColor="@color/text"
+                        android:textColorHint="@color/text_leise"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:text="@string/mymemory_hinweis"
+                        android:textColor="@color/text_leise"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/bereich_deepl"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <EditText
+                        android:id="@+id/deepl_schluessel"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:background="@drawable/suchfeld"
+                        android:hint="@string/deepl_hinweis_feld"
+                        android:importantForAutofill="no"
+                        android:inputType="textPassword"
+                        android:paddingStart="16dp"
+                        android:paddingEnd="16dp"
+                        android:singleLine="true"
+                        android:textColor="@color/text"
+                        android:textColorHint="@color/text_leise"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:id="@+id/deepl_hinweis"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:autoLink="web"
+                        android:text="@string/deepl_hinweis"
+                        android:textColor="@color/text_leise"
+                        android:textSize="13sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/korrekturen_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textColor="@color/text_leise"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/knopf_korrekturen"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/knopf_korrekturen" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_knopf" />
+
+                <Switch
+                    android:id="@+id/schalter_live"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="48dp"
+                    android:text="@string/schalter_live"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="@string/knopf_zeigen"
+                    android:textColor="@color/text"
+                    android:textSize="15sp" />
+
+                <RadioGroup
+                    android:id="@+id/knopf_modus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/knopf_immer"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/knopf_immer"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/knopf_auto"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/knopf_auto"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/knopf_aus"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/knopf_aus"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/knopf_wegziehen"
+                    android:textColor="@color/text_leise"
+                    android:textSize="13sp" />
+
+                <Button
+                    android:id="@+id/knopf_kachel"
+                    style="@style/KnopfUmriss"
+                    android:text="@string/knopf_kachel" />
+
+                <TextView
+                    style="@style/Beschriftung"
+                    android:text="@string/titel_modus" />
+
+                <RadioGroup
+                    android:id="@+id/modus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <RadioButton
+                        android:id="@+id/modus_text"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/modus_text"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+
+                    <RadioButton
+                        android:id="@+id/modus_ocr"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:buttonTint="@color/primaer"
+                        android:minHeight="44dp"
+                        android:text="@string/modus_ocr"
+                        android:textColor="@color/text"
+                        android:textSize="15sp" />
+                </RadioGroup>
+
+
+            </LinearLayout>
+
+            <!-- Sprachpakete -->
+            <LinearLayout style="@style/Karte">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/titel_sprachpakete" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/sprachpakete_hinweis"
+                    android:textColor="@color/text_leise"
+                    android:textSize="13sp" />
+
+                <LinearLayout
+                    android:id="@+id/sprachpakete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+            <!-- Apps -->
+            <LinearLayout style="@style/Karte">
+
+                <TextView
+                    style="@style/KartenTitel"
+                    android:text="@string/titel_apps" />
+
+                <EditText
+                    android:id="@+id/suche"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@drawable/suchfeld"
+                    android:drawableStart="@drawable/ic_suche"
+                    android:drawablePadding="10dp"
+                    android:hint="@string/suche_hinweis"
+                    android:importantForAutofill="no"
+                    android:inputType="text"
+                    android:paddingStart="16dp"
+                    android:paddingEnd="16dp"
+                    android:singleLine="true"
+                    android:textColor="@color/text"
+                    android:textColorHint="@color/text_leise"
+                    android:textSize="15sp" />
+
+                <LinearLayout
+                    android:id="@+id/apps"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>
