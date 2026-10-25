@@ -27,10 +27,11 @@ import { DurableObject } from "cloudflare:workers";
 import { behandleEinkauf, EinkaufSpeicher } from "./einkauf-modul.js";
 import { behandleTourenapi, TourenKanal, TourenKopplung } from "./tourenapi-modul.js";
 import { behandleFinanzapi, FinanzKanal, FinanzKopplung } from "./finanzapi-modul.js";
+import { behandleVorleserapi, VorleserKopplung, VorleserTreff } from "./vorleserapi-modul.js";
 
 // Durable Objects der beiden zugekauften Dienste weiterreichen - Cloudflare
 // findet sie sonst nicht, obwohl sie in der wrangler.jsonc stehen.
-export { EinkaufSpeicher, TourenKanal, TourenKopplung, FinanzKanal, FinanzKopplung };
+export { EinkaufSpeicher, TourenKanal, TourenKopplung, FinanzKanal, FinanzKopplung, VorleserKopplung, VorleserTreff };
 
 const KEY_RE = /^[a-z]+:[a-z0-9-]{1,40}$/;
 const ALLOWED_PREFIXES = ["views", "video", "download"];
@@ -60,6 +61,7 @@ const RESERVIERT = [
   "apps",          // /apps/einkaufsliste/ - die Web-Fassung samt APK
   "tourenapi",     // Kopplungsdienst des Tourenplaners
   "finanzapi",     // Geraeteabgleich des Finanzmanagers (27.09.2026)
+  "vorleserapi",   // Kopplung und Treffpunkt des FINNVELO Vorlesers (25.10.2026)
   "einkaufsliste", // Programmseite der Einkaufsliste
   "tourenplaner",  // Programmseite des Tourenplaners
   "lesezeit",      // Programmseite Lesezeit
@@ -1755,6 +1757,17 @@ export default {
                               "(Bindungen FINANZ_KANAL und FINANZ_KOPPLUNG fehlen)." }, 503);
       }
       return behandleFinanzapi(request, env);
+    }
+
+    /* Kopplung und Treffpunkt des FINNVELO Vorlesers (25.10.2026) - aus demselben Grund wie
+       /tourenapi/ vor allem anderen (die Dateiauslieferung antwortet auf PUT mit 405). Ueber den
+       Server gehen nur kleine, verschluesselte Pakete; Buecher und Ton gehen direkt im Heimnetz. */
+    if (url.pathname === "/vorleserapi" || url.pathname.startsWith("/vorleserapi/")) {
+      if (!env || !env.VORLESER_KOPPLUNG || !env.VORLESER_TREFF) {
+        return json({ fehler: "Der Vorleser-Dienst ist nicht eingerichtet " +
+                              "(Bindungen VORLESER_KOPPLUNG und VORLESER_TREFF fehlen)." }, 503);
+      }
+      return behandleVorleserapi(request, env);
     }
 
     /* =================================================================

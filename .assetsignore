@@ -14,6 +14,8 @@ worker.js
 *.map
 # Geraeteabgleich des Finanzmanagers (27.09.2026) - Servercode
 finanzapi-modul.js
+# Kopplung und Treffpunkt des FINNVELO Vorlesers (25.10.2026) - Servercode
+vorleserapi-modul.js
 
 # Konfiguration
 wrangler.jsonc
