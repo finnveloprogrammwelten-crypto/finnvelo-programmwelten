@@ -6697,3 +6697,41 @@
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * Verweis "Hilfe zur Installation" unter jedem Download-Knopf (05.11.2026)
+ * ---------------------------------------------------------------------
+ * Fuehrt auf /installation, gleich zum passenden Abschnitt (nach der
+ * Dateiendung des Knopfziels: .apk -> Android, .html -> Browser, sonst
+ * Windows). Ein <a> ohne Klasse "button" - zaehlt weder als Text- noch als
+ * Knopffeld des Bearbeiten-Modus, verschiebt also keine Nummern.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    function abschnitt(knopf, block) {
+      var h = (knopf.getAttribute('href') || '').toLowerCase();
+      if (/\.apk(\?|#|$)/.test(h)) return 'android';
+      if (/\.html?(\?|#|$)/.test(h)) return 'browser';
+      if (/\.exe(\?|#|$)/.test(h)) return 'windows';
+      return block.classList.contains('program-download-block--pc') ? 'windows' : 'android';
+    }
+    function start() {
+      var bloecke = document.querySelectorAll('.program-download-block');
+      Array.prototype.forEach.call(bloecke, function (block) {
+        var knopf = block.querySelector('.download-slot a.button[href]');
+        if (!knopf || block.querySelector('.fv-hilfe-link')) return;
+        var a = document.createElement('a');
+        a.className = 'fv-hilfe-link';
+        a.textContent = 'Hilfe zur Installation →';
+        var setzen = function () { a.href = '/installation#' + abschnitt(knopf, block); };
+        setzen();
+        // Das Knopfziel kann der Bearbeiten-Modus spaeter noch umsetzen
+        try { new MutationObserver(setzen).observe(knopf, { attributes: true, attributeFilter: ['href'] }); } catch (e) {}
+        knopf.parentNode.appendChild(a);
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();

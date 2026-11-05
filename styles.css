@@ -3309,3 +3309,22 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
 .fv-qr__text { color: var(--muted); font-size: 14px; line-height: 1.45; max-width: 280px; }
 .fv-qr__text b { color: var(--text); }
 @media (max-width: 760px), (pointer: coarse) { .fv-qr { display: none !important; } }
+
+/* Hilfeseite "Installation" (05.11.2026) */
+.hilfe-lead { color: var(--muted); font-size: 17px; line-height: 1.65; max-width: 760px; }
+.hilfe-sprung { display: flex; flex-wrap: wrap; gap: 8px; margin: 22px 0 8px; }
+.hilfe-sprung a { padding: 7px 14px; border-radius: 999px; border: 1px solid rgba(120, 170, 255, .45);
+  color: var(--blue-light); text-decoration: none; font-size: 14px; font-weight: 700; }
+.hilfe-sprung a:hover { background: rgba(120, 170, 255, .12); }
+.hilfe-abschnitt { margin-top: 34px; padding-top: 24px; border-top: 1px solid var(--line); scroll-margin-top: 90px; }
+.hilfe-abschnitt h2 { margin: 0 0 12px; font-size: clamp(22px, 2.2vw, 30px); letter-spacing: -0.02em; }
+.hilfe-abschnitt p { color: var(--muted); line-height: 1.65; }
+.hilfe-abschnitt a { color: #fff; font-weight: 700; }
+.hilfe-schritte { margin: 0; padding-left: 22px; display: grid; gap: 10px; color: var(--muted); line-height: 1.6; }
+.hilfe-schritte strong, .hilfe-hinweis strong { color: var(--text); }
+.hilfe-schritte code { background: rgba(255, 255, 255, .08); padding: 1px 6px; border-radius: 5px; }
+.hilfe-hinweis { margin-top: 14px; padding: 10px 14px; border-left: 3px solid var(--blue); background: rgba(49, 124, 255, .08); border-radius: 0 10px 10px 0; }
+
+/* Verweis "Hilfe zur Installation" in den Download-Bereichen (setzt stats.js) */
+.fv-hilfe-link { display: inline-block; margin-top: 12px; color: var(--blue-light); font-size: 14px; font-weight: 700; text-decoration: none; }
+.fv-hilfe-link:hover { text-decoration: underline; }

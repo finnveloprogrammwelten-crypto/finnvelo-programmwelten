@@ -62,6 +62,7 @@ const RESERVIERT = [
   "tourenapi",     // Kopplungsdienst des Tourenplaners
   "finanzapi",     // Geraeteabgleich des Finanzmanagers (27.09.2026)
   "vorleserapi",   // Kopplung und Treffpunkt des FINNVELO Vorlesers (25.10.2026)
+  "installation",  // Hilfeseite zur Installation (05.11.2026)
   "einkaufsliste", // Programmseite der Einkaufsliste
   "tourenplaner",  // Programmseite des Tourenplaners
   "lesezeit",      // Programmseite Lesezeit
