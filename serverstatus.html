@@ -51,6 +51,7 @@
     .fvs-lage { display:inline-block; min-width:38px; padding:2px 7px; border-radius:6px; font-weight:800; font-size:12px; text-align:center; }
     .fvs-lage--4 { background:rgba(240,180,41,.16); color:#f0b429; }
     .fvs-lage--5 { background:rgba(200,60,80,.18); color:#ff8095; }
+    .fvs-lage--gut { background:rgba(60,190,120,.16); color:#6fe0a0; }
     .fvs-balken { height:7px; border-radius:99px; background:rgba(255,255,255,.09); overflow:hidden; margin-top:8px; }
     .fvs-balken i { display:block; height:100%; background:#4ad991; }
     .fvs-balken i.voll { background:#f0b429; }
@@ -314,6 +315,13 @@
           + 'unbekannter Kanal, zu viele Anfragen. Erst Lagen ab 500 deuten auf ein Problem des Servers hin.</p>';
       }
 
+      html += '<h2 class="fvs-abschnitt">Download-Links</h2>'
+        + '<p class="fvs-leer">Prüft alle Download-Knöpfe der Programmseiten – auch die Ziele, die im '
+        + 'Bearbeiten-Modus gesetzt wurden. Ausgeblendete Bereiche werden mitgeprüft und als solche gekennzeichnet.</p>'
+        + '<p><button type="button" class="status-knopf" id="linksPruefen">Jetzt prüfen</button> '
+        + '<span class="fvs-melde" id="linksMelde"></span></p>'
+        + '<div id="linksErgebnis"></div>';
+
       html += '<h2 class="fvs-abschnitt">Zugang</h2>'
         + '<div class="fvs-zugang">'
         + '  <p class="fvs-leer">Passwort für Admin-Modus und diese Seite ändern. '
@@ -435,12 +443,133 @@
           }).catch(function () { m.textContent = '\u2717 Ändern fehlgeschlagen.'; m.className = 'fvs-melde schlecht'; });
       });
 
+      var lp = document.getElementById('linksPruefen');
+      if (lp) lp.addEventListener('click', linksPruefen);
+
       var sp = document.getElementById('sperren');
       if (sp) sp.addEventListener('click', function () {
         pw = '';
         try { sessionStorage.removeItem('fv_admin_pw'); } catch (e) {}
         location.reload();
       });
+    }
+
+    /* ---- Download-Links pruefen (05.11.2026) --------------------------
+       Sammelt die Knoepfe so, wie stats.js sie zaehlt (gleiche Auswahl, gleiche
+       Reihenfolge), setzt die im Bearbeiten-Modus gespeicherten Ziele (d0, d1 …)
+       und Beschriftungen (b0 …) ein und laesst den Server in Achterpaketen
+       nachfragen - der Browser darf Antworten von GitHub nicht lesen. */
+    var PROGRAMMSEITEN = ['command-control', 'archivar', 'einkaufsliste', 'lesezeit', 'tourenplaner',
+      'finanzmanager', 'aufgabenplaner', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner',
+      'klarschiff', 'systemwart'];
+    // Muss mit LINK_SEL in stats.js uebereinstimmen, sonst passen d0, d1 … nicht
+    var KNOPF_WAHL = '.program-launch a.button[href], .program-download-block a.button[href], .download-slot a.button[href]';
+
+    function seiteLesen(slug) {
+      return Promise.all([
+        fetch('/' + slug, { cache: 'no-store' }).then(function (r) { return r.ok ? r.text() : ''; }),
+        fetch('/api/content?page=' + encodeURIComponent(slug), { cache: 'no-store' })
+          .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+      ]).then(function (a) {
+        var haupt = new DOMParser().parseFromString(a[0], 'text/html').querySelector('main');
+        if (!haupt) return [];
+        var gesp = {};
+        (a[1].items || []).forEach(function (i) { gesp[i.block] = i; });
+        var aus = {}, verborgen = [];
+        try { if (gesp.y0) aus = JSON.parse(gesp.y0.value) || {}; } catch (e) {}
+        try { if (gesp.h0) verborgen = JSON.parse(gesp.h0.value) || []; } catch (e) {}
+        return Array.prototype.map.call(haupt.querySelectorAll(KNOPF_WAHL), function (el, i) {
+          var ziel = el.getAttribute('href');
+          var d = gesp['d' + i];
+          if (d && d.type === 'link' && /^(https?:\/\/|\/)/i.test(d.value)) ziel = d.value;
+          var b = gesp['b' + i];
+          var text = (b && b.type === 'text' && b.value) ? b.value.replace(/<[^>]*>/g, '').trim() : el.textContent.trim();
+          var block = el.closest('.program-download-block');
+          var pc = !!(block && block.classList.contains('program-download-block--pc'));
+          var versteckt = verborgen.indexOf('d' + i) !== -1 || !!(block && (pc ? aus.pc : aus.app));
+          return { seite: slug, knopf: text, adresse: new URL(ziel, location.origin).href, versteckt: versteckt };
+        });
+      }).catch(function () { return []; });
+    }
+
+    function linksPruefen() {
+      var knopf = document.getElementById('linksPruefen');
+      var melde = document.getElementById('linksMelde');
+      var ziel = document.getElementById('linksErgebnis');
+      knopf.disabled = true;
+      melde.textContent = 'Knöpfe werden gesammelt …'; melde.className = 'fvs-melde';
+      fetch('/api/programme', { cache: 'no-store' })
+        .then(function (r) { return r.ok ? r.json() : { programme: [] }; })
+        .catch(function () { return { programme: [] }; })
+        .then(function (d) {
+          var seiten = PROGRAMMSEITEN.slice();
+          (d.programme || []).forEach(function (p) {
+            if (p && p.slug && p.art !== 'info' && seiten.indexOf(p.slug) === -1) seiten.push(p.slug);
+          });
+          return Promise.all(seiten.map(seiteLesen));
+        })
+        .then(function (listen) {
+          var knoepfe = [].concat.apply([], listen);
+          var adressen = [];
+          knoepfe.forEach(function (k) { if (adressen.indexOf(k.adresse) === -1) adressen.push(k.adresse); });
+          var antworten = {};
+          var pakete = [];
+          for (var i = 0; i < adressen.length; i += 8) pakete.push(adressen.slice(i, i + 8));
+          var kette = Promise.resolve();
+          pakete.forEach(function (paket, n) {
+            kette = kette.then(function () {
+              melde.textContent = 'Prüfe … ' + Math.min((n + 1) * 8, adressen.length) + ' von ' + adressen.length;
+              return fetch('/api/linkpruefung', {
+                method: 'POST', headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ password: pw, adressen: paket })
+              }).then(function (r) {
+                if (r.status === 401) throw new Error('Passwort stimmt nicht.');
+                return r.json();
+              }).then(function (a) {
+                (a.ergebnisse || []).forEach(function (e) { antworten[e.adresse] = e; });
+              });
+            });
+          });
+          return kette.then(function () { return { knoepfe: knoepfe, antworten: antworten, anzahl: adressen.length }; });
+        })
+        .then(function (r) {
+          var fehlerhaft = 0;
+          var zeilen = r.knoepfe.map(function (k) {
+            var e = r.antworten[k.adresse] || { ok: false, status: 0, fehler: 'nicht geprüft' };
+            if (!e.ok && !k.versteckt) fehlerhaft++;
+            return { k: k, e: e };
+          });
+          // Probleme zuerst, ausgeblendete zuletzt
+          zeilen.sort(function (a, b) {
+            var ga = (!a.e.ok && !a.k.versteckt) ? 0 : (a.k.versteckt ? 2 : 1);
+            var gb = (!b.e.ok && !b.k.versteckt) ? 0 : (b.k.versteckt ? 2 : 1);
+            return ga - gb;
+          });
+          var html = '<table class="fvs-tabelle"><thead><tr><th>Seite</th><th>Knopf</th><th>Ziel</th><th>Ergebnis</th></tr></thead><tbody>';
+          zeilen.forEach(function (z) {
+            var datei = z.k.adresse.split('/').pop() || z.k.adresse;
+            var ergebnis = z.e.ok
+              ? '<span class="fvs-lage fvs-lage--gut">✓ ' + z.e.status + '</span>'
+              : '<span class="fvs-lage fvs-lage--5">✗ ' + (z.e.status || '') + '</span> ' + sicher(z.e.fehler || 'nicht gefunden');
+            html += '<tr' + (z.k.versteckt ? ' style="opacity:.55"' : '') + '>'
+              + '<td><a href="/' + sicher(z.k.seite) + '" style="color:var(--blue-light)">' + sicher(z.k.seite) + '</a></td>'
+              + '<td>' + sicher(z.k.knopf) + (z.k.versteckt ? '<br><span class="fvs-kachel__zusatz">ausgeblendet</span>' : '') + '</td>'
+              + '<td><a href="' + sicher(z.k.adresse) + '" title="' + sicher(z.k.adresse) + '" target="_blank" rel="noopener" style="color:var(--muted)">'
+              + sicher(datei) + '</a></td>'
+              + '<td>' + ergebnis + '</td></tr>';
+          });
+          html += '</tbody></table>';
+          ziel.innerHTML = html;
+          melde.textContent = fehlerhaft
+            ? '✗ ' + fehlerhaft + ' sichtbare Knöpfe führen ins Leere.'
+            : '✓ Alle ' + r.anzahl + ' Ziele erreichbar.';
+          melde.className = 'fvs-melde ' + (fehlerhaft ? 'schlecht' : 'gut');
+        })
+        .catch(function (e) {
+          melde.textContent = '✗ ' + (e && e.message ? e.message : 'Prüfung fehlgeschlagen.');
+          melde.className = 'fvs-melde schlecht';
+        })
+        .then(function () { knopf.disabled = false; });
     }
 
     function abrufen() {

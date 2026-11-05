@@ -453,6 +453,45 @@ export class Counter extends DurableObject {
      * findet auch Bilder in Sammellisten wie der Galerie, wo sie nicht
      * als eigener Eintrag stehen.
      * ------------------------------------------------------------------ */
+    /* --- Download-Links pruefen (nur Admin, 05.11.2026) -----------------
+     * Der Browser darf Antworten von GitHub nicht lesen (CORS) - deshalb
+     * fragt der Server nach. Hoechstens 8 Adressen je Aufruf: jede
+     * Weiterleitung (GitHub -> Speicherdienst) zaehlt als eigene Anfrage,
+     * und Cloudflare begrenzt die Zahl der Anfragen je Aufruf.
+     * Nur https - der Weg ist kein allgemeiner Abrufdienst.
+     * ------------------------------------------------------------------ */
+    if (url.pathname === "/api/linkpruefung" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      const liste = (Array.isArray(body.adressen) ? body.adressen : []).slice(0, 8);
+      const kopf = { "user-agent": "FINNVELO-Linkpruefung/1.0" };
+      const ergebnisse = [];
+      for (const roh of liste) {
+        const adresse = String(roh || "");
+        if (!/^https:\/\/\S{4,600}$/.test(adresse)) {
+          ergebnisse.push({ adresse, status: 0, ok: false, fehler: "keine gültige Adresse" });
+          continue;
+        }
+        const steuer = new AbortController();
+        const uhr = setTimeout(() => steuer.abort(), 12000);
+        try {
+          let a = await fetch(adresse, { method: "HEAD", redirect: "follow", signal: steuer.signal, headers: kopf });
+          if (a.status === 403 || a.status === 405) {
+            // Manche Dienste kennen HEAD nicht - dann ein einziges Byte holen
+            a = await fetch(adresse, { method: "GET", redirect: "follow", signal: steuer.signal,
+                                       headers: Object.assign({ range: "bytes=0-0" }, kopf) });
+            try { if (a.body) await a.body.cancel(); } catch (_e) {}
+          }
+          ergebnisse.push({ adresse, status: a.status, ok: a.status >= 200 && a.status < 400 });
+        } catch (_e) {
+          ergebnisse.push({ adresse, status: 0, ok: false,
+                            fehler: steuer.signal.aborted ? "keine Antwort (Zeitüberschreitung)" : "nicht erreichbar" });
+        } finally { clearTimeout(uhr); }
+      }
+      return json({ ok: true, ergebnisse });
+    }
+
     if (url.pathname === "/api/images" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
