@@ -87,11 +87,12 @@
 
   function injectStyles() {
     if (document.getElementById('fv-stats-style')) return;
-    /* Lage: oben rechts, fest auf der Seite. Am PC unter der Kopfzeile und mit
-       z-index UNTER ihr (20): beim Scrollen gleitet das Badge unter die stehende
-       Kopfzeile statt ueber das Menue. Am Handy sitzt es in der freien Ecke
-       neben dem Schriftzug und liegt deshalb UEBER der Kopfzeile (siehe unten). */
-    var css = '.fv-stats-badge{position:absolute;z-index:15;font:12px/1.3 system-ui,"Segoe UI",Arial,sans-serif;'
+    /* Lage (05.11.2026, Wunsch Tatorasa): fest in der Kopfzeile, die beim
+       Scrollen stehen bleibt - immer sichtbar, aber nie ueber dem Text.
+       Wohin genau, rechnet platzieren() aus dem freien Platz aus. top/right
+       hier sind nur der Ausgangspunkt, bis platzieren() gelaufen ist.
+       z-index 25 liegt ueber der Kopfzeile (20), unter der Admin-Leiste. */
+    var css = '.fv-stats-badge{position:fixed;z-index:25;top:calc(14px + var(--fv-admin-hoehe, 0px));right:16px;font:12px/1.3 system-ui,"Segoe UI",Arial,sans-serif;'
       + 'background:rgba(15,22,38,.85);color:#e8eef5;border:1px solid rgba(255,255,255,.16);'
       + 'border-radius:999px;padding:6px 12px;box-shadow:0 6px 18px rgba(0,0,0,.3);'
       + 'pointer-events:none;user-select:none;display:flex;gap:8px;align-items:center;white-space:nowrap;'
@@ -99,10 +100,11 @@
         + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;z-index:9999;}'
         + '.fv-edit-on .fv-stats-badge:hover{border-color:rgba(120,170,255,.7);}'
         + '.fv-stats-badge.fv-zieht{cursor:grabbing;opacity:.85;}'
-      /* 12 px unter der Kopfzeile. Ihre Hoehe misst kopfHoeheMerken() - bricht
-         das Menue bei mittlerer Fensterbreite zweizeilig um, waeren feste 84 px
-         mitten in der Kopfzeile gelandet. 72 px ist die Hoehe am breiten PC. */
-      + '.fv-stats-badge--home,.fv-stats-badge--page{top:calc(var(--fv-kopf-hoehe, 72px) + 12px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
+      /* Dreizeilige Form, wenn die Zeile zu schmal ist (setzt platzieren()) */
+      + '.fv-stats-badge--eng{flex-direction:column;align-items:flex-end;gap:0;border-radius:12px;font-size:11px;line-height:1.2;padding:4px 9px;white-space:normal;max-width:104px;text-align:right;}'
+      + '.fv-stats-badge--eng .fv-sep{display:none;}'
+      /* Umbrechen nur bei 'Besucher gesamt' - die drei Zeilen der Programmseiten bleiben je eine Zeile */
+      + '.fv-stats-badge--page.fv-stats-badge--eng{max-width:none;white-space:nowrap;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
       + '.fv-stats-badge .fv-sep{opacity:.35;}'
       + '.fv-video-facade{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:#000 center/cover no-repeat;border-radius:inherit;display:block;}'
@@ -110,12 +112,10 @@
       + '.fv-video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:50px;border-radius:14px;background:rgba(20,20,20,.85);z-index:1;transition:background .15s;}'
       + '.fv-video-play::before{content:"";position:absolute;top:50%;left:54%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff;}'
       + '.fv-video-facade:hover .fv-video-play,.fv-video-facade:focus-visible .fv-video-play{background:#ff0000;}'
-      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 10px;gap:5px;z-index:25;top:calc(14px + var(--fv-admin-hoehe, 0px));right:16px;left:auto;bottom:auto;}'
-      + '.fv-stats-badge--page{flex-direction:column;align-items:flex-end;gap:1px;border-radius:12px;}'
-      + '.fv-stats-badge--page .fv-sep{display:none;}}'
-      /* Sehr schmale Handys (320 px): eine Stufe kleiner, sonst ueberdeckt das
-         Badge das Ende des Schriftzugs (gemessen: 2 px). */
-      + '@media (max-width:360px){.fv-stats-badge{font-size:10px;padding:4px 8px;right:10px;max-width:calc(100vw - 216px);white-space:normal;text-align:right;justify-content:flex-end;border-radius:12px;}}';
+      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 10px;gap:5px;}}'
+      /* Sehr schmale Handys (320 px): eine Stufe kleiner und notfalls
+         zweizeilig, sonst ueberdeckt "Besucher gesamt" den Schriftzug. */
+      + '@media (max-width:360px){.fv-stats-badge{font-size:10px;padding:4px 8px;max-width:calc(100vw - 236px);white-space:normal;text-align:right;justify-content:flex-end;border-radius:12px;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
@@ -127,25 +127,67 @@
     var el = document.createElement('div');
     el.className = 'fv-stats-badge fv-stats-badge--' + kind;
     (document.body || document.documentElement).appendChild(el);
-    kopfHoeheMerken();
-    window.addEventListener('resize', kopfHoeheMerken);
-    lageAnwenden(el);
+    if (!lageAnwenden(el)) platzieren(el);
+    var neu = function () { platzieren(el); };
+    window.addEventListener('resize', neu);
+    // Die Admin-Leiste schiebt die Kopfzeile nachtraeglich nach unten - sie
+    // meldet ihre Hoehe ueber das style-Attribut von <html>.
+    try { new MutationObserver(neu).observe(document.documentElement, { attributes: true, attributeFilter: ['style'] }); } catch (_e) {}
+    try { document.fonts.ready.then(neu); } catch (_e) {}
+    setTimeout(neu, 400); setTimeout(neu, 1500);
     verschiebbarMachen(el);
     return el;
   }
 
-  /* Hoehe der Kopfzeile fuer die Lage des Badges (CSS-Variable --fv-kopf-hoehe).
-     offsetHeight haengt nicht vom Scrollweg ab - die Kopfzeile ist sticky. */
-  function kopfHoeheMerken() {
+  /* Setzt das Badge an die freie Stelle der Kopfzeile. Die Kopfzeile ist
+     sticky - ihre Lage im Fenster haengt also nicht vom Scrollweg ab, und
+     das Badge kann fest im Fenster stehen.
+       - Menue in eigener Zeile (Handy, PC bis ~880 px): Ecke oben rechts
+         neben dem Schriftzug
+       - Menue in derselben Zeile: rechtsbuendig in der Luecke vor dem Menue
+       - passt es einzeilig nicht: dreizeilig (--eng)
+       - passt auch das nicht: notfalls direkt unter der Kopfzeile, rechts
+     Von Hand gezogen (Bearbeiten-Modus)? Dann bleibt es, wo es liegt. */
+  var gezogen = false;
+  function platzieren(el) {
+    if (!el || gezogen) return;
     var kopf = document.querySelector('.site-header');
-    if (!kopf) return;
-    document.documentElement.style.setProperty('--fv-kopf-hoehe', kopf.offsetHeight + 'px');
+    var marke = kopf && kopf.querySelector('.brand');
+    var menue = kopf && kopf.querySelector('nav');
+    el.classList.remove('fv-stats-badge--eng');
+    el.style.top = ''; el.style.left = ''; el.style.right = ''; el.style.bottom = '';
+    if (!kopf || !marke || !menue) return;          // anderer Seitenaufbau: CSS-Vorgabe
+    var k = kopf.getBoundingClientRect();
+    var m = marke.getBoundingClientRect();
+    var n = menue.getBoundingClientRect();
+    var breite = document.documentElement.clientWidth;
+    var RAND = 16, ABSTAND = 10;
+    function passt(platz, hoehe) { return el.offsetWidth <= platz && el.offsetHeight <= hoehe; }
+
+    if (n.top >= m.bottom - 4) {
+      if (!passt(breite - RAND - m.right - ABSTAND, Infinity)) el.classList.add('fv-stats-badge--eng');
+      el.style.top = Math.round(m.top) + 'px';
+      el.style.right = RAND + 'px';
+      return;
+    }
+    var luecke = n.left - m.right - 2 * ABSTAND;
+    var hoehe = k.height - 8;
+    if (!passt(luecke, hoehe)) el.classList.add('fv-stats-badge--eng');
+    if (passt(luecke, hoehe)) {
+      el.style.top = Math.round(k.top + (k.height - el.offsetHeight) / 2) + 'px';
+      el.style.left = Math.round(n.left - ABSTAND - el.offsetWidth) + 'px';
+      el.style.right = 'auto';
+      return;
+    }
+    el.classList.remove('fv-stats-badge--eng');
+    el.style.top = Math.round(k.bottom + 12) + 'px';
+    el.style.right = '20px';
   }
 
   /* Die Zaehlerleiste lag fest oben rechts - und damit je nach Fensterbreite
      mitten im Menue. Sie laesst sich jetzt im Bearbeiten-Modus an eine freie
-     Stelle ziehen. Seit dem 05.11.2026 gilt die Lage auf der SEITE, nicht im
-     Fenster: oben/links sind Seitenkoordinaten (Scrollweg eingerechnet). Die Lage merkt sich der Browser (localStorage, also je
+     Stelle ziehen. Oben/links sind Fensterkoordinaten - das Badge steht fest
+     im Fenster. Die Lage merkt sich der Browser (localStorage, also je
      Geraet): es ist reine Ansichtssache, Besucher sollen davon nichts
      mitbekommen, und der Server bleibt aussen vor. */
   var LAGE_SCHLUESSEL = 'fv_zaehler_lage';
@@ -153,18 +195,20 @@
   function lageAnwenden(el) {
     try {
       var roh = localStorage.getItem(LAGE_SCHLUESSEL);
-      if (!roh) return;
+      if (!roh) return false;
       var l = JSON.parse(roh);
-      if (typeof l.oben !== 'number' || typeof l.links !== 'number') return;
+      if (typeof l.oben !== 'number' || typeof l.links !== 'number') return false;
       // Im sichtbaren Bereich halten - das Fenster kann seit dem Ablegen
       // kleiner geworden sein, sonst waere die Leiste unerreichbar.
       var maxL = Math.max(0, window.innerWidth - 140);
-      var maxO = Math.max(0, document.documentElement.scrollHeight - 40);
+      var maxO = Math.max(0, window.innerHeight - 40);
       el.style.top = Math.min(l.oben, maxO) + 'px';
       el.style.left = Math.min(l.links, maxL) + 'px';
       el.style.right = 'auto';
       el.style.bottom = 'auto';
-    } catch (_e) { /* dann bleibt die Vorgabe */ }
+      gezogen = true;
+      return true;
+    } catch (_e) { return false; /* dann bleibt die Vorgabe */ }
   }
 
   function verschiebbarMachen(el) {
@@ -183,11 +227,8 @@
 
     el.addEventListener('pointermove', function (e) {
       if (!zieht) return;
-      // Seitenkoordinaten: das Badge haengt an der Seite, nicht am Fenster.
-      var links = Math.max(4, Math.min(document.documentElement.clientWidth - el.offsetWidth - 4,
-                                       e.clientX - dx + window.scrollX));
-      var oben = Math.max(4, Math.min(document.documentElement.scrollHeight - el.offsetHeight - 4,
-                                      e.clientY - dy + window.scrollY));
+      var links = Math.max(4, Math.min(window.innerWidth - el.offsetWidth - 4, e.clientX - dx));
+      var oben = Math.max(4, Math.min(window.innerHeight - el.offsetHeight - 4, e.clientY - dy));
       el.style.left = links + 'px';
       el.style.top = oben + 'px';
       el.style.right = 'auto';
@@ -197,6 +238,7 @@
     function ende() {
       if (!zieht) return;
       zieht = false;
+      gezogen = true;
       el.classList.remove('fv-zieht');
       try {
         localStorage.setItem(LAGE_SCHLUESSEL, JSON.stringify({
@@ -212,10 +254,8 @@
     el.addEventListener('dblclick', function () {
       if (!document.body.classList.contains('fv-edit-on')) return;
       try { localStorage.removeItem(LAGE_SCHLUESSEL); } catch (_e) {}
-      el.style.removeProperty('top');
-      el.style.removeProperty('left');
-      el.style.removeProperty('right');
-      el.style.removeProperty('bottom');
+      gezogen = false;
+      platzieren(el);
     });
   }
 
@@ -244,6 +284,7 @@
         + '<span class="fv-sep">·</span>'
         + '<span>\u2B07 Downloads: <b>' + fmt(counts['download:' + key]) + '</b></span>';
     }
+    platzieren(badgeEl);
   }
 
   function bump(metricKey) {
@@ -314,11 +355,13 @@
     if (isHome) {
       badgeEl = makeBadge('home');
       badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
+      platzieren(badgeEl);
       // Nur noch der eine Zaehler wird angezeigt - die anderen nicht mehr holen.
       keysToShow = ['views:site'];
     } else if (isProgram) {
       badgeEl = makeBadge('page');
       badgeEl.innerHTML = '<span>Lädt…</span>';
+      platzieren(badgeEl);
       keysToShow = ['views:' + key, 'video:' + key, 'download:' + key];
     }
 
