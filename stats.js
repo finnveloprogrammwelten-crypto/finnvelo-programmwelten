@@ -2331,6 +2331,7 @@
         ? '<span class="fv-admin-hint">Texte anklicken \u00b7 Bilder klicken/ziehen \u00b7 Kacheln am Griff ziehen</span>'
         : '<span class="fv-admin-hint">Zum \u00c4ndern einschalten \u2013 sonst normal navigieren</span>';
       var right = '<span class="fv-admin-fehler" hidden></span>'
+                + '<span class="fv-admin-kommentare" hidden></span>'
                 + '<button type="button" class="fv-admin-btn fv-admin-putzen">\uD83E\uDDF9 Felder s\u00e4ubern</button>'
                 + '<button type="button" class="fv-admin-btn fv-admin-werkzeuge" '
                 + 'title="Alle Verwaltungs-K\u00e4sten \u2013 sie liegen auf der Programme-Seite">'
@@ -2463,6 +2464,30 @@
         document.dispatchEvent(new CustomEvent('fv:seiten-oeffnen'));
       });
       fehlerHinweisHolen(bar);
+      kommentarHinweisHolen(bar);
+    }
+
+    /* ---- Hinweis auf neue Kommentare (05.11.2026) ------------------------
+     * Wann zuletzt hingesehen wurde, weiss der Server - nicht der Browser.
+     * Als gelesen gilt alles, sobald die Kommentarseite als Admin geoeffnet
+     * wird (das erledigt kommentare.html). Auf der Kommentarseite selbst
+     * erscheint der Hinweis deshalb gar nicht erst. */
+    function kommentarHinweisHolen(bar) {
+      if (/^\/kommentare(\.html)?\/?$/.test(location.pathname)) return;
+      fetch(API + '/comments/neu', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw() })
+      })
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) {
+          if (!d || !d.anzahl) return;
+          var feld = bar.querySelector('.fv-admin-kommentare');
+          if (!feld) return;
+          feld.hidden = false;
+          feld.innerHTML = '<a class="fv-admin-btn fv-admin-btn--neu" href="/kommentare">'
+            + '💬 ' + d.anzahl + (d.anzahl === 1 ? ' neuer Kommentar' : ' neue Kommentare') + '</a>';
+        })
+        .catch(function () { /* der Hinweis ist Beiwerk - nie stoeren */ });
     }
 
     /* ---- Hinweis auf neue Fehler --------------------------------------

@@ -1326,6 +1326,19 @@ footer a {
   background: rgba(230, 120, 120, 0.12);
 }
 
+/* Markierung "Neu" fuer den Admin (05.11.2026) */
+.comment__neu {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(49, 124, 255, 0.22);
+  color: var(--blue-light);
+  font-size: 11px;
+  font-weight: 800;
+  vertical-align: 2px;
+}
+
 /* Antwort des Admins auf einen Kommentar (05.11.2026) */
 .comment__reply {
   margin: 12px 0 0 18px;
@@ -2172,6 +2185,18 @@ body.fv-admin-on .site-header { top: 44px; }
   font-weight: 700;
 }
 .fv-admin-btn.fv-admin-btn--warn:hover { background: rgba(240, 180, 41, 0.34); }
+
+/* Hinweis auf neue Kommentare (05.11.2026) */
+.fv-admin-kommentare { display: inline-flex; }
+.fv-admin-kommentare[hidden] { display: none; }
+.fv-admin-btn.fv-admin-btn--neu {
+  background: rgba(49, 124, 255, 0.22);
+  border-color: rgba(120, 170, 255, 0.75);
+  color: var(--blue-light);
+  font-weight: 700;
+  text-decoration: none;
+}
+.fv-admin-btn.fv-admin-btn--neu:hover { background: rgba(49, 124, 255, 0.34); }
 
 /* ---------------------------------------------------------------------
    Verlauf: fruehere Fassungen ansehen und zurueckholen

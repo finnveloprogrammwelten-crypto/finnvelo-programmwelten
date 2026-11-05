@@ -335,6 +335,34 @@ export class Counter extends DurableObject {
       return json({ ok: checkAdmin(body, env, this.gesetztesPasswort()) });
     }
 
+    /* Neue Kommentare fuer die Admin-Leiste (05.11.2026). Wann zuletzt
+       hingesehen wurde, liegt auf dem SERVER (Seite "system", Block "k0") -
+       nicht im Browser: so gilt es fuer alle Geraete gleich. */
+    if ((url.pathname === "/api/comments/neu" || url.pathname === "/api/comments/gelesen") && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      let seit = 0;
+      try {
+        const r = this.sql.exec("SELECT value FROM content WHERE page = 'system' AND block = 'k0'").toArray();
+        seit = r.length ? (Number(r[0].value) || 0) : 0;
+      } catch (_e) { seit = 0; }
+      if (url.pathname === "/api/comments/neu") {
+        const n = this.sql.exec(
+          "SELECT COUNT(*) AS n FROM comments WHERE removed = 0 AND created > ?", seit
+        ).toArray()[0].n;
+        return json({ ok: true, anzahl: Number(n) || 0, seit });
+      }
+      const jetzt = Date.now();
+      this.sql.exec(
+        "INSERT INTO content (page, block, type, value, updated) VALUES ('system', 'k0', 'text', ?, ?) " +
+        "ON CONFLICT(page, block) DO UPDATE SET value = excluded.value, updated = excluded.updated",
+        String(jetzt), jetzt
+      );
+      // "vorher" braucht die Kommentarseite, um die neuen hervorzuheben
+      return json({ ok: true, vorher: seit });
+    }
+
     // Auf einen Kommentar antworten, die Antwort aendern oder (leerer Text) loeschen.
     if (url.pathname === "/api/comments/antwort" && method === "POST") {
       let body = {};

@@ -117,6 +117,13 @@
         when.className = 'comment__date';
         when.textContent = fmtDate(c.created);
         head.appendChild(who);
+        // Fuer den Admin: seit dem letzten Besuch dazugekommen
+        if (adminPw && neuSeit !== null && !c.removed && c.created > neuSeit) {
+          var neu = document.createElement('span');
+          neu.className = 'comment__neu';
+          neu.textContent = 'Neu';
+          who.appendChild(neu);
+        }
         head.appendChild(when);
         li.appendChild(head);
 
@@ -310,7 +317,20 @@
       }).catch(function () { window.alert('Netzwerkfehler.'); });
     }
 
-    load();
+    // Als Admin: alles als gelesen markieren und den vorigen Stand merken,
+    // damit die seitdem neuen Kommentare hervorgehoben werden.
+    var neuSeit = null;
+    if (adminPw) {
+      fetch('/api/comments/gelesen', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ password: adminPw })
+      }).then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (d) { if (d && d.ok) neuSeit = Number(d.vorher) || 0; })
+        .catch(function () {})
+        .then(load);
+    } else {
+      load();
+    }
   })();
   </script>
   <script src="stats.js" defer></script>
