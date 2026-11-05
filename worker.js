@@ -114,13 +114,53 @@ function textGleich(a, b) {
   return d === 0;
 }
 
-// Passwort aus den Einstellungen (Cloudflare) ODER ein selbst gesetztes,
-// das in der Datenbank liegt. Das gesetzte hat Vorrang.
-function checkAdmin(body, env, gesetzt) {
-  if (typeof body.password !== "string" || !body.password) return false;
-  if (gesetzt) return textGleich(body.password, gesetzt);
-  return !!env.ADMIN_PASSWORD && textGleich(body.password, env.ADMIN_PASSWORD);
+/* --- Passwort und Notfall-PIN nur als Hash ablegen (05.11.2026) ----------
+ * Format: "pbkdf2$<runden>$<salz base64>$<hash base64>", PBKDF2-SHA256.
+ * 100.000 Runden - mehr laesst Cloudflare fuer PBKDF2 nicht zu.
+ * Alte Klartext-Eintraege werden weiter erkannt und bei der naechsten
+ * erfolgreichen Anmeldung umgestellt (Counter.passwortStimmt). Ein
+ * Klartext-Eintrag aus einer alten Sicherung funktioniert also weiterhin.
+ * Die Pruefung des Admin-Passworts selbst: Counter.adminPruefen (mit
+ * Anmeldebremse). Die fruehere Funktion checkAdmin ist darin aufgegangen.
+ * ------------------------------------------------------------------------ */
+const HASH_RUNDEN = 100000;
+
+function bytesB64(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
 }
+
+async function pbkdf2(text, salz, runden) {
+  const roh = await crypto.subtle.importKey(
+    "raw", new TextEncoder().encode(String(text)), "PBKDF2", false, ["deriveBits"]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: salz, iterations: runden }, roh, 256);
+  return new Uint8Array(bits);
+}
+
+function istHash(s) { return typeof s === "string" && s.indexOf("pbkdf2$") === 0; }
+
+async function geheimHashen(text) {
+  const salz = crypto.getRandomValues(new Uint8Array(16));
+  return "pbkdf2$" + HASH_RUNDEN + "$" + bytesB64(salz) + "$" + bytesB64(await pbkdf2(text, salz, HASH_RUNDEN));
+}
+
+async function geheimPasst(eingabe, gespeichert) {
+  if (typeof eingabe !== "string" || !eingabe || !gespeichert) return false;
+  if (!istHash(gespeichert)) return textGleich(eingabe, gespeichert);   // Altbestand: Klartext
+  const t = gespeichert.split("$");
+  if (t.length !== 4) return false;
+  const runden = Number(t[1]) || 0;
+  if (runden < 1 || runden > HASH_RUNDEN) return false;
+  return textGleich(bytesB64(await pbkdf2(eingabe, b64ToBytes(t[2]), runden)), t[3]);
+}
+
+// Anmeldebremse: nach so vielen VERSCHIEDENEN falschen Eingaben einer
+// Herkunft ist fuer BREMSE_DAUER Pause. Eine Zaehlung verfaellt nach einer Stunde.
+const BREMSE_VERSUCHE = 5;
+const BREMSE_DAUER = 10 * 60 * 1000;
+const BREMSE_VERFALL = 60 * 60 * 1000;
 
 function b64ToBytes(b64) {
   const bin = atob(b64);
@@ -210,6 +250,12 @@ export class Counter extends DurableObject {
       "CREATE TABLE IF NOT EXISTS zugang (eins INTEGER PRIMARY KEY CHECK (eins = 1), " +
       "passwort TEXT, pin TEXT, geaendert INTEGER)"
     );
+    // Anmeldebremse (05.11.2026). "herkunft" ist ein Hash der IP-Adresse,
+    // "letzter" ein Kurzhash der letzten falschen Eingabe - nie die Eingabe selbst.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS anmeldebremse (herkunft TEXT PRIMARY KEY, " +
+      "versuche INTEGER NOT NULL DEFAULT 0, bis INTEGER, letzter TEXT, zeit INTEGER)"
+    );
 
     // Aeltere Faessungen bearbeiteter Bloecke. Vor jedem Ueberschreiben wandert
     // der bisherige Wert hierher - so laesst sich ein Vertipper zuruecknehmen.
@@ -223,7 +269,8 @@ export class Counter extends DurableObject {
       "CREATE INDEX IF NOT EXISTS verlauf_seite ON verlauf (seite, block, nr)"
     );
 
-    this.recentPosts = new Map();   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
+    this.recentPosts = new Map();
+    this.sperrBis = new WeakMap();   // Anfrage -> Sperre bis (Anmeldebremse)   // ipHash -> Zeitstempel (nur im Speicher, fuer Rate-Limit)
   }
 
   readCount(key) {
@@ -236,6 +283,107 @@ export class Counter extends DurableObject {
       const r = this.sql.exec("SELECT passwort FROM zugang WHERE eins = 1").toArray();
       return (r.length && r[0].passwort) ? r[0].passwort : "";
     } catch (_e) { return ""; }
+  }
+
+  /* ---- Admin-Passwort pruefen (mit Anmeldebremse) ---------------------
+   * Ersetzt das fruehere checkAdmin an allen Stellen. Ablauf:
+   *   1. Ist diese Herkunft gerade gesperrt?  -> nein, ohne zu pruefen
+   *   2. Passwort richtig?                    -> ja, Zaehlung loeschen
+   *   3. Sonst Fehlversuch zaehlen. Derselbe falsche Wert hintereinander
+   *      (eine veraltete Sitzung, die regelmaessig nachfragt) zaehlt nur
+   *      einmal - Durchprobieren dagegen jedes Mal.
+   * Ohne Passworteingabe wird nichts gezaehlt. */
+  async herkunftKennung(request) {
+    const ip = (request && request.headers.get("CF-Connecting-IP")) || "unbekannt";
+    return (await sha256hex("bremse:" + ip)).slice(0, 32);
+  }
+
+  bremseZeile(wer) {
+    try {
+      return this.sql.exec(
+        "SELECT versuche, bis, letzter, zeit FROM anmeldebremse WHERE herkunft = ?", wer
+      ).toArray()[0] || null;
+    } catch (_e) { return null; }
+  }
+
+  async fehlversuch(wer, z, eingabe, request) {
+    const jetzt = Date.now();
+    const merkmal = (await sha256hex("falsch:" + eingabe)).slice(0, 16);
+    if (z && z.letzter === merkmal && z.zeit && jetzt - z.zeit < BREMSE_VERFALL) return;
+    let versuche = 1;
+    if (z && !(z.bis && z.bis <= jetzt) && z.zeit && jetzt - z.zeit < BREMSE_VERFALL) {
+      versuche = (Number(z.versuche) || 0) + 1;
+    }
+    const sperren = versuche >= BREMSE_VERSUCHE;
+    this.sql.exec(
+      "INSERT INTO anmeldebremse (herkunft, versuche, bis, letzter, zeit) VALUES (?, ?, ?, ?, ?) " +
+      "ON CONFLICT(herkunft) DO UPDATE SET versuche = excluded.versuche, bis = excluded.bis, " +
+      "letzter = excluded.letzter, zeit = excluded.zeit",
+      wer, sperren ? 0 : versuche, sperren ? jetzt + BREMSE_DAUER : null, merkmal, jetzt
+    );
+    try { this.sql.exec("DELETE FROM anmeldebremse WHERE zeit < ?", jetzt - 24 * 60 * 60 * 1000); } catch (_e) {}
+    if (sperren) {
+      this.sperrBis.set(request, jetzt + BREMSE_DAUER);
+      this.spurLegen("Anmeldung", "Zu viele Fehlversuche - Anmeldung für 10 Minuten gesperrt");
+    }
+  }
+
+  // Stimmt das Passwort? Stellt einen alten Klartext-Eintrag dabei auf Hash um.
+  async passwortStimmt(pw) {
+    const gesetzt = this.gesetztesPasswort();
+    if (!gesetzt) return !!this.env.ADMIN_PASSWORD && textGleich(pw, this.env.ADMIN_PASSWORD);
+    // Zwischenspeicher: PBKDF2 kostet Rechenzeit, und die Admin-Oberflaeche
+    // fragt oft nach. Gilt nur, solange der gespeicherte Wert gleich bleibt.
+    const merk = (await sha256hex("ok:" + pw)) + "|" + gesetzt;
+    if (this.pwBestaetigt === merk) return true;
+    if (!(await geheimPasst(pw, gesetzt))) return false;
+    if (!istHash(gesetzt)) {
+      const h = await geheimHashen(pw);
+      this.sql.exec("UPDATE zugang SET passwort = ? WHERE eins = 1", h);
+      await this.pinHashen();
+      this.spurLegen("Zugang", "Passwort und PIN auf verschlüsselte Ablage umgestellt");
+      this.pwBestaetigt = (await sha256hex("ok:" + pw)) + "|" + h;
+      return true;
+    }
+    this.pwBestaetigt = merk;
+    return true;
+  }
+
+  // Eine noch im Klartext liegende Notfall-PIN auf Hash umstellen.
+  async pinHashen() {
+    try {
+      const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
+      const pin = (r.length && r[0].pin) ? r[0].pin : "";
+      if (pin && !istHash(pin)) {
+        this.sql.exec("UPDATE zugang SET pin = ? WHERE eins = 1", await geheimHashen(pin));
+      }
+    } catch (_e) { /* die PIN bleibt dann vorerst, wie sie ist */ }
+  }
+
+  /* Die Anfrage wird ausdruecklich mitgegeben, nicht im Objekt gemerkt:
+     waehrend PBKDF2 rechnet, kann das Objekt schon die naechste Anfrage
+     annehmen - eine gemerkte Herkunft waere dann die falsche. */
+  async adminPruefen(body, request) {
+    const pw = (body && typeof body.password === "string") ? body.password : "";
+    if (!pw) return false;
+    const wer = await this.herkunftKennung(request);
+    const z = this.bremseZeile(wer);
+    if (z && z.bis && z.bis > Date.now()) { this.sperrBis.set(request, z.bis); return false; }
+    if (await this.passwortStimmt(pw)) {
+      if (z) { try { this.sql.exec("DELETE FROM anmeldebremse WHERE herkunft = ?", wer); } catch (_e) {} }
+      return true;
+    }
+    await this.fehlversuch(wer, z, pw, request);
+    return false;
+  }
+
+  sperrHinweis(request) {
+    const bis = this.sperrBis.get(request) || 0;
+    return bis
+      ? "Zu viele Fehlversuche – die Anmeldung ist bis " +
+        new Date(bis).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" }) +
+        " Uhr gesperrt."
+      : "";
   }
 
   // Eintrag ins Fehlerbuch mit Lage 200 - kein Fehler, sondern eine Spur.
@@ -254,6 +402,8 @@ export class Counter extends DurableObject {
     const url = new URL(request.url);
     const method = request.method;
     const env = this.env;
+    // Admin-Pruefung mit Anmeldebremse; die Anfrage bestimmt die Herkunft
+    const adminOk = (b) => this.adminPruefen(b, request);
 
     // --- Zaehler ---
     if (method === "GET" && url.pathname === "/api/stats") {
@@ -332,7 +482,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/comments/admin" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      return json({ ok: checkAdmin(body, env, this.gesetztesPasswort()) });
+      return json({ ok: await adminOk(body) });
     }
 
     /* Neue Kommentare fuer die Admin-Leiste (05.11.2026). Wann zuletzt
@@ -341,7 +491,7 @@ export class Counter extends DurableObject {
     if ((url.pathname === "/api/comments/neu" || url.pathname === "/api/comments/gelesen") && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       let seit = 0;
       try {
         const r = this.sql.exec("SELECT value FROM content WHERE page = 'system' AND block = 'k0'").toArray();
@@ -367,7 +517,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/comments/antwort" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) {
+      if (!await adminOk(body)) {
         return json({ error: "unauthorized" }, 401);
       }
       const id = clean(body.id, 60);
@@ -391,7 +541,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/comments/remove" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) {
+      if (!await adminOk(body)) {
         return json({ error: "unauthorized" }, 401);
       }
       const id = clean(body.id, 60);
@@ -414,7 +564,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/content" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const page = String(body.page || "");
       const block = String(body.block || "");
       const type = String(body.type || "");
@@ -459,7 +609,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/image" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const dataUrl = String(body.dataUrl || "");
       const comma = dataUrl.indexOf(",");
       const b64 = (comma >= 0 ? dataUrl.slice(comma + 1) : dataUrl).replace(/\s+/g, "");
@@ -491,7 +641,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/linkpruefung" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const liste = (Array.isArray(body.adressen) ? body.adressen : []).slice(0, 8);
       const kopf = { "user-agent": "FINNVELO-Linkpruefung/1.0" };
       const ergebnisse = [];
@@ -523,7 +673,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/images" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
 
       const bilder = this.sql.exec(
         "SELECT id, mime, LENGTH(data) AS n, created FROM images ORDER BY created DESC"
@@ -570,7 +720,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/altlasten" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
 
       const erreichbar = {};
       for (const p in VERSION_ABLAGEN) erreichbar[VERSION_ABLAGEN[p]] = p;
@@ -613,7 +763,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/altlasten/entfernen" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const liste = Array.isArray(body.eintraege) ? body.eintraege : [];
       let weg = 0;
       for (const e of liste) {
@@ -641,7 +791,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/images/entfernen" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const ids = Array.isArray(body.ids) ? body.ids : [];
       let weg = 0;
       for (const roh of ids) {
@@ -714,7 +864,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/aufsicht" && method === "POST") {
       let b = {};
       try { b = await request.json(); } catch (_e) { b = {}; }
-      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(b)) return json({ error: "unauthorized" }, 401);
 
       // Jede Abfrage einzeln abgesichert: eine fehlende Tabelle darf die
       // ganze Uebersicht nicht kippen.
@@ -763,7 +913,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/verlauf" && method === "POST") {
       let b = {};
       try { b = await request.json(); } catch (_e) { b = {}; }
-      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      if (!await adminOk(b)) return json({ fehler: "unauthorized" }, 401);
       const seite = String(b.seite || "");
       if (!PAGE_RE.test(seite)) return json({ fehler: "bad_request" }, 400);
       let zeilen = [];
@@ -788,7 +938,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/verlauf/eintrag" && method === "POST") {
       let b = {};
       try { b = await request.json(); } catch (_e) { b = {}; }
-      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      if (!await adminOk(b)) return json({ fehler: "unauthorized" }, 401);
       const nr = Number(b.nr || 0);
       if (!nr) return json({ fehler: "bad_request" }, 400);
       let r = [];
@@ -806,7 +956,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/fehler/leeren" && method === "POST") {
       let b = {};
       try { b = await request.json(); } catch (_e) { b = {}; }
-      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      if (!await adminOk(b)) return json({ fehler: "unauthorized" }, 401);
       const bis = Number(b.bis || 0) || Date.now();
       let weg = 0;
       try {
@@ -827,7 +977,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/fehler/anzahl" && method === "POST") {
       let b = {};
       try { b = await request.json(); } catch (_e) { b = {}; }
-      if (!checkAdmin(b, env, this.gesetztesPasswort())) return json({ fehler: "unauthorized" }, 401);
+      if (!await adminOk(b)) return json({ fehler: "unauthorized" }, 401);
       const seit = Number(b.seit || 0);
       let anzahl = 0, letzter = null;
       try {
@@ -896,7 +1046,7 @@ export class Counter extends DurableObject {
           "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
           "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
           "pin = excluded.pin, geaendert = excluded.geaendert",
-          neuesPw, neuePin, Date.now()
+          await geheimHashen(neuesPw), await geheimHashen(neuePin), Date.now()
         );
         this.spurLegen("/api/zugang einrichten", "Zugang erstmals eingerichtet");
         return json({ ok: true, hinweis: "Zugang eingerichtet." });
@@ -907,24 +1057,34 @@ export class Counter extends DurableObject {
         const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
         const pin = (r.length && r[0].pin) ? r[0].pin : "";
         if (!pin) return json({ fehler: "Es ist keine Notfall-PIN hinterlegt." }, 400);
-        if (!textGleich(String(b.pin || ""), pin)) {
-          return json({ fehler: "Die Notfall-PIN stimmt nicht." }, 401);
+        // Dieselbe Bremse wie beim Passwort - sonst liesse sich die PIN durchprobieren
+        const wer = await this.herkunftKennung(request);
+        const z = this.bremseZeile(wer);
+        if (z && z.bis && z.bis > Date.now()) {
+          this.sperrBis.set(request, z.bis);
+          return json({ fehler: this.sperrHinweis(request) }, 429);
+        }
+        if (!(await geheimPasst(String(b.pin || "").trim(), pin))) {
+          await this.fehlversuch(wer, z, "pin:" + String(b.pin || ""), request);
+          return json({ fehler: this.sperrHinweis(request) || "Die Notfall-PIN stimmt nicht." }, 401);
         }
         const neuesPw = String(b.neu || "");
         if (neuesPw.length < 8) {
           return json({ fehler: "Das neue Passwort muss mindestens acht Zeichen haben." }, 400);
         }
+        if (z) { try { this.sql.exec("DELETE FROM anmeldebremse WHERE herkunft = ?", wer); } catch (_e) {} }
         this.sql.exec(
           "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
-          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, geaendert = excluded.geaendert",
-          neuesPw, pin, Date.now()
+          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, pin = excluded.pin, " +
+          "geaendert = excluded.geaendert",
+          await geheimHashen(neuesPw), istHash(pin) ? pin : await geheimHashen(pin), Date.now()
         );
         this.spurLegen("/api/zugang zuruecksetzen", "Passwort per Notfall-PIN zurückgesetzt");
         return json({ ok: true, hinweis: "Passwort zurückgesetzt." });
       }
 
       // Alles Weitere braucht das gueltige Passwort.
-      if (!checkAdmin(b, env, gesetzt)) return json({ error: "unauthorized" }, 401);
+      if (!(await adminOk(b))) return json({ error: "unauthorized", fehler: this.sperrHinweis(request) || undefined }, 401);
 
       // Nur die Notfall-PIN setzen oder wechseln - Passwort bleibt.
       if (aktion === "pin") {
@@ -938,11 +1098,11 @@ export class Counter extends DurableObject {
         // Es kann sein, dass es noch gar keine Zeile gibt (Anmeldung ueber das
         // Cloudflare-Secret). Dann das geltende Passwort mit uebernehmen,
         // damit der Zugang nicht ins Leere laeuft.
-        const bisher = gesetzt || String(b.password || "");
+        const bisher = gesetzt || await geheimHashen(String(b.password || ""));
         this.sql.exec(
           "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
           "ON CONFLICT(eins) DO UPDATE SET pin = excluded.pin, geaendert = excluded.geaendert",
-          bisher, neuePin, Date.now()
+          bisher, await geheimHashen(neuePin), Date.now()
         );
         this.spurLegen("/api/zugang pin", "Notfall-PIN gesetzt");
         return json({ ok: true, hinweis: "Notfall-PIN gespeichert." });
@@ -981,7 +1141,7 @@ export class Counter extends DurableObject {
           "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
           "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
           "pin = excluded.pin, geaendert = excluded.geaendert",
-          neuesPw, pin, Date.now()
+          await geheimHashen(neuesPw), (!pin || istHash(pin)) ? pin : await geheimHashen(pin), Date.now()
         );
         this.spurLegen("/api/zugang aendern", "Passwort geändert");
         // Eine gewuerfelte PIN wird genau einmal herausgegeben - danach nie wieder.
@@ -1007,7 +1167,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/export" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const rows = this.sql.exec(
         "SELECT page, block, type, value, updated FROM content ORDER BY page, block"
       ).toArray();
@@ -1083,7 +1243,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/import" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const daten = body.daten;
       if (!daten || daten.art !== "finnvelo-sicherung" || !Array.isArray(daten.inhalte)) {
         return json({ error: "keine_sicherung" }, 400);
@@ -1235,7 +1395,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/programme/datei" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
       const slug = String(body.slug || "");
       if (!PAGE_RE.test(slug)) return json({ error: "bad_slug" }, 400);
 
@@ -1267,7 +1427,7 @@ export class Counter extends DurableObject {
     if (url.pathname === "/api/programme" && method === "POST") {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
-      if (!checkAdmin(body, env, this.gesetztesPasswort())) return json({ error: "unauthorized" }, 401);
+      if (!await adminOk(body)) return json({ error: "unauthorized" }, 401);
 
       const rows = this.sql.exec(
         "SELECT value FROM content WHERE page = 'system' AND block = 'p0'"
@@ -1413,7 +1573,10 @@ export class Counter extends DurableObject {
       if (!gesetzt && !env.ADMIN_PASSWORD) {
         return json({ ok: false, einrichtungOffen: true });
       }
-      return json({ ok: checkAdmin(body, env, gesetzt) });
+      const ok = await adminOk(body);
+      if (ok) return json({ ok: true });
+      const hinweis = this.sperrHinweis(request);
+      return json(hinweis ? { ok: false, gesperrt: true, fehler: hinweis } : { ok: false });
     }
 
     return json({ error: "not_found" }, 404);
@@ -2038,7 +2201,10 @@ export default {
       try { b = await request.json(); } catch (_e) { b = {}; }
       const g = env.COUNTERS.get(env.COUNTERS.idFromName("global"));
       const grund = await g.fetch(new Request("https://zaehler/api/aufsicht", {
-        method: "POST", headers: { "content-type": "application/json" },
+        // Herkunft mitgeben - sonst teilen sich alle Aufrufe hier eine
+        // Anmeldebremse, und ein Angreifer sperrte den Admin gleich mit aus.
+        method: "POST", headers: { "content-type": "application/json",
+                                   "CF-Connecting-IP": request.headers.get("CF-Connecting-IP") || "" },
         body: JSON.stringify(b)
       }));
       if (!grund.ok) return grund;

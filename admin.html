@@ -147,7 +147,8 @@
               setTimeout(function () { zeigeVerwaltung(p, false); }, 300);
             } else {
               go.disabled = false;
-              melden('Falsches Passwort.', 'schlecht');
+              // Anmeldebremse: der Server nennt dann den Grund (zu viele Fehlversuche)
+              melden((res && res.fehler) || 'Falsches Passwort.', 'schlecht');
             }
           })
           .catch(function () { go.disabled = false; melden('Verbindungsfehler.', 'schlecht'); });
