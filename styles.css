@@ -1019,6 +1019,7 @@ footer a {
 .program-media-card img {
   display: block;
   width: 100%;
+  height: auto;          /* width/height im HTML nur fuer den Platzhalter beim Laden */
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(0, 0, 0, 0.24);
