@@ -6735,3 +6735,56 @@
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * Filter in der Programmliste (05.11.2026)
+ * ---------------------------------------------------------------------
+ * Die Merkmale stehen als data-plattform / data-thema an den Zeilen in
+ * programme.html. Zeilen ohne Merkmale (selbst angelegte Programme) sind
+ * nur unter "Alle" zu sehen. Ausblenden per Klasse - die Reihenfolge, die
+ * der Bearbeiten-Modus setzt, bleibt dabei unberuehrt.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    function start() {
+      var leiste = document.querySelector('.fv-filter');
+      var liste = document.querySelector('.program-row-list');
+      if (!leiste || !liste) return;
+      var wahl = { plattform: '', thema: '' };
+      var anzahl = leiste.querySelector('.fv-filter__anzahl');
+
+      function anwenden() {
+        var zeilen = liste.querySelectorAll('.program-row');
+        var sichtbar = 0;
+        Array.prototype.forEach.call(zeilen, function (z) {
+          var pl = (z.getAttribute('data-plattform') || '').split(' ');
+          var th = z.getAttribute('data-thema') || '';
+          var passt = (!wahl.plattform || pl.indexOf(wahl.plattform) !== -1)
+                   && (!wahl.thema || th === wahl.thema);
+          z.classList.toggle('fv-ausgefiltert', !passt);
+          if (passt) sichtbar++;
+        });
+        var gefiltert = wahl.plattform || wahl.thema;
+        anzahl.textContent = gefiltert
+          ? sichtbar + (sichtbar === 1 ? ' Programm' : ' Programme')
+          : '';
+      }
+
+      Array.prototype.forEach.call(leiste.querySelectorAll('[data-fv-filter]'), function (gruppe) {
+        var art = gruppe.getAttribute('data-fv-filter');
+        gruppe.addEventListener('click', function (e) {
+          var k = e.target.closest('.fv-filter__knopf');
+          if (!k) return;
+          wahl[art] = k.getAttribute('data-wert') || '';
+          Array.prototype.forEach.call(gruppe.querySelectorAll('.fv-filter__knopf'), function (x) {
+            x.setAttribute('aria-pressed', x === k ? 'true' : 'false');
+          });
+          anwenden();
+        });
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
