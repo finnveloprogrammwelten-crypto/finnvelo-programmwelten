@@ -6635,3 +6635,65 @@
     else suchen();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * QR-Code bei Android-Downloads (05.11.2026)
+ * ---------------------------------------------------------------------
+ * Wer die Seite am PC ansieht, scannt den Code mit dem Handy und laedt die
+ * App direkt dort. Gilt fuer den ersten Download-Knopf im Android-Bereich,
+ * sofern er auf eine APK zeigt. Der Code folgt dem Ziel des Knopfes - auch
+ * wenn es im Bearbeiten-Modus geaendert wurde (die Ueberschreibung kommt
+ * spaeter als das Seitenladen, daher der Beobachter auf "href").
+ * Bewusst nur div/span, kein p und kein img: sonst verschoeben sich die
+ * gespeicherten Nummern des Bearbeiten-Modus.
+ * Bibliothek: qrcode-generator 1.4.4 (Kazuhiko Arase, MIT), lokal unter
+ * /assets/js/, nur auf Seiten mit APK-Knopf nachgeladen.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var laden = null;
+    function bibliothek() {
+      if (window.qrcode) return Promise.resolve();
+      if (!laden) {
+        laden = new Promise(function (ok, fehl) {
+          var s = document.createElement('script');
+          s.src = '/assets/js/qrcode-generator.js';
+          s.onload = ok; s.onerror = fehl;
+          document.head.appendChild(s);
+        });
+      }
+      return laden;
+    }
+    function zeichnen(knopf, kasten) {
+      var ziel = knopf.href || '';
+      if (!/\.apk(\?|#|$)/i.test(ziel)) { kasten.hidden = true; return; }
+      bibliothek().then(function () {
+        var qr = window.qrcode(0, 'L');   // L: weniger, groessere Felder - lange GitHub-Adressen
+        qr.addData(ziel);
+        qr.make();
+        kasten.querySelector('.fv-qr__code').innerHTML =
+          qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true, alt: 'QR-Code zum Herunterladen der App' });
+        kasten.hidden = false;
+      }).catch(function () { kasten.hidden = true; });
+    }
+    function start() {
+      var knopf = document.querySelector('.program-download-block:not(.program-download-block--pc) .download-slot a.button[href]');
+      if (!knopf) return;
+      var kasten = document.createElement('div');
+      kasten.className = 'fv-qr';
+      kasten.hidden = true;
+      kasten.innerHTML = '<div class="fv-qr__code"></div>'
+        + '<span class="fv-qr__text"><b>Am PC?</b> Code mit dem Handy scannen – '
+        + 'die App wird direkt dort heruntergeladen.</span>';
+      knopf.insertAdjacentElement('afterend', kasten);
+      zeichnen(knopf, kasten);
+      try {
+        new MutationObserver(function () { zeichnen(knopf, kasten); })
+          .observe(knopf, { attributes: true, attributeFilter: ['href'] });
+      } catch (e) {}
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();

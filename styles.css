@@ -3299,3 +3299,13 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
    --------------------------------------------------------------------- */
 [data-fv-gallery-section].fv-leer-weg { display: none; }
 .fv-sektion-versteckt { display: none !important; }
+
+/* QR-Code bei Android-Downloads (05.11.2026) - setzt stats.js ein.
+   Nur am PC sinnvoll; am Handy und auf Touch-Geraeten ausgeblendet. */
+.fv-qr { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.fv-qr[hidden] { display: none; }
+.fv-qr__code { flex: none; width: 168px; height: 168px; padding: 8px; background: #fff; border-radius: 10px; box-sizing: border-box; }
+.fv-qr__code svg { display: block; width: 100%; height: 100%; }
+.fv-qr__text { color: var(--muted); font-size: 14px; line-height: 1.45; max-width: 280px; }
+.fv-qr__text b { color: var(--text); }
+@media (max-width: 760px), (pointer: coarse) { .fv-qr { display: none !important; } }
