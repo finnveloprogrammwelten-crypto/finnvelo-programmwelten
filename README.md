@@ -116,15 +116,22 @@ Besucher sichtbar**.
 ### Freischalten
 1. Rufe `deine-adresse.de/admin` auf.
 2. **Beim allerersten Mal** steht dort "Zugang einrichten": Passwort (mind. 8
-   Zeichen) und eine selbst gewaehlte **Notfall-PIN** (mind. 6 Zeichen)
-   vergeben. Danach ist dieser Weg dauerhaft zu.
+   Zeichen, zweimal), **Master-Key** (mind. 12 Zeichen, zweimal - auf Wunsch
+   mit Vorschlag) und **vier von 30 Sicherheitsfragen** samt Antworten.
+   Danach wird ein **PDF-Sicherheitszertifikat** heruntergeladen (Master-Key
+   und Fragen, ohne Antworten). Danach ist dieser Weg dauerhaft zu.
 3. Danach: Passwort eingeben und **Freischalten** klicken.
-4. Du landest in der Zugangsverwaltung - dort lassen sich Passwort und
-   Notfall-PIN jederzeit aendern. Ueber "Weiter zur Webseite" geht es zur
-   Startseite; oben erscheint die **Admin-Leiste**.
+4. Du landest in der Zugangsverwaltung - dort laesst sich das Passwort aendern
+   und die Passwort-Zuruecksetzung neu einrichten (neues Zertifikat). Ueber
+   "Weiter zur Webseite" geht es zur Startseite; oben erscheint die
+   **Admin-Leiste**.
 
-**Passwort vergessen?** Auf `/admin` den Knopf "Passwort vergessen" -
-mit der Notfall-PIN laesst sich ein neues setzen. Die PIN bleibt dabei gleich.
+**Passwort vergessen?** Auf `/admin` den Knopf "Passwort vergessen": entweder
+den **Master-Key** vom Zertifikat eingeben oder **zwei zufaellig gestellte
+Sicherheitsfragen** beantworten (15 Minuten lang dieselben zwei), dann ein neues
+Passwort festlegen. Es gilt dieselbe Anmeldebremse wie beim Passwort.
+Alte Zugaenge ohne dieses Paket setzen wie bisher mit der Notfall-PIN zurueck;
+sobald das Paket eingerichtet ist, wird die PIN geloescht.
 
 **Sichtbarkeitsauge:** In jedem Passwort- und PIN-Feld sitzt rechts ein
 kleines Auge. Anklicken zeigt das Eingetippte im Klartext, nochmal anklicken

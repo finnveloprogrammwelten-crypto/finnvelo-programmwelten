@@ -135,25 +135,41 @@ JPEG-Qualität 0,85). Alle drei Upload-Wege gehen dort durch.
 
 ---
 
-## 3a. Zugang: Passwort und Notfall-PIN
+## 3a. Zugang: Passwort, Master-Key und Sicherheitsfragen
 
 Verwaltet wird alles unter **`/admin`** — bewusst dort und nicht auf
 `/serverstatus`, damit man auch dann herankommt, wenn die Statusseite klemmt.
+Zurücksetzen nach dem Finnvelo-Standard (seit 05.11.2026): Passwort und
+Master-Key je doppelt, vier von 30 Sicherheitsfragen (Katalog wie im
+Finanzmanager). Danach erzeugt `admin.html` mit jsPDF
+(`assets/js/jspdf.umd.min.js`) ein PDF-Zertifikat mit Master-Key und Fragen —
+**ohne Antworten**. Master-Key und Antworten liegen nur als PBKDF2-Hash in
+der Tabelle `zugang_sicherung`; der Server kann sie nie wieder ausgeben.
 
 | Weg | Verlangt | Wofür |
 |---|---|---|
-| `{aktion:"lage"}` | nichts | Ja/Nein: schon eingerichtet? |
-| `{aktion:"einrichten", neu, pin}` | nichts | **nur** solange nichts gesetzt ist |
-| `{password, aktion:"aendern", neu, pin?}` | Passwort | Passwort wechseln |
-| `{password, aktion:"pin", pin}` | Passwort | PIN setzen/wechseln |
-| `{aktion:"zuruecksetzen", pin, neu}` | PIN | Passwort ohne altes setzen |
+| `{aktion:"lage"}` | nichts | Ja/Nein: eingerichtet? PIN? Paket (`sicherungDa`)? |
+| `{aktion:"katalog"}` | nichts | die 30 Fragen |
+| `{aktion:"einrichten", neu, neu2, master, master2, fragen}` | nichts | **nur** solange nichts gesetzt ist |
+| `{password, aktion:"sicherheit", …wie einrichten}` | Passwort | Paket anlegen/erneuern, löscht die PIN |
+| `{password, aktion:"aendern", neu}` | Passwort | Passwort wechseln |
+| `{aktion:"fragen"}` | nichts | zwei der vier Fragen, je Herkunft 15 Min. fest |
+| `{aktion:"zuruecksetzen-fragen", antworten, neu, neu2}` | 2 Antworten | Passwort ohne altes setzen |
+| `{aktion:"zuruecksetzen-master", master, neu, neu2}` | Master-Key | Passwort ohne altes setzen |
+| `{password, aktion:"pin", pin}` | Passwort | alt: nur ohne Paket |
+| `{aktion:"zuruecksetzen", pin, neu}` | PIN | alt: nur ohne Paket |
 
 **Wichtig:**
 
 * Ein in der Datenbank gesetztes Passwort hat **Vorrang** vor dem Cloudflare-
   Secret `ADMIN_PASSWORD`. Ist das Secret gesetzt, ist die Ersteinrichtung
   von vornherein gesperrt.
-* Passwort mind. 8 Zeichen, PIN mind. 6, beide müssen verschieden sein.
+* Passwort mind. 8 Zeichen, Master-Key mind. 12, beide müssen verschieden sein.
+  Antworten: Groß-/Kleinschreibung und doppelte Leerzeichen egal.
+* Alle Zurücksetzen-Wege unterliegen der Anmeldebremse (5 verschiedene
+  Fehlversuche → 10 Minuten Sperre).
+* Die Reihenfolge von `FRAGEN_KATALOG` in `worker.js` nie ändern, nur hinten
+  anfügen — gespeichert wird die Nummer der Frage (der Text steht zusätzlich dabei).
 * Jeder Zugriff auf den Zugang landet als **Spur mit Lage 200** im Fehlerbuch
   und ist auf `/serverstatus` sichtbar.
 * Solange nichts eingerichtet ist, steht die Ersteinrichtung offen — das ist
@@ -180,7 +196,8 @@ Tatorasa kann **alles Inhaltliche selbst**, ohne Veröffentlichen:
 * Sicherung aller Inhalte herunterladen und einspielen
 * Bilder-Übersicht mit Entfernen ungenutzter Bilder
 * **Zugang selbst verwalten** unter `/admin`: Ersteinrichtung, Passwort
-  ändern, Notfall-PIN selbst festlegen, Passwort per PIN zurücksetzen
+  ändern, Master-Key und Sicherheitsfragen mit PDF-Zertifikat, Passwort per
+  Master-Key oder zwei Sicherheitsfragen zurücksetzen
 
 **Nur über den Chat geht noch:** Layout und Design, neue Server-Wege,
 das Logo in der Kopfzeile.

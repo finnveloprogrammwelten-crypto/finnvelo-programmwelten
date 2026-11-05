@@ -38,6 +38,28 @@
     .fv-login .fv-pin code { font-size: 17px; font-weight: 800; letter-spacing: .08em; color: #f0b429; }
     .fv-login .gut { color: #4ad991; }
     .fv-login .schlecht { color: #e6a4a4; }
+    /* --- Passwort-Zuruecksetzung: Master-Key, Sicherheitsfragen, Zertifikat --- */
+    .fv-login.fv-login--breit { max-width: 580px; }
+    .fv-login h3 { font-size: 14px; margin: 20px 0 8px; }
+    .fv-login select { width: 100%; padding: 10px 12px; border-radius: 9px; border: 1px solid rgba(255,255,255,.18);
+      background: var(--bg-soft); color: var(--text); font: inherit; font-size: 14px; }
+    .fv-login .fv-frage { margin-top: 10px; padding: 10px; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); }
+    .fv-login .fv-frage select + input { margin-top: 8px; }
+    .fv-login .fv-zweit { width: auto; margin-top: 10px; padding: 8px 14px; background: rgba(255,255,255,.08);
+      color: var(--text); font-weight: 600; font-size: 13px; }
+    .fv-login .fv-zweit:hover { background: rgba(255,255,255,.14); }
+    .fv-login .fv-umschalter { display: flex; gap: 8px; margin: 0 0 16px; }
+    .fv-login .fv-umschalter button { flex: 1; margin-top: 0; padding: 9px 8px; background: rgba(255,255,255,.08);
+      color: var(--text); font-weight: 600; font-size: 13.5px; }
+    .fv-login .fv-umschalter button.an { background: var(--blue); color: #fff; }
+    .fv-login .fv-gefragt { margin: 14px 0 7px; font-size: 14px; font-weight: 600; line-height: 1.45; }
+    .fv-login #gefragt { margin-bottom: 16px; }
+    .fv-login .fv-ok { margin: 0 0 4px; padding: 12px 14px; border-radius: 10px; font-size: 13.5px; line-height: 1.6;
+      border-left: 3px solid #4ad991; background: rgba(74,217,145,.10); }
+    .fv-login .fv-ok code { font-size: 15px; font-weight: 800; letter-spacing: .05em; color: #4ad991; word-break: break-all; }
+    .fv-login .fv-fragenliste { margin: 0 0 6px; padding-left: 20px; font-size: 13px; line-height: 1.7; color: var(--muted); }
+    @media (max-width: 420px) { .fv-login { padding: 20px 16px; } }
   </style>
 </head>
 <body class="legal-body">
@@ -53,20 +75,26 @@
   </main>
   <script>
   (function () {
+    var karte = document.getElementById('karte');
     var rumpf = document.getElementById('rumpf');
     var titel = document.getElementById('titel');
     var msg   = document.getElementById('msg');
+    var lage  = {};       // Antwort von {aktion:'lage'} - beim Start einmal geholt
 
-    function melden(text, art) {
-      msg.textContent = text || '';
-      msg.className = 'msg' + (art ? ' ' + art : '');
+    function meldenIn(el, text, art) {
+      el.textContent = text || '';
+      el.className = 'msg' + (art ? ' ' + art : '');
     }
+    function melden(text, art) { meldenIn(msg, text, art); }
     function feld(id) { var e = document.getElementById(id); return e ? (e.value || '') : ''; }
     function merken(p) { try { sessionStorage.setItem('fv_admin_pw', p); } catch (e) {} }
     function sicher(t) {
       return String(t == null ? '' : t)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+    function breit(an) { karte.classList.toggle('fv-login--breit', !!an); }
+    function zwei(n) { return (n < 10 ? '0' : '') + n; }
+    function datumText(d) { return zwei(d.getDate()) + '.' + zwei(d.getMonth() + 1) + '.' + d.getFullYear(); }
 
     // Ruft /api/zugang auf und liefert { ok, d } zurueck.
     function zugang(daten) {
@@ -80,44 +108,360 @@
     }
 
     /* =================================================================
+     * Bausteine fuer die Passwort-Zuruecksetzung
+     * Finnvelo-Standard: Passwort und Master-Key je doppelt, vier von
+     * dreissig Sicherheitsfragen. Danach ein PDF-Zertifikat - mit Master-Key
+     * und Fragen, OHNE Antworten. Es entsteht hier im Browser; der Server
+     * kennt den Master-Key nur als Hash und koennte ihn gar nicht ausgeben.
+     * ================================================================= */
+    var katalogLaden = null;   // die 30 Fragen, einmal vom Server
+    function katalogHolen() {
+      if (!katalogLaden) {
+        katalogLaden = zugang({ aktion: 'katalog' }).then(function (res) {
+          var f = (res.d && res.d.fragen) || [];
+          if (!f.length) throw new Error('katalog');
+          return f;
+        });
+        katalogLaden.catch(function () { katalogLaden = null; });
+      }
+      return katalogLaden;
+    }
+
+    // jsPDF und Logo - im Hintergrund vorgeladen, damit das Zertifikat sofort entsteht.
+    var pdfLaden = null;
+    function pdfWerkzeug() {
+      if (!pdfLaden) {
+        pdfLaden = Promise.all([
+          new Promise(function (ok, nein) {
+            if (window.jspdf && window.jspdf.jsPDF) return ok();
+            var s = document.createElement('script');
+            s.src = '/assets/js/jspdf.umd.min.js';
+            s.onload = function () { (window.jspdf && window.jspdf.jsPDF) ? ok() : nein(new Error('jspdf')); };
+            s.onerror = function () { nein(new Error('jspdf')); };
+            document.head.appendChild(s);
+          }),
+          fetch('/assets/images/zertifikat-logo.jpg').then(function (r) {
+            if (!r.ok) throw new Error('logo');
+            return r.blob();
+          }).then(function (blob) {
+            return new Promise(function (ok, nein) {
+              var fr = new FileReader();
+              fr.onload = function () { ok(fr.result); };
+              fr.onerror = nein;
+              fr.readAsDataURL(blob);
+            });
+          }).catch(function () { return null; })   // ohne Logo geht es auch
+        ]).then(function (teile) { return { jsPDF: window.jspdf.jsPDF, logo: teile[1] }; });
+        pdfLaden.catch(function () { pdfLaden = null; });
+      }
+      return pdfLaden;
+    }
+
+    // Vorschlag fuer den Master-Key: 20 Zeichen aus 32 (ohne 0/O und 1/I), 100 Bit Zufall.
+    function masterVorschlag() {
+      var Z = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      var b = new Uint8Array(20);
+      crypto.getRandomValues(b);
+      var s = '';
+      for (var i = 0; i < 20; i++) { if (i && i % 4 === 0) s += '-'; s += Z[b[i] % 32]; }
+      return s;
+    }
+
+    function paketFormular(katalog) {
+      var optionen = '<option value="">– Frage wählen –</option>' + katalog.map(function (f, i) {
+        return '<option value="' + i + '">' + sicher(f) + '</option>';
+      }).join('');
+      var fragen = '';
+      for (var n = 1; n <= 4; n++) {
+        fragen += '<div class="fv-frage">'
+          + '<select id="sf' + n + '" aria-label="Sicherheitsfrage ' + n + '">' + optionen + '</select>'
+          + '<input type="text" id="sa' + n + '" placeholder="Antwort auf Frage ' + n + '" autocomplete="off" spellcheck="false">'
+          + '</div>';
+      }
+      return '<h3>1. Passwort</h3>'
+        + '<input type="password" id="kp1" placeholder="Passwort (mind. 8 Zeichen)" autocomplete="new-password">'
+        + '<input type="password" id="kp2" placeholder="Passwort wiederholen" autocomplete="new-password">'
+        + '<h3>2. Master-Key</h3>'
+        + '<p class="fv-erklaer" style="margin-bottom:8px">Damit l&auml;sst sich das Passwort jederzeit zur&uuml;cksetzen. '
+        + 'Er steht nachher auf dem Zertifikat. Mindestens 12 Zeichen und anders als das Passwort &ndash; '
+        + 'am sichersten ist der Vorschlag.</p>'
+        + '<input type="password" id="km1" placeholder="Master-Key (mind. 12 Zeichen)" autocomplete="off" spellcheck="false">'
+        + '<input type="password" id="km2" placeholder="Master-Key wiederholen" autocomplete="off" spellcheck="false">'
+        + '<button type="button" class="fv-zweit" id="kmvor">Sicheren Master-Key vorschlagen</button>'
+        + '<h3>3. Vier Sicherheitsfragen</h3>'
+        + '<p class="fv-erklaer" style="margin-bottom:4px">Vier verschiedene Fragen w&auml;hlen und beantworten. '
+        + 'Beim Zur&uuml;cksetzen werden zwei davon zuf&auml;llig gestellt. Gro&szlig;- und Kleinschreibung '
+        + 'spielen dabei keine Rolle.</p>'
+        + fragen;
+    }
+
+    function paketVerdrahten(ziel) {
+      var sel = [1, 2, 3, 4].map(function (n) { return document.getElementById('sf' + n); });
+      // Eine Frage, die schon in einer anderen Zeile steht, ist nicht noch einmal waehlbar.
+      function sperren() {
+        var gewaehlt = sel.map(function (s) { return s.value; });
+        sel.forEach(function (s, i) {
+          [].forEach.call(s.options, function (o) {
+            o.disabled = o.value !== '' && gewaehlt.some(function (g, j) { return j !== i && g === o.value; });
+          });
+        });
+      }
+      sel.forEach(function (s) { s.addEventListener('change', sperren); });
+      document.getElementById('kmvor').addEventListener('click', function () {
+        var v = masterVorschlag();
+        ['km1', 'km2'].forEach(function (id) {
+          var f = document.getElementById(id);
+          f.value = v;
+          // sichtbar machen - ueber das Auge, damit dessen Anzeige stimmt
+          if (f.type === 'password') {
+            var auge = f.parentNode && f.parentNode.querySelector('.fv-pw-auge');
+            if (auge) auge.click(); else f.type = 'text';
+          }
+        });
+        meldenIn(ziel, 'Vorschlag eingetragen – er steht nachher auch auf dem Zertifikat.', 'gut');
+      });
+    }
+
+    function paketLesen() {
+      var d = { neu: feld('kp1'), neu2: feld('kp2'), master: feld('km1').trim(), master2: feld('km2').trim(), fragen: [] };
+      if (d.neu.length < 8)           return { fehler: 'Das Passwort braucht mindestens acht Zeichen.' };
+      if (d.neu !== d.neu2)           return { fehler: 'Die beiden Passwörter sind verschieden.' };
+      if (d.master.length < 12)       return { fehler: 'Der Master-Key braucht mindestens zwölf Zeichen.' };
+      if (d.master.length > 200)      return { fehler: 'Der Master-Key ist zu lang (höchstens 200 Zeichen).' };
+      if (d.master !== d.master2)     return { fehler: 'Die beiden Master-Keys sind verschieden.' };
+      if (d.master === d.neu)         return { fehler: 'Master-Key und Passwort müssen verschieden sein.' };
+      // Das PDF kennt nur westeuropaeische Zeichen - alles andere waere dort unlesbar.
+      if (/[^ -~ -ÿ€]/.test(d.master)) {
+        return { fehler: 'Der Master-Key darf nur Buchstaben, Ziffern und gängige Sonderzeichen enthalten.' };
+      }
+      for (var n = 1; n <= 4; n++) {
+        var nr = feld('sf' + n), antwort = feld('sa' + n).trim();
+        if (nr === '')          return { fehler: 'Bitte in Zeile ' + n + ' eine Frage wählen – es werden genau vier gebraucht.' };
+        if (antwort.length < 2) return { fehler: 'Bitte Frage ' + n + ' beantworten.' };
+        if (d.fragen.some(function (f) { return f.nr === Number(nr); })) return { fehler: 'Jede Frage bitte nur einmal wählen.' };
+        d.fragen.push({ nr: Number(nr), antwort: antwort });
+      }
+      return d;
+    }
+
+    /* Prueft, speichert und erzeugt das Zertifikat. Das PDF-Werkzeug wird
+       VOR dem Speichern geladen: so gibt es nie ein neues Paket ohne
+       Zertifikat. fertig(neuesPasswort, zertifikat, pdfOk). */
+    function paketSpeichern(knopf, ziel, aktion, pw, fertig) {
+      var d = paketLesen();
+      if (d.fehler) return meldenIn(ziel, d.fehler, 'schlecht');
+      knopf.disabled = true;
+      meldenIn(ziel, 'Zertifikat wird vorbereitet …');
+      pdfWerkzeug().then(function () {
+        meldenIn(ziel, 'Wird gespeichert …');
+        var daten = { aktion: aktion, neu: d.neu, neu2: d.neu2, master: d.master, master2: d.master2, fragen: d.fragen };
+        if (pw) daten.password = pw;
+        return zugang(daten);
+      }, function () {
+        var e = new Error('pdf'); e.pdf = true; throw e;
+      }).then(function (res) {
+        if (!res.ok) {
+          knopf.disabled = false;
+          return meldenIn(ziel, res.d.fehler || 'Speichern fehlgeschlagen.', 'schlecht');
+        }
+        lage.sicherungDa = true;
+        var zert = { master: d.master, fragen: res.d.fragen || [], angelegt: res.d.angelegt || Date.now() };
+        return zertifikatSpeichern(zert).then(
+          function () { fertig(d.neu, zert, true); },
+          function () { fertig(d.neu, zert, false); });
+      }).catch(function (e) {
+        knopf.disabled = false;
+        meldenIn(ziel, (e && e.pdf)
+          ? 'Das PDF-Werkzeug ließ sich nicht laden – es wurde nichts gespeichert. Bitte die Seite neu laden.'
+          : 'Verbindungsfehler.', 'schlecht');
+      });
+    }
+
+    // Anzeige nach dem Speichern, mit Knopf zum erneuten Herunterladen.
+    function fertigAnzeigen(platz, zert, pdfOk, weiterText, weiter) {
+      platz.innerHTML = '<div class="fv-ok"><strong>Gespeichert.</strong> '
+        + (pdfOk
+          ? 'Das Sicherheitszertifikat wurde als PDF heruntergeladen. Bitte ablegen oder ausdrucken.'
+          : 'Das PDF ließ sich nicht erzeugen – bitte mit dem Knopf unten noch einmal versuchen.')
+        + '<br>Master-Key: <code>' + sicher(zert.master) + '</code><br>'
+        + 'Nach dem Verlassen dieser Seite wird er nirgends mehr angezeigt.</div>'
+        + '<button type="button" class="fv-zweit" id="pdfneu">PDF erneut herunterladen</button>'
+        + (weiterText ? '<button type="button" id="pdfweiter">' + weiterText + '</button>' : '')
+        + '<p class="msg" id="pdfmsg"></p>';
+      document.getElementById('pdfneu').addEventListener('click', function () {
+        var m = document.getElementById('pdfmsg');
+        zertifikatSpeichern(zert).then(function () { meldenIn(m, 'PDF heruntergeladen.', 'gut'); },
+          function () { meldenIn(m, 'Das PDF ließ sich nicht erzeugen.', 'schlecht'); });
+      });
+      if (weiterText) document.getElementById('pdfweiter').addEventListener('click', weiter);
+    }
+
+    /* Das Zertifikat als A4-PDF (jsPDF, Standardschrift Helvetica/Courier -
+       die kennen Umlaute, ß und deutsche Anfuehrungszeichen). */
+    function zertifikatSpeichern(zert) {
+      return pdfWerkzeug().then(function (w) {
+        var doc = new w.jsPDF({ unit: 'mm', format: 'a4' });
+        var B = 210, R = 20, innen = B - 2 * R, PT = 0.3528;
+        var DUNKEL = [28, 28, 32], GRAU = [105, 105, 112], ROT = [180, 28, 42], BRAUN = [120, 80, 0];
+        var d = new Date(zert.angelegt || Date.now());
+        var tag = datumText(d), zeit = zwei(d.getHours()) + ':' + zwei(d.getMinutes());
+        var iso = d.getFullYear() + '-' + zwei(d.getMonth() + 1) + '-' + zwei(d.getDate());
+
+        function schrift(art, groesse, farbe) {
+          doc.setFont(art === 'mono' ? 'courier' : 'helvetica', art === 'normal' ? 'normal' : 'bold');
+          doc.setFontSize(groesse);
+          doc.setTextColor(farbe[0], farbe[1], farbe[2]);
+        }
+        // Text mit Umbruch; liefert die Grundlinie fuer die naechste Zeile.
+        function absatz(text, x, y, breite, groesse) {
+          var z = doc.splitTextToSize(text, breite);
+          doc.text(z, x, y, { lineHeightFactor: 1.3 });
+          return y + z.length * groesse * PT * 1.3;
+        }
+
+        // Kopf: dunkles Band mit Logo, darunter eine rote Linie
+        doc.setFillColor(16, 16, 18);
+        doc.rect(0, 0, B, 48, 'F');
+        var tx = R;
+        if (w.logo) { doc.addImage(w.logo, 'JPEG', R, 8, 48, 32); tx = R + 56; }
+        schrift('fett', 23, [255, 255, 255]);
+        doc.text('Sicherheitszertifikat', tx, 23);
+        schrift('normal', 11, [205, 205, 210]);
+        doc.text('FINNVELO Programmwelten – Admin-Zugang', tx, 31);
+        doc.text('finnveloprogramme.com', tx, 37.5);
+        doc.setFillColor(ROT[0], ROT[1], ROT[2]);
+        doc.rect(0, 48, B, 1.2, 'F');
+
+        var y = 62;
+        schrift('normal', 10.5, GRAU);
+        doc.text('Ausgestellt am ' + tag + ' um ' + zeit + ' Uhr', R, y);
+
+        // Master-Key im Kasten, Schrift so gross wie moeglich
+        y += 7;
+        var gr = 18;
+        schrift('mono', gr, DUNKEL);
+        while (gr > 11 && doc.getTextWidth(zert.master) > innen - 14) { gr -= 1; doc.setFontSize(gr); }
+        var mz = doc.splitTextToSize(zert.master, innen - 14);
+        var hKey = mz.length * gr * PT * 1.25;
+        var hBox = 23 + hKey;
+        doc.setDrawColor(ROT[0], ROT[1], ROT[2]);
+        doc.setLineWidth(0.7);
+        doc.setFillColor(252, 247, 247);
+        doc.roundedRect(R, y, innen, hBox, 3, 3, 'FD');
+        schrift('fett', 9.5, ROT);
+        doc.text('MASTER-KEY', R + 7, y + 8.5);
+        schrift('mono', gr, DUNKEL);
+        doc.text(mz, R + 7, y + 11 + gr * PT, { lineHeightFactor: 1.25 });
+        schrift('normal', 9, GRAU);
+        doc.text('Genau so eingeben, wie er hier steht – Groß- und Kleinschreibung zählt.', R + 7, y + hBox - 5);
+        y += hBox + 13;
+
+        // Die vier Fragen - ohne Antworten
+        schrift('fett', 13, DUNKEL);
+        doc.text('Deine vier Sicherheitsfragen', R, y);
+        y += 7.5;
+        zert.fragen.forEach(function (f, i) {
+          schrift('fett', 10.5, ROT);
+          doc.text((i + 1) + '.', R + 1, y);
+          schrift('normal', 10.5, DUNKEL);
+          y = absatz(f, R + 8, y, innen - 8, 10.5) + 1.2;
+        });
+        schrift('normal', 9.5, GRAU);
+        y = absatz('Beim Zurücksetzen werden zwei dieser Fragen zufällig gestellt – beide Antworten müssen stimmen.',
+          R, y + 1.5, innen, 9.5);
+        y += 9;
+
+        // Anleitung
+        schrift('fett', 13, DUNKEL);
+        doc.text('So setzt du das Passwort zurück', R, y);
+        y += 7.5;
+        [
+          'finnveloprogramme.com/admin aufrufen und „Passwort vergessen“ wählen.',
+          '„Master-Key“ wählen und den Schlüssel von diesem Blatt eingeben – oder '
+            + '„Sicherheitsfragen“ wählen und die zwei gestellten Fragen beantworten.',
+          'Ein neues Passwort zweimal eingeben und bestätigen.',
+          'Fertig: Du bist direkt angemeldet. Master-Key und Fragen bleiben gültig.'
+        ].forEach(function (s, i) {
+          schrift('fett', 10.5, ROT);
+          doc.text((i + 1) + '.', R + 1, y);
+          schrift('normal', 10.5, DUNKEL);
+          y = absatz(s, R + 8, y, innen - 8, 10.5) + 1.2;
+        });
+        y += 6;
+
+        // Hinweise im gelben Kasten
+        schrift('normal', 10, DUNKEL);
+        var hinweise = [
+          'Die Antworten stehen absichtlich nicht auf diesem Blatt.',
+          'Wer den Master-Key kennt, kann das Passwort zurücksetzen. Bitte getrennt vom Rechner sicher '
+            + 'aufbewahren – ausgedruckt oder als Datei an einem geschützten Ort.',
+          'Wird die Passwort-Zurücksetzung im Admin-Bereich neu eingerichtet, gilt dieses Zertifikat nicht mehr.'
+        ].map(function (h) { return doc.splitTextToSize(h, innen - 18); });
+        var hZeile = 10 * PT * 1.3;
+        var hHin = 15;
+        hinweise.forEach(function (z) { hHin += z.length * hZeile + 2; });
+        doc.setDrawColor(230, 170, 40);
+        doc.setLineWidth(0.5);
+        doc.setFillColor(255, 248, 225);
+        doc.roundedRect(R, y, innen, hHin, 3, 3, 'FD');
+        schrift('fett', 10.5, BRAUN);
+        doc.text('Wichtig', R + 7, y + 8);
+        var yy = y + 14;
+        hinweise.forEach(function (z) {
+          schrift('fett', 10, BRAUN);
+          doc.text('•', R + 7, yy);
+          schrift('normal', 10, DUNKEL);
+          doc.text(z, R + 11, yy, { lineHeightFactor: 1.3 });
+          yy += z.length * hZeile + 2;
+        });
+
+        // Fusszeile
+        doc.setDrawColor(210, 210, 215);
+        doc.setLineWidth(0.3);
+        doc.line(R, 280, B - R, 280);
+        schrift('normal', 8.5, GRAU);
+        doc.text('FINNVELO Programmwelten · finnveloprogrammwelten@gmail.com', R, 285);
+        doc.text('Ausgestellt am ' + tag, B - R, 285, { align: 'right' });
+
+        doc.setProperties({
+          title: 'FINNVELO Sicherheitszertifikat',
+          subject: 'Admin-Zugang finnveloprogramme.com',
+          creator: 'FINNVELO Programmwelten'
+        });
+        doc.save('Finnvelo-Sicherheitszertifikat-' + iso + '.pdf');
+      });
+    }
+
+    /* =================================================================
      * 1. Ersteinrichtung - nur solange gar kein Passwort existiert
      * ================================================================= */
     function zeigeEinrichtung() {
       titel.textContent = 'Zugang einrichten';
-      rumpf.innerHTML =
-        '<p class="fv-warn"><strong>Es ist noch kein Passwort vergeben.</strong> '
-        + 'Bis das erledigt ist, k&ouml;nnte jeder, der diese Seite kennt, den Zugang '
-        + 'belegen. Bitte jetzt gleich einrichten.</p>'
-        + '<input type="password" id="pw1" placeholder="Passwort (mind. 8 Zeichen)" autocomplete="new-password" autofocus>'
-        + '<input type="password" id="pw2" placeholder="Passwort wiederholen" autocomplete="new-password">'
-        + '<p class="fv-erklaer" style="margin:14px 0 8px">Dazu eine <strong>Notfall-PIN</strong>. '
-        + 'Damit l&auml;sst sich das Passwort zur&uuml;cksetzen, falls du es vergisst. '
-        + 'Sie muss anders lauten als das Passwort und geh&ouml;rt nicht auf denselben Zettel.</p>'
-        + '<input type="password" id="pin1" placeholder="Notfall-PIN (mind. 6 Zeichen)" autocomplete="off">'
-        + '<input type="password" id="pin2" placeholder="Notfall-PIN wiederholen" autocomplete="off">'
-        + '<button type="button" id="los">Zugang einrichten</button>';
-
-      document.getElementById('los').addEventListener('click', function () {
-        var p1 = feld('pw1'), p2 = feld('pw2'), n1 = feld('pin1'), n2 = feld('pin2');
-        if (p1.length < 8) return melden('Das Passwort braucht mindestens acht Zeichen.', 'schlecht');
-        if (p1 !== p2)     return melden('Die beiden Passw\u00f6rter sind verschieden.', 'schlecht');
-        if (n1.length < 6) return melden('Die Notfall-PIN braucht mindestens sechs Zeichen.', 'schlecht');
-        if (n1 !== n2)     return melden('Die beiden PINs sind verschieden.', 'schlecht');
-        if (n1 === p1)     return melden('PIN und Passwort m\u00fcssen verschieden sein.', 'schlecht');
-        var knopf = this;
-        knopf.disabled = true;
-        melden('Wird eingerichtet \u2026');
-        zugang({ aktion: 'einrichten', neu: p1, pin: n1 }).then(function (res) {
-          if (!res.ok) {
-            knopf.disabled = false;
-            return melden(res.d.fehler || 'Einrichten fehlgeschlagen.', 'schlecht');
-          }
-          merken(p1);
-          melden('Zugang eingerichtet. Du bist angemeldet.', 'gut');
-          setTimeout(function () { zeigeVerwaltung(p1, true); }, 600);
-        }).catch(function () {
-          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+      breit(true);
+      rumpf.innerHTML = '<p class="fv-erklaer">Wird geladen …</p>';
+      pdfWerkzeug().catch(function () {});
+      katalogHolen().then(function (katalog) {
+        rumpf.innerHTML =
+          '<p class="fv-warn"><strong>Es ist noch kein Passwort vergeben.</strong> '
+          + 'Bis das erledigt ist, k&ouml;nnte jeder, der diese Seite kennt, den Zugang '
+          + 'belegen. Bitte jetzt gleich einrichten. Danach entsteht ein PDF-Zertifikat '
+          + 'zum Ablegen oder Ausdrucken.</p>'
+          + paketFormular(katalog)
+          + '<button type="button" id="los">Zugang einrichten und Zertifikat erstellen</button>';
+        paketVerdrahten(msg);
+        document.getElementById('los').addEventListener('click', function () {
+          paketSpeichern(this, msg, 'einrichten', '', function (neuPw, zert, pdfOk) {
+            merken(neuPw);
+            melden('');
+            titel.textContent = 'Zugang eingerichtet';
+            fertigAnzeigen(rumpf, zert, pdfOk, 'Weiter zur Verwaltung', function () {
+              zeigeVerwaltung(neuPw, true);
+            });
+          });
         });
+      }).catch(function () {
+        rumpf.innerHTML = '';
+        melden('Die Sicherheitsfragen ließen sich nicht laden. Bitte die Seite neu laden.', 'schlecht');
       });
     }
 
@@ -126,6 +470,7 @@
      * ================================================================= */
     function zeigeAnmeldung() {
       titel.textContent = 'Anmeldung';
+      breit(false);
       rumpf.innerHTML =
         '<input type="password" id="pw" placeholder="Passwort" autocomplete="current-password" autofocus>'
         + '<button type="button" id="go">Freischalten</button>'
@@ -134,7 +479,7 @@
       function anmelden() {
         var p = feld('pw'); if (!p) return;
         var go = document.getElementById('go');
-        go.disabled = true; melden('Pr\u00fcfe \u2026');
+        go.disabled = true; melden('Prüfe …');
         fetch('/api/admin/login', {
           method: 'POST', headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ password: p })
@@ -157,71 +502,150 @@
       document.getElementById('pw').addEventListener('keydown', function (e) {
         if (e.key === 'Enter') anmelden();
       });
-      document.getElementById('vergessen').addEventListener('click', zeigeVergessen);
+      document.getElementById('vergessen').addEventListener('click', function () {
+        melden(''); zeigeVergessen();
+      });
     }
 
     /* =================================================================
-     * 3. Passwort vergessen - Zuruecksetzen mit der Notfall-PIN
+     * 3. Passwort vergessen - mit Sicherheitsfragen oder Master-Key.
+     *    Solange kein Paket eingerichtet ist: wie bisher mit der Notfall-PIN.
      * ================================================================= */
-    function zeigeVergessen() {
-      titel.textContent = 'Passwort zur\u00fccksetzen';
-      rumpf.innerHTML =
-        '<p class="fv-erklaer">Mit der Notfall-PIN l&auml;sst sich ein neues Passwort setzen. '
-        + 'Die PIN selbst bleibt dabei unver&auml;ndert.</p>'
-        + '<input type="password" id="rpin" placeholder="Notfall-PIN" autocomplete="off" autofocus>'
-        + '<input type="password" id="rpw1" placeholder="Neues Passwort (mind. 8 Zeichen)" autocomplete="new-password">'
-        + '<input type="password" id="rpw2" placeholder="Neues Passwort wiederholen" autocomplete="new-password">'
-        + '<button type="button" id="rlos">Passwort zur&uuml;cksetzen</button>'
-        + '<button type="button" class="fv-neben" id="zurueck">Zur&uuml;ck zur Anmeldung</button>';
+    var NEUES_PW = '<input type="password" id="rpw1" placeholder="Neues Passwort (mind. 8 Zeichen)" autocomplete="new-password">'
+      + '<input type="password" id="rpw2" placeholder="Neues Passwort wiederholen" autocomplete="new-password">';
 
+    function zuruecksetzenSenden(knopf, daten) {
+      var p1 = feld('rpw1'), p2 = feld('rpw2');
+      if (p1.length < 8) return melden('Das neue Passwort braucht mindestens acht Zeichen.', 'schlecht');
+      if (p1 !== p2)     return melden('Die beiden Passwörter sind verschieden.', 'schlecht');
+      daten.neu = p1; daten.neu2 = p2;
+      knopf.disabled = true; melden('Wird geprüft …');
+      return zugang(daten).then(function (res) {
+        if (!res.ok) {
+          knopf.disabled = false;
+          melden(res.d.fehler || 'Zurücksetzen fehlgeschlagen.', 'schlecht');
+          return res;
+        }
+        merken(p1);
+        melden('Passwort zurückgesetzt. Du bist angemeldet.', 'gut');
+        setTimeout(function () { zeigeVerwaltung(p1, false); }, 900);
+        return res;
+      }).catch(function () {
+        knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+      });
+    }
+
+    function zeigeVergessen() {
+      titel.textContent = 'Passwort zurücksetzen';
+      breit(false);
+      var zurueck = '<button type="button" class="fv-neben" id="zurueck">Zur&uuml;ck zur Anmeldung</button>';
+
+      if (lage.sicherungDa) {
+        rumpf.innerHTML =
+          '<div class="fv-umschalter">'
+          + '<button type="button" id="wFragen" class="an">Sicherheitsfragen</button>'
+          + '<button type="button" id="wMaster">Master-Key</button>'
+          + '</div><div id="wInhalt"></div>' + zurueck;
+        document.getElementById('wFragen').addEventListener('click', function () { wahl('fragen'); });
+        document.getElementById('wMaster').addEventListener('click', function () { wahl('master'); });
+        wahl('fragen');
+      } else if (lage.pinDa) {
+        rumpf.innerHTML =
+          '<p class="fv-erklaer">Mit der Notfall-PIN l&auml;sst sich ein neues Passwort setzen. '
+          + 'Die PIN selbst bleibt dabei unver&auml;ndert.</p>'
+          + '<input type="password" id="rpin" placeholder="Notfall-PIN" autocomplete="off" autofocus>'
+          + NEUES_PW
+          + '<button type="button" id="rlos">Passwort zur&uuml;cksetzen</button>' + zurueck;
+        document.getElementById('rlos').addEventListener('click', function () {
+          var pin = feld('rpin').trim();
+          if (!pin) return melden('Bitte die Notfall-PIN eingeben.', 'schlecht');
+          zuruecksetzenSenden(this, { aktion: 'zuruecksetzen', pin: pin });
+        });
+      } else {
+        rumpf.innerHTML =
+          '<p class="fv-erklaer">F&uuml;r diesen Zugang ist kein Weg zum Zur&uuml;cksetzen hinterlegt. '
+          + 'Dann hilft nur noch das Cloudflare-Secret ADMIN_PASSWORD im Dashboard.</p>' + zurueck;
+      }
       document.getElementById('zurueck').addEventListener('click', function () {
         melden(''); zeigeAnmeldung();
       });
-      document.getElementById('rlos').addEventListener('click', function () {
-        var pin = feld('rpin'), p1 = feld('rpw1'), p2 = feld('rpw2');
-        if (!pin)          return melden('Bitte die Notfall-PIN eingeben.', 'schlecht');
-        if (p1.length < 8) return melden('Das neue Passwort braucht mindestens acht Zeichen.', 'schlecht');
-        if (p1 !== p2)     return melden('Die beiden Passw\u00f6rter sind verschieden.', 'schlecht');
-        var knopf = this; knopf.disabled = true; melden('Wird zur\u00fcckgesetzt \u2026');
-        zugang({ aktion: 'zuruecksetzen', pin: pin.trim(), neu: p1 }).then(function (res) {
-          if (!res.ok) {
-            knopf.disabled = false;
-            return melden(res.d.fehler || 'Zur\u00fccksetzen fehlgeschlagen.', 'schlecht');
+
+      function wahl(art) {
+        melden('');
+        document.getElementById('wFragen').className = art === 'fragen' ? 'an' : '';
+        document.getElementById('wMaster').className = art === 'master' ? 'an' : '';
+        var platz = document.getElementById('wInhalt');
+        if (art === 'master') {
+          platz.innerHTML =
+            '<p class="fv-erklaer">Den Master-Key vom Sicherheitszertifikat eingeben und ein neues Passwort festlegen.</p>'
+            + '<input type="password" id="rmaster" placeholder="Master-Key" autocomplete="off" spellcheck="false">'
+            + NEUES_PW
+            + '<button type="button" id="rlos">Passwort zur&uuml;cksetzen</button>';
+          document.getElementById('rlos').addEventListener('click', function () {
+            var m = feld('rmaster').trim();
+            if (!m) return melden('Bitte den Master-Key eingeben.', 'schlecht');
+            zuruecksetzenSenden(this, { aktion: 'zuruecksetzen-master', master: m });
+          });
+          return;
+        }
+        platz.innerHTML =
+          '<p class="fv-erklaer">Beantworte die beiden Fragen und lege ein neues Passwort fest. '
+          + 'Gro&szlig;- und Kleinschreibung spielen keine Rolle.</p>'
+          + '<div id="gefragt"><p class="fv-erklaer">Fragen werden geladen …</p></div>'
+          + NEUES_PW
+          + '<button type="button" id="rlos" disabled>Passwort zur&uuml;cksetzen</button>';
+        var los = document.getElementById('rlos');
+        zugang({ aktion: 'fragen' }).then(function (res) {
+          var g = document.getElementById('gefragt');
+          if (!g) return;   // inzwischen umgeschaltet
+          if (!res.ok || !res.d.fragen) {
+            g.innerHTML = '';
+            return melden(res.d.fehler || 'Die Fragen ließen sich nicht laden.', 'schlecht');
           }
-          merken(p1);
-          melden('Passwort zur\u00fcckgesetzt. Du bist angemeldet.', 'gut');
-          setTimeout(function () { zeigeVerwaltung(p1, false); }, 600);
-        }).catch(function () {
-          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+          g.innerHTML = res.d.fragen.map(function (f, i) {
+            return '<p class="fv-gefragt">' + sicher(f) + '</p>'
+              + '<input type="text" id="ra' + i + '" placeholder="Antwort" autocomplete="off" spellcheck="false">';
+          }).join('');
+          los.disabled = false;
+        }).catch(function () { melden('Verbindungsfehler.', 'schlecht'); });
+        los.addEventListener('click', function () {
+          var a = [feld('ra0').trim(), feld('ra1').trim()];
+          if (!a[0] || !a[1]) return melden('Bitte beide Fragen beantworten.', 'schlecht');
+          var p = zuruecksetzenSenden(this, { aktion: 'zuruecksetzen-fragen', antworten: a });
+          if (p) p.then(function (res) {
+            // 15 Minuten vorbei: neue Fragen holen
+            if (res && res.d && res.d.abgelaufen) {
+              wahl('fragen');
+              melden('Die Fragen waren abgelaufen – bitte die neuen beantworten.', 'schlecht');
+            }
+          });
         });
-      });
+      }
     }
 
     /* =================================================================
-     * 4. Zugangsverwaltung - Passwort und PIN aendern, weiter zur Seite
+     * 4. Zugangsverwaltung - Zuruecksetzung, Passwort, weiter zur Seite
      * ================================================================= */
     function zeigeVerwaltung(pw, frisch) {
       titel.textContent = 'Zugang';
+      breit(true);
+      melden('');
       rumpf.innerHTML =
         '<p class="fv-erklaer">Du bist angemeldet.'
-        + (frisch ? '' : ' Hier lassen sich Passwort und Notfall-PIN &auml;ndern.') + '</p>'
+        + (frisch ? '' : ' Hier l&auml;sst sich das Passwort &auml;ndern und die Zur&uuml;cksetzung verwalten.') + '</p>'
         + '<button type="button" id="weiter">Weiter zur Webseite</button>'
         + '<button type="button" class="fv-neben" id="status">Serverstatus &ouml;ffnen</button>'
+
+        + '<div class="fv-abschnitt" id="paketBereich">'
+        + '  <h2>Passwort-Zur&uuml;cksetzung</h2>'
+        + '  <p class="fv-erklaer">Wird geladen …</p>'
+        + '</div>'
 
         + '<div class="fv-abschnitt">'
         + '  <h2>Passwort &auml;ndern</h2>'
         + '  <input type="password" id="npw1" placeholder="Neues Passwort (mind. 8 Zeichen)" autocomplete="new-password">'
         + '  <input type="password" id="npw2" placeholder="Neues Passwort wiederholen" autocomplete="new-password">'
         + '  <button type="button" id="npwlos">Passwort &auml;ndern</button>'
-        + '</div>'
-
-        + '<div class="fv-abschnitt">'
-        + '  <h2>Notfall-PIN &auml;ndern</h2>'
-        + '  <p class="fv-erklaer">Nur n&ouml;tig, wenn du sie wechseln willst. '
-        + '    Muss anders lauten als das Passwort.</p>'
-        + '  <input type="password" id="npin1" placeholder="Neue Notfall-PIN (mind. 6 Zeichen)" autocomplete="off">'
-        + '  <input type="password" id="npin2" placeholder="Neue Notfall-PIN wiederholen" autocomplete="off">'
-        + '  <button type="button" id="npinlos">Notfall-PIN speichern</button>'
         + '</div>'
         + '<div id="pinzeigen"></div>';
 
@@ -235,52 +659,97 @@
       document.getElementById('npwlos').addEventListener('click', function () {
         var p1 = feld('npw1'), p2 = feld('npw2');
         if (p1.length < 8) return melden('Das neue Passwort braucht mindestens acht Zeichen.', 'schlecht');
-        if (p1 !== p2)     return melden('Die beiden Passw\u00f6rter sind verschieden.', 'schlecht');
-        var knopf = this; knopf.disabled = true; melden('Wird ge\u00e4ndert \u2026');
+        if (p1 !== p2)     return melden('Die beiden Passwörter sind verschieden.', 'schlecht');
+        var knopf = this; knopf.disabled = true; melden('Wird geändert …');
         zugang({ password: pw, aktion: 'aendern', neu: p1 }).then(function (res) {
           knopf.disabled = false;
-          if (!res.ok) return melden(res.d.fehler || '\u00c4ndern fehlgeschlagen.', 'schlecht');
+          if (!res.ok) return melden(res.d.fehler || 'Ändern fehlgeschlagen.', 'schlecht');
           pw = p1; merken(p1);
           document.getElementById('npw1').value = '';
           document.getElementById('npw2').value = '';
-          melden('Passwort ge\u00e4ndert.', 'gut');
+          melden('Passwort geändert.', 'gut');
+          // Nur ohne eingerichtete Zuruecksetzung wuerfelt der Server noch eine Notfall-PIN.
           if (res.d.pin) {
             document.getElementById('pinzeigen').innerHTML =
               '<p class="fv-pin"><strong>Notfall-PIN:</strong> <code>' + sicher(res.d.pin) + '</code><br>'
-              + 'Der Server hat sie gew\u00fcrfelt, weil noch keine hinterlegt war. '
-              + 'Jetzt aufschreiben \u2013 sie wird nie wieder angezeigt.</p>';
+              + 'Der Server hat sie gewürfelt, weil noch keine hinterlegt war. '
+              + 'Jetzt aufschreiben – sie wird nie wieder angezeigt. '
+              + 'Besser: oben Master-Key und Sicherheitsfragen einrichten.</p>';
           }
         }).catch(function () {
           knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
         });
       });
 
-      document.getElementById('npinlos').addEventListener('click', function () {
-        var n1 = feld('npin1'), n2 = feld('npin2');
-        if (n1.length < 6) return melden('Die Notfall-PIN braucht mindestens sechs Zeichen.', 'schlecht');
-        if (n1 !== n2)     return melden('Die beiden PINs sind verschieden.', 'schlecht');
-        if (n1 === pw)     return melden('PIN und Passwort m\u00fcssen verschieden sein.', 'schlecht');
-        var knopf = this; knopf.disabled = true; melden('Wird gespeichert \u2026');
-        zugang({ password: pw, aktion: 'pin', pin: n1 }).then(function (res) {
-          knopf.disabled = false;
-          if (!res.ok) return melden(res.d.fehler || 'Speichern fehlgeschlagen.', 'schlecht');
-          document.getElementById('npin1').value = '';
-          document.getElementById('npin2').value = '';
-          document.getElementById('pinzeigen').innerHTML = '';
-          melden('Notfall-PIN gespeichert.', 'gut');
+      pdfWerkzeug().catch(function () {});   // im Hintergrund vorladen
+      paketBereichZeigen();
+
+      function paketBereichZeigen() {
+        var bereich = document.getElementById('paketBereich');
+        Promise.all([zugang({ password: pw, aktion: 'zustand' }), katalogHolen()]).then(function (teile) {
+          var z = teile[0].d || {}, katalog = teile[1];
+          if (!teile[0].ok) throw new Error('zustand');
+          var formular = function (warnung, knopfText) {
+            return warnung + paketFormular(katalog)
+              + '<button type="button" id="paketlos">' + knopfText + '</button>'
+              + '<p class="msg" id="paketmsg"></p>';
+          };
+          var verdrahten = function () {
+            var m = document.getElementById('paketmsg');
+            paketVerdrahten(m);
+            document.getElementById('paketlos').addEventListener('click', function () {
+              paketSpeichern(this, m, 'sicherheit', pw, function (neuPw, zert, pdfOk) {
+                pw = neuPw; merken(neuPw);
+                document.getElementById('pinzeigen').innerHTML = '';
+                fertigAnzeigen(bereich, zert, pdfOk, '', null);
+                bereich.insertAdjacentHTML('afterbegin', '<h2>Passwort-Zur&uuml;cksetzung</h2>');
+              });
+            });
+          };
+
+          if (z.sicherungDa) {
+            var am = z.sicherungAngelegt ? datumText(new Date(z.sicherungAngelegt)) : '';
+            bereich.innerHTML = '<h2>Passwort-Zur&uuml;cksetzung</h2>'
+              + '<p class="fv-erklaer" style="margin-bottom:8px">Eingerichtet' + (am ? ' am ' + am : '') + '. '
+              + 'Zur&uuml;cksetzen geht &uuml;ber &bdquo;Passwort vergessen&ldquo; auf der Anmeldeseite &ndash; '
+              + 'mit dem Master-Key vom Zertifikat oder mit zwei dieser vier Fragen:</p>'
+              + '<ol class="fv-fragenliste">' + (z.sicherungFragen || []).map(function (f) {
+                  return '<li>' + sicher(f) + '</li>';
+                }).join('') + '</ol>'
+              + '<button type="button" class="fv-zweit" id="paketneu">Neu einrichten (neues Zertifikat)</button>'
+              + '<div id="paketform"></div>';
+            document.getElementById('paketneu').addEventListener('click', function () {
+              this.hidden = true;
+              document.getElementById('paketform').innerHTML = formular(
+                '<p class="fv-warn" style="margin-top:14px">Danach gelten nur noch der neue Master-Key und die neuen '
+                + 'Fragen. Das bisherige Zertifikat ist dann wertlos.</p>',
+                'Speichern und neues Zertifikat erstellen');
+              verdrahten();
+            });
+          } else {
+            bereich.innerHTML = '<h2>Passwort-Zur&uuml;cksetzung einrichten</h2>'
+              + formular('<p class="fv-warn"><strong>Noch nicht eingerichtet.</strong> Lege einen Master-Key und vier '
+                + 'Sicherheitsfragen fest. Danach entsteht ein PDF-Zertifikat zum Ablegen oder Ausdrucken. '
+                + (z.pinDa ? 'Die bisherige Notfall-PIN wird dabei gel&ouml;scht &ndash; der Master-Key ersetzt sie.' : '')
+                + '</p>', 'Speichern und Zertifikat erstellen');
+            verdrahten();
+          }
         }).catch(function () {
-          knopf.disabled = false; melden('Verbindungsfehler.', 'schlecht');
+          bereich.innerHTML = '<h2>Passwort-Zur&uuml;cksetzung</h2>'
+            + '<p class="fv-erklaer schlecht">Der Stand lie&szlig; sich nicht laden. Bitte die Seite neu laden.</p>';
         });
-      });
+      }
     }
 
     /* =================================================================
      * Start: erst fragen, wie die Lage ist
      * ================================================================= */
     zugang({ aktion: 'lage' }).then(function (res) {
-      var lage = res.d || {};
+      lage = res.d || {};
       if (lage.einrichtungOffen) zeigeEinrichtung();
+      else if (location.hash === '#vergessen') zeigeVergessen();
       else zeigeAnmeldung();
+      katalogHolen().catch(function () {});   // im Hintergrund vorladen
     }).catch(function () {
       // Server nicht erreichbar: lieber die Anmeldung zeigen als gar nichts.
       zeigeAnmeldung();

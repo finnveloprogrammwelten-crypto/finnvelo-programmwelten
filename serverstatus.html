@@ -325,7 +325,7 @@
       html += '<h2 class="fvs-abschnitt">Zugang</h2>'
         + '<div class="fvs-zugang">'
         + '  <p class="fvs-leer">Passwort für Admin-Modus und diese Seite ändern. '
-        + '    Die <strong>Notfall-PIN</strong> und die vollständige Verwaltung liegen unter '
+        + '    Master-Key, Sicherheitsfragen samt Zertifikat und die vollständige Verwaltung liegen unter '
         + '    <a href="/admin" style="color:var(--blue-light)">/admin</a>.</p>'
         + '  <input type="password" id="pwNeu" placeholder="Neues Passwort (mind. 8 Zeichen)">'
         + '  <input type="password" id="pwNeu2" placeholder="Neues Passwort wiederholen">'
@@ -596,23 +596,10 @@
       abrufen();
     });
     document.getElementById('vergessen').addEventListener('click', function () {
-      var m = document.getElementById('melde');
-      // Der bequeme Weg mit ordentlichen Feldern liegt unter /admin.
-      // Hier bleibt der kurze Weg, falls jemand schon auf dieser Seite steht.
-      var pin = window.prompt('Notfall-PIN eingeben:', '');
-      if (!pin) return;
-      var neuPw = window.prompt('Neues Passwort (mindestens acht Zeichen):', '');
-      if (!neuPw) return;
-      fetch('/api/zugang', { method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ aktion: 'zuruecksetzen', pin: pin.trim(), neu: neuPw }) })
-        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-        .then(function (res) {
-          if (!res.ok) { m.textContent = '\u2717 ' + (res.d.fehler || 'Zurücksetzen fehlgeschlagen.'); m.className = 'fvs-melde schlecht'; return; }
-          pw = neuPw;
-          try { sessionStorage.setItem('fv_admin_pw', neuPw); } catch (e) {}
-          m.textContent = '\u2713 Passwort zurückgesetzt.'; m.className = 'fvs-melde gut';
-          abrufen();
-        }).catch(function () { m.textContent = '\u2717 Zurücksetzen fehlgeschlagen.'; m.className = 'fvs-melde schlecht'; });
+      // Zuruecksetzen (Master-Key oder Sicherheitsfragen) gibt es nur unter /admin -
+      // dort mit ordentlichen Feldern statt Eingabefenstern. Solange dort noch
+      // kein Paket eingerichtet ist, bietet /admin auch die alte Notfall-PIN an.
+      location.href = '/admin#vergessen';
     });
 
     document.getElementById('pw').addEventListener('keydown', function (e) {

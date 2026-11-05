@@ -4556,7 +4556,8 @@
         kanalliste: 'welche Kanäle es gibt',
         verlauf: 'Änderungshistorie hinter „↺ Verlauf"',
         marken: 'Einladungsmarken',
-        zugang: 'Passwort und Notfall-PIN — steht im Klartext in sicherung.json'
+        zugang: 'Admin-Passwort (und eine alte Notfall-PIN, falls noch vorhanden) — nur als Hash',
+        zugang_sicherung: 'Master-Key und Antworten der vier Sicherheitsfragen — nur als Hash'
       };
       var namen = Object.keys(erklaerung);
       namen.forEach(function (n) {
@@ -4666,10 +4667,11 @@
           + '- Bilder: ' + bilder.length + '\n'
           + '- Zeilen in weiteren Tabellen: ' + tabZeilen + '\n'
           + '- Kan\u00e4le: ' + kanaele.length + '\n\n'
-          + '> **Diese Sicherung enth\u00e4lt dein Admin-Passwort und die Notfall-PIN im\n'
-          + '> Klartext** (in `sicherung.json`, Abschnitt `tabellen.zugang`). Ohne sie w\u00e4re\n'
-          + '> ein Wiederanlauf auf einer leeren Datenbank nicht m\u00f6glich. Bewahre die\n'
-          + '> Datei entsprechend auf und lege sie nicht offen ab.\n\n'
+          + '> **Diese Sicherung enth\u00e4lt deine Zugangsdaten** \u2013 Admin-Passwort, Master-Key\n'
+          + '> und die Antworten der Sicherheitsfragen, alle nur als Hash, nicht im Klartext\n'
+          + '> (in `sicherung.json`, Abschnitte `tabellen.zugang` und `tabellen.zugang_sicherung`).\n'
+          + '> Damit l\u00e4uft der Zugang nach einem Wiederanlauf mit denselben Daten weiter.\n'
+          + '> Bewahre die Datei trotzdem sorgsam auf und lege sie nicht offen ab.\n\n'
           + '## Was hier drin ist\n\n'
           + '| Datei | Wof\u00fcr |\n|---|---|\n'
           + '| `sicherung.json` | Die Sicherung selbst. Genau diese Datei nimmt '

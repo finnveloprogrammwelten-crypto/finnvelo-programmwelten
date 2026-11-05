@@ -10,16 +10,24 @@
 //   POST /api/comments/admin   {password}                  -> prueft Admin-Passwort
 //   POST /api/comments/remove  {id, reason, password}      -> Kommentar als "entfernt" markieren
 //
-// Admin-Zugang: Beim ersten Aufruf von /admin wird Passwort + Notfall-PIN
-// selbst vergeben (Weg "einrichten"); sie liegen danach in der Tabelle
-// "zugang". Alternativ kann in Cloudflare ein Secret ADMIN_PASSWORD stehen -
+// Admin-Zugang: Beim ersten Aufruf von /admin werden Passwort, Master-Key und
+// vier Sicherheitsfragen selbst vergeben (Weg "einrichten"); sie liegen danach
+// als Hash in den Tabellen "zugang" und "zugang_sicherung" (fruehere Zugaenge:
+// Passwort + Notfall-PIN). Alternativ kann in Cloudflare ein Secret ADMIN_PASSWORD stehen -
 // dann ist die Ersteinrichtung von vornherein gesperrt:
 //   Dashboard -> Workers & Pages -> Projekt -> Settings -> Variables and Secrets
 // Ein selbst gesetztes Passwort hat immer Vorrang vor dem Secret.
 //
 //   POST /api/zugang {aktion:"lage"}                        -> Ja/Nein-Auskunft, ohne Passwort
-//   POST /api/zugang {aktion:"einrichten", neu, pin}        -> nur solange nichts gesetzt ist
+//   POST /api/zugang {aktion:"katalog"}                     -> die 30 Sicherheitsfragen
+//   POST /api/zugang {aktion:"einrichten", neu, neu2, master, master2, fragen:[{nr, antwort}]x4}
+//                                                           -> nur solange nichts gesetzt ist
+//   POST /api/zugang {password, aktion:"sicherheit", ...wie einrichten} -> Paket anlegen/erneuern
 //   POST /api/zugang {password, aktion:"aendern", neu, pin?}
+//   POST /api/zugang {aktion:"fragen"}                      -> zwei der vier Fragen (15 Min. fest)
+//   POST /api/zugang {aktion:"zuruecksetzen-fragen", antworten:[a, b], neu, neu2}
+//   POST /api/zugang {aktion:"zuruecksetzen-master", master, neu, neu2}
+//   Alt, bis das Paket eingerichtet ist (danach ist die PIN geloescht):
 //   POST /api/zugang {password, aktion:"pin", pin}
 //   POST /api/zugang {aktion:"zuruecksetzen", pin, neu}     -> ohne altes Passwort
 
@@ -156,6 +164,81 @@ async function geheimPasst(eingabe, gespeichert) {
   return textGleich(bytesB64(await pbkdf2(eingabe, b64ToBytes(t[2]), runden)), t[3]);
 }
 
+/* --- Zuruecksetzen nach dem Finnvelo-Standard (05.11.2026) ----------------
+ * Passwort und Master-Key je doppelt eingeben, vier von dreissig Fragen
+ * waehlen und beantworten. Zum Zuruecksetzen: zwei der vier Fragen werden
+ * zufaellig gestellt (beide muessen stimmen) - oder der Master-Key.
+ * Danach entsteht im Browser ein PDF-Zertifikat (admin.html).
+ * Katalog wortgleich mit dem Finnvelo Finanzmanager (datenspeicher.js).
+ * Die Nummer einer Frage ist ihr Platz in dieser Liste - NICHT umsortieren,
+ * nur hinten anfuegen, sonst passen gespeicherte Fragen nicht mehr.
+ * ------------------------------------------------------------------------ */
+const FRAGEN_KATALOG = [
+  "Wie hieß dein erstes Haustier?",
+  "In welcher Stadt bist du geboren?",
+  "Wie lautet der Geburtsname deiner Mutter?",
+  "Wie hieß deine erste Schule?",
+  "Wie hieß dein bester Freund in der Kindheit?",
+  "Was war dein erstes Auto (Marke und Modell)?",
+  "In welcher Straße bist du aufgewachsen?",
+  "Wie heißt dein Lieblingsbuch?",
+  "Wo hast du deinen ersten Urlaub verbracht?",
+  "Wie lautete dein erster Spitzname?",
+  "Wie hieß deine erste Lehrerin oder dein erster Lehrer?",
+  "Was war dein erster Beruf oder Ferienjob?",
+  "Wie hieß dein erster Arbeitgeber?",
+  "In welcher Stadt haben sich deine Eltern kennengelernt?",
+  "Wie heißt der Geburtsort deines Vaters?",
+  "Was war dein Lieblingsessen als Kind?",
+  "Wie hieß dein erstes Kuscheltier?",
+  "Welches Instrument wolltest du als Kind lernen?",
+  "Wie hieß deine Lieblingsband als Jugendlicher?",
+  "Welchen Film hast du als erstes im Kino gesehen?",
+  "Wie hieß der Ort deiner Konfirmation, Kommunion oder Jugendweihe?",
+  "Wie lautet der Vorname deines ältesten Cousins oder deiner ältesten Cousine?",
+  "Welche Farbe hatte dein erstes Fahrrad?",
+  "Wie hieß die Straße deiner ersten eigenen Wohnung?",
+  "Was war dein Traumberuf als Kind?",
+  "Wie hieß dein Lieblingslehrer oder deine Lieblingslehrerin?",
+  "In welchem Krankenhaus bist du geboren?",
+  "Wie hieß dein erster Sportverein?",
+  "Welches war dein erstes Handy (Marke und Modell)?",
+  "Wie lautet der zweite Vorname deines ältesten Geschwisters?"
+];
+const FRAGE_GUELTIG = 15 * 60 * 1000;   // so lange bleiben die zwei gestellten Fragen dieselben
+
+// Antworten vergleichen wie im Finanzmanager: Gross/klein und Leerraum egal.
+function antwortNorm(text) {
+  return String(text || "").normalize("NFC").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+/* Pruefung der Eingaben fuer das Sicherheitspaket. Liefert { fehler } oder
+   { neu, master, fragen: [{ nr, antwort }] }. Doppelte Eingaben prueft auch
+   der Server - die Seite koennte veraltet sein. */
+function paketPruefen(b) {
+  const neu = String(b.neu || ""), neu2 = String(b.neu2 || "");
+  const master = String(b.master || "").trim(), master2 = String(b.master2 || "").trim();
+  if (neu.length < 8) return { fehler: "Das Passwort braucht mindestens acht Zeichen." };
+  if (neu !== neu2) return { fehler: "Die beiden Passwörter sind verschieden." };
+  if (master.length < 12) return { fehler: "Der Master-Key braucht mindestens zwölf Zeichen." };
+  if (master.length > 200) return { fehler: "Der Master-Key ist zu lang (höchstens 200 Zeichen)." };
+  if (master !== master2) return { fehler: "Die beiden Master-Keys sind verschieden." };
+  if (textGleich(master, neu)) return { fehler: "Master-Key und Passwort müssen verschieden sein." };
+  const roh = Array.isArray(b.fragen) ? b.fragen : [];
+  if (roh.length !== 4) return { fehler: "Bitte genau vier Sicherheitsfragen wählen und beantworten." };
+  const fragen = [];
+  for (const f of roh) {
+    const nr = Number(f && f.nr);
+    if (!Number.isInteger(nr) || nr < 0 || nr >= FRAGEN_KATALOG.length) return { fehler: "Unbekannte Sicherheitsfrage." };
+    if (fragen.some((x) => x.nr === nr)) return { fehler: "Jede Sicherheitsfrage darf nur einmal vorkommen." };
+    const antwort = antwortNorm(f.antwort);
+    if (antwort.length < 2) return { fehler: "Bitte jede der vier Fragen beantworten (mindestens zwei Zeichen)." };
+    if (antwort.length > 200) return { fehler: "Eine Antwort ist zu lang (höchstens 200 Zeichen)." };
+    fragen.push({ nr, antwort });
+  }
+  return { neu, master, fragen };
+}
+
 // Anmeldebremse: nach so vielen VERSCHIEDENEN falschen Eingaben einer
 // Herkunft ist fuer BREMSE_DAUER Pause. Eine Zaehlung verfaellt nach einer Stunde.
 const BREMSE_VERSUCHE = 5;
@@ -249,6 +332,16 @@ export class Counter extends DurableObject {
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS zugang (eins INTEGER PRIMARY KEY CHECK (eins = 1), " +
       "passwort TEXT, pin TEXT, geaendert INTEGER)"
+    );
+    // Sicherheitspaket fuer das Zuruecksetzen (05.11.2026): Master-Key und
+    // vier Fragen, alles nur als Hash. "fragen" = JSON [{ nr, frage, hash }].
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS zugang_sicherung (eins INTEGER PRIMARY KEY CHECK (eins = 1), " +
+      "master TEXT NOT NULL, fragen TEXT NOT NULL, angelegt INTEGER NOT NULL)"
+    );
+    // Welche zwei der vier Fragen einer Herkunft gerade gestellt sind
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS zugang_frage (herkunft TEXT PRIMARY KEY, auswahl TEXT NOT NULL, bis INTEGER NOT NULL)"
     );
     // Anmeldebremse (05.11.2026). "herkunft" ist ein Hash der IP-Adresse,
     // "letzter" ein Kurzhash der letzten falschen Eingabe - nie die Eingabe selbst.
@@ -375,6 +468,47 @@ export class Counter extends DurableObject {
     }
     await this.fehlversuch(wer, z, pw, request);
     return false;
+  }
+
+  // Das hinterlegte Sicherheitspaket oder null.
+  sicherung() {
+    try {
+      const r = this.sql.exec("SELECT master, fragen, angelegt FROM zugang_sicherung WHERE eins = 1").toArray();
+      if (!r.length) return null;
+      const fragen = JSON.parse(r[0].fragen || "[]");
+      return (r[0].master && Array.isArray(fragen) && fragen.length === 4)
+        ? { master: r[0].master, fragen: fragen, angelegt: Number(r[0].angelegt) || 0 }
+        : null;
+    } catch (_e) { return null; }
+  }
+
+  /* Passwort, Master-Key und vier Antworten speichern - alles als Hash.
+     Die alte Notfall-PIN wird dabei geloescht: der Master-Key loest sie ab.
+     Erst alle Hashes rechnen, dann ohne await schreiben - so landet alles
+     zusammen oder gar nicht in der Datenbank. */
+  async paketSpeichern(p, nurWennLeer) {
+    const fragen = [];
+    for (const f of p.fragen) {
+      fragen.push({ nr: f.nr, frage: FRAGEN_KATALOG[f.nr], hash: await geheimHashen(f.antwort) });
+    }
+    const master = await geheimHashen(p.master);
+    const pw = await geheimHashen(p.neu);
+    // Ersteinrichtung: waehrend gerechnet wurde, koennte eine zweite
+    // Anfrage schneller gewesen sein - dann nichts ueberschreiben.
+    if (nurWennLeer && this.gesetztesPasswort()) return null;
+    const jetzt = Date.now();
+    this.sql.exec(
+      "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, '', ?) " +
+      "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, pin = '', geaendert = excluded.geaendert",
+      pw, jetzt
+    );
+    this.sql.exec(
+      "INSERT INTO zugang_sicherung (eins, master, fragen, angelegt) VALUES (1, ?, ?, ?) " +
+      "ON CONFLICT(eins) DO UPDATE SET master = excluded.master, fragen = excluded.fragen, angelegt = excluded.angelegt",
+      master, JSON.stringify(fragen), jetzt
+    );
+    this.sql.exec("DELETE FROM zugang_frage");
+    return { angelegt: jetzt, fragen: fragen.map((f) => f.frage) };
   }
 
   sperrHinweis(request) {
@@ -1019,37 +1153,147 @@ export class Counter extends DurableObject {
               return !!(r.length && r[0].pin);
             } catch (_e) { return false; }
           })(),
+          sicherungDa: !!this.sicherung(),
           einrichtungOffen: einrichtungOffen
         });
       }
 
-      // Ersteinrichtung: Passwort UND Notfall-PIN in einem Schritt selbst
-      // vergeben. Geht nur, solange noch nichts eingerichtet ist - danach ist
-      // dieser Weg dauerhaft zu und es gilt "aendern".
+      // Die dreissig Fragen zur Auswahl - kein Geheimnis.
+      if (aktion === "katalog") {
+        return json({ fragen: FRAGEN_KATALOG });
+      }
+
+      // Gesperrt durch die Anmeldebremse? Gilt fuer alle Wege zum Zuruecksetzen.
+      const bremseVorab = async () => {
+        const wer = await this.herkunftKennung(request);
+        const z = this.bremseZeile(wer);
+        if (z && z.bis && z.bis > Date.now()) {
+          this.sperrBis.set(request, z.bis);
+          return { wer, z, antwort: json({ fehler: this.sperrHinweis(request) }, 429) };
+        }
+        return { wer, z, antwort: null };
+      };
+      // Neues Passwort beim Zuruecksetzen: zweimal gleich, mindestens acht Zeichen.
+      const neuesPwFehler = () => {
+        const neu = String(b.neu || "");
+        if (neu.length < 8) return "Das neue Passwort braucht mindestens acht Zeichen.";
+        if (neu !== String(b.neu2 || "")) return "Die beiden Passwörter sind verschieden.";
+        return "";
+      };
+      const passwortSetzen = async (wer, z) => {
+        const h = await geheimHashen(String(b.neu || ""));
+        this.sql.exec(
+          "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, '', ?) " +
+          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, geaendert = excluded.geaendert",
+          h, Date.now()
+        );
+        try {
+          this.sql.exec("DELETE FROM zugang_frage WHERE herkunft = ?", wer);
+          if (z) this.sql.exec("DELETE FROM anmeldebremse WHERE herkunft = ?", wer);
+        } catch (_e) {}
+      };
+
+      // Ersteinrichtung: Passwort, Master-Key und vier Sicherheitsfragen in
+      // einem Schritt. Geht nur, solange noch nichts eingerichtet ist -
+      // danach ist dieser Weg dauerhaft zu.
       if (aktion === "einrichten") {
         if (!einrichtungOffen) {
           return json({ fehler: "Es ist bereits ein Passwort eingerichtet. " +
                                 "Bitte über \"Passwort ändern\" gehen." }, 409);
         }
-        const neuesPw = String(b.neu || "");
-        const neuePin = String(b.pin || "").trim();
-        if (neuesPw.length < 8) {
-          return json({ fehler: "Das Passwort muss mindestens acht Zeichen haben." }, 400);
+        const p = paketPruefen(b);
+        if (p.fehler) return json({ fehler: p.fehler }, 400);
+        const erg = await this.paketSpeichern(p, true);
+        if (!erg) return json({ fehler: "Es wurde gerade schon ein Passwort eingerichtet." }, 409);
+        this.spurLegen("/api/zugang einrichten", "Zugang erstmals eingerichtet (mit Master-Key und Sicherheitsfragen)");
+        return json({ ok: true, angelegt: erg.angelegt, fragen: erg.fragen, hinweis: "Zugang eingerichtet." });
+      }
+
+      // Zwei der vier Fragen stellen. Dieselbe Herkunft bekommt 15 Minuten
+      // lang dieselben zwei - neu laden wuerfelt nicht neu, sonst koennte man
+      // so lange laden, bis zwei bekannte Fragen kommen.
+      if (aktion === "fragen") {
+        const s = this.sicherung();
+        if (!s) return json({ fehler: "Es sind keine Sicherheitsfragen hinterlegt." }, 400);
+        const v = await bremseVorab();
+        if (v.antwort) return v.antwort;
+        const jetzt = Date.now();
+        let auswahl = null;
+        const r = this.sql.exec("SELECT auswahl, bis FROM zugang_frage WHERE herkunft = ?", v.wer).toArray();
+        if (r.length && Number(r[0].bis) > jetzt) {
+          try { auswahl = JSON.parse(r[0].auswahl); } catch (_e) { auswahl = null; }
         }
-        if (neuePin.length < 6) {
-          return json({ fehler: "Die Notfall-PIN muss mindestens sechs Zeichen haben." }, 400);
+        if (!Array.isArray(auswahl) || auswahl.length !== 2) {
+          const plaetze = [0, 1, 2, 3];
+          const zufall = new Uint32Array(4);
+          crypto.getRandomValues(zufall);
+          for (let i = 3; i > 0; i--) {
+            const j = zufall[i] % (i + 1);
+            const t = plaetze[i]; plaetze[i] = plaetze[j]; plaetze[j] = t;
+          }
+          auswahl = plaetze.slice(0, 2).sort((x, y) => x - y);
+          this.sql.exec(
+            "INSERT INTO zugang_frage (herkunft, auswahl, bis) VALUES (?, ?, ?) " +
+            "ON CONFLICT(herkunft) DO UPDATE SET auswahl = excluded.auswahl, bis = excluded.bis",
+            v.wer, JSON.stringify(auswahl), jetzt + FRAGE_GUELTIG
+          );
+          try { this.sql.exec("DELETE FROM zugang_frage WHERE bis < ?", jetzt); } catch (_e) {}
         }
-        if (textGleich(neuePin, neuesPw)) {
-          return json({ fehler: "Notfall-PIN und Passwort müssen verschieden sein." }, 400);
+        return json({ ok: true, fragen: auswahl.map((p) => s.fragen[p].frage) });
+      }
+
+      // Zuruecksetzen mit den zwei gestellten Fragen - beide muessen stimmen.
+      if (aktion === "zuruecksetzen-fragen") {
+        const s = this.sicherung();
+        if (!s) return json({ fehler: "Es sind keine Sicherheitsfragen hinterlegt." }, 400);
+        const v = await bremseVorab();
+        if (v.antwort) return v.antwort;
+        const r = this.sql.exec("SELECT auswahl, bis FROM zugang_frage WHERE herkunft = ?", v.wer).toArray();
+        let auswahl = null;
+        if (r.length && Number(r[0].bis) > Date.now()) {
+          try { auswahl = JSON.parse(r[0].auswahl); } catch (_e) { auswahl = null; }
         }
-        this.sql.exec(
-          "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, ?, ?) " +
-          "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, " +
-          "pin = excluded.pin, geaendert = excluded.geaendert",
-          await geheimHashen(neuesPw), await geheimHashen(neuePin), Date.now()
-        );
-        this.spurLegen("/api/zugang einrichten", "Zugang erstmals eingerichtet");
-        return json({ ok: true, hinweis: "Zugang eingerichtet." });
+        if (!Array.isArray(auswahl) || auswahl.length !== 2) {
+          return json({ fehler: "Die Fragen sind abgelaufen. Bitte neu laden.", abgelaufen: true }, 409);
+        }
+        const pf = neuesPwFehler();
+        if (pf) return json({ fehler: pf }, 400);
+        const antworten = (Array.isArray(b.antworten) ? b.antworten : []).slice(0, 2).map(antwortNorm);
+        let richtig = antworten.length === 2;
+        for (let i = 0; richtig && i < 2; i++) {
+          if (!(await geheimPasst(antworten[i], s.fragen[auswahl[i]].hash))) richtig = false;
+        }
+        if (!richtig) {
+          await this.fehlversuch(v.wer, v.z, "fragen:" + antworten.join("|"), request);
+          return json({ fehler: this.sperrHinweis(request) || "Mindestens eine Antwort stimmt nicht." }, 401);
+        }
+        if (await geheimPasst(String(b.neu || ""), s.master)) {
+          return json({ fehler: "Das neue Passwort darf nicht der Master-Key sein." }, 400);
+        }
+        await passwortSetzen(v.wer, v.z);
+        this.spurLegen("/api/zugang zuruecksetzen", "Passwort per Sicherheitsfragen zurückgesetzt");
+        return json({ ok: true, hinweis: "Passwort zurückgesetzt." });
+      }
+
+      // Zuruecksetzen mit dem Master-Key aus dem Zertifikat.
+      if (aktion === "zuruecksetzen-master") {
+        const s = this.sicherung();
+        if (!s) return json({ fehler: "Es ist kein Master-Key hinterlegt." }, 400);
+        const v = await bremseVorab();
+        if (v.antwort) return v.antwort;
+        const pf = neuesPwFehler();
+        if (pf) return json({ fehler: pf }, 400);
+        const master = String(b.master || "").trim();
+        if (!master || !(await geheimPasst(master, s.master))) {
+          await this.fehlversuch(v.wer, v.z, "master:" + master, request);
+          return json({ fehler: this.sperrHinweis(request) || "Der Master-Key stimmt nicht." }, 401);
+        }
+        if (textGleich(String(b.neu || ""), master)) {
+          return json({ fehler: "Das neue Passwort darf nicht der Master-Key sein." }, 400);
+        }
+        await passwortSetzen(v.wer, v.z);
+        this.spurLegen("/api/zugang zuruecksetzen", "Passwort per Master-Key zurückgesetzt");
+        return json({ ok: true, hinweis: "Passwort zurückgesetzt." });
       }
 
       // Zuruecksetzen mit der Notfall-PIN - ohne das alte Passwort.
@@ -1086,8 +1330,25 @@ export class Counter extends DurableObject {
       // Alles Weitere braucht das gueltige Passwort.
       if (!(await adminOk(b))) return json({ error: "unauthorized", fehler: this.sperrHinweis(request) || undefined }, 401);
 
+      // Sicherheitspaket anlegen oder erneuern: Passwort, Master-Key und
+      // vier Fragen. Die Antworten und der Master-Key verlassen den Server
+      // nie wieder - das Zertifikat baut die Seite aus ihren Eingaben.
+      if (aktion === "sicherheit") {
+        const p = paketPruefen(b);
+        if (p.fehler) return json({ fehler: p.fehler }, 400);
+        const neu = !this.sicherung();
+        const erg = await this.paketSpeichern(p, false);
+        this.spurLegen("/api/zugang sicherheit", neu
+          ? "Master-Key und Sicherheitsfragen eingerichtet, Notfall-PIN gelöscht"
+          : "Master-Key und Sicherheitsfragen erneuert");
+        return json({ ok: true, angelegt: erg.angelegt, fragen: erg.fragen });
+      }
+
       // Nur die Notfall-PIN setzen oder wechseln - Passwort bleibt.
       if (aktion === "pin") {
+        if (this.sicherung()) {
+          return json({ fehler: "Die Notfall-PIN ist durch Master-Key und Sicherheitsfragen ersetzt." }, 409);
+        }
         const neuePin = String(b.pin || "").trim();
         if (neuePin.length < 6) {
           return json({ fehler: "Die Notfall-PIN muss mindestens sechs Zeichen haben." }, 400);
@@ -1112,6 +1373,20 @@ export class Counter extends DurableObject {
         const neuesPw = String(b.neu || "");
         if (neuesPw.length < 8) {
           return json({ fehler: "Das neue Passwort muss mindestens acht Zeichen haben." }, 400);
+        }
+        // Mit Sicherheitspaket gibt es keine PIN mehr - nur das Passwort wechseln.
+        const s = this.sicherung();
+        if (s) {
+          if (await geheimPasst(neuesPw, s.master)) {
+            return json({ fehler: "Das neue Passwort darf nicht der Master-Key sein." }, 400);
+          }
+          this.sql.exec(
+            "INSERT INTO zugang (eins, passwort, pin, geaendert) VALUES (1, ?, '', ?) " +
+            "ON CONFLICT(eins) DO UPDATE SET passwort = excluded.passwort, geaendert = excluded.geaendert",
+            await geheimHashen(neuesPw), Date.now()
+          );
+          this.spurLegen("/api/zugang aendern", "Passwort geändert");
+          return json({ ok: true, hinweis: "" });
         }
         const r = this.sql.exec("SELECT pin FROM zugang WHERE eins = 1").toArray();
         let pin = (r.length && r[0].pin) ? r[0].pin : "";
@@ -1151,10 +1426,14 @@ export class Counter extends DurableObject {
 
       if (aktion === "zustand") {
         const r = this.sql.exec("SELECT passwort, pin, geaendert FROM zugang WHERE eins = 1").toArray();
+        const s = this.sicherung();
         return json({
           eigenes: !!(r.length && r[0].passwort),
           pinDa: !!(r.length && r[0].pin),
-          geaendert: (r.length && r[0].geaendert) ? new Date(r[0].geaendert).toISOString() : null
+          geaendert: (r.length && r[0].geaendert) ? new Date(r[0].geaendert).toISOString() : null,
+          sicherungDa: !!s,
+          sicherungAngelegt: s && s.angelegt ? new Date(s.angelegt).toISOString() : null,
+          sicherungFragen: s ? s.fragen.map((f) => f.frage) : []
         });
       }
       return json({ error: "bad_request" }, 400);
@@ -1188,7 +1467,7 @@ export class Counter extends DurableObject {
          "bremse" und "fehler" bleiben draussen: Sperrzeiten und
          Fehlermeldungen sind nach dem Zurueckspielen wertlos.       */
       const tabellen = {};
-      const mit = ["counter_values", "comments", "antworten", "apps", "kanalliste", "verlauf", "marken", "zugang"];
+      const mit = ["counter_values", "comments", "antworten", "apps", "kanalliste", "verlauf", "marken", "zugang", "zugang_sicherung"];
       for (const t of mit) {
         try { tabellen[t] = this.sql.exec("SELECT * FROM " + t).toArray(); }
         catch (_e) { tabellen[t] = []; }
@@ -1324,6 +1603,18 @@ export class Counter extends DurableObject {
           );
           zugang = "aus der Sicherung gesetzt";
         } catch (_e) { zugang = "fehlgeschlagen"; }
+        // Master-Key und Fragen gehoeren zu diesem Zugang - nur zusammen mit
+        // ihm und nur, wenn hier noch keine hinterlegt sind.
+        const sTeil = Array.isArray(tab.zugang_sicherung) ? tab.zugang_sicherung[0] : null;
+        if (zugang === "aus der Sicherung gesetzt" && sTeil && sTeil.master && sTeil.fragen && !this.sicherung()) {
+          try {
+            this.sql.exec(
+              "INSERT INTO zugang_sicherung (eins, master, fragen, angelegt) VALUES (1, ?, ?, ?)",
+              String(sTeil.master), String(sTeil.fragen), Number(sTeil.angelegt) || Date.now()
+            );
+            zugang += ", mit Master-Key und Sicherheitsfragen";
+          } catch (_e) { /* Zugang steht trotzdem */ }
+        }
       }
 
       /* Kanaele: jeder in sein eigenes Objekt zurueck. */
