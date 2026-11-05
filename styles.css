@@ -1326,6 +1326,83 @@ footer a {
   background: rgba(230, 120, 120, 0.12);
 }
 
+/* Antwort des Admins auf einen Kommentar (05.11.2026) */
+.comment__reply {
+  margin: 12px 0 0 18px;
+  padding: 10px 14px;
+  border-left: 3px solid var(--blue);
+  border-radius: 0 10px 10px 0;
+  background: rgba(49, 124, 255, 0.08);
+}
+
+.comment__reply-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.comment__reply-name {
+  font-weight: 800;
+  font-size: 14px;
+  color: var(--blue-light);
+}
+
+.comment__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* display:flex oben schlaegt sonst das hidden-Attribut */
+.comment__actions[hidden] {
+  display: none;
+}
+
+.comment__actions .comment__remove {
+  margin-top: 0;
+}
+
+.comment__reply-btn {
+  background: none;
+  border: 1px solid rgba(120, 170, 255, 0.5);
+  color: var(--blue-light);
+  border-radius: 8px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.comment__reply-btn:hover {
+  background: rgba(120, 170, 255, 0.12);
+}
+
+.comment__reply-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.comment__reply-form .comment-composer__text {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.comment__reply-save {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+@media (max-width: 560px) {
+  .comment__reply {
+    margin-left: 8px;
+  }
+}
+
 /* =====================================================================
    Spenden vorerst KOMPLETT ausgeblendet (Markup bleibt im HTML erhalten).
    --> Reaktivieren: einfach die folgende eine Regel wieder loeschen.

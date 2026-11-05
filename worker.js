@@ -175,6 +175,13 @@ export class Counter extends DurableObject {
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS comments (id TEXT PRIMARY KEY, name TEXT, body TEXT NOT NULL, created INTEGER NOT NULL, removed INTEGER NOT NULL DEFAULT 0, reason TEXT)"
     );
+    // Antworten des Admins auf Kommentare (05.11.2026). Eigene Tabelle statt
+    // neuer Spalte in "comments": ein ALTER TABLE muesste bei jedem Aufwachen
+    // laufen und wirft, sobald die Spalte da ist (siehe Kanal-Konstruktor).
+    // Je Kommentar hoechstens eine Antwort; sie laesst sich bearbeiten.
+    this.sql.exec(
+      "CREATE TABLE IF NOT EXISTS antworten (kommentar TEXT PRIMARY KEY, text TEXT NOT NULL, zeit INTEGER NOT NULL)"
+    );
     // Inline-Editor: bearbeitete Texte/Bild-Verweise je Seite + hochgeladene Bilder.
     this.sql.exec(
       "CREATE TABLE IF NOT EXISTS content (page TEXT NOT NULL, block TEXT NOT NULL, type TEXT NOT NULL, value TEXT NOT NULL, updated INTEGER NOT NULL, PRIMARY KEY (page, block))"
@@ -274,9 +281,17 @@ export class Counter extends DurableObject {
         "SELECT id, name, body, created, removed, reason FROM comments ORDER BY created DESC LIMIT ?",
         MAX_KEEP
       ).toArray();
+      const antworten = {};
+      try {
+        for (const a of this.sql.exec("SELECT kommentar, text, zeit FROM antworten").toArray()) {
+          antworten[a.kommentar] = { text: a.text, zeit: Number(a.zeit) };
+        }
+      } catch (_e) { /* ohne Antworten gehen die Kommentare trotzdem raus */ }
+      // Zu einem entfernten Kommentar wird auch die Antwort nicht gezeigt.
       const pub = rows.map((r) => (r.removed
         ? { id: r.id, name: r.name, created: Number(r.created), removed: true, removeReason: r.reason }
-        : { id: r.id, name: r.name, created: Number(r.created), removed: false, text: r.body }));
+        : { id: r.id, name: r.name, created: Number(r.created), removed: false, text: r.body,
+            antwort: antworten[r.id] || null }));
       return json({ comments: pub });
     }
 
@@ -307,6 +322,9 @@ export class Counter extends DurableObject {
         "DELETE FROM comments WHERE id NOT IN (SELECT id FROM comments ORDER BY created DESC LIMIT ?)",
         MAX_KEEP
       );
+      // Antworten auf eingedampfte Kommentare mitnehmen
+      try { this.sql.exec("DELETE FROM antworten WHERE kommentar NOT IN (SELECT id FROM comments)"); }
+      catch (_e) {}
       return json({ ok: true });
     }
 
@@ -314,6 +332,31 @@ export class Counter extends DurableObject {
       let body = {};
       try { body = await request.json(); } catch (_e) { body = {}; }
       return json({ ok: checkAdmin(body, env, this.gesetztesPasswort()) });
+    }
+
+    // Auf einen Kommentar antworten, die Antwort aendern oder (leerer Text) loeschen.
+    if (url.pathname === "/api/comments/antwort" && method === "POST") {
+      let body = {};
+      try { body = await request.json(); } catch (_e) { body = {}; }
+      if (!checkAdmin(body, env, this.gesetztesPasswort())) {
+        return json({ error: "unauthorized" }, 401);
+      }
+      const id = clean(body.id, 60);
+      if (!id) return json({ error: "bad_request" }, 400);
+      const da = this.sql.exec("SELECT removed FROM comments WHERE id = ?", id).toArray();
+      if (!da.length) return json({ error: "not_found" }, 404);
+      if (da[0].removed) return json({ error: "removed" }, 409);
+      const text = clean(body.text, MAX_TEXT);
+      if (!text) {
+        this.sql.exec("DELETE FROM antworten WHERE kommentar = ?", id);
+        return json({ ok: true, geloescht: true });
+      }
+      this.sql.exec(
+        "INSERT INTO antworten (kommentar, text, zeit) VALUES (?, ?, ?) " +
+        "ON CONFLICT(kommentar) DO UPDATE SET text = excluded.text, zeit = excluded.zeit",
+        id, text, Date.now()
+      );
+      return json({ ok: true });
     }
 
     if (url.pathname === "/api/comments/remove" && method === "POST") {
@@ -917,7 +960,7 @@ export class Counter extends DurableObject {
          "bremse" und "fehler" bleiben draussen: Sperrzeiten und
          Fehlermeldungen sind nach dem Zurueckspielen wertlos.       */
       const tabellen = {};
-      const mit = ["counter_values", "comments", "apps", "kanalliste", "verlauf", "marken", "zugang"];
+      const mit = ["counter_values", "comments", "antworten", "apps", "kanalliste", "verlauf", "marken", "zugang"];
       for (const t of mit) {
         try { tabellen[t] = this.sql.exec("SELECT * FROM " + t).toArray(); }
         catch (_e) { tabellen[t] = []; }
@@ -1018,7 +1061,7 @@ export class Counter extends DurableObject {
          INSERT OR REPLACE: was in der Sicherung steht, gewinnt; was
          seither dazukam, bleibt stehen. */
       let zeilen = 0;
-      const erlaubt = ["counter_values", "comments", "apps", "kanalliste", "verlauf", "marken"];
+      const erlaubt = ["counter_values", "comments", "antworten", "apps", "kanalliste", "verlauf", "marken"];
       const tab = (daten && daten.tabellen) || {};
       for (const name of erlaubt) {
         const liste = Array.isArray(tab[name]) ? tab[name] : [];

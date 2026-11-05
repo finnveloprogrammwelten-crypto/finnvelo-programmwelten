@@ -86,7 +86,8 @@
     var statusEl = document.getElementById('comment-status');
     var submitBtn = document.getElementById('comment-submit');
     // Moderation ist an die Edit-Sitzung gekoppelt: wer ueber /admin eingeloggt ist,
-    // sieht hier automatisch die "Entfernen"-Schaltflaechen. Sonst nichts davon.
+    // sieht hier automatisch "Antworten" und "Entfernen". Sonst nichts davon.
+    var ANTWORT_NAME = 'Tatorasa';
     var adminPw = (function () { try { return sessionStorage.getItem('fv_admin_pw') || null; } catch (e) { return null; } })();
 
     function fmtDate(ms) {
@@ -129,16 +130,123 @@
         }
         li.appendChild(body);
 
+        var antwort = (!c.removed && c.antwort && c.antwort.text) ? c.antwort : null;
+        if (antwort) li.appendChild(antwortBlock(antwort));
+
         if (adminPw && !c.removed) {
+          var aktionen = document.createElement('div');
+          aktionen.className = 'comment__actions';
+
+          var antworten = document.createElement('button');
+          antworten.type = 'button';
+          antworten.className = 'comment__reply-btn';
+          antworten.textContent = antwort ? 'Antwort bearbeiten' : 'Antworten';
+          antworten.addEventListener('click', function () { antwortFormular(li, c, aktionen); });
+          aktionen.appendChild(antworten);
+
           var btn = document.createElement('button');
           btn.type = 'button';
           btn.className = 'comment__remove';
           btn.textContent = 'Entfernen';
           btn.addEventListener('click', function () { removeComment(c.id); });
-          li.appendChild(btn);
+          aktionen.appendChild(btn);
+          li.appendChild(aktionen);
         }
         list.appendChild(li);
       });
+    }
+
+    // Die Antwort steht abgesetzt unter dem Kommentar. textContent -> kein HTML.
+    function antwortBlock(a) {
+      var box = document.createElement('div');
+      box.className = 'comment__reply';
+      var kopf = document.createElement('div');
+      kopf.className = 'comment__reply-head';
+      var wer = document.createElement('span');
+      wer.className = 'comment__reply-name';
+      wer.textContent = 'Antwort von ' + ANTWORT_NAME;
+      var wann = document.createElement('span');
+      wann.className = 'comment__date';
+      wann.textContent = fmtDate(a.zeit);
+      kopf.appendChild(wer);
+      kopf.appendChild(wann);
+      var text = document.createElement('p');
+      text.className = 'comment__text';
+      text.textContent = a.text;
+      box.appendChild(kopf);
+      box.appendChild(text);
+      return box;
+    }
+
+    // Eingabefeld direkt am Kommentar - statt window.prompt, damit auch
+    // mehrzeilige Antworten gehen. Ein leerer Text loescht die Antwort.
+    function antwortFormular(li, c, aktionen) {
+      if (li.querySelector('.comment__reply-form')) return;
+      var vorhanden = c.antwort && c.antwort.text ? c.antwort.text : '';
+      var form = document.createElement('div');
+      form.className = 'comment__reply-form';
+      var feld = document.createElement('textarea');
+      feld.className = 'comment-composer__text';
+      feld.maxLength = 2000;
+      feld.rows = 3;
+      feld.placeholder = 'Deine Antwort …';
+      feld.value = vorhanden;
+      var leiste = document.createElement('div');
+      leiste.className = 'comment__actions';
+      var meldung = document.createElement('span');
+      meldung.className = 'comment-status';
+
+      function knopf(text, klasse, aktion) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = klasse;
+        b.textContent = text;
+        b.addEventListener('click', aktion);
+        leiste.appendChild(b);
+        return b;
+      }
+      var speichern = knopf('Antwort speichern', 'button comment__reply-save', function () {
+        var t = feld.value.trim();
+        if (!t) { meldung.textContent = 'Bitte einen Text eingeben.'; return; }
+        senden(t);
+      });
+      knopf('Abbrechen', 'comment__reply-btn', function () {
+        form.remove();
+        aktionen.hidden = false;
+      });
+      if (vorhanden) {
+        knopf('Antwort löschen', 'comment__remove', function () {
+          if (window.confirm('Antwort wirklich löschen?')) senden('');
+        });
+      }
+
+      function senden(t) {
+        speichern.disabled = true;
+        meldung.textContent = 'Wird gespeichert …';
+        fetch('/api/comments/antwort', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ id: c.id, text: t, password: adminPw })
+        }).then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (d) { return { r: r, d: d }; });
+        }).then(function (res) {
+          if (res.r.ok && res.d.ok) { load(); return; }
+          meldung.textContent = res.r.status === 401
+            ? 'Nicht autorisiert – bitte über /admin neu anmelden.'
+            : 'Konnte nicht gespeichert werden.';
+          speichern.disabled = false;
+        }).catch(function () {
+          meldung.textContent = 'Netzwerkfehler.';
+          speichern.disabled = false;
+        });
+      }
+
+      form.appendChild(feld);
+      form.appendChild(leiste);
+      form.appendChild(meldung);
+      aktionen.hidden = true;
+      li.appendChild(form);
+      feld.focus();
     }
 
     function load() {
