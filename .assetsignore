@@ -16,6 +16,10 @@ worker.js
 finanzapi-modul.js
 # Kopplung und Treffpunkt des FINNVELO Vorlesers (25.10.2026) - Servercode
 vorleserapi-modul.js
+# Einkaufsliste und Tourenplaner - Servercode. Bis 05.11.2026 oeffentlich
+# abrufbar (HTTP 200 geprueft); gebraucht werden sie nur von worker.js.
+einkauf-modul.js
+tourenapi-modul.js
 
 # Konfiguration
 wrangler.jsonc
