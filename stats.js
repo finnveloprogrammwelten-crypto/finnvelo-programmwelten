@@ -1,8 +1,10 @@
 /* Finnvelo Programmwelten - anonyme Besucher-/Ereignisanzeige.
  * Zaehlt Besucher (einmal pro Browser), Video-Klicks und Download-Klicks und
  * zeigt sie als dezentes Eck-Badge an:
- *   Startseite  -> oben links: Besucher gesamt
+ *   Startseite  -> oben rechts: Besucher gesamt
  *   Programmseite -> oben rechts: Besucher / Video-Klicks / Downloads
+ * Das Badge gehoert zur Seite (position:absolute) und scrollt mit ihr weg -
+ * es schwebt nicht ueber dem Inhalt mit (Wunsch Tatorasa, 05.11.2026).
  * Keine Cookies, kein Tracking - es werden nur Zahlen gezaehlt. Der lokale
  * "schon gezaehlt"-Merker liegt anonym im localStorage des Browsers.
  * Faellt die Server-Komponente aus, bricht nichts - es wird nur "-" angezeigt.
@@ -85,16 +87,22 @@
 
   function injectStyles() {
     if (document.getElementById('fv-stats-style')) return;
-    var css = '.fv-stats-badge{position:fixed;z-index:9999;font:12px/1.3 system-ui,"Segoe UI",Arial,sans-serif;'
+    /* Lage: oben rechts, fest auf der Seite. Am PC unter der Kopfzeile und mit
+       z-index UNTER ihr (20): beim Scrollen gleitet das Badge unter die stehende
+       Kopfzeile statt ueber das Menue. Am Handy sitzt es in der freien Ecke
+       neben dem Schriftzug und liegt deshalb UEBER der Kopfzeile (siehe unten). */
+    var css = '.fv-stats-badge{position:absolute;z-index:15;font:12px/1.3 system-ui,"Segoe UI",Arial,sans-serif;'
       + 'background:rgba(15,22,38,.85);color:#e8eef5;border:1px solid rgba(255,255,255,.16);'
       + 'border-radius:999px;padding:6px 12px;box-shadow:0 6px 18px rgba(0,0,0,.3);'
       + 'pointer-events:none;user-select:none;display:flex;gap:8px;align-items:center;white-space:nowrap;'
       + '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}'
-        + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;}'
+        + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;z-index:9999;}'
         + '.fv-edit-on .fv-stats-badge:hover{border-color:rgba(120,170,255,.7);}'
         + '.fv-stats-badge.fv-zieht{cursor:grabbing;opacity:.85;}'
-      + '.fv-stats-badge--home{top:calc(84px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
-      + '.fv-stats-badge--page{top:calc(84px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
+      /* 12 px unter der Kopfzeile. Ihre Hoehe misst kopfHoeheMerken() - bricht
+         das Menue bei mittlerer Fensterbreite zweizeilig um, waeren feste 84 px
+         mitten in der Kopfzeile gelandet. 72 px ist die Hoehe am breiten PC. */
+      + '.fv-stats-badge--home,.fv-stats-badge--page{top:calc(var(--fv-kopf-hoehe, 72px) + 12px + var(--fv-admin-hoehe, 0px));right:20px;left:auto;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
       + '.fv-stats-badge .fv-sep{opacity:.35;}'
       + '.fv-video-facade{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:#000 center/cover no-repeat;border-radius:inherit;display:block;}'
@@ -102,7 +110,12 @@
       + '.fv-video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:50px;border-radius:14px;background:rgba(20,20,20,.85);z-index:1;transition:background .15s;}'
       + '.fv-video-play::before{content:"";position:absolute;top:50%;left:54%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff;}'
       + '.fv-video-facade:hover .fv-video-play,.fv-video-facade:focus-visible .fv-video-play{background:#ff0000;}'
-      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 9px;gap:5px;top:auto;bottom:12px;right:12px;left:12px;flex-wrap:wrap;justify-content:center;white-space:normal;border-radius:14px;}}';
+      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 10px;gap:5px;z-index:25;top:calc(14px + var(--fv-admin-hoehe, 0px));right:16px;left:auto;bottom:auto;}'
+      + '.fv-stats-badge--page{flex-direction:column;align-items:flex-end;gap:1px;border-radius:12px;}'
+      + '.fv-stats-badge--page .fv-sep{display:none;}}'
+      /* Sehr schmale Handys (320 px): eine Stufe kleiner, sonst ueberdeckt das
+         Badge das Ende des Schriftzugs (gemessen: 2 px). */
+      + '@media (max-width:360px){.fv-stats-badge{font-size:10px;padding:4px 8px;right:10px;max-width:calc(100vw - 216px);white-space:normal;text-align:right;justify-content:flex-end;border-radius:12px;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
@@ -114,14 +127,25 @@
     var el = document.createElement('div');
     el.className = 'fv-stats-badge fv-stats-badge--' + kind;
     (document.body || document.documentElement).appendChild(el);
+    kopfHoeheMerken();
+    window.addEventListener('resize', kopfHoeheMerken);
     lageAnwenden(el);
     verschiebbarMachen(el);
     return el;
   }
 
+  /* Hoehe der Kopfzeile fuer die Lage des Badges (CSS-Variable --fv-kopf-hoehe).
+     offsetHeight haengt nicht vom Scrollweg ab - die Kopfzeile ist sticky. */
+  function kopfHoeheMerken() {
+    var kopf = document.querySelector('.site-header');
+    if (!kopf) return;
+    document.documentElement.style.setProperty('--fv-kopf-hoehe', kopf.offsetHeight + 'px');
+  }
+
   /* Die Zaehlerleiste lag fest oben rechts - und damit je nach Fensterbreite
      mitten im Menue. Sie laesst sich jetzt im Bearbeiten-Modus an eine freie
-     Stelle ziehen. Die Lage merkt sich der Browser (localStorage, also je
+     Stelle ziehen. Seit dem 05.11.2026 gilt die Lage auf der SEITE, nicht im
+     Fenster: oben/links sind Seitenkoordinaten (Scrollweg eingerechnet). Die Lage merkt sich der Browser (localStorage, also je
      Geraet): es ist reine Ansichtssache, Besucher sollen davon nichts
      mitbekommen, und der Server bleibt aussen vor. */
   var LAGE_SCHLUESSEL = 'fv_zaehler_lage';
@@ -135,7 +159,7 @@
       // Im sichtbaren Bereich halten - das Fenster kann seit dem Ablegen
       // kleiner geworden sein, sonst waere die Leiste unerreichbar.
       var maxL = Math.max(0, window.innerWidth - 140);
-      var maxO = Math.max(0, window.innerHeight - 40);
+      var maxO = Math.max(0, document.documentElement.scrollHeight - 40);
       el.style.top = Math.min(l.oben, maxO) + 'px';
       el.style.left = Math.min(l.links, maxL) + 'px';
       el.style.right = 'auto';
@@ -159,8 +183,11 @@
 
     el.addEventListener('pointermove', function (e) {
       if (!zieht) return;
-      var links = Math.max(4, Math.min(window.innerWidth - el.offsetWidth - 4, e.clientX - dx));
-      var oben = Math.max(4, Math.min(window.innerHeight - el.offsetHeight - 4, e.clientY - dy));
+      // Seitenkoordinaten: das Badge haengt an der Seite, nicht am Fenster.
+      var links = Math.max(4, Math.min(document.documentElement.clientWidth - el.offsetWidth - 4,
+                                       e.clientX - dx + window.scrollX));
+      var oben = Math.max(4, Math.min(document.documentElement.scrollHeight - el.offsetHeight - 4,
+                                      e.clientY - dy + window.scrollY));
       el.style.left = links + 'px';
       el.style.top = oben + 'px';
       el.style.right = 'auto';
