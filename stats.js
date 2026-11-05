@@ -55,7 +55,19 @@
     return name;
   }
 
+  /* Eigene Besuche nicht mitzaehlen (05.11.2026): Ein Geraet, auf dem sich der
+     Admin einmal angemeldet hat, zaehlt dauerhaft nicht mehr mit - weder
+     Besuche noch Video- und Download-Klicks. Der Merker liegt im Browser des
+     Geraets; Browserdaten loeschen hebt ihn wieder auf. */
+  var ZAEHLT = (function () {
+    try {
+      if (sessionStorage.getItem('fv_admin_pw')) localStorage.setItem('fv_nicht_zaehlen', '1');
+      return localStorage.getItem('fv_nicht_zaehlen') !== '1';
+    } catch (e) { return true; }
+  })();
+
   function hit(key) {
+    if (!ZAEHLT) return Promise.resolve(null);
     try {
       return fetch(API + '/hit', {
         method: 'POST',
@@ -288,6 +300,7 @@
   }
 
   function bump(metricKey) {
+    if (!ZAEHLT) return;
     counts[metricKey] = (typeof counts[metricKey] === 'number' ? counts[metricKey] : 0) + 1;
     renderBadge();
   }
