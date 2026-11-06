@@ -83,10 +83,19 @@
       </div>
 
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite. Achtung: Die fuenf Bilder in
+             "Oberflaeche" samt Unterschriften (t20-t24, i1-i5) sind Grundbestand. Gespeichert und
+             ausgeblendet sind t32, t40 und d1 - die Zahl der Grundelemente t3-t35 nicht aendern,
+             Neues nur in data-fv-text-extra. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Die Auswertung ist bei Mischwald der zäheste Teil des Spielabends: Jede Kartenart bringt ihre eigenen Bedingungen mit, es fallen Zwischenrechnungen an, und das Ganze wiederholt sich für jede Mitspielerin und jeden Mitspieler. Genau dafür ist der Mischwaldrechner gemacht - eintragen statt rechnen.</p>
-          <p>Das Programm ist in fünf Bereiche aufgeteilt, zwischen denen sich am Handy seitlich wischen lässt. Es läuft als Android-App und funktioniert auch ohne Internetverbindung am Spieltisch, weil die Texterkennung samt Sprachdaten mit im Paket steckt. Die Oberfläche lässt sich zwischen Deutsch und Englisch umschalten.</p>
+          <p>Das Programm ist in sechs Bereiche aufgeteilt, zwischen denen sich am Handy seitlich wischen lässt. Es läuft als Android-App und funktioniert auch ohne Internetverbindung am Spieltisch, weil Text- und Bilderkennung samt Sprachdaten mit im Paket stecken. Die Oberfläche lässt sich zwischen Deutsch und Englisch umschalten.</p>
+          <div data-fv-text-extra>
+            <p>Erfasst wird der Wald Baum für Baum: Zu jedem Baum trägst du die Baumart ein und die Karten, die oben, unten, links und rechts angelegt sind – von Hand mit Plus und Minus oder per Foto. Beim Foto liest eine Texterkennung die Kartennamen aus, und eine Bilderkennung vergleicht die Karten mit dem, was du ihr beigebracht hast. Je mehr Karten du anlernst, desto sicherer wird sie. Unsichere Stellen lassen sich mit der Lupe prüfen und von Hand nachbessern.</p>
+            <p>Der Rechenweg zeigt danach für jeden Baum und jede Karte, wie viele Punkte sie bringt und warum. Wo die App eine Angabe braucht, die sich nicht aus den Karten ablesen lässt – etwa welche Höhle ausliegt oder wie viele Karten darin liegen –, stellt sie oben eine Rückfrage. Zwischenstände wie vollständig belegte Bäume oder die Zahl unterschiedlicher Baumarten hält die Zähl-Legende fest.</p>
+            <p>Bis zu fünf Spielerinnen und Spieler werden nebeneinander ausgewertet, jeweils mit Namen und Punktestand in der Kopfleiste. Für alle, die lieber klassisch zählen, gibt es zusätzlich die Wertungstabelle mit 40 Nummern und je acht Feldern. Die Kartenübersicht erklärt jede der 116 Karten mit Anzahl, Kosten und Punkteregel.</p>
+          </div>
 
           <div class="feature-grid" aria-label="Kernfunktionen des Mischwaldrechners">
             <article>
@@ -113,35 +122,76 @@
               <h3>Mehrere Spieler</h3>
               <p>Bis zu fünf Spieler mit eigenen Namen, jederzeit umschaltbar, mit Punktestand direkt in der Reiterleiste.</p>
             </article>
+            <article data-fv-text-extra>
+              <h3>Rückfragen</h3>
+              <p>Wo eine Karte eine Angabe braucht, die nicht auf dem Tisch abzulesen ist, fragt die App gezielt nach.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Karten anlernen</h3>
+              <p>Die Bilderkennung lernt aus deinen eigenen Fotos und merkt sich erkannte Karten von allein.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Spielstand bleibt erhalten</h3>
+              <p>Eingaben und Fotos werden auf dem Gerät gesichert – die Auswertung geht nach einer Unterbrechung weiter.</p>
+            </article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die Auswertung ist in fünf Bereiche aufgeteilt, zwischen denen sich am Handy seitlich wischen lässt. Die folgenden Ansichten zeigen das Programm im Einsatz.</p>
+          <p>Die folgenden Ansichten zeigen die App mit einem erfundenen Spielstand: Anna hat vier Bäume mit 16 Karten gelegt und kommt auf 41 Punkte. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: assets/auswertung.html der veroeffentlichten APK im Testbrowser (390 x 845, doppelte
+               Aufloesung), erfundener Spielstand, keine Fotos und keine Kartenbilder. -->
           <div class="program-media-grid program-media-grid--hoch" aria-label="Ansichten des Finnvelo Mischwaldrechners">
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/mischwaldrechner-1.webp" alt="Mischwaldrechner: Rechenweg mit erfassten Bäumen und Punkten je Karte" loading="lazy" width="620" height="1343">
-              <figcaption>Rechenweg mit Punkten je Karte</figcaption>
+              <img src="assets/images/oberflaeche/mischwaldrechner-01.webp" alt="Rechenweg mit Rückfragen und den erfassten Bäumen samt Punkten je Karte" loading="lazy" width="780" height="1690">
+              <figcaption><strong>Rechenweg</strong>Rückfragen oben, darunter jeder Baum mit seinen Karten und den Punkten, die sie bringen.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/mischwaldrechner-2.webp" alt="Mischwaldrechner: Fotomodus mit Kartenzuordnung rund um den Baum" loading="lazy" width="620" height="1343">
-              <figcaption>Fotomodus mit Kartenzuordnung</figcaption>
+              <img src="assets/images/oberflaeche/mischwaldrechner-02.webp" alt="Fotomodus mit Baum und den Karten oben, links, rechts und unten" loading="lazy" width="780" height="1690">
+              <figcaption><strong>Fotomodus</strong>Je Baum die Karten an allen vier Seiten – per Foto erkannt oder mit Plus und Minus gesetzt.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/mischwaldrechner-3.webp" alt="Mischwaldrechner: Zähl-Legende mit Baumarten und Anzahlen" loading="lazy" width="620" height="1343">
-              <figcaption>Zähl-Legende für Anzahlen</figcaption>
+              <img src="assets/images/oberflaeche/mischwaldrechner-03.webp" alt="Zähl-Legende mit Bäumen gesamt, Baumarten und vollständig belegten Bäumen" loading="lazy" width="780" height="1690">
+              <figcaption><strong>Zähl-Legende</strong>Bäume, Baumarten, Sträucher und mehr – vieles füllt die App aus den erfassten Bäumen selbst.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/mischwaldrechner-4.webp" alt="Mischwaldrechner: Wertungstabelle mit 40 Nummern und je acht Feldern" loading="lazy" width="620" height="1343">
-              <figcaption>Wertungstabelle je Spieler</figcaption>
+              <img src="assets/images/oberflaeche/mischwaldrechner-04.webp" alt="Wertungstabelle mit 40 Nummern und je acht Feldern" loading="lazy" width="780" height="1690">
+              <figcaption><strong>Wertungstabelle</strong>40 Nummern mit je acht Feldern, falls lieber von Hand gezählt wird.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/mischwaldrechner-5.webp" alt="Mischwaldrechner: Kartenübersicht mit Suche und Punkteregel je Karte" loading="lazy" width="620" height="1343">
-              <figcaption>Kartenübersicht mit Suche</figcaption>
+              <img src="assets/images/oberflaeche/mischwaldrechner-05.webp" alt="Kartenübersicht mit Suche, Anzahl, Kosten und Punkteregel je Karte" loading="lazy" width="780" height="1690">
+              <figcaption><strong>Kartenübersicht</strong>Alle Karten mit Anzahl, Kosten und Punkteregel, durchsuchbar.</figcaption>
+            </figure>
+            <figure class="program-media-card" data-fv-text-extra>
+              <img src="assets/images/oberflaeche/mischwaldrechner-06.webp" alt="Einstellungen mit Transparenz, Kartenerkennung und Hintergrundbild" loading="lazy" width="780" height="1690">
+              <figcaption><strong>Einstellungen</strong>Transparenz, Kartenerkennung anlernen und ein Hintergrundbild.</figcaption>
             </figure>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Der Mischwaldrechner kommt mit wenigen, gezielten Einstellungen aus:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Aussehen und Sprache</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Sprache</strong>Deutsch oder Englisch, oben in der Kopfleiste umschaltbar.</li>
+                <li><strong>Hintergrundbild</strong>Ein Bild als Hintergrund der App oder „Aus“ für den schlichten dunklen Hintergrund.</li>
+                <li><strong>Transparenz</strong>Wie stark der Hintergrund durch alle Flächen scheint.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Kartenerkennung und Spieler</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Karte anlernen</strong>Eine Karte fotografieren und ihren Namen wählen – die Erkennung wird damit sicherer.</li>
+                <li><strong>Gelerntes löschen</strong>Alles Angelernte zurücksetzen.</li>
+                <li><strong>Spieler</strong>Bis zu fünf, mit eigenem Namen; einzelne Spieler oder alle löschen für eine neue Partie.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
@@ -157,13 +207,25 @@
             <li>Als Android-App auch ohne Internetverbindung nutzbar - die Texterkennung ist mit eingebaut.</li>
             <li>Deckt Grundspiel und alle drei Erweiterungen ab.</li>
             <li>Alle Eingaben und Fotos bleiben auf dem eigenen Gerät.</li>
+            <li data-fv-text-extra>Jede Punktzahl mit Rechenweg nachvollziehbar.</li>
+            <li data-fv-text-extra>Bilderkennung, die mit deinen eigenen Karten dazulernt.</li>
           </ul>
         </section>
 
         <section class="program-info-block" aria-labelledby="target-title">
           <h2 id="target-title">Zielgruppe</h2>
           <p>Der Mischwaldrechner richtet sich an alle, die Mischwald regelmäßig spielen und die Schlussauswertung abkürzen möchten - besonders in größeren Runden, in denen sich das Zusammenzählen sonst lange hinzieht.</p>
-          <p class="hinweis-text">Wichtig zu wissen: Es wird nichts gespeichert. Eingaben und Fotos bleiben nur erhalten, solange die Seite beziehungsweise die App geöffnet ist. Eine Partie sollte also am Stück ausgewertet werden.</p>
+          <p class="hinweis-text">Gut zu wissen: Der Spielstand bleibt erhalten. Eingaben werden auf dem Gerät gesichert, Fotos in der Bildablage der App – auch nach dem Schließen. Mit „Alle löschen“ beginnt eine neue Partie.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Spielrunden, in denen die Auswertung sonst länger dauert als die letzte Runde.</li>
+            <li>Wer die Punkteregeln der Erweiterungen nicht jedes Mal nachlesen möchte.</li>
+            <li>Wer nach der Partie genau sehen will, welche Karten die meisten Punkte gebracht haben.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Spielstand, Fotos und angelernte Karten bleiben auf deinem Handy. Es gibt kein Konto und keine Anmeldung. Text- und Bilderkennung laufen in der App direkt auf dem Gerät, die nötigen Daten sind mitgeliefert – deshalb funktioniert die Auswertung auch ohne Internet.</p>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
