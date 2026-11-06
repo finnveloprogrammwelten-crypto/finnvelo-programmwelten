@@ -103,50 +103,240 @@
           <h1 id="program-title">Finnvelo Lesezeit</h1>
           <!-- Status-Schild: fuer "in Arbeit" die naechste Zeile drinlassen, sonst loeschen -->
           <span class="status">In Entwicklung</span>
-          <p class="lead">Finnvelo Lesezeit ist ein Lesetagebuch für Android. Bücher und Hörbücher sind per Suche oder ISBN-Scan in Sekunden angelegt – mit Cover und Klappentext. Danach zeigt die App, was auf dem Stapel wartet, was du gelesen hast und wie sich dein Lesejahr entwickelt.</p>
+          <p class="lead">Finnvelo Lesezeit ist ein Lesetagebuch für Android. Bücher und Hörbücher legst du per Suche in sieben Quellen oder per ISBN-Scan in Sekunden an – mit Cover und Klappentext. Danach zeigt die App, was auf dem Stapel wartet, was du gelesen hast und wie sich dein Lesejahr entwickelt.</p>
         </div>
       </div>
 
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026: Alles, was neu dazukam, steht in data-fv-text-extra.
+             So behalten die im Bearbeiten-Modus gespeicherten Texte (t29 im
+             Download-Bereich) ihre Nummern. Grundelemente t0-t28 nicht entfernen. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
-          <p>Die App ist wie ein Buch aufgebaut: Zwischen vier Seiten wird geblättert – der Übersicht, dem SuB, also dem Stapel ungelesener Bücher, dem Tagebuch mit allem, was du gelesen oder gehört hast, und der Auswertung nach Jahren und Monaten. Wer ein Buch beendet, vergibt bis zu fünf Sterne in halben Schritten; abgebrochene Bücher werden eigens geführt.</p>
-          <p>Gesucht wird in sechs Quellen gleichzeitig, darunter die Deutsche Nationalbibliothek, Google Books und Open Library. Deine Daten bleiben dabei auf dem Gerät – ohne Konto und ohne Anmeldung. Eine Internetverbindung braucht nur die Buchsuche.</p>
+          <p>Die App ist aufgebaut wie ein Buch: Du blätterst zwischen vier Seiten – der Übersicht, dem SuB (dem Stapel ungelesener Bücher), dem Tagebuch mit allem, was du gelesen oder gehört hast, und der Auswertung. Wer viele Reihen liest, schaltet eine fünfte Seite „Reihen“ dazu: Sie zeigt jede Buchreihe Band für Band mit Cover und Stand – und verrät, welcher Band noch fehlt.</p>
+          <p>Ein neues Buch ist schnell angelegt: Titel, Autor oder ISBN eintippen, und die App fragt sieben Quellen gleichzeitig ab – die Deutsche Nationalbibliothek, den Verbundkatalog K10plus, Google Books, Apple Books, Open Library, Wikidata und für Hörbücher Audible. Ein Tipp auf den Treffer übernimmt Titel, Autor, Verlag, Seitenzahl, Reihe und Cover. Auf Wunsch liest die Handykamera den Strichcode auf der Rückseite des Buches.</p>
+          <div data-fv-text-extra>
+            <p>Für jedes Buch hältst du fest, was dir wichtig ist: das Format vom gebundenen Buch über Taschenbuch, Comic und E-Book bis zum Hörbuch (E-Books und Hörbücher auch aus der Onleihe), Genre, Reihe und Band, wann es auf den SuB gekommen ist, woher es stammt – gekauft, geschenkt, geliehen oder aus dem Bücherschrank – und wo es geblieben ist. Ist ein Buch ausgelesen, trägst du Anfang und Ende ein, die App zählt die Lesetage, und du vergibst bis zu fünf Sterne. Halbe Sterne zählen auch.</p>
+            <p>Bei Hörbüchern spricht die App von „hören“ statt „lesen“, führt die Spieldauer statt der Seitenzahl und merkt sich, wer liest. Bücher und Hörbücher werden in Übersicht und Auswertung getrennt gezählt.</p>
+            <p>Kannst du dich nicht entscheiden, was als Nächstes drankommt, würfelt die App ein Buch aus deinem Stapel aus. Den Vorschlag legst du direkt auf „Lese ich gerade“ oder in die SuB-Abbau-Challenge – die Liste der Bücher, die du dir als Nächstes vorgenommen hast.</p>
+            <p>Alles bleibt auf deinem Handy: kein Konto, keine Anmeldung, keine Werbung. Ins Netz geht die App nur, wenn du suchst oder fehlende Klappentexte nachholst, und – abschaltbar – um nach einer neuen Fassung zu sehen.</p>
+          </div>
 
           <div class="feature-grid" aria-label="Kernfunktionen">
-            <article><h3>Bücher in Sekunden anlegen</h3><p>Suche in sechs Quellen oder ISBN per Kamera scannen – mit Cover und Klappentext.</p></article>
-            <article><h3>Den SuB im Blick</h3><p>Der Stapel ungelesener Bücher, aufgeschlüsselt nach Art – samt SuB-Abbau-Challenge.</p></article>
-            <article><h3>Tagebuch und Bewertung</h3><p>Gelesene und gehörte Titel mit Lesezeitraum und Sternen in halben Schritten.</p></article>
-            <article><h3>Auswertung</h3><p>Bücher, Seiten und Lesetage nach Jahren und Monaten – Bücher und Hörbücher getrennt.</p></article>
-            <article data-fv-text-extra><h3>Alle Formate</h3><p>Gebunden, Taschenbuch, Comic, E-Book und Hörbuch – auch aus der Onleihe.</p></article>
-            <article data-fv-text-extra><h3>Buchreihen</h3><p>Reihen auf einer eigenen Seite sammeln und weitere Bände direkt suchen.</p></article>
-            <article data-fv-text-extra><h3>Eigene Gestaltung</h3><p>30 Hintergrundmotive und frei einstellbare Farben für Leisten und Schrift.</p></article>
+            <article><h3>Bücher in Sekunden anlegen</h3><p>Suche in sieben Quellen gleichzeitig oder ISBN per Kamera einlesen – Cover, Verlag, Seitenzahl und Reihe kommen gleich mit.</p></article>
+            <article><h3>Den SuB im Blick</h3><p>Der Stapel ungelesener Bücher, geordnet nach dem Jahr, in dem sie dazukamen – samt SuB-Abbau-Challenge für die nächsten Vorhaben.</p></article>
+            <article><h3>Tagebuch und Bewertung</h3><p>Alles Gelesene und Gehörte nach Monaten, mit Lesezeitraum, Lesetagen und Sternen in halben Schritten. Jeden Lesemonat kannst du als Bild teilen.</p></article>
+            <article><h3>Auswertung</h3><p>Bücher und Seiten je Monat und Jahr, dazu die Summe über alle Jahre – Bücher und Hörbücher getrennt, abgebrochene auf Wunsch in eigener Reihe.</p></article>
+            <article data-fv-text-extra><h3>Alle Formate</h3><p>Gebunden, broschiert, Taschenbuch, Comic, E-Book und Hörbuch – E-Books und Hörbücher auch aus der Onleihe.</p></article>
+            <article data-fv-text-extra><h3>Buchreihen</h3><p>Reihen mit Bandnummer erfassen. Die Seite „Reihen“ zeigt jede Reihe Band für Band und meldet Lücken.</p></article>
+            <article data-fv-text-extra><h3>Der Würfel entscheidet</h3><p>Ein Zufallsbuch aus dem SuB – mit kurzer Würfelanimation oder auf Wunsch sofort.</p></article>
+            <article data-fv-text-extra><h3>Verzeichnisse</h3><p>Gemerkte Autoren, 121 Verlage, deine Reihen und 25 Genres stehen beim Tippen bereit. Umbenennen wirkt auf alle Bücher.</p></article>
+            <article data-fv-text-extra><h3>Suchen und Ordnen</h3><p>Lupe für die Suche im Bestand, Ordnen nach Reihe, Genre, Autor, Verlag, Format oder Jahr und Wechsel zwischen Covern und Liste.</p></article>
+            <article data-fv-text-extra><h3>Eigene Gestaltung</h3><p>Hell, dunkel oder wie das Gerät, 30 Hintergrundmotive oder ein eigenes Bild, dazu Farbräder für Hintergrund, Menüband und Schrift.</p></article>
+            <article data-fv-text-extra><h3>Besitz und Verbleib</h3><p>Woher ein Buch kam und wo es geblieben ist – behalten, verkauft, verschenkt oder zurückgegeben.</p></article>
+            <article data-fv-text-extra><h3>Papierkorb und Sicherung</h3><p>Gelöschtes bleibt 14 Tage im Papierkorb. Die Sicherung packt den ganzen Bestand samt Covern in eine Datei.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die vier Seiten der App, frisch installiert und noch ohne Bücher.</p>
-          <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
-          <div class="program-media-grid program-media-grid--hoch" data-fv-text-extra aria-label="Ansichten von Finnvelo Lesezeit">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lesezeit-1.webp" width="540" height="1199" loading="lazy" alt="Übersicht der Lesezeit-App">
-              <figcaption>Übersicht</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lesezeit-2.webp" width="540" height="1199" loading="lazy" alt="SuB-Seite mit SuB-Abbau-Challenge">
-              <figcaption>SuB mit SuB-Abbau-Challenge</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lesezeit-3.webp" width="540" height="1199" loading="lazy" alt="Tagebuch der gelesenen Bücher">
-              <figcaption>Tagebuch</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lesezeit-4.webp" width="540" height="1199" loading="lazy" alt="Auswertung des Lesejahres">
-              <figcaption>Auswertung</figcaption>
-            </figure>
+          <p>Die folgenden Ansichten zeigen die App mit einem Beispielbestand aus elf aktuellen Büchern und einem Hörbuch. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: veroeffentlichte Fassung 1.2 im Testbrowser (390 x 845, doppelte Aufloesung).
+               Buchdaten laut Katalog der Deutschen Nationalbibliothek, Cover vom DNB-Coverdienst. -->
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Lesen, sammeln, auswerten</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Ansichten zum Lesen und Auswerten">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-01.webp" width="780" height="1690" loading="lazy" alt="Übersicht mit dem Buch, das gerade gelesen wird, dem Hörbuch, das gerade läuft, und dem Stand des Stapels">
+                <figcaption><strong>Übersicht</strong>Was du gerade liest und hörst, dazu der Stand deines Stapels – Bücher und Hörbücher getrennt.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-02.webp" width="780" height="1690" loading="lazy" alt="SuB-Seite mit aktueller Lektüre, SuB-Abbau-Challenge und ungelesenen Büchern nach Jahren">
+                <figcaption><strong>SuB – Stapel ungelesener Bücher</strong>Oben die aktuelle Lektüre, darunter die SuB-Abbau-Challenge und der übrige Stapel nach dem Jahr, in dem die Bücher dazukamen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-03.webp" width="780" height="1690" loading="lazy" alt="Würfel-Vorschlag „Wie wäre es damit?“ mit einem Buch aus dem Stapel">
+                <figcaption><strong>Der Würfel</strong>„Wie wäre es damit?“ – ein Zufallsbuch aus dem Stapel, direkt als Lektüre oder für die Challenge übernehmen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-04.webp" width="780" height="1690" loading="lazy" alt="Tagebuch mit gelesenen Büchern nach Monaten, Sternen und Seitenzahlen">
+                <figcaption><strong>Tagebuch</strong>Gelesenes nach Monaten mit Sternen, Buch- und Seitenzahl. Jeder Monat lässt sich als Bild teilen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-05.webp" width="780" height="1690" loading="lazy" alt="Auswertung mit Büchern und Seiten je Monat und der Summe über alle Jahre">
+                <figcaption><strong>Auswertung</strong>Bücher und Seiten je Monat, die Jahressumme und alles zusammen über alle Jahre.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-06.webp" width="780" height="1690" loading="lazy" alt="Seite Reihen mit einer Buchreihe aus drei Bänden und ihrem Stand">
+                <figcaption><strong>Reihen</strong>Die zuschaltbare fünfte Seite: jede Reihe Band für Band – hier Band 1 gelesen, Band 2 in der Challenge, Band 3 noch ungelesen.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Bücher erfassen und pflegen</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Ansichten zum Erfassen von Büchern">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-07.webp" width="780" height="1690" loading="lazy" alt="Buch anlegen mit Suchfeldern, Quellenwahl, Sprachfilter und Reitern für Bücher und Hörbücher">
+                <figcaption><strong>Buch anlegen</strong>Suche nach Titel, Reihe, ISBN, Autor oder Verlag – in allen Quellen zusammen oder einer einzelnen, mit Sprachfilter und eigenem Reiter für Hörbücher.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-08.webp" width="780" height="1690" loading="lazy" alt="Buchansicht mit Cover, Bewertung, Status und allen Angaben">
+                <figcaption><strong>Buchansicht</strong>Alle Angaben eines Buches auf einen Blick, der Status lässt sich direkt umstellen, der Klappentext aufklappen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-09.webp" width="780" height="1690" loading="lazy" alt="Buch bearbeiten mit Cover, Format, Genre, Seitenzahl, Reihe, Band, Besitz und Verbleib">
+                <figcaption><strong>Buch bearbeiten</strong>Cover (auch ein eigenes Foto), Format, Genre, Seitenzahl, Reihe und Band, Besitz und Verbleib.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-10.webp" width="780" height="1690" loading="lazy" alt="Lesedaten mit Anfang, Ende, berechneten Lesetagen und Bewertung mit fünf Sternen">
+                <figcaption><strong>Lesedaten und Bewertung</strong>Anfang und Ende eintragen, die Lesetage rechnet die App selbst – dazu bis zu fünf Sterne.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-11.webp" width="780" height="1690" loading="lazy" alt="Verzeichnis der gemerkten Autoren mit der Zahl ihrer Bücher">
+                <figcaption><strong>Gemerkte Autoren</strong>Jeder Name aus dem Bestand steht beim nächsten Buch sofort bereit – ohne Umweg über das Netz.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-12.webp" width="780" height="1690" loading="lazy" alt="Verzeichnis der Genres mit vorgegebenen und belegten Genres">
+                <figcaption><strong>Genres</strong>25 gängige Genres sind vorgegeben, eigene kommen dazu. Umbenennen und Löschen wirkt auf alle Bücher.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Einstellungen und Aussehen</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Ansichten der Einstellungen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-13.webp" width="780" height="1690" loading="lazy" alt="Einstellungen: Aussehen und Erfassen">
+                <figcaption><strong>Aussehen und Erfassen</strong>Erscheinungsbild, Farben und Hintergrund, Umblättern, Würfel, Lage des Plus-Knopfs und Kamera für die ISBN.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-14.webp" width="780" height="1690" loading="lazy" alt="Einstellungen: Ordnen, Listenansicht, Suche im Bestand, Seite Reihen, Vorschläge und Sprachen">
+                <figcaption><strong>Bedienung und Sprachen</strong>Ordnen-Knopf, Listenansicht, Suche im Bestand, Seite „Reihen“, Vorschläge beim Tippen und der Sprachfilter der Suche.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-15.webp" width="780" height="1690" loading="lazy" alt="Einstellungen: Verzeichnisse, Auswertung und Quellen">
+                <figcaption><strong>Verzeichnisse und Auswertung</strong>Autoren, Verlage, Reihen und Genres pflegen und abgebrochene Bücher in der Auswertung zeigen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-16.webp" width="780" height="1690" loading="lazy" alt="Einstellungen: Quellenverzeichnis, Aktualisierung, Datenschutz und Begrüßung">
+                <figcaption><strong>Quellen, Aktualisierung, Begrüßung</strong>Quellenverzeichnis, Prüfung auf neue Fassungen, Datenschutz-Übersicht und wie die App dich anspricht.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-17.webp" width="780" height="1690" loading="lazy" alt="Einstellungen: Nachpflegen und Daten mit Papierkorb und Sicherung">
+                <figcaption><strong>Nachpflegen und Daten</strong>Klappentexte und Cover nachholen, Rückfrage vor dem Löschen, Papierkorb und Sicherung.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-18.webp" width="780" height="1690" loading="lazy" alt="Auswahl der Hintergrundmotive">
+                <figcaption><strong>Hintergrundmotive</strong>30 Motive, eine einfarbige Fläche oder ein eigenes Bild.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-19.webp" width="780" height="1690" loading="lazy" alt="Farbrad für die Hintergrundfarbe mit Reglern für Sättigung, Tiefe und Deckkraft">
+                <figcaption><strong>Farbräder</strong>Hintergrundfarbe mit Sättigung, Tiefe und Deckkraft – Menüband und Schrift auf Wunsch in eigener Farbe.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-20.webp" width="780" height="1690" loading="lazy" alt="SuB-Seite mit dem Hintergrundmotiv Bibliothek">
+                <figcaption><strong>Mit Hintergrundmotiv</strong>Derselbe Stapel mit dem Motiv „Bibliothek“ im Hintergrund.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/lesezeit-21.webp" width="780" height="1690" loading="lazy" alt="Übersicht im dunklen Erscheinungsbild">
+                <figcaption><strong>Dunkles Design</strong>Die Übersicht im dunklen Erscheinungsbild.</figcaption>
+              </figure>
+            </div>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Ab Werk ist Lesezeit schlicht gehalten. Vieles, was nicht jeder braucht, schaltest du in den Einstellungen dazu. Ein Überblick über alles, was sich einstellen lässt:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Aussehen</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Erscheinungsbild</strong>Hell, Dunkel oder wie das Gerät.</li>
+                <li><strong>Farben und Hintergrund</strong>30 Motive, eine Farbfläche oder ein eigenes Bild, wahlweise das ganze Motiv zeigen. Farbräder für Hintergrund, Menüband und Schrift, alles zurücksetzbar.</li>
+                <li><strong>Seiten umblättern</strong>Wie im Buch, mit Kapitelblatt. Ausgeschaltet schieben sich die Seiten nur.</li>
+                <li><strong>Seite „Reihen“ zeigen</strong>Schaltet die fünfte Seite mit allen Buchreihen dazu – Band für Band mit Cover und Stand.</li>
+                <li><strong>Listenansicht</strong>Knopf zum Umschalten zwischen Covern und einer Liste mit Titel, Verfasser und Jahr.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Bedienung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Würfel rollt</strong>Vor dem Vorschlag rollt zwei Sekunden lang ein Würfel. Ausgeschaltet erscheint das Buch sofort.</li>
+                <li><strong>Plus-Knopf und Würfel oben</strong>Ab Werk sitzen beide unten rechts, wahlweise oben in der Kopfleiste.</li>
+                <li><strong>Ordnen-Knopf</strong>Trichter in der Kopfleiste: ordnet SuB und Tagebuch nach Reihe, Genre, Autor, Verlag, Format oder Jahr.</li>
+                <li><strong>Suche im Bestand</strong>Lupe in der Leiste: sucht über Titel, Verfasser, Verlag, Reihe, Genre, Sprecher und ISBN.</li>
+                <li><strong>Vorschläge beim Tippen</strong>Zeigt schon beim Eintippen passende Bücher samt Cover.</li>
+                <li><strong>Kamera für die ISBN</strong>Kamerasymbol im ISBN-Feld zum Einlesen des Strichcodes.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Suche und Quellen</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Sprache der Suche</strong>Treffer werden nach Sprache gefiltert. Weitere Sprachen lassen sich mit ihrem Katalogcode ergänzen.</li>
+                <li><strong>Quellenverzeichnis</strong>Sieben eingebaute Quellen, jede einzeln abschaltbar. Eigene Bibliothekskataloge lassen sich dazu anlegen.</li>
+                <li><strong>Klappentexte selbst nachholen</strong>Fragt im Hintergrund bei den Buchdiensten nach, wenn einem Buch der Klappentext fehlt.</li>
+                <li><strong>Klappentexte und Cover nachholen</strong>Dasselbe auf Knopfdruck für den ganzen Bestand.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Verzeichnisse und Auswertung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Gemerkte Autoren und Verlage</strong>Namen, die beim Anlegen sofort bereitstehen – anlegen und löschen.</li>
+                <li><strong>Buchreihen und Genres</strong>Anlegen, umbenennen und löschen. Änderungen gelten für alle Bücher, die daran hängen.</li>
+                <li><strong>Abgebrochene Bücher anzeigen</strong>Eine eigene Reihe in der Auswertung.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Daten</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Vor dem Löschen nachfragen</strong>Schützt davor, ein Buch aus Versehen wegzuwerfen.</li>
+                <li><strong>Papierkorb</strong>Gelöschtes bleibt 14 Tage liegen und lässt sich zurückholen.</li>
+                <li><strong>Sicherung erstellen und einlesen</strong>Der ganze Bestand samt Covern in einer Datei – zum Aufbewahren oder Verschicken. Einlesen ersetzt den Bestand erst nach Rückfrage.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Begrüßung, Aktualisierung und Hilfe</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Wie soll die App dich nennen?</strong>Ein Name oder Spitzname für die Begrüßung.</li>
+                <li><strong>Beim Öffnen begrüßen</strong>Ein kurzer Willkommensgruß nach dem Startbild.</li>
+                <li><strong>Nach neuer Fassung sehen</strong>Fragt beim Öffnen auf finnveloprogramme.com nach. Abgeschaltet bleibt die Prüfung von Hand.</li>
+                <li><strong>Fehler melden</strong>Ein Bericht mit Fassung, Gerät und den letzten Fehlern – ohne Buchtitel und Notizen.</li>
+                <li><strong>Datenschutz</strong>Zeigt genau, was auf dem Gerät bleibt und was bei einer Suche wohin geht.</li>
+              </ul>
+            </article>
+          </div>
+        </section>
+
+        <section class="program-info-block" aria-labelledby="advantages-title">
+          <h2 id="advantages-title">Besondere Vorteile</h2>
+          <ul class="feature-list">
+            <li>Kein Konto, keine Anmeldung, keine Werbung</li>
+            <li>Alle Daten bleiben auf dem Gerät – die App holt nur, sie sendet nie</li>
+            <li>Suche in sieben Quellen gleichzeitig und ISBN-Scan per Kamera</li>
+            <li>Bücher und Hörbücher getrennt ausgewertet</li>
+            <li data-fv-text-extra>Papierkorb und Sicherung – nichts geht versehentlich verloren</li>
+            <li data-fv-text-extra>SuB-Abbau-Challenge und Zufallswürfel gegen den wachsenden Stapel</li>
+            <li data-fv-text-extra>Buchreihen Band für Band, fehlende Bände sofort sichtbar</li>
+            <li data-fv-text-extra>Ausländische Quellen abschaltbar – dann verlässt kein Suchwort die EU</li>
+            <li data-fv-text-extra>Ab Werk schlicht, alles Weitere nach Wunsch zuschaltbar</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block" aria-labelledby="target-title">
+          <h2 id="target-title">Zielgruppe</h2>
+          <p>Für alle, die gern lesen oder hören und den Überblick behalten wollen – über den Stapel, der noch wartet, und alles, was schon gelesen ist –, ohne dass daraus eine Verwaltungsaufgabe wird.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Vielleserinnen und Vielleser, deren SuB schneller wächst als er schrumpft – Challenge und Würfel helfen beim Abbauen.</li>
+            <li>Wer Reihen liest und wissen will, welcher Band als Nächstes dran ist oder noch fehlt.</li>
+            <li>Hörbuchfans, die Gehörtes genauso festhalten wollen wie Gelesenes – auch aus der Onleihe.</li>
+            <li>Alle, die ein Lesetagebuch ohne Konto, Cloud und Werbung suchen.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Dein Lesetagebuch bleibt auf dem Handy. Es gibt kein Konto, keine Anmeldung und keinen Server, auf dem deine Bücher liegen – die App holt nur, sie sendet nie. Keine Werbung, keine Zählpixel, keine Nutzungsauswertung.</p>
+          <p>Ins Netz geht die App nur, wenn du suchst – dann gehen deine Suchbegriffe an die Quellen, die du angeschaltet hast –, wenn sie fehlende Klappentexte oder Cover nachholt, und beim Öffnen für die Frage nach einer neuen Fassung. Cover werden einmal geholt, verkleinert und in der App abgelegt.</p>
+          <p>Tagebucheinträge, Bewertungen, Lesezeiten, dein Spitzname und die Zusammenstellung deines Bestandes verlassen das Gerät nie. Jede Quelle, die Aktualisierung und das Nachholen von Klappentexten lassen sich einzeln abschalten.</p>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
@@ -155,28 +345,12 @@
           <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
         </section>
 
-        <section class="program-info-block" aria-labelledby="advantages-title">
-          <h2 id="advantages-title">Besondere Vorteile</h2>
-          <ul class="feature-list">
-            <li>Kein Konto, keine Anmeldung</li>
-            <li>Alle Daten bleiben auf dem Gerät</li>
-            <li>Buchsuche in sechs Quellen und ISBN-Scan per Kamera</li>
-            <li>Bücher und Hörbücher getrennt ausgewertet</li>
-            <li data-fv-text-extra>Papierkorb und Sicherung – nichts geht versehentlich verloren</li>
-          </ul>
-        </section>
-
-        <section class="program-info-block" aria-labelledby="target-title">
-          <h2 id="target-title">Zielgruppe</h2>
-          <p>Für alle, die gern lesen oder hören und den Überblick behalten wollen – über den Stapel, der noch wartet, und alles, was schon gelesen ist –, ohne dass daraus eine Verwaltungsaufgabe wird.</p>
-        </section>
-
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
           <h2 id="download-title">Download (Android-App)</h2>
           <div class="download-slot">
             <h3>App herunterladen</h3>
             <p>Da die App nicht über den Play Store verteilt wird, muss Android beim Öffnen der Datei einmalig die Installation aus unbekannter Quelle erlauben.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.5.0.apk" target="_blank" rel="noopener">Android-App herunterladen (2,1 MB)</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-1.2.apk" target="_blank" rel="noopener">Android-App herunterladen</a>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Weitere Versionen und Patches</h3>

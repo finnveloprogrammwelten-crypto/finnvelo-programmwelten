@@ -1746,10 +1746,12 @@ body.fv-admin-on .site-header { top: 44px; }
 
 /* Hinweisblock "Web-Apps" auf der Startseite (gruener Akzent = laeuft im Browser). */
 
-/* Bildraster fuer Hochformat-Aufnahmen (Handy-Bildschirmfotos). */
+/* Bildraster fuer Hochformat-Aufnahmen (Handy-Bildschirmfotos).
+   Drei nebeneinander, damit die Schrift in den Bildern lesbar bleibt
+   (Wunsch Tatorasa 06.11.2026: "alles sauber zu erkennen"). */
 .program-media-grid--hoch {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(12px, 1.4vw, 22px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 30px);
 }
 .program-media-grid--hoch img {
   height: auto;          /* sonst wird die Hoehenangabe im HTML woertlich genommen */
@@ -1758,14 +1760,74 @@ body.fv-admin-on .site-header { top: 44px; }
   border-radius: 14px;
 }
 .program-media-grid--hoch figcaption {
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 14px;
+  line-height: 1.45;
 }
 @media (max-width: 1080px) {
   .program-media-grid--hoch { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 @media (max-width: 700px) {
   .program-media-grid--hoch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Bildunterschrift mit Titel: <figcaption><strong>Titel</strong>Erklaerung</figcaption> */
+.program-media-card figcaption strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--text);
+  font-size: 15px;
+}
+
+/* Zwischenueberschriften, wenn eine Oberflaeche in mehrere Bildgruppen zerfaellt */
+.program-media-gruppe {
+  margin: clamp(30px, 3.6vw, 52px) 0 0;
+  font-size: clamp(19px, 1.4vw, 24px);
+  letter-spacing: -0.018em;
+}
+.program-media-gruppe + .program-media-grid {
+  margin-top: clamp(14px, 1.6vw, 22px);
+}
+
+/* Abschnitt "Einstellungen - das kannst du anpassen" auf den Programmseiten */
+.einstellungs-raster {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(16px, 2vw, 28px);
+  margin-top: clamp(20px, 2.4vw, 32px);
+}
+.einstellungs-gruppe {
+  padding: clamp(16px, 1.6vw, 22px) clamp(18px, 1.8vw, 26px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  /* deckend genug, dass das Wappen im Seitenhintergrund die Schrift nicht stoert */
+  background: rgba(10, 12, 18, 0.86);
+}
+.einstellungs-gruppe h3 {
+  margin: 0 0 12px;
+  color: var(--text);
+  font-size: clamp(18px, 1.25vw, 22px);
+  letter-spacing: -0.018em;
+}
+.einstellungs-liste {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.einstellungs-liste strong {
+  display: block;
+  color: var(--text);
+}
+@media (max-width: 900px) {
+  .einstellungs-raster { grid-template-columns: 1fr; }
+}
+
+/* Aufzaehlung in voller Breite (z. B. Zielgruppe) */
+.feature-list--einspaltig {
+  grid-template-columns: 1fr;
 }
 
 /* =====================================================================
