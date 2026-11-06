@@ -108,69 +108,161 @@
       </div>
 
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite. Keine gespeicherten
+             Texte auf dieser Seite; Neues trotzdem in data-fv-text-extra. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
-          <p>Der Systemwart sammelt an einer Stelle, wofür man sonst ein halbes Dutzend Einzelwerkzeuge braucht. Er liest die verbaute Hardware aus, zeigt alle Laufwerke mit ihrem freien Platz, findet die größten Ordner und Dateien und räumt temporäre Ablagen, Zwischenspeicher und Reste alter Windows-Aktualisierungen weg.</p>
-          <p>Darüber hinaus lassen sich Autostart-Einträge, Dienste, geplante Aufgaben und installierte Programme durchsehen und einzeln abschalten oder entfernen. Jede Änderung landet in einem Journal und lässt sich mit einem Klick zurücknehmen.</p>
+          <p>Der Systemwart sammelt an einer Stelle, wofür man sonst ein halbes Dutzend Einzelwerkzeuge braucht. Er liest die verbaute Hardware aus, zeigt alle Laufwerke mit ihrem freien Platz und Gesundheitszustand, findet die größten Ordner und Dateien und räumt temporäre Ablagen, Zwischenspeicher und Reste alter Windows-Aktualisierungen weg.</p>
+          <p>Darüber hinaus lassen sich Autostart-Einträge, Dienste, geplante Aufgaben und installierte Programme durchsehen und einzeln abschalten oder entfernen. Jeder Eingriff landet mit dem Zustand davor im Änderungsprotokoll; Autostart und Leistungseinstellungen lassen sich dort einzeln zurücknehmen. Vor Eingriffen ohne eigenen Rückweg – Löschen, Deinstallieren, Treiber, Dienste – verlangt der Systemwart einen Wiederherstellungspunkt von heute.</p>
           <p>Treiber werden über die Aktualisierungsschnittstelle von Windows geprüft. Herstellerseiten werden nur verlinkt, nie im Hintergrund angezapft – so bleibt nachvollziehbar, woher eine Datei stammt.</p>
+          <div data-fv-text-extra>
+            <p>Das Programm ist in fünf Bereiche gegliedert. <strong>Prüfen</strong> zeigt die Übersicht, eine Startanalyse mit den Bremsern beim Hochfahren, die Auslastung live, den Befund, die Stabilität mit Abstürzen und einen Verlauf. <strong>Hardware</strong> liest Prozessor, Arbeitsspeicher, Grafik, Datenträger und System aus. <strong>Aufräumen</strong> umfasst Wartung, Altlasten, Autostart, Dienste, Aufgabenplanung, Programme und Speicherfresser. <strong>Erneuern</strong> kümmert sich um Treiber, Mainboard und Leistung, <strong>Absichern</strong> um Wiederherstellungspunkte und das Änderungsprotokoll.</p>
+            <p>Die Wartung führt auf Knopfdruck durch fünf Schritte: absichern, unbedenkliche Altlasten entfernen, bei Microsoft nach Treiber-Updates suchen, den Komponentenspeicher prüfen und Stabilität und Befund neu einlesen. Der Systemwart räumt nie von selbst auf – er erinnert nur, ab Werk alle 30 Tage.</p>
+            <p>Systemkritische Dienste und Einträge stehen auf einer Schutzliste und werden gar nicht erst angeboten. Temperaturen, Lüfter und Takt liest eine mitgelieferte Sensorbibliothek; für Prozessor, Mainboard und Speicherriegel lässt sich auf Wunsch der quelloffene Sensortreiber PawnIO einrichten, dessen Prüfsumme und Signatur das Programm vorher kontrolliert.</p>
+          </div>
 
-          <div class="feature-grid" aria-label="Kernfunktionen des Finnvelo Systemwarts">
+          <div class="feature-grid" aria-label="Kernfunktionen">
             <article><h3>Übersicht und Startanalyse</h3><p>Zeigt den Zustand des Rechners auf einen Blick und welche Programme den Windows-Start bremsen.</p></article>
             <article><h3>Hardware und Laufwerke</h3><p>Prozessor, Speicher, Grafik und Mainboard auslesen; Laufwerke mit Gesundheitswerten und aktuellem Lese- und Schreibtempo.</p></article>
-            <article><h3>Altlasten und Speicherfresser</h3><p>Temporäre Dateien und Update-Reste entfernen, die größten Ordner und Dateien aufspüren.</p></article>
+            <article><h3>Altlasten und Speicherfresser</h3><p>Temporäre Dateien und Update-Reste entfernen, die größten Ordner und Dateien aufspüren, den Komponentenspeicher bereinigen.</p></article>
             <article><h3>Autostart, Dienste, Aufgaben</h3><p>Einträge einzeln abschalten – systemkritische Dienste stehen auf einer Schutzliste und werden gar nicht erst angeboten.</p></article>
-            <article><h3>Leistung</h3><p>Energieplan, Indexdienst, visuelle Effekte und Hintergrund-Apps – jede Stellschraube einzeln und mit Rückweg.</p></article>
-            <article><h3>Auslastung live</h3><p>Prozessor, Arbeitsspeicher, Datenträger, Grafik und Netz in Echtzeit, dazu Temperaturen, Lüfter und Takt.</p></article>
+            <article><h3>Leistung</h3><p>Energieplan, SysMain, Indexdienst, visuelle Effekte, Hintergrund-Apps und Spielemodus – jede Stellschraube einzeln und mit Rückweg.</p></article>
+            <article><h3>Auslastung live</h3><p>Prozessor, Arbeitsspeicher, Datenträger, Grafik und Netz in Echtzeit, dazu Temperaturen, Lüfter, Takt und die hungrigsten Programme.</p></article>
+            <article data-fv-text-extra><h3>Wartung auf Knopfdruck</h3><p>Fünf Schritte vom Wiederherstellungspunkt bis zum neuen Befund – mit Erinnerung, aber nie von selbst.</p></article>
+            <article data-fv-text-extra><h3>Befund</h3><p>Fasst zusammen, was kritisch ist, was Beachtung verdient und welche Hinweise es gibt – jede Zeile führt zur passenden Seite.</p></article>
+            <article data-fv-text-extra><h3>Treiber aus seriöser Quelle</h3><p>Suche und Installation über Microsoft Update; Herstellerseiten nur als Link. Reste des anfälligen Treibers WinRing0 lassen sich entfernen.</p></article>
+            <article data-fv-text-extra><h3>Sicherung</h3><p>Computerschutz prüfen und einschalten, Wiederherstellungspunkte setzen – auf Wunsch automatisch beim Start.</p></article>
+            <article data-fv-text-extra><h3>Änderungsprotokoll</h3><p>Jeder Eingriff mit Zeitpunkt, Ziel und Zustand davor – die Grundlage fürs Zurücknehmen.</p></article>
+            <article data-fv-text-extra><h3>Erklärungen eingebaut</h3><p>Zu jedem Messwert steht direkt daneben, was er bedeutet – samt Gerätefehlercodes und Stopcodes.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die folgenden Ansichten zeigen den Finnvelo Systemwart auf einem Beispielrechner – ohne Messwerte eines echten Systems.</p>
-          <!-- Fotos 06.11.2026: Oberflaeche mit neutralen Beispielwerten, keine echten Systemdaten.
-               data-fv-text-extra: zaehlt im Bearbeiten-Modus nach allen vorhandenen Feldern -->
-          <div class="program-media-grid" data-fv-text-extra aria-label="Ansichten von Finnvelo Systemwart">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/systemwart-1.webp" width="1280" height="800" loading="lazy" alt="Seite Wartung mit Stand und den fünf Schritten des Wartungsablaufs">
-              <figcaption>Wartung – fünf Schritte auf Knopfdruck</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/systemwart-2.webp" width="1280" height="800" loading="lazy" alt="Seite Befund mit den Stufen Kritisch, Beachten und Hinweise">
-              <figcaption>Befund – alles Wichtige auf einen Blick</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/systemwart-3.webp" width="1280" height="800" loading="lazy" alt="Einstellungen für Start, Rechte, Startseite und Farbmodus">
-              <figcaption>Einstellungen für Start, Rechte und Darstellung</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/systemwart-4.webp" width="1280" height="800" loading="lazy" alt="Seite Aktualisierung mit eigener Fassung, Serverstand und Erklärung der Abfrage">
-              <figcaption>Aktualisierung – eine Abfrage, eine Zahl</figcaption>
-            </figure>
+          <p>Die folgenden Ansichten zeigen den Finnvelo Systemwart 1.0.0 auf einem Beispielrechner – ausschließlich Seiten ohne Messwerte eines echten Systems. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: Oberflaeche mit neutralen Beispielwerten und den Werkseinstellungen, keine echten Systemdaten. -->
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Pflegen und Absichern</h3>
+            <div class="program-media-grid" aria-label="Pflegen und Absichern">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-01.webp" width="1280" height="800" loading="lazy" alt="Seite Wartung mit Stand, Erinnerung alle 30 Tage und den fünf Schritten des Ablaufs">
+                <figcaption><strong>Wartung</strong>Letzte Wartung, Erinnerung und die fünf Schritte vom Wiederherstellungspunkt bis zum neuen Befund.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-02.webp" width="1280" height="800" loading="lazy" alt="Seite Befund mit kritisch, beachten und Hinweisen">
+                <figcaption><strong>Befund</strong>Was kritisch ist, was Beachtung verdient und welche Hinweise anstehen – hier „Wartung fällig“.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-03.webp" width="1280" height="800" loading="lazy" alt="Änderungsprotokoll, noch ohne Einträge">
+                <figcaption><strong>Änderungsprotokoll</strong>Hier landet jeder Eingriff mit Zeitpunkt, Ziel und Zustand davor.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-04.webp" width="1280" height="800" loading="lazy" alt="Seite Aktualisierung mit eigener Fassung, Serverstand und Erklärung der Abfrage">
+                <figcaption><strong>Aktualisierung</strong>Eine Abfrage, eine Zahl: Fassung auf dem Server, Ergebnis und was dabei passiert.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Einstellungen und Aussehen</h3>
+            <div class="program-media-grid" aria-label="Einstellungen und Aussehen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-05.webp" width="1280" height="800" loading="lazy" alt="Einstellungen Beim Start und Darstellung">
+                <figcaption><strong>Beim Start und Darstellung</strong>Administratorrechte, Rechte behalten, Wiederherstellungspunkt beim Start, Startseite und Farbmodus.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-06.webp" width="1280" height="800" loading="lazy" alt="Einstellungen Messen und Sensortreiber PawnIO">
+                <figcaption><strong>Messen und Sensortreiber</strong>Takt der Live-Anzeigen, Temperaturen, Prozessorkerne, Speicherfresser-Grenze und der Sensortreiber PawnIO.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-07.webp" width="1280" height="800" loading="lazy" alt="Einstellungen Wartung, Eingriffe, Ablage und Über">
+                <figcaption><strong>Wartung, Eingriffe und Ablage</strong>Erinnerung, Nachfrage vor jedem Eingriff, Datenordner, Schutzliste und Lizenzen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/systemwart-08.webp" width="1280" height="800" loading="lazy" alt="Seite Wartung im hellen Farbmodus">
+                <figcaption><strong>Heller Farbmodus</strong>Dieselbe Wartungsseite hell – wahlweise auch passend zu Windows.</figcaption>
+              </figure>
+            </div>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
         </section>
 
-        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
-          <h2 id="tutorial-title">Tutorial-Video</h2>
-          <p>Ein Tutorial-Video wird hier ergänzt, sobald es bereitsteht.</p>
-          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Ab Werk ist der Systemwart vorsichtig eingestellt. Ein Überblick über alles, was sich anpassen lässt:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Beim Start</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Nach Administratorrechten fragen</strong>Ohne Rechte bleiben Autostart, Dienste, Sensoren und Wiederherstellungspunkte leer.</li>
+                <li><strong>Rechte behalten</strong>Einmal zugestimmt, startet der Systemwart künftig ohne erneute Abfrage – über eine Aufgabe, die nur ihn selbst startet. Abschaltbar, der Deinstaller entfernt sie.</li>
+                <li><strong>Wiederherstellungspunkt beim Start</strong>Ist der jüngste Punkt älter als die Sperrfrist von Windows, legt der Systemwart still einen neuen an.</li>
+                <li><strong>Womit das Programm aufmacht</strong>Jede der Seiten kann Startseite sein.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Darstellung und Messen</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Farbmodus</strong>Dunkel, hell oder wie Windows.</li>
+                <li><strong>Takt der Live-Anzeigen</strong>Jede Sekunde, alle 2, 5 oder 10 Sekunden.</li>
+                <li><strong>Temperaturen und Lüfter auslesen</strong>Über die mitgelieferte Sensorbibliothek – abschaltbar, falls ein anderes Überwachungsprogramm läuft.</li>
+                <li><strong>Einzelne Prozessorkerne anzeigen</strong>Jeder Kern einzeln statt nur der Gesamtlast.</li>
+                <li><strong>Ab welcher Größe eine Datei als Speicherfresser gilt</strong>100 MB, 200 MB, 500 MB oder 1 GB.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Sensortreiber und Wartung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Sensortreiber PawnIO</strong>Liegt bei, wird nur auf Wunsch eingerichtet und wieder entfernt – vorher prüft der Systemwart Prüfsumme und Signatur.</li>
+                <li><strong>An die Wartung erinnern</strong>Nie, jede Woche, alle 2 Wochen oder jeden Monat.</li>
+                <li><strong>Vor jedem Eingriff nachfragen</strong>Zusätzliche Sicherheitsabfrage vor Löschen, Abschalten und Deinstallieren.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Ablage, Aktualisierung und Über</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Datenordner</strong>Einstellungen und Änderungsprotokoll öffnen, das Protokoll leeren oder die Einstellungen zurücksetzen.</li>
+                <li><strong>Schutzliste der Dienste</strong>Was nie angeboten wird, steht in einer eigenen Datei.</li>
+                <li><strong>Aktualisierung</strong>Beim Start still nachsehen oder von Hand – der Download öffnet nur den Browser, eingespielt wird von Hand.</li>
+                <li><strong>Über</strong>Fassung, Laufzeit und die Lizenzen aller mitgelieferten Bausteine.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block" aria-labelledby="advantages-title">
           <h2 id="advantages-title">Besondere Vorteile</h2>
           <ul class="feature-list">
-            <li>Wiederherstellungspunkt vor jedem Eingriff</li>
-            <li>Änderungsjournal mit Rückgängig – jede Aktion einzeln</li>
+            <li>Wiederherstellungspunkt vor Eingriffen ohne eigenen Rückweg</li>
+            <li>Änderungsprotokoll mit dem Zustand vor jedem Eingriff</li>
             <li>Schutzliste für systemkritische Dienste, die nicht angefasst werden</li>
             <li>Temperaturen und Auslastung live</li>
             <li>Treiber nur aus seriöser Quelle</li>
             <li>Erklärungen zu jedem Punkt direkt im Programm</li>
+            <li data-fv-text-extra>Räumt nie von selbst auf – erinnert nur</li>
+            <li data-fv-text-extra>Läuft auch ohne Administratorrechte – dann mit weniger Angaben</li>
           </ul>
         </section>
 
         <section class="program-info-block" aria-labelledby="target-title">
           <h2 id="target-title">Zielgruppe</h2>
           <p>Alle, die ihren Windows-Rechner selbst in Ordnung halten wollen, ohne sich durch ein Dutzend Systemeinstellungen zu klicken – und ohne Angst, dabei etwas kaputtzumachen.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Wer wissen will, warum der Rechner langsam startet oder die Festplatte voll ist.</li>
+            <li>Wer seinen PC regelmäßig pflegen möchte, aber keine Lust auf Werkzeuge mit Werbung und Abo hat.</li>
+            <li>Wer nachvollziehen möchte, was ein Programm am System verändert hat – und es zurücknehmen kann.</li>
+            <li>Wer Familie oder Freunden den Rechner einrichtet und dabei auf Nummer sicher gehen will.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Alle Messungen laufen auf deinem Rechner. Einstellungen und Änderungsprotokoll liegen als Dateien im Datenordner des Programms unter AppData. Es gibt kein Konto und keine Anmeldung.</p>
+          <p>Ins Netz geht der Systemwart nur für drei Dinge: eine kurze Abfrage der neuesten Fassung bei finnveloprogramme.com, die nach fünf Sekunden abbricht, die Treibersuche über Microsoft Update und die Herstellerseiten, die du unter „Treiber“ selbst anklickst.</p>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
+          <h2 id="tutorial-title">Tutorial-Video</h2>
+          <p>Ein Tutorial-Video wird hier ergänzt, sobald es bereitsteht.</p>
+          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
         </section>
 
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
