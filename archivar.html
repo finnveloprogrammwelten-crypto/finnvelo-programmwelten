@@ -82,63 +82,177 @@
       </div>
 
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite: Neues steht in
+             data-fv-text-extra, damit die gespeicherten Texte t43/t44 im Download-Bereich
+             ihre Nummern behalten. Grundelemente t0-t40 (auch die vier Bildunterschriften
+             der ersten Bildgruppe) nicht entfernen. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
-          <p>Das Programm richtet sich an Nutzer, die Dateien sichern, Ordnerstände vervielfältigen oder wiederkehrende Dateiabläufe schnell und kontrolliert ausführen möchten. Dateien und Ordner können über die Programmoberfläche oder direkt aus dem Windows-Kontextmenü an den Finnvelo Archivar übergeben werden.</p>
-          <p>Die Oberfläche ist klar aufgebaut, unterstützt helles und dunkles Design und bietet eine mehrsprachige Bedienung. Archivierungs- und Kopiervorgänge werden mit Fortschritt, Datenmenge und Status angezeigt und können bei Bedarf abgebrochen werden.</p>
+          <p>Der Finnvelo Archivar packt Dateien und Ordner zu Archiven, entpackt vorhandene Archive und legt Sicherungskopien an – in einem schlanken Windows-Programm. Was du hineinziehst, erkennt er selbst: Ordner und Dateien werden gepackt, Archive entpackt. Ziehst du mehrere Dateien oder Ordner auf einmal hinein, fasst er sie zu einem gemeinsamen Archiv zusammen. Über den Rechtsklick im Windows-Explorer („Mit Finnvelo Archivar archivieren“) kommen Dateien und Ordner auch ohne Umweg ins Programm.</p>
+          <p>Archiviert wird mit der bewährten 7-Zip-Technik: als 7z, ZIP, TAR oder WIM, mit Kompressionsstärke von „Speichern“ bis „Ultra“, auf Wunsch mit Passwort und verschlüsselten Dateinamen. Entpacken klappt mit ZIP, 7z, RAR, TAR, GZ, BZ2, XZ und WIM. Jeder Vorgang zeigt Fortschritt in Prozent und Megabyte und lässt sich jederzeit abbrechen.</p>
+          <div data-fv-text-extra>
+            <p>Mit Auswahlregeln legst du fest, was nicht ins Archiv soll – zum Beispiel einen Videoordner oder Systemdateien wie „Thumbs.db“. Du blätterst dazu durch die Quelle und schließt Unterordner und Dateien mit einem Klick aus oder nimmst sie wieder mit. Außerdem bestimmst du, ob der oberste Ordner selbst mit eingepackt wird und ob leere Ordner erhalten bleiben. Vor dem Packen prüft „Ordner prüfen“ die Quelle, nach dem Packen kontrolliert „Archiv prüfen“ das Ergebnis.</p>
+            <p>Der eingebaute Kopierer ist für wiederkehrende Sicherungen gedacht: Quelle, Zielordner, Auswahlregeln und die Zahl der Kopien speicherst du als Vorlage. Bei jedem Lauf legt er die nächste nummerierte Kopie an – „Urlaubsfotos 2025 (Kopie 1)“, „(Kopie 2)“ und so weiter – und zeigt vorher an, welche als Nächstes entsteht. Ist die eingestellte Anzahl erreicht, ersetzt er reihum die älteste. So hast du immer mehrere Stände, ohne dass der Platz unbegrenzt wächst.</p>
+            <p>Die zuletzt genutzten Quellen und Ablageorte merkt sich der Archivar zum schnellen Wiederaufruf. Design, Schrift, Farben und Sprache stellst du in seinen Einstellungen ein, neue Fassungen meldet er auf Wunsch beim Start. Den Archivar gibt es als eigenständiges Programm, er steckt aber auch in Finnvelo Command Control – dort öffnest du ihn direkt aus der oberen Leiste.</p>
+          </div>
 
           <div class="feature-grid" aria-label="Kernfunktionen des Finnvelo Archivars">
             <article>
               <h3>Archivieren und Entpacken</h3>
-              <p>Dateien und Ordner lassen sich komfortabel zu Archiven zusammenfassen oder aus vorhandenen Archiven entpacken - inklusive Fortschrittsanzeige, optionalem Passwortschutz und Abbruchfunktion.</p>
+              <p>Packen als 7z, ZIP, TAR oder WIM, entpacken auch RAR, GZ, BZ2 und XZ – der Archivar erkennt selbst, was zu tun ist. Mit Fortschritt, Passwort und Abbruch.</p>
             </article>
             <article>
               <h3>Auswahlregeln</h3>
-              <p>Bei Ordnerquellen kann festgelegt werden, welche Dateien oder Unterordner ausgeschlossen werden. Dadurch entstehen Archive gezielt nach den gewünschten Regeln.</p>
+              <p>Unterordner und Dateien gezielt ausschließen – durch die Quelle blättern und mit einem Klick ausschließen oder wieder mitnehmen.</p>
             </article>
             <article>
               <h3>Integrierter Kopierer</h3>
-              <p>Wiederkehrende Kopierabläufe können als Kopiervorlage gespeichert werden - mit Quelle, Zielordner, Kopienanzahl, Auswahlregeln und aktuellem Kopierstand.</p>
+              <p>Wiederkehrende Kopien als Vorlage speichern – mit Quelle, Zielordner, Kopienanzahl und Auswahlregeln.</p>
             </article>
             <article>
               <h3>Automatische Kopierschleife</h3>
-              <p>Der Archivar erkennt vorhandene Kopien und erstellt automatisch die nächste passende Kopie, ohne bestehende Kopien versehentlich zu überschreiben.</p>
+              <p>Nummerierte Kopien reihum. Vorab siehst du, welche Kopie als Nächstes entsteht; nach der eingestellten Anzahl wird die älteste ersetzt.</p>
             </article>
             <article>
               <h3>Windows-Integration</h3>
-              <p>Dateien und Ordner lassen sich per Rechtsklick an das Programm übergeben. Die ausgewählte Quelle wird automatisch übernommen und der gewünschte Vorgang vorbereitet.</p>
+              <p>Rechtsklick auf Dateien oder Ordner: „Mit Finnvelo Archivar archivieren“. Auf freier Fläche im Ordner: „Finnvelo Archivar hier öffnen“.</p>
             </article>
             <article>
               <h3>Mehrsprachige Oberfläche</h3>
-              <p>Die Bedienung ist für mehrere Sprachen vorbereitet, darunter Deutsch, Englisch, Französisch, Spanisch, Italienisch, Niederländisch, Polnisch, Tschechisch, Dänisch und Türkisch.</p>
+              <p>Bedienbar in Deutsch, Englisch, Französisch, Spanisch, Italienisch, Niederländisch, Polnisch, Tschechisch, Dänisch und Türkisch.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Mehrere Quellen, ein Archiv</h3>
+              <p>Mehrere Dateien, Ordner oder Archive auf einmal hineinziehen – sie werden zu einem Archiv zusammengefasst.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Erweiterte Archivoptionen</h3>
+              <p>Format, Kompressionsstärke und -verfahren, Wörterbuch- und Wortgröße, CPU-Threads, solides Archiv und Art der Aktualisierung.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Passwortschutz</h3>
+              <p>Archive optional mit Passwort verschlüsseln, auf Wunsch auch die Dateinamen. Beim Entpacken fragt der Archivar nach dem Passwort.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Prüfen vor und nach dem Packen</h3>
+              <p>„Ordner prüfen“ sieht sich die Quelle an, „Archiv prüfen“ kontrolliert ein fertiges Archiv.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Letzte Quellen und Ablageorte</h3>
+              <p>Zuletzt genutzte Quellen, Ablageorte und Zielordner stehen in einer Auswahlliste bereit.</p>
+            </article>
+            <article data-fv-text-extra>
+              <h3>Eigene Darstellung</h3>
+              <p>Dunkles oder helles Design, eigene Schrift und Farben. Im Command Control eingebaut übernimmt er dessen Einstellungen.</p>
             </article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die folgenden Ansichten zeigen den Finnvelo Archivar mit einem erfundenen Beispielordner: Archivieren, Auswahlregeln, Kopierer mit Vorlagen und die Einstellungen.</p>
-          <!-- Fotos 06.11.2026: Oberflaeche mit Beispieldaten, keine echten Inhalte.
-               Gleiche Anzahl Bilder und Unterschriften wie zuvor - gespeicherte Felder bleiben, wo sie sind. -->
-          <div class="program-media-grid" aria-label="Ansichten des Finnvelo Archivars">
+          <p>Die folgenden Ansichten zeigen den Finnvelo Archivar 1.1.0 mit einem erfundenen Beispielordner. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: Fassung 1.1.0 im Testbrowser, Beispielordner ohne echte Daten.
+               Die erste Bildgruppe ist Grundbestand (Bildunterschriften t20-t23), nicht verschieben. -->
+          <h3 class="program-media-gruppe" data-fv-text-extra>Archivieren und Entpacken</h3>
+          <div class="program-media-grid" aria-label="Archivieren und Entpacken">
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/archivar-1.webp" width="1280" height="709" loading="lazy" alt="Archivieren: Quelle, Ziel, Passwort und Optionen">
-              <figcaption>Archiv erstellen – Quelle, Ziel und Optionen</figcaption>
+              <img src="assets/images/oberflaeche/archivar-01.webp" width="1280" height="709" loading="lazy" alt="Archivar mit Quellordner, Ablageort, Passwortfeld, Root-Ordner und leeren Ordnern">
+              <figcaption><strong>Archiv erstellen</strong>Quelle hineinziehen oder auswählen, Ablageort wählen, Passwort, Root-Ordner und leere Ordner festlegen.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/archivar-2.webp" width="1280" height="709" loading="lazy" alt="Auswahlregeln mit ausgeschlossenen Ordnern und Dateien">
-              <figcaption>Auswahlregeln für Ordner und Dateien</figcaption>
+              <img src="assets/images/oberflaeche/archivar-02.webp" width="1280" height="800" loading="lazy" alt="Erweiterte Archivoptionen mit Format, Kompression, Wörterbuch, Threads und Verschlüsselung">
+              <figcaption><strong>Erweiterte Archivoptionen</strong>Format, Kompressionsstärke und -verfahren, Wörterbuch, Wortgröße, Threads, solides Archiv, Aktualisierung und verschlüsselte Dateinamen.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/archivar-3.webp" width="1280" height="697" loading="lazy" alt="Kopierer mit Kopiervorlage, Quelle, Ziel und Kopierschleife">
-              <figcaption>Kopierer mit Vorlagen und Kopierschleife</figcaption>
+              <img src="assets/images/oberflaeche/archivar-03.webp" width="1280" height="709" loading="lazy" alt="Auswahlregeln mit ausgeschlossenem Videoordner und ausgeschlossener Systemdatei">
+              <figcaption><strong>Auswahlregeln</strong>Durch die Quelle blättern und Ordner oder Dateien ausschließen – hier der Videoordner und „Thumbs.db“.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/archivar-4.webp" width="1280" height="697" loading="lazy" alt="Archivar-Einstellungen für Design, Fenster und Schrift">
-              <figcaption>Einstellungen für Design, Fenster und Schrift</figcaption>
+              <img src="assets/images/oberflaeche/archivar-04.webp" width="1280" height="704" loading="lazy" alt="Archivar erkennt ein ZIP-Archiv und bietet Entpacken mit Optionen für vorhandene Dateien an">
+              <figcaption><strong>Archiv entpacken</strong>Ein Archiv als Quelle wird erkannt – dann entpackt der Archivar und fragt, was mit vorhandenen Dateien geschehen soll.</figcaption>
             </figure>
           </div>
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Kopierer und Einstellungen</h3>
+            <div class="program-media-grid" aria-label="Kopierer und Einstellungen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/archivar-05.webp" width="1280" height="697" loading="lazy" alt="Kopierer mit Kopiervorlage, Quelle, Zielordner, Kopierschleife und Vorschau der nächsten Kopie">
+                <figcaption><strong>Kopierer mit Vorlage</strong>Vorlage laden oder speichern, Quelle und Zielordner, Kopierschleife und Vorschau der nächsten Kopie.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/archivar-06.webp" width="1280" height="697" loading="lazy" alt="Auswahlregeln des Kopierers">
+                <figcaption><strong>Auswahlregeln beim Kopieren</strong>Auch der Kopierer lässt Ordner und Dateien gezielt aus.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/archivar-07.webp" width="1280" height="697" loading="lazy" alt="Archivar-Einstellungen mit Design, Windows-Themen, Logo, Löschabfragen, Sprache, Fenstergröße und Schrift">
+                <figcaption><strong>Einstellungen: Fenster und Schrift</strong>Design, Windows-Themen, Logo, Löschabfragen, Sprache, Fenstergröße und Schrift – nur für den Archivar.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/archivar-08.webp" width="1280" height="697" loading="lazy" alt="Archivar-Einstellungen mit Farben und Aktualisierung">
+                <figcaption><strong>Einstellungen: Farben und Aktualisierung</strong>Drei Farbebenen und die Prüfung auf neue Fassungen beim Start.</figcaption>
+              </figure>
+            </div>
+          </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Als eigenständiges Programm hat der Archivar seine eigenen Einstellungen. In Finnvelo Command Control eingebaut übernimmt er ab Werk dessen Einstellungen, Änderungen hier gelten dann nur für den Archivar. Dazu kommen die Optionen, die du bei jedem Vorgang wählst:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Fenster und Oberfläche</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Design</strong>Dunkel oder hell, auf Wunsch nach den Windows-Themen.</li>
+                <li><strong>Logo / Cover</strong>Das Logo oben links ein- oder ausblenden.</li>
+                <li><strong>Löschabfragen</strong>Vor dem Löschen von Einträgen nachfragen oder nicht mehr.</li>
+                <li><strong>Sprache</strong>Zehn Sprachen von Deutsch bis Türkisch.</li>
+                <li><strong>Fenstergröße</strong>Zeigt die aktuelle Größe in Pixeln an.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Schrift und Farben</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Schriftart</strong>Freie Wahl der Schrift für den Archivar.</li>
+                <li><strong>Schriftgröße und Kontrast</strong>Größe 8 bis 24, Kontrast von hell bis dunkel.</li>
+                <li><strong>Farben</strong>Hintergrund, Panel- und Textbausteinflächen sowie Eingaben und Tasten – jeweils mit eigenem Farbwert.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Archivoptionen je Vorgang</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Passwort</strong>Optional, mit Anzeige zum Gegenprüfen.</li>
+                <li><strong>Root-Ordner und leere Ordner</strong>Obersten Ordner mit einpacken oder nicht, leere Ordner behalten oder nicht.</li>
+                <li><strong>Archivformat</strong>Automatisch, 7z, ZIP, TAR oder WIM.</li>
+                <li><strong>Kompression</strong>Stärke von „Speichern“ bis „Ultra“, Verfahren LZMA2, LZMA, Deflate, BZip2, PPMd oder ohne.</li>
+                <li><strong>Feineinstellung</strong>Wörterbuchgröße 16 bis 256 MB, Wortgröße, CPU-Threads und solides Archiv.</li>
+                <li><strong>Art der Aktualisierung</strong>Hinzufügen und ersetzen, nur neue und neuere, nur vorhandene oder synchronisieren.</li>
+                <li><strong>Dateinamen verschlüsseln</strong>An oder aus.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Entpacken und Kopieren</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Vorhandene Dateien</strong>Beim Entpacken überschreiben, überspringen oder umbenennen.</li>
+                <li><strong>Kopiervorlagen</strong>Speichern, laden und löschen.</li>
+                <li><strong>Kopierschleife</strong>Wie viele nummerierte Kopien reihum entstehen.</li>
+                <li><strong>Auswahlregeln</strong>Für Archive und für den Kopierer getrennt, jederzeit zurücksetzbar.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Aktualisierung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Beim Start prüfen</strong>Automatisch nach neuen Fassungen sehen oder nicht.</li>
+                <li><strong>Nach Updates suchen</strong>Die Prüfung von Hand anstoßen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Zurücksetzen</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Auf Global-Einstellungen zurücksetzen</strong>Verwirft die eigenen Archivar-Werte und kehrt zu den Grundeinstellungen zurück – im Command Control zu dessen Einstellungen.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
@@ -161,16 +275,18 @@
         <section class="program-info-block" aria-labelledby="advantages-title">
           <h2 id="advantages-title">Besondere Vorteile</h2>
           <ul class="feature-list">
-            <li>Eigenständiges Windows-Programm für Archivierung und Dateiabläufe</li>
+            <li>Eigenständiges Windows-Programm zum Packen, Entpacken und Kopieren</li>
             <li>Integrierter Kopierer für wiederkehrende Kopierprozesse</li>
-            <li>Speicherbare Kopiervorlagen mit automatischer Kopierschleife</li>
+            <li>Speicherbare Kopiervorlagen mit nummerierten Kopien reihum</li>
             <li>Auswahlregeln für Dateien und Unterordner</li>
-            <li>Optionaler Passwortschutz beim Archivieren</li>
+            <li>Optionaler Passwortschutz, auch für die Dateinamen</li>
             <li>Fortschrittsanzeige mit Prozent- und MB-Anzeige</li>
-            <li>Direkte Windows-Kontextmenü-Integration</li>
-            <li>Helles und dunkles Design</li>
+            <li>Rechtsklick-Menü im Windows-Explorer</li>
+            <li>Helles und dunkles Design, zehn Sprachen</li>
             <li>Updatefähiger Installer für spätere Versionen</li>
             <li>Kein unnötiger Autostart</li>
+            <li data-fv-text-extra>7z, ZIP, TAR und WIM packen – dazu RAR, GZ, BZ2 und XZ entpacken</li>
+            <li data-fv-text-extra>Ordner und Archive vor und nach dem Packen prüfen</li>
           </ul>
         </section>
 
@@ -178,6 +294,18 @@
           <h2 id="target-title">Zielgruppe</h2>
           <p>Finnvelo Archivar eignet sich für Nutzer, die regelmäßig Projektordner sichern, Arbeitsstände archivieren, Dateien strukturiert kopieren oder wiederkehrende Datei- und Sicherungsprozesse effizienter gestalten möchten.</p>
           <p>Besonders hilfreich ist das Programm für Projektarbeit, strukturierte Dateiablagen, Backup-Vorbereitung, Medienordner, Vorlagenordner und wiederkehrende Arbeitsprozesse.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Wer Fotos, Videos oder Projektordner regelmäßig sichert und dabei mehrere Stände behalten möchte, ohne dass die Sicherung unbegrenzt wächst.</li>
+            <li>Wer Archive weitergibt und dabei Unwichtiges wie Vorschaudateien oder Rohmaterial auslassen will.</li>
+            <li>Wer vertrauliche Unterlagen verschlüsselt packen möchte – auf Wunsch samt Dateinamen.</li>
+            <li>Wer keine Lust auf überladene Packprogramme hat und lieber per Rechtsklick ans Ziel kommt.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Der Archivar arbeitet vollständig auf deinem Rechner. Deine Dateien, Archive und Kopien verlassen ihn nicht, es gibt kein Konto und keine Anmeldung. Einstellungen, Vorlagen, Auswahlregeln und die Listen der letzten Quellen und Ablageorte speichert das Programm als Dateien in deinem Benutzerordner unter AppData.</p>
+          <p>Ins Netz geht der Archivar nur für die Frage nach einer neuen Fassung bei finnveloprogramme.com – und auch das nur, wenn „Beim Start prüfen“ eingeschaltet ist oder du selbst nach Updates suchst.</p>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
