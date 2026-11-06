@@ -6854,3 +6854,38 @@
     else start();
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * Grossansicht der Programmfotos (06.11.2026)
+ * ---------------------------------------------------------------------
+ * Klick auf ein Foto im Abschnitt "Oberflaeche" zeigt es gross, mit
+ * Bildunterschrift. Klick, Esc oder der Schliessen-Knopf beenden die
+ * Ansicht. Im Bearbeiten-Modus aus - dort gehoert der Klick dem Editor.
+ * Das Fenster haengt ausserhalb von <main>: keine Nummern verschieben sich.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    var fenster = null;
+    function bauen() {
+      var d = document.createElement('dialog');
+      d.className = 'fv-grossbild';
+      d.innerHTML = '<button type="button" class="fv-grossbild__zu" aria-label="Schließen">✕</button>'
+        + '<img class="fv-grossbild__bild" alt=""><div class="fv-grossbild__text"></div>';
+      document.body.appendChild(d);
+      d.addEventListener('click', function () { d.close(); });
+      return d;
+    }
+    document.addEventListener('click', function (e) {
+      var bild = e.target && e.target.closest ? e.target.closest('.program-media-card img') : null;
+      if (!bild || document.body.classList.contains('fv-edit-on')) return;
+      if (!fenster) fenster = bauen();
+      var gross = fenster.querySelector('.fv-grossbild__bild');
+      gross.src = bild.currentSrc || bild.src;
+      gross.alt = bild.alt || '';
+      var unterschrift = bild.closest('figure') && bild.closest('figure').querySelector('figcaption');
+      fenster.querySelector('.fv-grossbild__text').textContent = unterschrift ? unterschrift.textContent : '';
+      if (typeof fenster.showModal === 'function') fenster.showModal(); else fenster.setAttribute('open', '');
+    });
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();

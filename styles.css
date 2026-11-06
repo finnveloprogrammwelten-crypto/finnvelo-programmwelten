@@ -3429,3 +3429,14 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
   nav { flex-wrap: nowrap; gap: 2px; justify-content: space-between; width: 100%; }
   nav a { padding: 7px clamp(4px, 1.6vw, 9px); font-size: clamp(11px, 3.4vw, 13px); white-space: nowrap; }
 }
+
+/* Grossansicht der Programmfotos (setzt stats.js, 06.11.2026) */
+.program-media-card img { cursor: zoom-in; }
+.fv-edit-on .program-media-card img { cursor: auto; }
+.fv-grossbild { max-width: 96vw; max-height: 96vh; padding: 0; border: 0; background: transparent; overflow: visible; cursor: zoom-out; }
+.fv-grossbild::backdrop { background: rgba(0, 0, 0, .86); }
+.fv-grossbild__bild { display: block; max-width: 96vw; max-height: calc(96vh - 48px); width: auto; height: auto; margin: 0 auto;
+  border-radius: 12px; border: 1px solid rgba(255, 255, 255, .16); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); }
+.fv-grossbild__text { margin-top: 12px; color: var(--muted); font-size: 15px; text-align: center; }
+.fv-grossbild__zu { position: fixed; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .25); background: rgba(10, 14, 22, .8); color: #fff; font-size: 16px; cursor: pointer; }
