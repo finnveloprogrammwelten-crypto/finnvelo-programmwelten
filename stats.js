@@ -3179,9 +3179,9 @@
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-LORCANA-ANDROID' },
-        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10008, versionName: '1.0.8',
-                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.8.apk',
-                   hinweise: 'Neu: „Bilder je Reihe“ 1 bis 4 in Sammlung, Karten und Deckbau – weniger scrollen. Kartenmärkte wählbar (Cardmarket, CardTrader, Recollectibles, Battle-Bear), Vermerk „bei … bestellt“. Das Update-Fenster erklärt die Chrome-Warnung beim Herunterladen.' }
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10009, versionName: '1.0.9',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.9.apk',
+                   hinweise: 'Neu: Ganze App am Handy durchgesehen – Deck-Generator-Ergebnis lesbar, sichtbarer Fortschrittsbalken, Abstände und Ränder korrigiert, nichts ragt mehr über den Rand. Märkte öffnen in der gewählten Sprache, Notiz im Eintragen-Fenster zweizeilig.' }
       },
       {
         seite: 'lorcana', art: 'pc',
@@ -3191,9 +3191,9 @@
         felder: pcFelder('major x 10000 + minor x 100 + patch', '10100',
                          'https://github.com/.../FINNVELO-Lorcana-Einrichtung-1.1.0.exe'),
         fest: { schluessel: 'FINNVELO-LORCANA-PC' },
-        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10102, versionName: '1.1.2',
-                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.2.exe',
-                   hinweise: 'Neu: Kartenmärkte wählbar – Cardmarket, CardTrader, Recollectibles und Battle-Bear (Einstellungen → Kartenmärkte). Im Fenster „Bei … eintragen“ lässt sich der Markt je Karte umschalten, die Notiz merkt sich „bei … bestellt“ bzw. „inseriert bei …“.' }
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10103, versionName: '1.1.3',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.3.exe',
+                   hinweise: 'Neu: Kartenmärkte öffnen in der gewählten Sprache (Einstellungen → Kartenmärkte: Deutsch, Englisch, Französisch, Italienisch, Spanisch). Das Fenster „Bei … eintragen“ ist breiter, die Notiz hat zwei Zeilen Platz. Fortschrittsbalken des Deck-Generators gut sichtbar.' }
       }
     ];
 

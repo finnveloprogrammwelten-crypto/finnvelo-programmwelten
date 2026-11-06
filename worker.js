@@ -1846,14 +1846,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           06.11.2026: PC 1.1.1, App 1.0.7). Ein in der Kachel "Aktualisierung"
+           06.11.2026: PC 1.1.3, App 1.0.9). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10102, versionName: "1.1.2",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.2.exe",
-                        hinweise: "Neu: Kartenmärkte wählbar – Cardmarket, CardTrader, Recollectibles und Battle-Bear (Einstellungen → Kartenmärkte). Im Fenster „Bei … eintragen“ lässt sich der Markt je Karte umschalten, die Notiz merkt sich „bei … bestellt“ bzw. „inseriert bei …“." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10008, versionName: "1.0.8",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.8.apk",
-                             hinweise: "Neu: „Bilder je Reihe“ 1 bis 4 in Sammlung, Karten und Deckbau – weniger scrollen. Kartenmärkte wählbar (Cardmarket, CardTrader, Recollectibles, Battle-Bear), Vermerk „bei … bestellt“. Das Update-Fenster erklärt die Chrome-Warnung beim Herunterladen." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10103, versionName: "1.1.3",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.3.exe",
+                        hinweise: "Neu: Kartenmärkte öffnen in der gewählten Sprache (Einstellungen → Kartenmärkte: Deutsch, Englisch, Französisch, Italienisch, Spanisch). Das Fenster „Bei … eintragen“ ist breiter, die Notiz hat zwei Zeilen Platz. Fortschrittsbalken des Deck-Generators gut sichtbar." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10009, versionName: "1.0.9",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.9.apk",
+                             hinweise: "Neu: Ganze App am Handy durchgesehen – Deck-Generator-Ergebnis lesbar, sichtbarer Fortschrittsbalken, Abstände und Ränder korrigiert, nichts ragt mehr über den Rand. Märkte öffnen in der gewählten Sprache, Notiz im Eintragen-Fenster zweizeilig." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
