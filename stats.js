@@ -120,7 +120,11 @@
       /* Handy: Logo 38 px. Die drei Werte der Programmseiten duerfen dort
          umbrechen - dann ohne Trennpunkte, die stuenden sonst am Zeilenanfang. */
       + '@media (max-width:520px){.fv-stats-badge{margin-left:50px;max-width:calc(100% - 50px);font-size:11px;gap:1px 10px;}'
-      + '.fv-stats-badge .fv-sep{display:none;}}';
+      + '.fv-stats-badge .fv-sep{display:none;}}'
+      /* Sehr schmale Handys: etwas kleiner, unter 340 px ab dem Logo-Rand -
+         so bleiben auch die drei Werte der Programmseiten in einer Zeile. */
+      + '@media (max-width:360px){.fv-stats-badge{font-size:10.5px;gap:1px 6px;padding:2px 8px;}}'
+      + '@media (max-width:340px){.fv-stats-badge{margin-left:0;max-width:100%;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
