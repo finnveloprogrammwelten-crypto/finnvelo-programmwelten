@@ -3179,9 +3179,9 @@
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-LORCANA-ANDROID' },
-        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10009, versionName: '1.0.9',
-                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.9.apk',
-                   hinweise: 'Neu: Ganze App am Handy durchgesehen – Deck-Generator-Ergebnis lesbar, sichtbarer Fortschrittsbalken, Abstände und Ränder korrigiert, nichts ragt mehr über den Rand. Märkte öffnen in der gewählten Sprache, Notiz im Eintragen-Fenster zweizeilig.' }
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10010, versionName: '1.0.10',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.10.apk',
+                   hinweise: 'Neu: Seiten durch seitliches Wischen wechseln (nach links: nächste Seite, nach rechts: vorige – abschaltbar unter Einstellungen → Bedienung). Notizen bei „Verkaufen“ und „Einkaufen“ zweizeilig.' }
       },
       {
         seite: 'lorcana', art: 'pc',
@@ -3191,9 +3191,9 @@
         felder: pcFelder('major x 10000 + minor x 100 + patch', '10100',
                          'https://github.com/.../FINNVELO-Lorcana-Einrichtung-1.1.0.exe'),
         fest: { schluessel: 'FINNVELO-LORCANA-PC' },
-        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10103, versionName: '1.1.3',
-                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.3.exe',
-                   hinweise: 'Neu: Kartenmärkte öffnen in der gewählten Sprache (Einstellungen → Kartenmärkte: Deutsch, Englisch, Französisch, Italienisch, Spanisch). Das Fenster „Bei … eintragen“ ist breiter, die Notiz hat zwei Zeilen Platz. Fortschrittsbalken des Deck-Generators gut sichtbar.' }
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10104, versionName: '1.1.4',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.4.exe',
+                   hinweise: 'Neu: „Verkaufen“ und „Einkaufen“ nutzen die volle Fensterbreite, die Notiz je Karte ist deutlich breiter und hat zwei Zeilen Platz.' }
       }
     ];
 

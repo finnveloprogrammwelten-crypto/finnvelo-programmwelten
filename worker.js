@@ -1846,14 +1846,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           06.11.2026: PC 1.1.3, App 1.0.9). Ein in der Kachel "Aktualisierung"
+           06.11.2026: PC 1.1.4, App 1.0.10). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10103, versionName: "1.1.3",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.3.exe",
-                        hinweise: "Neu: Kartenmärkte öffnen in der gewählten Sprache (Einstellungen → Kartenmärkte: Deutsch, Englisch, Französisch, Italienisch, Spanisch). Das Fenster „Bei … eintragen“ ist breiter, die Notiz hat zwei Zeilen Platz. Fortschrittsbalken des Deck-Generators gut sichtbar." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10009, versionName: "1.0.9",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.9.apk",
-                             hinweise: "Neu: Ganze App am Handy durchgesehen – Deck-Generator-Ergebnis lesbar, sichtbarer Fortschrittsbalken, Abstände und Ränder korrigiert, nichts ragt mehr über den Rand. Märkte öffnen in der gewählten Sprache, Notiz im Eintragen-Fenster zweizeilig." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10104, versionName: "1.1.4",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.4.exe",
+                        hinweise: "Neu: „Verkaufen“ und „Einkaufen“ nutzen die volle Fensterbreite, die Notiz je Karte ist deutlich breiter und hat zwei Zeilen Platz." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10010, versionName: "1.0.10",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.10.apk",
+                             hinweise: "Neu: Seiten durch seitliches Wischen wechseln (nach links: nächste Seite, nach rechts: vorige – abschaltbar unter Einstellungen → Bedienung). Notizen bei „Verkaufen“ und „Einkaufen“ zweizeilig." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
