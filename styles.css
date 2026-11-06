@@ -336,6 +336,16 @@ h1 {
 .program-button {
   grid-template-rows: auto 1fr auto;
 }
+/* 06.11.2026 (Wunsch Tatorasa): Status jetzt ZWISCHEN Plakette und Text.
+   So stehen alle Schilder auf einer Hoehe, egal wie lang die Beschreibung
+   ist - einheitlicher als unten am unterschiedlich langen Text. */
+.program-button { grid-template-rows: auto auto 1fr; }
+.program-button > img { grid-row: 1; }
+.program-button__description { grid-row: 3; }
+/* Versehentliche Zeilenumbrueche im Schild (aus dem Bearbeiten-Modus)
+   machen es hoeher als die anderen - ein Status ist immer eine Zeile. */
+.program-button__status br,
+.status br { display: none; }
 /* Nur das ERSTE Statuszeichen zeigen.
    Frueher lagen alle per "position: absolute" exakt uebereinander - man sah
    immer nur das oberste, doppelte fielen nie auf. Seit sie im Raster stehen,
@@ -348,7 +358,7 @@ h1 {
 
 .program-button__status {
   position: static;
-  grid-row: 3;
+  grid-row: 2;
   justify-self: start;
   margin-top: 10px;
   z-index: 2;
