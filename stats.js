@@ -6800,6 +6800,119 @@
 })();
 
 /* =====================================================================
+ * Info-Knopf "Warum warnt mein Geraet?" ueber jedem Download (06.11.2026)
+ * ---------------------------------------------------------------------
+ * Tatorasa hat entschieden, die Warnungen nicht zu umgehen (kein Play
+ * Store, keine bezahlte Signatur), sondern zu erklaeren. Gemessen am
+ * 06.11.2026: Chrome warnt bei JEDER APK aus dem Internet ("Datei koennte
+ * schaedlich sein", auch bei F-Droid), und keiner der Windows-Installer
+ * auf der Seite ist signiert (PE-Kopf ohne Signaturbereich, bei Finanz-
+ * manager und Lorcana mit Get-AuthenticodeSignature bestaetigt).
+ * Der Knopf erscheint nur, wenn das Knopfziel wirklich eine .apk oder .exe
+ * ist, und folgt Aenderungen aus dem Bearbeiten-Modus. Das Fenster zeigt
+ * nur die Teile, die zu den sichtbaren Downloads der Seite passen.
+ * Bewusst nur div/span/strong/button und das Fenster ausserhalb von
+ * <main>: sonst verschoeben sich die Nummern des Bearbeiten-Modus.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    function art(knopf) {
+      var h = (knopf.getAttribute('href') || '').toLowerCase();
+      if (/\.apk(\?|#|$)/.test(h)) return 'android';
+      if (/\.exe(\?|#|$)/.test(h)) return 'windows';
+      return '';
+    }
+    // Welche Dateiarten bieten die SICHTBAREN Download-Bereiche gerade an?
+    function arten() {
+      var a = { android: false, windows: false };
+      Array.prototype.forEach.call(document.querySelectorAll('.program-download-block'), function (b) {
+        if (!b.offsetParent) return;                    // ausgeblendeter Bereich
+        var k = b.querySelector('.download-slot a.button[href]');
+        var x = k ? art(k) : '';
+        if (x) a[x] = true;
+      });
+      return a;
+    }
+
+    var fenster = null;
+    function fensterBauen() {
+      var d = document.createElement('dialog');
+      d.className = 'fv-warnfenster';
+      d.setAttribute('aria-labelledby', 'fv-warnfenster-titel');
+      d.innerHTML =
+          '<div class="fv-warnfenster__kopf">'
+        + '<strong id="fv-warnfenster-titel">Warum warnt mein Gerät beim Herunterladen?</strong>'
+        + '<button type="button" class="fv-warnfenster__zu" aria-label="Schließen">✕</button>'
+        + '</div>'
+        + '<div class="fv-warnfenster__teil" data-teil="android">'
+        +   '<span class="fv-warnfenster__marke">Android-App</span>'
+        +   '<div>Die App wird nicht über den Google Play Store verteilt. Deshalb ist sie bei Google nicht hinterlegt '
+        +   'und von Google nicht geprüft. Chrome warnt darum bei jeder App-Datei aus dem Internet mit '
+        +   '<strong>„Datei könnte schädlich sein“</strong> – das gilt für alle Apps außerhalb des Play Stores, auch für '
+        +   'bekannte. Die Warnung heißt nicht, dass mit der Datei etwas nicht stimmt.</div>'
+        +   '<div class="fv-warnfenster__weiter">So geht es weiter:</div>'
+        +   '<div class="fv-warnfenster__schritte">'
+        +     '<div><span>1</span><div><strong>„Trotzdem herunterladen“</strong> wählen.</div></div>'
+        +     '<div><span>2</span><div>Fragt Android, ob der Browser Apps installieren darf: <strong>„Zulassen“</strong>.</div></div>'
+        +     '<div><span>3</span><div>Fragt Play Protect nach: <strong>„Trotzdem installieren“</strong>.</div></div>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="fv-warnfenster__teil" data-teil="windows">'
+        +   '<span class="fv-warnfenster__marke">Windows-Programm</span>'
+        +   '<div>Das Einrichtungsprogramm ist nicht mit einem kostenpflichtigen Herausgeber-Zertifikat signiert. '
+        +   'Windows kann deshalb beim ersten Start <strong>„Der Computer wurde durch Windows geschützt“</strong> zeigen.</div>'
+        +   '<div class="fv-warnfenster__weiter">So geht es weiter:</div>'
+        +   '<div class="fv-warnfenster__schritte">'
+        +     '<div><span>1</span><div><strong>„Weitere Informationen“</strong> anklicken.</div></div>'
+        +     '<div><span>2</span><div><strong>„Trotzdem ausführen“</strong> wählen.</div></div>'
+        +   '</div>'
+        + '</div>'
+        + '<a class="fv-warnfenster__mehr" href="/installation">Ausführliche Hilfe zur Installation →</a>';
+      document.body.appendChild(d);
+      d.querySelector('.fv-warnfenster__zu').addEventListener('click', function () { d.close(); });
+      // Klick neben das Fenster (auf den abgedunkelten Hintergrund) schliesst es
+      d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+      return d;
+    }
+    function zeigen(knopfArt) {
+      if (!fenster) fenster = fensterBauen();
+      var a = arten();
+      a[knopfArt] = true;                               // der angeklickte Bereich zaehlt immer
+      Array.prototype.forEach.call(fenster.querySelectorAll('[data-teil]'), function (t) {
+        t.hidden = !a[t.getAttribute('data-teil')];
+      });
+      // Der Teil zum angeklickten Knopf steht oben
+      var oben = fenster.querySelector('[data-teil="' + knopfArt + '"]');
+      fenster.insertBefore(oben, fenster.querySelector('.fv-warnfenster__kopf').nextSibling);
+      if (typeof fenster.showModal === 'function') fenster.showModal();
+      else fenster.setAttribute('open', '');
+    }
+
+    function start() {
+      Array.prototype.forEach.call(document.querySelectorAll('.program-download-block'), function (block) {
+        var knopf = block.querySelector('.download-slot a.button[href]');
+        if (!knopf || block.querySelector('.fv-warninfo')) return;
+        var huelle = document.createElement('div');
+        huelle.className = 'fv-warninfo';
+        huelle.innerHTML = '<button type="button" class="fv-warninfo__knopf" aria-haspopup="dialog">'
+          + '<span class="fv-warninfo__i" aria-hidden="true">i</span>Warum warnt mein Gerät?</button>';
+        var setzen = function () { huelle.hidden = !art(knopf); };
+        setzen();
+        try { new MutationObserver(setzen).observe(knopf, { attributes: true, attributeFilter: ['href'] }); } catch (e) {}
+        huelle.querySelector('button').addEventListener('click', function () {
+          var x = art(knopf);
+          if (x) zeigen(x);
+        });
+        knopf.insertAdjacentElement('beforebegin', huelle);
+      });
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+    else start();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
+
+/* =====================================================================
  * Filter in der Programmliste (05.11.2026)
  * ---------------------------------------------------------------------
  * Die Merkmale stehen als data-plattform / data-thema an den Zeilen in

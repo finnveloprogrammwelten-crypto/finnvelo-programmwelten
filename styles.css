@@ -3355,6 +3355,38 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
 .fv-hilfe-link { display: inline-block; margin-top: 12px; color: var(--blue-light); font-size: 14px; font-weight: 700; text-decoration: none; }
 .fv-hilfe-link:hover { text-decoration: underline; }
 
+/* Info-Knopf "Warum warnt mein Geraet?" ueber den Downloads (setzt stats.js, 06.11.2026) */
+.fv-warninfo { margin: 4px 0 12px; }
+.fv-warninfo[hidden] { display: none; }
+.fv-warninfo__knopf { display: inline-flex; align-items: center; gap: 8px; padding: 6px 13px 6px 7px; border-radius: 999px;
+  border: 1px solid rgba(120, 170, 255, .45); background: rgba(49, 124, 255, .08); color: var(--blue-light);
+  font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+.fv-warninfo__knopf:hover { background: rgba(49, 124, 255, .18); color: #fff; }
+.fv-warninfo__i { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--blue); color: #fff; font-size: 13px; font-weight: 800; font-style: italic; font-family: Georgia, serif; }
+.fv-warnfenster { width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow: auto; padding: 0;
+  border: 1px solid rgba(255, 255, 255, .14); border-radius: 16px; background: var(--bg-soft); color: var(--text);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, .55); }
+.fv-warnfenster::backdrop { background: rgba(0, 0, 0, .62); }
+.fv-warnfenster__kopf { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  padding: 20px 22px 6px; font-size: 19px; line-height: 1.35; }
+.fv-warnfenster__zu { flex: none; width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255, 255, 255, .16);
+  background: rgba(255, 255, 255, .05); color: var(--muted); font: inherit; font-size: 15px; cursor: pointer; }
+.fv-warnfenster__zu:hover { color: #fff; border-color: rgba(255, 255, 255, .35); }
+.fv-warnfenster__teil { margin: 12px 22px 0; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .03); color: var(--muted); font-size: 15px; line-height: 1.6; }
+.fv-warnfenster__teil[hidden] { display: none; }
+.fv-warnfenster__teil strong { color: var(--text); }
+.fv-warnfenster__marke { display: inline-block; margin-bottom: 8px; color: var(--soft); font-size: 12px; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; }
+.fv-warnfenster__weiter { margin-top: 10px; color: var(--text); font-weight: 700; }
+.fv-warnfenster__schritte { display: grid; gap: 8px; margin-top: 8px; }
+.fv-warnfenster__schritte > div { display: flex; gap: 10px; align-items: baseline; }
+.fv-warnfenster__schritte > div > span { flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px;
+  border-radius: 50%; background: rgba(49, 124, 255, .22); color: var(--blue-light); font-size: 12px; font-weight: 800; }
+.fv-warnfenster__mehr { display: inline-block; margin: 14px 22px 20px; color: var(--blue-light); font-size: 14px; font-weight: 700; text-decoration: none; }
+.fv-warnfenster__mehr:hover { text-decoration: underline; }
+
 /* Filter in der Programmliste (05.11.2026) */
 .fv-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 26px; margin-top: clamp(26px, 3vw, 44px); }
 .fv-filter__gruppe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
