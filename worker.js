@@ -1845,14 +1845,15 @@ export class Counter extends DurableObject {
                        eine zweite App daneben - mit leeren Daten. Nur der ANZEIGENAME
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
-        /* Lorcana: vorbelegt mit den am 06.11.2026 hochgeladenen Fassungen.
-           Sobald jemand die Kachel "Aktualisierung" speichert, gilt deren Eintrag. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10100, versionName: "1.1.0",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.0.exe",
-                        hinweise: "Neu: mehrere Handys gleichzeitig verbinden (auch als Kamera), Verkaufsliste mit Zustand und Notizen, Fenster „Bei Cardmarket eintragen“, Klick-Liste (kompakt oder groß), KI-Hilfe im Deckbau, Regler für nicht tintbare Karten im Deck-Generator." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10006, versionName: "1.0.6",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.6.apk",
-                             hinweise: "Neu: Verbundene Geräte – die App gleicht mit mehreren PCs und anderen Handys ab (Handy mit Handy, solange beide Apps offen sind). Verkaufsliste mit Zustand, kompakte Klick-Liste." },
+        /* Lorcana: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
+           06.11.2026: PC 1.1.1, App 1.0.7). Ein in der Kachel "Aktualisierung"
+           gespeicherter Eintrag hat Vorrang. */
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10101, versionName: "1.1.1",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.1.exe",
+                        hinweise: "Neu: Der Deck-Generator zeigt nach der KI-Hilfe deren Einstellungen (Spielstil, Thema, Farben). Nach dem Einspielen einer Sicherung wird das Protokoll geleert, damit „Zurücksetzen“ richtig rechnet. Kleinere Korrekturen." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10007, versionName: "1.0.7",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.7.apk",
+                             hinweise: "Neu: „Verkaufen“ und „CSV sichern“ direkt in der Sammlung, Einkaufsliste in Deckbau und Meine Decks, Filter der Sammlung wieder in voller Höhe, Startseite mit „Deck bauen lassen“ und „Datei wählen“, weitere Korrekturen aus einem Gesamttest." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);

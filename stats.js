@@ -3299,9 +3299,9 @@
           { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
         ],
         fest: { schluessel: 'FINNVELO-LORCANA-ANDROID' },
-        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10006, versionName: '1.0.6',
-                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.6.apk',
-                   hinweise: 'Neu: Verbundene Geräte – die App gleicht mit mehreren PCs und anderen Handys ab (Handy mit Handy, solange beide Apps offen sind). Verkaufsliste mit Zustand, kompakte Klick-Liste.' }
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10007, versionName: '1.0.7',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.7.apk',
+                   hinweise: 'Neu: „Verkaufen“ und „CSV sichern“ direkt in der Sammlung, Einkaufsliste in Deckbau und Meine Decks, Filter der Sammlung wieder in voller Höhe, Startseite mit „Deck bauen lassen“ und „Datei wählen“, weitere Korrekturen aus einem Gesamttest.' }
       },
       {
         seite: 'lorcana', art: 'pc',
@@ -3311,9 +3311,9 @@
         felder: pcFelder('major x 10000 + minor x 100 + patch', '10100',
                          'https://github.com/.../FINNVELO-Lorcana-Einrichtung-1.1.0.exe'),
         fest: { schluessel: 'FINNVELO-LORCANA-PC' },
-        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10100, versionName: '1.1.0',
-                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.0.exe',
-                   hinweise: 'Neu: mehrere Handys gleichzeitig verbinden (auch als Kamera), Verkaufsliste mit Zustand und Notizen, Fenster „Bei Cardmarket eintragen“, Klick-Liste (kompakt oder groß), KI-Hilfe im Deckbau, Regler für nicht tintbare Karten im Deck-Generator.' }
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10101, versionName: '1.1.1',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.1.exe',
+                   hinweise: 'Neu: Der Deck-Generator zeigt nach der KI-Hilfe deren Einstellungen (Spielstil, Thema, Farben). Nach dem Einspielen einer Sicherung wird das Protokoll geleert, damit „Zurücksetzen“ richtig rechnet. Kleinere Korrekturen.' }
       }
     ];
 
