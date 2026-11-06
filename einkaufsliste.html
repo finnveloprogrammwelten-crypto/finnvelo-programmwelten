@@ -115,6 +115,10 @@
           <p>Jeder Eintrag landet automatisch in einer von vierzehn Rubriken – Milch im Kühlregal, Äpfel bei Obst &amp; Gemüse –, und die Liste zeigt sie in der Reihenfolge deines Ladenwegs. Im Einkaufsmodus werden die Zeilen groß, ein Balken zeigt, wie viel schon im Wagen liegt, und Abgehaktes verschwindet sofort.</p>
           <p><strong>Geteilt wird über einen Code aus sechs Zeichen.</strong> Auf dem ersten Gerät erzeugen, auf dem zweiten eintippen – fertig. Der Code gilt 15 Minuten und lässt sich von bis zu fünf Geräten einlösen. Danach gleichen sich die Listen im Hintergrund ab, und ein farbiges Kürzel zeigt, wer welchen Eintrag aufgeschrieben hat.</p>
           <p>Was dabei übertragen wird, ist bereits auf dem Gerät verschlüsselt (AES-256-GCM). <strong>Der Server sieht nur unlesbare Daten</strong> – keine Konten, keine Namen, keine Inhalte. Ohne Netz arbeitet die App normal weiter und gleicht ab, sobald wieder eine Verbindung besteht.</p>
+          <div data-fv-text-extra>
+            <p>Neben dem Einkauf führst du beliebig viele weitere Listen – etwa für Geschenkideen, Renovieren oder Sparen. Bei solchen Listen lässt sich abschalten, dass die Einträge in der Artikel-Datenbank landen. Jede Liste hat ihr eigenes Menü: einkaufen, bearbeiten, verschieben, Erledigtes entfernen oder löschen. Ein Wisch nach rechts löscht einen Eintrag, ein Wisch nach links öffnet die Bearbeitung, ein langer Druck das Menü.</p>
+            <p>Die Artikel-Datenbank merkt sich jeden Artikel mit Rubrik, üblicher Menge und Barcode. Ein unbekannter Barcode lässt sich im Netz nachschlagen, Sorten ordnest du einem Oberbegriff unter – etwa „Kartoffeln festkochend“ unter „Kartoffeln“. Im Reiter „Angebote“ hinterlegst du Orte per Postleitzahl, findest Märkte im Umkreis von 5, 10 oder 25 Kilometern und öffnest mit einem Tipp deren Prospekt – auf Wunsch direkt in der App.</p>
+          </div>
 
           <div class="feature-grid" aria-label="Kernfunktionen">
             <article><h3>Rund 1.060 Artikel ab Werk</h3><p>Lebensmittel und Haushaltssachen, bereits nach Rubriken sortiert – Vorschläge ab dem zweiten Buchstaben.</p></article>
@@ -126,32 +130,100 @@
             <article data-fv-text-extra><h3>Artikel-Datenbank mit Barcode</h3><p>Jeder notierte Artikel wird mit Rubrik, üblicher Menge und – wenn gescannt – seinem Barcode gemerkt.</p></article>
             <article data-fv-text-extra><h3>Angebote in deiner Nähe</h3><p>Orte per Postleitzahl hinterlegen und mit einem Tipp die Angebotsseiten der Märkte öffnen.</p></article>
             <article data-fv-text-extra><h3>Eigene Gestaltung</h3><p>Hell oder dunkel, neun Akzentfarben und Hintergründe aus Mustern, Fotos oder einem eigenen Bild.</p></article>
+            <article data-fv-text-extra><h3>Mehrere Listen</h3><p>Einkauf, Geschenkideen oder Renovieren – jede Liste mit eigenem Namen, Symbol und Farbe.</p></article>
+            <article data-fv-text-extra><h3>Wischen und Halten</h3><p>Nach rechts wischen löscht, nach links bearbeitet, langes Drücken öffnet das Menü.</p></article>
+            <article data-fv-text-extra><h3>Erledigtes aufräumen</h3><p>Abgehakte Einträge wandern auf Wunsch nach drei Tagen von selbst in den Papierkorb.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die App frisch installiert, noch ohne eigene Einträge.</p>
-          <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
-          <div class="program-media-grid program-media-grid--hoch" data-fv-text-extra aria-label="Ansichten von Finnvelo Einkaufsplaner">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/einkaufsliste-1.webp" width="540" height="1199" loading="lazy" alt="Leere Einkaufsliste mit den Listen Einkauf, Spaß und Sonstiges">
-              <figcaption>Leere Liste – bereit für den ersten Eintrag</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/einkaufsliste-2.webp" width="540" height="1199" loading="lazy" alt="Artikel-Datenbank mit Rubriken und Scan-Knopf">
-              <figcaption>Artikel-Datenbank mit Rubriken und Barcode-Scan</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/einkaufsliste-3.webp" width="540" height="1199" loading="lazy" alt="Angebote: Ort wählen und Märkte in der Nähe finden">
-              <figcaption>Angebote der Märkte in der Nähe</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/einkaufsliste-4.webp" width="540" height="1199" loading="lazy" alt="Einstellungen mit Erscheinungsbild, Akzentfarben und Hintergründen">
-              <figcaption>Hell, dunkel, Akzentfarben und Hintergründe</figcaption>
-            </figure>
+          <p>Die folgenden Ansichten zeigen die App mit einem erfundenen Wocheneinkauf aus 14 Artikeln. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: assets/index.html der veroeffentlichten APK 1.4.0 im Testbrowser (390 x 845, doppelte Aufloesung).
+               Artikel ueber das Eingabefeld eingetragen, drei abgehakt. Keine echten Daten. -->
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Liste und Einkauf</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Liste und Einkauf">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-01.webp" width="780" height="1690" loading="lazy" alt="Einkaufsliste nach Rubriken: Backwaren, Kühlregal, Vorräte mit Mengenangaben">
+                <figcaption><strong>Liste nach Ladenweg</strong>Jede Rubrik an ihrem Platz, Mengen wie „2×“ oder „10 Stück“ rechts am Eintrag.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-02.webp" width="780" height="1690" loading="lazy" alt="Unteres Ende der Liste mit Getränken, Haushalt, Drogerie und drei erledigten Einträgen">
+                <figcaption><strong>Erledigtes</strong>Abgehaktes rutscht nach unten und lässt sich mit einem Tipp entfernen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-03.webp" width="780" height="1690" loading="lazy" alt="Artikel-Datenbank mit Rubriken, Suche, Scannen und Neu anlegen">
+                <figcaption><strong>Artikel-Datenbank</strong>Rund 1.060 Artikel in Rubriken, mit Suche, Barcode-Scan und eigenen Einträgen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-04.webp" width="780" height="1690" loading="lazy" alt="Angebote mit Ortswahl, Umkreis und Märkten">
+                <figcaption><strong>Angebote</strong>Ort wählen, Umkreis festlegen, Märkte suchen und den Prospekt öffnen.</figcaption>
+              </figure>
+            </div>
+            <h3 class="program-media-gruppe">Einstellungen</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Einstellungen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-05.webp" width="780" height="1690" loading="lazy" alt="Einstellungen Darstellung mit Erscheinungsbild, Akzentfarbe und Hintergrundmustern">
+                <figcaption><strong>Darstellung</strong>Hell, dunkel oder wie das System, neun Akzentfarben und Hintergrundmuster.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-06.webp" width="780" height="1690" loading="lazy" alt="Hintergrundbilder, Deckkraft und Geräte koppeln mit Name, Kürzel und Farbe">
+                <figcaption><strong>Hintergrund und Koppeln</strong>Fotos als Hintergrund mit Deckkraft, dazu Name, Kürzel und Farbe für den gemeinsamen Kanal.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-07.webp" width="780" height="1690" loading="lazy" alt="Kanal, Serveradresse und Daten mit Angeboten und Prospekten">
+                <figcaption><strong>Kanal und Daten</strong>Code erzeugen oder eingeben, Serveradresse, Angebote-Reiter und Prospekte in der App.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/einkaufsliste-08.webp" width="780" height="1690" loading="lazy" alt="Vorschläge beim Tippen, Rubriken, Aufräumen, Sicherung und Über">
+                <figcaption><strong>Liste und Sicherung</strong>Vorschläge, Gruppieren nach Rubriken, automatisches Aufräumen und Sicherung.</figcaption>
+              </figure>
+            </div>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Ein Überblick über alles, was sich in den Einstellungen und an den Listen anpassen lässt:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Darstellung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Erscheinungsbild</strong>Hell, dunkel oder wie das System.</li>
+                <li><strong>Akzentfarbe</strong>Neun Farben für Knöpfe und Hervorhebungen.</li>
+                <li><strong>Hintergrundbild</strong>Muster wie Höhenlinien oder Wellen, Naturfotos oder ein eigenes Bild – mit einstellbarer Deckkraft.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Geräte koppeln</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Dein Name, Kürzel und Farbe</strong>Stehen an jedem Eintrag, den du aufschreibst – das Kürzel auch automatisch aus dem Namen.</li>
+                <li><strong>Code erzeugen oder eingeben</strong>Sechs Zeichen, 15 Minuten gültig, bis zu fünf Geräte.</li>
+                <li><strong>Abgleichen und Kanal verlassen</strong>Von Hand abgleichen oder die Kopplung lösen.</li>
+                <li><strong>Serveradresse</strong>Adresse des FINNVELO-Servers für den Abgleich.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Angebote</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Reiter „Angebote“</strong>Den Knopf für die Prospekte deiner Läden ein- oder ausblenden.</li>
+                <li><strong>Prospekte in der App öffnen</strong>In einem eigenen Fenster mit Rückweg statt im Browser.</li>
+                <li><strong>Katalogdaten löschen</strong>Kekse und Zwischenspeicher der Händlerseiten wegwerfen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Liste und Daten</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Vorschläge beim Tippen</strong>Passende Artikel aus der Datenbank über dem Eingabefeld.</li>
+                <li><strong>Nach Rubriken gruppieren</strong>Die Liste in der Reihenfolge deines Ladenwegs teilen; die Reihenfolge der Rubriken lässt sich umsortieren.</li>
+                <li><strong>Erledigtes automatisch aufräumen</strong>Abgehakte Einträge nach drei Tagen in den Papierkorb.</li>
+                <li><strong>Sicherung speichern und laden</strong>Alle Listen als Datei sichern und wieder einlesen.</li>
+                <li><strong>Je Liste</strong>Name, Symbol, Farbe und ob die Einträge in der Datenbank gemerkt werden.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
@@ -169,12 +241,25 @@
             <li>Sicherung speichern und laden – die Daten gehören dir</li>
             <li>Funktioniert auch ohne Netz weiter</li>
             <li data-fv-text-extra>Angebote der Märkte in deiner Nähe mit einem Tipp</li>
+            <li data-fv-text-extra>Liste in der Reihenfolge deines Ladenwegs</li>
+            <li data-fv-text-extra>Farbiges Kürzel zeigt, wer was aufgeschrieben hat</li>
           </ul>
         </section>
 
         <section class="program-info-block" aria-labelledby="target-title">
           <h2 id="target-title">Zielgruppe</h2>
           <p>Für Haushalte, in denen mehr als eine Person einkauft – wenn einer im Laden steht und dem anderen zu Hause noch etwas einfällt. Und für alle, die einfach eine gut sortierte Einkaufsliste wollen, die nicht nach einem Konto fragt.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Paare und Familien, die eine gemeinsame Liste auf mehreren Handys führen.</li>
+            <li>Wer im Laden nicht hin- und herlaufen will, weil die Liste dem Ladenweg folgt.</li>
+            <li>Wer Angebote im Blick behalten möchte, ohne für jeden Markt eine eigene App zu installieren.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Listen, Artikel-Datenbank und Einstellungen liegen auf deinem Handy. Es gibt kein Konto, keine Anmeldung und keine E-Mail-Adresse. Sicherungen speicherst du selbst als Datei.</p>
+          <p>Ins Netz geht die App nur, wenn du es nutzt: Beim Koppeln werden die Einträge auf dem Gerät mit AES-256-GCM verschlüsselt und über finnveloprogramme.com abgeglichen – der Server sieht nur unlesbare Pakete. Für unbekannte Barcodes fragt die App bei Open Food Facts nach, für Märkte in der Nähe bei OpenStreetMap-Diensten, und Prospekte kommen direkt von den Seiten der Händler.</p>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
