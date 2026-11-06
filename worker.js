@@ -1848,12 +1848,12 @@ export class Counter extends DurableObject {
         /* Lorcana: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
            06.11.2026: PC 1.1.1, App 1.0.7). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10101, versionName: "1.1.1",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.1.exe",
-                        hinweise: "Neu: Der Deck-Generator zeigt nach der KI-Hilfe deren Einstellungen (Spielstil, Thema, Farben). Nach dem Einspielen einer Sicherung wird das Protokoll geleert, damit „Zurücksetzen“ richtig rechnet. Kleinere Korrekturen." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10007, versionName: "1.0.7",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.7.apk",
-                             hinweise: "Neu: „Verkaufen“ und „CSV sichern“ direkt in der Sammlung, Einkaufsliste in Deckbau und Meine Decks, Filter der Sammlung wieder in voller Höhe, Startseite mit „Deck bauen lassen“ und „Datei wählen“, weitere Korrekturen aus einem Gesamttest." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10102, versionName: "1.1.2",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.2.exe",
+                        hinweise: "Neu: Kartenmärkte wählbar – Cardmarket, CardTrader, Recollectibles und Battle-Bear (Einstellungen → Kartenmärkte). Im Fenster „Bei … eintragen“ lässt sich der Markt je Karte umschalten, die Notiz merkt sich „bei … bestellt“ bzw. „inseriert bei …“." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10008, versionName: "1.0.8",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.8.apk",
+                             hinweise: "Neu: „Bilder je Reihe“ 1 bis 4 in Sammlung, Karten und Deckbau – weniger scrollen. Kartenmärkte wählbar (Cardmarket, CardTrader, Recollectibles, Battle-Bear), Vermerk „bei … bestellt“. Das Update-Fenster erklärt die Chrome-Warnung beim Herunterladen." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
