@@ -109,6 +109,9 @@
         </div>
       </div>
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite: Neues in data-fv-text-extra,
+             damit die gespeicherten Texte t31/t34 im Download-Bereich ihre Nummern behalten.
+             Grundelemente t0-t30 nicht entfernen. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Der Tourenplaner erzeugt Wander-, Lauf- und Radtouren auf Wunsch von selbst.
@@ -118,6 +121,12 @@
             Zielpunkt.</p>
           <p>Dabei lässt sich mitgeben, woraus die Route bestehen soll: wie viel Straße es sein darf und welcher Art, wie viel über Schotter, Feld- oder Waldwege führen soll. Eigene Sperrzonen und militärische Sperrgebiete werden umfahren. So passt der Vorschlag zu dem, was du – und dein Rad oder deine Schuhe – an dem Tag vorhaben.</p>
           <p>Jeder Vorschlag ist ein Anfang, kein Diktat: Abschnitte lassen sich von Hand umlegen, ganze Touren selbst zeichnen. Unterwegs führt die Navigation mit Sprachansagen, die gefahrene Strecke wird auf Wunsch aufgezeichnet, und fertige Touren lassen sich als GPX-Datei weitergeben – zum Beispiel an Komoot.</p>
+          <div data-fv-text-extra>
+            <p>Sieben Bewegungsarten stehen zur Wahl: Wandern, Joggen, Rennrad, Fahrrad, Tourenrad, Gravelbike und Mountainbike. Die Länge gibst du in Kilometern mit einer Toleranz vor – oder planst nach Zeit. Auf Wunsch wird die Runde als Hin- und Rückweg über zwei verschiedene Wege gelegt, und Zwischenziele lassen sich einfügen. Start und Ziel findest du über Postleitzahl, Ort und Straße, über die freie Suche nach Orten oder über deinen Standort.</p>
+            <p>Nach der Berechnung zeigt der Reiter „Tour“ alles Wichtige: Länge, Höhenmeter bergauf und bergab, voraussichtliche Dauer, ein Höhenprofil und eine Auswertung des Untergrunds und des Verkehrs – also wie viel über feste Straßen, Schotter und Naturwege führt, wie viel über ruhige Straßen oder Wege ganz ohne Autos und ob Abschnitte doppelt gefahren werden. Passt etwas nicht, gibt es mit einem Tipp eine neue Variante.</p>
+            <p>Gespeicherte Touren liegen unter „Meine Touren“, von wo du sie wieder lädst, nachbesserst, teilst oder direkt losfährst. Die Navigation folgt der Route, führt zu einem Ziel oder zeichnet frei auf. Sie dreht die Karte auf Wunsch in Fahrtrichtung, prüft vor dem Start den Wind und spart unterwegs Strom: Ab 20 % Akku schaltet die App selbst in den Sparmodus.</p>
+            <p>Den Tourenplaner gibt es als Android-App und als Windows-Programm – mit derselben Oberfläche. Am Rechner planst du auf der großen Karte, gekoppelt erscheinen die Touren auch auf dem Handy.</p>
+          </div>
 
           <div class="feature-grid" aria-label="Kernfunktionen">
             <article><h3>Automatisch vorschlagen</h3><p>Fortbewegungsart und Wunschlänge angeben – die Route entsteht von selbst.</p></article>
@@ -128,52 +137,140 @@
             <article><h3>GPX und Komoot</h3><p>Touren als GPX-Datei einlesen, speichern und weitergeben – etwa an Komoot.</p></article>
             <article data-fv-text-extra><h3>Von Hand nachbessern</h3><p>Jeden Vorschlag anpassen oder eine Route ganz ohne Vorschlag selbst zeichnen.</p></article>
             <article data-fv-text-extra><h3>Fahrten aufzeichnen</h3><p>Die gefahrene Strecke mitschreiben – mit Kalorienschätzung nach der Fahrt.</p></article>
-            <article data-fv-text-extra><h3>Wetter zur Tour</h3><p>Die Wettervorhersage direkt bei der Planung im Blick.</p></article>
+            <article data-fv-text-extra><h3>Wetter zur Tour</h3><p>Die Wettervorhersage und den Wind direkt bei der Planung und vor dem Start im Blick.</p></article>
             <article data-fv-text-extra><h3>Handy und PC gekoppelt</h3><p>Am Rechner planen, am Handy losfahren – die Touren werden verschlüsselt zwischen den Geräten ausgetauscht.</p></article>
-            <article data-fv-text-extra><h3>Für mehrere Sportarten</h3><p>Wandern, Joggen, Radfahren, Trekking, Gravel und Mountainbike.</p></article>
+            <article data-fv-text-extra><h3>Für mehrere Sportarten</h3><p>Wandern, Joggen, Rennrad, Fahrrad, Tourenrad, Gravel und Mountainbike.</p></article>
+            <article data-fv-text-extra><h3>Untergrund und Verkehr</h3><p>Jede Tour wird ausgewertet: wie viel Straße, Schotter und Naturweg, wie viel ruhig und autofrei.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die App frisch installiert, noch ohne eigene Touren – darunter die PC-Fassung im gleichen Zustand.</p>
-          <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
-          <div class="program-media-grid program-media-grid--hoch" data-fv-text-extra aria-label="Ansichten von Finnvelo Tourenplaner">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/tourenplaner-1.webp" width="540" height="1199" loading="lazy" alt="Planen: Start und Ziel festlegen">
-              <figcaption>Planen – Start und Ziel festlegen</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/tourenplaner-2.webp" width="540" height="1199" loading="lazy" alt="Reiter Tour mit Kartenansicht">
-              <figcaption>Tour mit Karte</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/tourenplaner-3.webp" width="540" height="1199" loading="lazy" alt="Meine Touren mit GPX-Import">
-              <figcaption>Meine Touren mit GPX-Import</figcaption>
-            </figure>
-          </div>
-          <!-- PC-Fassung 1.0.2, Fotos 06.11.2026: Testumgebung ohne eigene Daten, Karte © OpenStreetMap -->
-          <div class="program-media-grid" data-fv-text-extra aria-label="Ansichten der PC-Fassung von Finnvelo Tourenplaner">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/tourenplaner-pc-1.webp" width="1280" height="800" loading="lazy" alt="PC-Fassung: Reiter Planen mit Start und Ziel neben einer großen Karte">
-              <figcaption>PC – Planen mit großer Karte</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/tourenplaner-pc-2.webp" width="1280" height="800" loading="lazy" alt="PC-Fassung: Reiter Navigation mit Radwahl und Wind-Prüfung">
-              <figcaption>PC – Navigation mit Radwahl und Wind-Prüfung</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/tourenplaner-pc-3.webp" width="1280" height="800" loading="lazy" alt="PC-Fassung: Einstellungen mit Erscheinungsbild, Akzentfarben und Hintergründen">
-              <figcaption>PC – Einstellungen mit Farben und Hintergründen</figcaption>
-            </figure>
+          <p>Die folgenden Ansichten zeigen den Tourenplaner 1.0.2 mit einer Beispielrunde: 28 Kilometer mit dem Tourenrad ab Münster, automatisch vorgeschlagen. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: Fassung 1.0.2 (App und PC nutzen dieselbe Oberflaeche) im Testbrowser.
+               Beispielrunde ab Muenster, berechnet ueber BRouter, Karte (c) OpenStreetMap. Keine persoenlichen Daten. -->
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Planen, prüfen, losfahren</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Ansichten der App">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-01.webp" width="780" height="1690" loading="lazy" alt="Reiter Planen mit Start über Postleitzahl und Ort und Vorschlägen der Ortssuche">
+                <figcaption><strong>Planen – Start festlegen</strong>Postleitzahl und Ort eintippen, die Ortssuche schlägt passende Orte vor. Alternativ Standort oder freie Suche.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-02.webp" width="780" height="1690" loading="lazy" alt="Planungsoptionen mit Bewegungsart und Untergrund">
+                <figcaption><strong>Bewegungsart und Untergrund</strong>Automatisch oder von Hand planen, sieben Bewegungsarten und der gewünschte Untergrund von „Nur Straße“ bis „Nur Gelände“.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-03.webp" width="780" height="1690" loading="lazy" alt="Reiter Tour mit Länge, Höhenmetern, Dauer, Untergrund und Verkehr">
+                <figcaption><strong>Tour – das Ergebnis</strong>Länge, Höhenmeter, Dauer, Untergrund im Vergleich zum Wunsch, Verkehr und wie viel doppelt gefahren wird.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-04.webp" width="780" height="1690" loading="lazy" alt="Karte mit der Beispielrunde ab Münster">
+                <figcaption><strong>Die Runde auf der Karte</strong>Mit Kurzangaben oben und der Möglichkeit, sie zu sichern oder umgekehrt zu sichern.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-05.webp" width="780" height="1690" loading="lazy" alt="Meine Touren mit der gesicherten Beispielrunde">
+                <figcaption><strong>Meine Touren</strong>Gesicherte Touren mit Fahren, Teilen und Löschen, dazu GPX-Dateien einlesen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-06.webp" width="780" height="1690" loading="lazy" alt="Reiter Navigation mit Rad, Optionen, Wind prüfen und Navigation starten">
+                <figcaption><strong>Navigation</strong>Nach Route, zum Ziel oder frei fahren – mit Radwahl, Wind-Prüfung und Karte in Fahrtrichtung.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Einstellungen</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Einstellungen der App">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-07.webp" width="780" height="1690" loading="lazy" alt="Einstellungen Darstellung mit Erscheinungsbild, Akzentfarbe und Hintergründen">
+                <figcaption><strong>Darstellung</strong>Hell, dunkel oder wie das System, neun Akzentfarben, Hintergrundmuster und Motive oder ein eigenes Bild.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-08.webp" width="780" height="1690" loading="lazy" alt="Einstellungen Schleier, Aktualisierung, Karten für unterwegs, Routing-Dienst und Angaben zur Person">
+                <figcaption><strong>Karten, Routing und Über dich</strong>Karten offline speichern, Routing-Dienst wählen und Angaben für die Kalorienschätzung.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-09.webp" width="780" height="1690" loading="lazy" alt="Einstellungen Räder, Reihenfolge, Teilen, eigene Orte, Datenspeicher und Datensicherung">
+                <figcaption><strong>Räder, Orte und Daten</strong>Eigene Räder, Reihenfolge der Touren, gemerkte Orte, Datenordner und Sicherung als ZIP.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-10.webp" width="780" height="1690" loading="lazy" alt="Einstellungen Navigation und Ansage sowie Geräte koppeln">
+                <figcaption><strong>Ansage und Kopplung</strong>Stimme, Sprechtempo, Kartenmaßstab beim Navigieren und das Koppeln mit einem zweiten Gerät.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Am PC</h3>
+            <div class="program-media-grid" aria-label="Ansichten der PC-Fassung">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-11.webp" width="1280" height="800" loading="lazy" alt="PC-Fassung: Planen mit der Beispielrunde auf der großen Karte">
+                <figcaption><strong>Planen mit großer Karte</strong>Links die Planung, rechts die ganze Runde auf einen Blick.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/tourenplaner-12.webp" width="1280" height="800" loading="lazy" alt="PC-Fassung: Reiter Tour mit Ergebnis neben der Karte">
+                <figcaption><strong>Tour neben der Karte</strong>Ergebnis, Untergrund und Verkehr direkt neben der Route.</figcaption>
+              </figure>
+            </div>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
         </section>
 
-        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
-          <h2 id="tutorial-title">Tutorial-Video</h2>
-          <p>Ein Tutorial-Video wird hier ergänzt, sobald es bereitsteht.</p>
-          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Neben den Vorgaben bei jeder Planung bietet das Einstellungsfenster einiges, um die App auf dich zuzuschneiden:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Planung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Bewegungsart</strong>Wandern, Joggen, Rennrad, Fahrrad, Tourenrad, Gravelbike oder Mountainbike.</li>
+                <li><strong>Automatisch oder von Hand</strong>Vorschlag berechnen lassen oder die Route selbst setzen.</li>
+                <li><strong>Untergrund</strong>Von „Nur Straße“ über „Ausgewogen“ bis „Nur Gelände“.</li>
+                <li><strong>Länge</strong>In Kilometern mit Toleranz oder nach Zeit, auf Wunsch „Und zurück“ über zwei Wege.</li>
+                <li><strong>Sperrgebiete und Sehenswürdigkeiten</strong>Sperrgebiete meiden und Sehenswertes entlang der Strecke suchen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Darstellung</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Erscheinungsbild</strong>Hell, dunkel oder wie das System.</li>
+                <li><strong>Akzentfarbe</strong>Neun Farben zur Wahl.</li>
+                <li><strong>Hintergrund</strong>Muster wie Höhenlinien oder Karo, Natur- und Tiermotive, eine eigene Farbe oder ein eigenes Bild – mit Deckkraft und hellem Schleier.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Karten und Routing</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Karten für unterwegs</strong>Die Karte der aktuellen Tour offline speichern, gespeicherte Karten löschen.</li>
+                <li><strong>Kartenart</strong>Standardkarte, topografische Karte oder Radkarte, umschaltbar auf der Karte.</li>
+                <li><strong>Routing-Dienst</strong>Welcher Dienst die Route berechnet, ab Werk BRouter.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Über dich und deine Räder</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Über dich</strong>Geschlecht, Alter, Größe und Gewicht – nur für Kalorien und Leistung, bleibt auf dem Gerät.</li>
+                <li><strong>Meine Räder</strong>Räder mit Art und Gewicht anlegen, eines als Standard.</li>
+                <li><strong>Eigene Orte</strong>Orte, die auf der Karte fehlen, selbst merken – sie erscheinen bei der Suche zuerst.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Navigation und Ansage</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Stimme und Sprechtempo</strong>Stimme wählen und anhören, Tempo der Ansagen einstellen.</li>
+                <li><strong>Kartenmaßstab beim Navigieren</strong>Wie nah die Karte unterwegs heranzoomt.</li>
+                <li><strong>Runde dort beginnen, wo ich stehe</strong>Und die Karte in Fahrtrichtung drehen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Daten, Teilen und Geräte</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Reihenfolge der Touren</strong>Neueste oder älteste oben.</li>
+                <li><strong>Teilen</strong>Beim Teilen fragt die App, wohin die Tour soll.</li>
+                <li><strong>Datenspeicher</strong>Alles liegt als Dateien in einem Ordner, der sich wechseln lässt.</li>
+                <li><strong>Datensicherung</strong>Als ZIP sichern, verschicken und auf einem neuen Gerät wieder einlesen.</li>
+                <li><strong>Geräte koppeln</strong>Per Code mit einem zweiten Gerät verbinden oder die Kopplung trennen.</li>
+                <li><strong>Anzeige am PC</strong>Fenster, randloses Vollbild oder Vollbild, Fenstergröße, Zoom und Menüleiste.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block" aria-labelledby="advantages-title">
@@ -185,12 +282,32 @@
             <li>Navigation mit Sprachansage, auch ohne Netz</li>
             <li>Als Android-App und als Windows-Programm</li>
             <li data-fv-text-extra>Alle Daten als Dateien auf dem eigenen Gerät, Sicherung als ZIP</li>
+            <li data-fv-text-extra>Auswertung von Untergrund und Verkehr für jede Tour</li>
+            <li data-fv-text-extra>Kein Konto und keine Anmeldung</li>
           </ul>
         </section>
 
         <section class="program-info-block" aria-labelledby="target-title">
           <h2 id="target-title">Zielgruppe</h2>
           <p>Für alle, die gern draußen unterwegs sind und nicht jedes Mal von Neuem eine Strecke zusammensuchen wollen – ob zur Feierabendrunde mit dem Rad, zur Wanderung am Wochenende oder zur festen Laufrunde. Wer genaue Vorstellungen hat, gibt sie vor; wer einfach los will, nimmt den Vorschlag.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Radfahrerinnen und Radfahrer, die nach Feierabend eine Runde mit fester Länge und ruhigen Wegen suchen.</li>
+            <li>Gravel- und Mountainbiker, die bewusst viel Schotter und Gelände wollen.</li>
+            <li>Wanderer und Läufer, die neue Runden direkt vor der Haustür entdecken möchten.</li>
+            <li>Wer seine Touren am PC plant und unterwegs am Handy nachfahren will.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Touren, Fahrten, Räder, eigene Orte und Einstellungen liegen als Dateien auf deinem Gerät. Es gibt kein Konto und keine Anmeldung. Angaben über dich werden nur für die Kalorienschätzung genutzt und verlassen das Gerät nicht.</p>
+          <p>Für die Planung braucht die App das Netz: Kartenkacheln kommen von OpenStreetMap und verwandten Kartendiensten, Orte von der Ortssuche, die Route vom Routing-Dienst, Sperrgebiete und Sehenswürdigkeiten aus OpenStreetMap-Daten und das Wetter von Open-Meteo. Gespeicherte Karten und Touren funktionieren unterwegs auch ohne Netz. Beim Koppeln werden die Touren verschlüsselt zwischen deinen Geräten ausgetauscht.</p>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
+          <h2 id="tutorial-title">Tutorial-Video</h2>
+          <p>Ein Tutorial-Video wird hier ergänzt, sobald es bereitsteht.</p>
+          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
