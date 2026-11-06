@@ -108,10 +108,18 @@
       </div>
 
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite: Neues in data-fv-text-extra,
+             damit der gespeicherte Text t27 im Download-Bereich seine Nummer behaelt.
+             Grundelemente t3-t24 nicht entfernen. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Bad putzen, Spiegel wischen, Blumen gießen – Aufgaben, die immer wiederkommen und die sich niemand merken will. Im Verzeichnis liegt der Vorrat aller Aufgaben eines Haushalts; über 150 fertige Vorschläge aus zwölf Bereichen erleichtern den Start. Was gerade ansteht, wird von dort übernommen – für eine Person oder für alle. Beim Abhaken fragt die App, ob die Aufgabe gleich neu eingeplant werden soll, und hält fest, wer sie wann erledigt hat.</p>
           <p>Jeder Haushalt bildet einen gemeinsamen Kanal. Familienmitglieder werden per Einladung dazugeholt und sehen dieselben Aufgaben. Die Daten werden auf dem Gerät verschlüsselt – der Server speichert sie, lesen kann er sie nicht. Erinnerungen plant jedes Handy selbst, und zwar nur für die eigenen Aufgaben und die des ganzen Haushalts.</p>
+          <div data-fv-text-extra>
+            <p>Die App hat sechs Reiter. <strong>Offen</strong> zeigt, was heute und in den nächsten Tagen ansteht, auf Wunsch gefiltert nach Person. Im <strong>Verzeichnis</strong> liegen alle Aufgaben nach Bereichen – Allgemein, Küche, Bäder, Wohnzimmer, Schlafzimmer, Flur, Hauswirtschaftsraum, Keller, Balkon, Garten und Auto. Der <strong>Kalender</strong> rechnet die wiederkehrenden Aufgaben voraus, der <strong>Verlauf</strong> zeigt, wer in den letzten 30 Tagen wie viel erledigt hat und ob es pünktlich war. Unter <strong>Haushalt</strong> stehen die Personen mit ihren Farben, und unter <strong>Mehr</strong> liegen die Einstellungen.</p>
+            <p>Jede Aufgabe bekommt einen Bereich, einen Turnus – alle so viele Tage, Wochen, Monate oder Jahre – und eine nächste Fälligkeit. Zuständig ist eine feste Person, alle oder mehrere reihum: Nach jedem Abschluss ist die nächste dran. Erinnert wird am Tag selbst oder ein bis drei Tage vorher zu einer festen Uhrzeit, auf Wunsch täglich, solange die Aufgabe offen ist. Ob der nächste Termin ab der Erledigung oder ab dem Solltermin zählt, legst du je Aufgabe fest; eine Aufgabe lässt sich außerdem pausieren oder vorerst im Verzeichnis parken.</p>
+            <p>Wer etwas abhakt, wählt aus, wer es gemacht hat. Danach wird die Aufgabe neu eingeplant oder wandert zurück ins Verzeichnis, bis sie wieder jemand braucht. So entsteht nebenbei ein ehrlicher Überblick, wie sich die Arbeit verteilt.</p>
+          </div>
 
           <div class="feature-grid" aria-label="Kernfunktionen">
             <article><h3>Aufgaben mit Turnus</h3><p>Wöchentlich, alle zehn Tage, alle drei Wochen – frei einstellbar.</p></article>
@@ -121,37 +129,127 @@
             <article><h3>Verlauf</h3><p>Wann wurde was zuletzt gemacht – damit sich die Arbeit fair verteilt.</p></article>
             <article data-fv-text-extra><h3>Kalender</h3><p>Tages-, Wochen-, Monats- und Jahresansicht, in der wiederkehrende Aufgaben vorausberechnet sind.</p></article>
             <article data-fv-text-extra><h3>Eigene Farben</h3><p>Helles oder dunkles Design und selbst gewählte Farben für jedes Familienmitglied.</p></article>
+            <article data-fv-text-extra><h3>Erledigt – von wem?</h3><p>Beim Abhaken die Person wählen, dann neu einplanen oder zurück ins Verzeichnis.</p></article>
+            <article data-fv-text-extra><h3>Nachhaken</h3><p>Bleibt eine Aufgabe liegen, erinnert die App auf Wunsch jeden Tag erneut.</p></article>
+            <article data-fv-text-extra><h3>Pausieren und parken</h3><p>Aufgaben vorübergehend anhalten oder im Verzeichnis liegen lassen, ohne sie zu löschen.</p></article>
+            <article data-fv-text-extra><h3>Haushalt weitergeben</h3><p>Den ganzen Haushalt als Datei sichern oder auf ein anderes Gerät übertragen.</p></article>
+            <article data-fv-text-extra><h3>Ohne Konto</h3><p>Keine Anmeldung, keine E-Mail-Adresse – die App ist sofort einsatzbereit.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
           <p>Die folgenden Ansichten zeigen Klar Schiff 1.1 mit einem erfundenen Beispielhaushalt.</p>
-          <!-- Fotos 06.11.2026: Emulator, frisch installiert, Beispielhaushalt Anna/Ben/Clara mit Aufgaben aus den Vorschlaegen.
-               data-fv-text-extra: zaehlt im Bearbeiten-Modus nach allen vorhandenen Feldern -->
-          <div class="program-media-grid program-media-grid--hoch" data-fv-text-extra aria-label="Ansichten von Finnvelo Klar Schiff">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/klarschiff-1.webp" width="540" height="1170" loading="lazy" alt="Offene Aufgaben von heute mit Filter nach Personen">
-              <figcaption>Offen – was heute ansteht</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/klarschiff-2.webp" width="540" height="1170" loading="lazy" alt="Aufgabe erledigt: Auswahl, wer es gemacht hat, und Wieder einplanen">
-              <figcaption>Erledigt – wer war es?</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/klarschiff-3.webp" width="540" height="1170" loading="lazy" alt="Verzeichnis aller Aufgaben nach Räumen mit Zuständigen und Abständen">
-              <figcaption>Verzeichnis nach Räumen</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/klarschiff-4.webp" width="540" height="1170" loading="lazy" alt="Kalender in der Wochenansicht mit farbigen Aufgaben">
-              <figcaption>Kalender mit Wochenansicht</figcaption>
-            </figure>
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/klarschiff-5.webp" width="540" height="1170" loading="lazy" alt="Haushalt mit drei Personen in eigenen Farben">
-              <figcaption>Haushalt mit eigenen Farben</figcaption>
-            </figure>
+          <!-- Fotos 06.11.2026: Emulator, Fassung 1.1 frisch installiert, Beispielhaushalt Anna/Ben/Clara
+               mit 14 Aufgaben aus den Vorschlaegen. Keine echten Daten. -->
+          <div data-fv-text-extra>
+            <p>Anna, Ben und Clara teilen sich 14 Aufgaben aus den Vorschlägen. Ein Klick auf ein Bild öffnet es groß.</p>
+            <h3 class="program-media-gruppe">Im Alltag</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Ansichten im Alltag">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-01.webp" width="720" height="1560" loading="lazy" alt="Offene Aufgaben von heute mit Filter nach Personen">
+                <figcaption><strong>Offen</strong>Was heute ansteht, gefiltert nach Person – ein Tipp auf den Haken erledigt die Aufgabe.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-02.webp" width="720" height="1560" loading="lazy" alt="Dialog Waschbecken putzen erledigt mit Auswahl der Person">
+                <figcaption><strong>Erledigt – wer war es?</strong>Person wählen, dann wieder einplanen oder zurück ins Verzeichnis.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-03.webp" width="720" height="1560" loading="lazy" alt="Kalender in der Wochenansicht mit den Aufgaben des Tages">
+                <figcaption><strong>Kalender</strong>Woche für Woche, mit Uhrzeit, Bereich und Person – umschaltbar auf Tag, Monat und Jahr.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-04.webp" width="720" height="1560" loading="lazy" alt="Verlauf mit erledigten Aufgaben je Person der letzten 30 Tage">
+                <figcaption><strong>Verlauf</strong>Wer in den letzten 30 Tagen wie viel erledigt hat – und ob pünktlich.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Aufgaben anlegen</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Aufgaben anlegen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-05.webp" width="720" height="1560" loading="lazy" alt="Verzeichnis mit Aufgaben nach Bereichen">
+                <figcaption><strong>Verzeichnis</strong>Alle Aufgaben nach Bereichen, mit Turnus und Zuständigkeit.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-06.webp" width="720" height="1560" loading="lazy" alt="Vorschläge für den Bereich Großes Bad mit ausgewählten Aufgaben">
+                <figcaption><strong>Vorschläge</strong>Über 150 fertige Aufgaben nach Bereichen – antippen und übernehmen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-07.webp" width="720" height="1560" loading="lazy" alt="Neue Aufgabe Fenster putzen im Wohnzimmer, monatlich, reihum">
+                <figcaption><strong>Neue Aufgabe</strong>Was, wo, wie oft und ab wann – hier „Fenster putzen“ einmal im Monat, reihum.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-08.webp" width="720" height="1560" loading="lazy" alt="Reihenfolge der Personen, Erinnerung und Schalter einer Aufgabe">
+                <figcaption><strong>Reihum und Erinnerung</strong>Reihenfolge der Personen, Erinnerung mit Uhrzeit, Nachhaken und Pause.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Haushalt und Einstellungen</h3>
+            <div class="program-media-grid program-media-grid--hoch" aria-label="Haushalt und Einstellungen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-09.webp" width="720" height="1560" loading="lazy" alt="Haushalt mit drei Personen und der Auswahl, wer an diesem Gerät sitzt">
+                <figcaption><strong>Haushalt</strong>Personen mit eigener Farbe, wer an diesem Gerät sitzt und der gemeinsame Kanal.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-10.webp" width="720" height="1560" loading="lazy" alt="Einstellungen Ansicht mit Farben">
+                <figcaption><strong>Farben</strong>Hell, dunkel oder wie das System, dazu fünf frei wählbare Farben.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-11.webp" width="720" height="1560" loading="lazy" alt="Einstellungen Erinnerungen und Übertragen und Sichern">
+                <figcaption><strong>Erinnerungen und Sichern</strong>Nur eigene Aufgaben melden, Meldung ausprobieren, Haushalt weitergeben und einlesen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/klarschiff-12.webp" width="720" height="1560" loading="lazy" alt="Einstellungen Aktualisierung, Diagnose und Über">
+                <figcaption><strong>Aktualisierung und Diagnose</strong>Nach neuen Fassungen suchen, Verbindungsprotokoll und Hinweise zur App.</figcaption>
+              </figure>
+            </div>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Vieles stellst du direkt an der Aufgabe ein, den Rest im Reiter „Mehr“ und unter „Haushalt“. Ein Überblick:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Je Aufgabe</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Was und wo</strong>Name der Aufgabe und Bereich.</li>
+                <li><strong>Wie oft</strong>Alle so viele Tage, Wochen, Monate oder Jahre, dazu die nächste Fälligkeit.</li>
+                <li><strong>Wer macht das?</strong>Feste Person, reihum in einer festen Reihenfolge oder alle.</li>
+                <li><strong>Erinnerung</strong>Am Tag oder ein bis drei Tage vorher, zu einer festen Uhrzeit.</li>
+                <li><strong>Täglich nachhaken</strong>Erneut erinnern, solange die Aufgabe offen ist.</li>
+                <li><strong>Nächster Termin</strong>Ab der Erledigung oder ab dem Solltermin gerechnet.</li>
+                <li><strong>Offen oder im Verzeichnis, läuft mit oder pausiert</strong>Aufgaben parken oder anhalten, ohne sie zu löschen. Dazu eine Notiz.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Haushalt</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Name des Haushalts</strong>Steht oben auf der Seite „Offen“.</li>
+                <li><strong>Personen</strong>Hinzufügen, umbenennen, entfernen – jede mit eigener Farbe.</li>
+                <li><strong>An diesem Gerät sitzt</strong>Danach richten sich die Erinnerungen dieses Handys.</li>
+                <li><strong>Haushalt am Server</strong>Einen Kanal anlegen und die anderen per Einladung dazuholen oder einer Einladung folgen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Ansicht</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Farben</strong>Wie das System, hell oder dunkel.</li>
+                <li><strong>Eigene Farben</strong>Hintergrund, Akzent, Flächen, Schrift und die Farbe für Aufgaben des ganzen Haushalts – jeweils automatisch oder frei gewählt.</li>
+                <li><strong>Voreingestellte Erinnerungszeit</strong>Damit startet jede neue Aufgabe, ab Werk 09:00 Uhr.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Erinnerungen und Daten</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Nur meine Aufgaben melden</strong>Es kommt nur, was die Person an diesem Gerät erledigen soll.</li>
+                <li><strong>Benachrichtigungen und genaue Weckzeiten</strong>Zeigt, ob Android die Meldungen erlaubt; „Meldung ausprobieren“ testet sie.</li>
+                <li><strong>Übertragen und sichern</strong>Den Haushalt als Datei weitergeben oder einlesen.</li>
+                <li><strong>Aktualisierung und Diagnose</strong>Nach neuen Fassungen suchen, Verbindungsprotokoll ansehen.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
@@ -168,12 +266,26 @@
             <li>Ein gemeinsamer Kanal je Haushalt, Beitritt per Einladung</li>
             <li>Erinnerung nur bei der zuständigen Person</li>
             <li data-fv-text-extra>Über 150 fertige Aufgaben für einen schnellen Start</li>
+            <li data-fv-text-extra>Reihum-Verteilung, damit niemand alles allein macht</li>
+            <li data-fv-text-extra>Verlauf zeigt, wer was erledigt hat</li>
+            <li data-fv-text-extra>Funktioniert auch ganz ohne Server auf einem einzigen Handy</li>
           </ul>
         </section>
 
         <section class="program-info-block" aria-labelledby="target-title">
           <h2 id="target-title">Zielgruppe</h2>
-          <p>Für Familien, Paare und Wohngemeinschaften, die sich den Haushalt teilen und nicht jedes Mal neu aushandeln wollen, wer wann was macht – und für alle, die ihre eigenen wiederkehrenden Aufgaben einfach zuverlässig im Blick behalten möchten.</p>
+          <p>Für Familien, Paare und Wohngemeinschaften, die sich den Haushalt teilen und nicht jedes Mal neu absprechen wollen, wer gerade dran ist.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Familien, in denen auch die Kinder feste Aufgaben bekommen sollen.</li>
+            <li>Wohngemeinschaften, die Putzdienste fair reihum verteilen wollen.</li>
+            <li>Alle, die seltene Aufgaben wie Kühlschrank auswischen oder Kaffeemaschine entkalken nicht vergessen möchten.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Personen, Aufgaben, Verlauf und Einstellungen liegen als Datei im Speicher der App auf deinem Handy. Es gibt kein Konto und keine Anmeldung, und die Erinnerungen plant jedes Handy selbst – ohne Push-Dienst.</p>
+          <p>Nur wenn ihr einen gemeinsamen Haushalt einrichtet, geht der Bestand über finnveloprogramme.com an die anderen Geräte. Er wird vorher auf dem Handy mit AES verschlüsselt, der Schlüssel steckt im Einladungstext und geht nie über den Server. Der Server sieht also nur verschlüsselte Daten. Außerdem fragt die App bei finnveloprogramme.com nach einer neuen Fassung.</p>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
