@@ -100,12 +100,11 @@
   function injectStyles() {
     if (document.getElementById('fv-stats-style')) return;
     /* Lage (06.11.2026, Wunsch Tatorasa): fest in der Kopfleiste, direkt
-       unter dem Schriftzug "Finnvelo Programmwelten" und buendig mit ihm
-       (Logo 44 px + Abstand 12 px). Marke und Zaehler stecken dazu in einem
+       unter Wappen und Schriftzug, links buendig mit dem Wappen. Marke und Zaehler stecken dazu in einem
        gemeinsamen Block .fv-kopf-marke. Die Kopfleiste ist sticky - der
        Zaehler bleibt damit immer sichtbar, ohne Rechnerei und ohne Ziehen. */
     var css = '.fv-kopf-marke{display:flex;flex-direction:column;align-items:flex-start;gap:3px;flex:none;max-width:100%;}'
-      + '.fv-stats-badge{display:inline-flex;flex-wrap:wrap;align-items:center;gap:2px 8px;margin-left:56px;max-width:calc(100% - 56px);'
+      + '.fv-stats-badge{display:inline-flex;flex-wrap:wrap;align-items:center;gap:2px 8px;max-width:100%;'
       + 'box-sizing:border-box;font:11.5px/1.35 system-ui,"Segoe UI",Arial,sans-serif;white-space:nowrap;user-select:none;'
       + 'background:rgba(15,22,38,.85);color:#e8eef5;border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:2px 10px;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
@@ -117,14 +116,13 @@
       + '.fv-video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:50px;border-radius:14px;background:rgba(20,20,20,.85);z-index:1;transition:background .15s;}'
       + '.fv-video-play::before{content:"";position:absolute;top:50%;left:54%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff;}'
       + '.fv-video-facade:hover .fv-video-play,.fv-video-facade:focus-visible .fv-video-play{background:#ff0000;}'
-      /* Handy: Logo 38 px. Die drei Werte der Programmseiten duerfen dort
-         umbrechen - dann ohne Trennpunkte, die stuenden sonst am Zeilenanfang. */
-      + '@media (max-width:520px){.fv-stats-badge{margin-left:50px;max-width:calc(100% - 50px);font-size:11px;gap:1px 10px;}'
+      /* Handy: etwas kleiner. Falls die drei Werte der Programmseiten doch
+         umbrechen, dann ohne Trennpunkte - die stuenden sonst am Zeilenanfang. */
+      + '@media (max-width:520px){.fv-stats-badge{font-size:11px;gap:1px 10px;}'
       + '.fv-stats-badge .fv-sep{display:none;}}'
-      /* Sehr schmale Handys: etwas kleiner, unter 340 px ab dem Logo-Rand -
-         so bleiben auch die drei Werte der Programmseiten in einer Zeile. */
-      + '@media (max-width:360px){.fv-stats-badge{font-size:10.5px;gap:1px 6px;padding:2px 8px;}}'
-      + '@media (max-width:340px){.fv-stats-badge{margin-left:0;max-width:100%;}}';
+      /* Sehr schmale Handys: etwas kleiner - so bleiben auch die drei Werte
+         der Programmseiten in einer Zeile. */
+      + '@media (max-width:360px){.fv-stats-badge{font-size:10.5px;gap:1px 6px;padding:2px 8px;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
