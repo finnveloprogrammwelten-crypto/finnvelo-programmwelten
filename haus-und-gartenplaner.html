@@ -106,62 +106,149 @@
 
 
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite: Neues in data-fv-text-extra,
+             damit die gespeicherten Texte t34/t37 im Download-Bereich ihre Nummern behalten.
+             Grundelemente t3-t32 nicht entfernen. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
-          <p>Geplant wird Etage für Etage – vom Keller über bis zu fünf Obergeschosse bis ins Dachgeschoss. Grundrisse entstehen im Zeichenmodus mit Innenwänden, Türen und Fenstern; neue Etagen übernehmen die Hausmaße automatisch. Das Dach lässt sich als Sattel-, Walm-, Pult-, Zelt- oder Flachdach anlegen, mit Kniestock, Dachfenstern und sieben Ziegelformen.</p>
-          <p>Wände und Fassaden werden mit Pinsel, Kacheln und Mustern gestaltet, 31 Fassadentexturen inklusive. Wer es genau wissen will, blendet die Dachkonstruktion mit Sparren und Pfetten ein und erhält eine Stückliste mit Längen und Schnittwinkeln. Jede Änderung wird automatisch gesichert; ein eigenständiges Windows-Programm ist in Arbeit.</p>
+          <p>Geplant wird Etage für Etage – vom Keller über bis zu fünf Obergeschosse bis ins Dachgeschoss. Grundrisse entstehen als Rechteck, Quadrat, L- oder U-Form, frei gezeichnet oder über Eckpunkte, mit Innenwänden, Türen und Fenstern; der Grundriss einer Etage lässt sich auf alle anderen übertragen. Das Dach lässt sich als Sattel-, Walm-, Pult-, Zelt- oder Flachdach anlegen, mit Kniestock, Dachfenstern und sieben Ziegelformen.</p>
+          <p>Wände und Fassaden werden mit Pinsel, Kacheln und Mustern gestaltet, 31 Fassadentexturen inklusive. Wer es genau wissen will, blendet die Dachkonstruktion mit Sparren und Pfetten ein und erhält eine Stückliste. Jede Änderung wird automatisch gesichert; ein eigenständiges Windows-Programm ist in Arbeit.</p>
+          <div data-fv-text-extra>
+            <p>Eingerichtet wird aus einer Bibliothek mit 127 Einträgen: Wohnen, Essen, Schlafen, Küche, Bad, Büro, Technik und Deko, dazu Personen als Maßstab, Treppen, Einbauten, Elektro und Garten. Für den schnellen Start gibt es Einrichtungsvorlagen für Wohnzimmer, Schlafzimmer, Küche und Büro. Jedes Möbel lässt sich verschieben, drehen, kippen, in der Größe ändern, spiegeln, duplizieren und einfärben; mehrere Stücke lassen sich gruppieren.</p>
+            <p>Eigene Möbel entstehen im Baukasten aus Korpus, Böden, Teilern, Türen, Schubladen, Sitzflächen und Lehnen, im Zeichenmodus aus Grundriss und Höhe oder im eigenen Möbel-Editor. Fertige 3D-Modelle im Format .glb lassen sich laden; eine Linkliste führt zu großen Sammlungen freier Modelle. Für Küche und Elektro gibt es einen Einbau-Planer und Mehrfachrahmen aus Steckdosen und Schaltern.</p>
+            <p>Angesehen wird der Plan in 3D von allen Seiten, in der Draufsicht als 2D-Grundriss mit Maßen oder in der Ego-Ansicht, in der du mit Maus und Tastatur durch die Räume gehst. Lampen leuchten auf Wunsch, der Sonnenstand ist einstellbar, und jede Ansicht lässt sich als Bild speichern. Die Möbelliste gibt es als CSV-Datei.</p>
+          </div>
 
-          <div class="feature-grid" aria-label="Kernfunktionen des Haus und Gartenplaners">
-            <article>
-              <h3>Grundriss mit echten Maßen</h3>
-              <p>Räume und Innenwände zeichnen, Türen und Fenster setzen – Etage für Etage, vom Keller bis zum Dach.</p>
-            </article>
-            <article>
-              <h3>Dach und Dachkonstruktion</h3>
-              <p>Fünf Dachformen, Kniestock und Dachfenster – auf Wunsch mit Sparren, Pfetten und Stückliste.</p>
-            </article>
-            <article>
-              <h3>Möbel-Baukasten</h3>
-              <p>127 Möbel aus der Bibliothek, jedes in seine Teile zerlegbar und in Größe und Aufbau anpassbar.</p>
-            </article>
-            <article>
-              <h3>Farben und Materialien</h3>
-              <p>Jedes Möbelteil einzeln einfärben, Wände bemalen oder fliesen – mit Pipette, Lineal und Raster.</p>
-            </article>
-            <article>
-              <h3>Garten gestalten</h3>
-              <p>Beete, Zäune, Hecken, Bäume und Pool rund ums Haus im selben Planer anlegen.</p>
-            </article>
-            <article>
-              <h3>Ego-Ansicht</h3>
-              <p>Durch die geplanten Räume laufen wie in einem Spiel – gesteuert mit Maus und Tastatur.</p>
-            </article>
-            <article data-fv-text-extra>
-              <h3>Eigene Möbel entwerfen</h3>
-              <p>Im Möbel-Editor eigene Stücke bauen und für weitere Projekte speichern.</p>
-            </article>
-            <article data-fv-text-extra>
-              <h3>Automatisch gesichert</h3>
-              <p>Jede Änderung wird gespeichert; benannte Projekte lassen sich jederzeit wieder öffnen.</p>
-            </article>
+          <div class="feature-grid" aria-label="Kernfunktionen">
+            <article><h3>Grundriss mit echten Maßen</h3><p>Räume und Innenwände zeichnen, Türen und Fenster setzen – Etage für Etage, vom Keller bis zum Dach.</p></article>
+            <article><h3>Dach und Dachkonstruktion</h3><p>Fünf Dachformen, Kniestock und Dachfenster – auf Wunsch mit Sparren, Pfetten und Stückliste.</p></article>
+            <article><h3>Möbel-Baukasten</h3><p>127 Einträge in der Bibliothek, Möbel in ihre Teile zerlegbar und in Größe und Aufbau anpassbar.</p></article>
+            <article><h3>Farben und Materialien</h3><p>Jedes Möbelteil einzeln einfärben, Wände bemalen oder fliesen – mit Pipette, Lineal und Raster.</p></article>
+            <article><h3>Garten gestalten</h3><p>Zaun und Gartentor, Wegplatten, Bäume, Hecken, Hochbeet, Kräuter, Gartenhaus und Gartenbank rund ums Haus im selben Planer anlegen.</p></article>
+            <article><h3>Ego-Ansicht</h3><p>Durch die geplanten Räume laufen wie in einem Spiel – gesteuert mit Maus und Tastatur.</p></article>
+            <article data-fv-text-extra><h3>Eigene Möbel entwerfen</h3><p>Im Möbel-Editor eigene Stücke bauen und für weitere Projekte speichern.</p></article>
+            <article data-fv-text-extra><h3>Automatisch gesichert</h3><p>Jede Änderung wird gespeichert; benannte Projekte lassen sich jederzeit wieder öffnen.</p></article>
+            <article data-fv-text-extra><h3>Einrichtungsvorlagen</h3><p>Wohnzimmer, Schlafzimmer, Küche oder Büro mit einem Klick einrichten – und dann anpassen.</p></article>
+            <article data-fv-text-extra><h3>Draufsicht mit Maßen</h3><p>Der Plan als 2D-Grundriss, Maße ein- und ausblendbar, Wände automatisch durchsichtig.</p></article>
+            <article data-fv-text-extra><h3>Eigene 3D-Modelle</h3><p>Fertige Modelle im Format .glb laden; Links zu freien Sammlungen sind eingebaut.</p></article>
+            <article data-fv-text-extra><h3>Als Bild und Liste</h3><p>Ansichten als PNG speichern, die Möbelliste als CSV-Datei ausgeben.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Der Planer direkt nach dem ersten Öffnen, mit einem Beispielraum.</p>
-          <div class="program-media-grid" data-fv-text-extra aria-label="Ansichten von Finnvelo Haus- und Gartenplaner">
-            <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/haus-und-gartenplaner-1.webp" width="1366" height="800" loading="lazy" alt="3D-Ansicht eines Beispielraums mit Menü und Werkzeugleiste">
-              <figcaption>Beispielraum mit Menü und Werkzeugleiste</figcaption>
-            </figure>
+          <p>Die folgenden Ansichten zeigen den Planer mit Beispielräumen aus den eingebauten Vorlagen. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: veroeffentlichte HTML-Datei im Testbrowser, Raeume aus den Einrichtungsvorlagen. -->
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Planen und Einrichten</h3>
+            <div class="program-media-grid" aria-label="Planen und Einrichten">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-01.webp" width="1366" height="800" loading="lazy" alt="3D-Ansicht eines Wohnzimmers mit Sofa, Sesseln, Couchtisch, Fernseher und Pflanze">
+                <figcaption><strong>Wohnzimmer in 3D</strong>Eingerichtet mit der Vorlage „Wohnzimmer“, die Wände zur Kamera blenden sich automatisch aus.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-02.webp" width="1366" height="800" loading="lazy" alt="Draufsicht auf das Wohnzimmer als 2D-Grundriss mit Maßen">
+                <figcaption><strong>Draufsicht</strong>Derselbe Raum als 2D-Grundriss mit Maßen an allen Wänden.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-03.webp" width="1366" height="800" loading="lazy" alt="L-förmiger Raum mit Küchenzeile, Kühlschrank und Esstisch, links die Grundriss- und Dacheinstellungen">
+                <figcaption><strong>Grundriss in L-Form</strong>Breite, Tiefe und Aussparung in Zentimetern, eingerichtet mit der Vorlage „Küche“. Darunter beginnen die Dacheinstellungen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-04.webp" width="1366" height="800" loading="lazy" alt="Möbel-Baukasten mit einem Schrank und seinen Maßen und Teilen">
+                <figcaption><strong>Möbel-Baukasten</strong>Korpus, Böden, Rückwand, Beine, Griffe und angebaute Teile – hier ein Schrank mit Türen.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Gestalten und Einstellen</h3>
+            <div class="program-media-grid" aria-label="Gestalten und Einstellen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-05.webp" width="1366" height="800" loading="lazy" alt="Bereich Boden, Wände und Textur mit Farben und Mustern">
+                <figcaption><strong>Boden, Wände und Textur</strong>Farben, Muster und eigene Bilder für Wände und Boden.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-06.webp" width="1366" height="800" loading="lazy" alt="Bereich Ansicht und Datei mit Wänden, Wandstärke, Kamera und Speichern">
+                <figcaption><strong>Ansicht und Datei</strong>Wände, Wandstärke, Kamera, Speichern und Laden, Möbelliste, Decke, Licht und Ego-Ansicht.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-07.webp" width="1366" height="800" loading="lazy" alt="Bereich Steuerung und Einstellungen">
+                <figcaption><strong>Steuerung und Einstellungen</strong>Tasten, Fenstermodus, Tempo, Einrasten, Raster, Einheit und Sonnenstand.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/haus-und-gartenplaner-08.webp" width="1366" height="800" loading="lazy" alt="Möbel-Editor mit Werkzeugen und leerer Arbeitsfläche">
+                <figcaption><strong>Möbel-Editor</strong>Eigene Möbel aus Grundformen zusammensetzen und in die Bibliothek speichern.</figcaption>
+              </figure>
+            </div>
           </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Der Planer ist in Bereiche gegliedert, die sich in der linken Leiste aufklappen. Ein Überblick über alles, was sich einstellen lässt:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Ebene und Grundriss</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Haus anlegen</strong>Keller, ein bis sechs Geschosse und Dachgeschoss wählen und übernehmen.</li>
+                <li><strong>Aktive Ebene</strong>Die Ebene darunter blass einblenden, alle Ebenen zeigen oder das Haus aufschneiden.</li>
+                <li><strong>Grundriss-Design</strong>Rechteck, Quadrat, L-Form, U-Form, frei zeichnen oder Eckpunkte – mit Breite, Tiefe und Höhe.</li>
+                <li><strong>Keller</strong>Wie weit er aus der Erde ragt; Lichtschächte kommen automatisch.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Dach</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Dachform</strong>Satteldach, Walmdach, Pultdach, Zeltdach oder Flachdach.</li>
+                <li><strong>Maße</strong>Kniestock, Firsthöhe, Dachüberstand, Abseitenwand und Zwischendecke.</li>
+                <li><strong>Dachkonstruktion</strong>Sparrenabstand, -breite und -höhe, Pfetten, verschiebbare Sparren und Stückliste.</li>
+                <li><strong>Ziegel und Fenster</strong>Sieben Ziegelformen, Dachfarbe und Dachfenster an beliebiger Stelle.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Boden, Wände und Textur</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Wände</strong>Farbe, Muster, Tapete aus eigenem Bild oder Foto – auf einer Wand oder allen.</li>
+                <li><strong>Boden</strong>Farbe, Muster in vier Richtungen oder eigenes Bild.</li>
+                <li><strong>Malen</strong>Pinsel, Kachel, Rechteck, Dreieck, Streifen, Radierer und Pipette, mit Raster und Lineal, dazu Muster wie Rand, Schachbrett oder Sockel.</li>
+                <li><strong>Decke</strong>Anzeigen, einfärben oder mit Textur belegen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Möbel und Auswahl</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Position und Lage</strong>Drehen, kippen und rollen in Grad, Höhe über dem Boden.</li>
+                <li><strong>Maße</strong>Breite, Tiefe und Höhe; bei verstellbaren Möbeln auch Sitzhöhe und Lehnen.</li>
+                <li><strong>Aussehen</strong>Farbe, Bild oder Materialtextur – je Möbel oder Teil.</li>
+                <li><strong>Türen und Fenster</strong>Position ab Ecke, Breite, Höhe, Brüstung, Türart und Anschlag.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Ansicht und Datei</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Wände</strong>Automatisch, alle an oder alle aus, Wandstärke in Zentimetern.</li>
+                <li><strong>Ansicht</strong>Maße im Grundriss, Decke, Lampen leuchten, Ego-Ansicht.</li>
+                <li><strong>Dachschräge und Treppenloch</strong>Für das Dachgeschoss und Durchbrüche zwischen den Etagen.</li>
+                <li><strong>Datei</strong>Speichern mit Ort, Projekt laden, Möbelliste als CSV, Ansicht als PNG.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Steuerung und Projekte</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Tastenbelegung</strong>Bewegen, drehen, zoomen, löschen – jede Taste neu belegbar.</li>
+                <li><strong>Fenstermodus und Tempo</strong>Fenster, Vollbild oder maximiert; Bewegungstempo in Prozent.</li>
+                <li><strong>Einrasten</strong>Auf Möbel absetzen, Möbel aneinander und am 5-cm-Raster einrasten, Gitter am Boden.</li>
+                <li><strong>Einheit und Sonnenstand</strong>Zentimeter oder Meter, Sonne von Morgen bis Abend.</li>
+                <li><strong>Projekte</strong>Speichern, laden, löschen, Standard-Speicherort für Export und Import.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
           <h2 id="tutorial-title">Tutorial-Video</h2>
           <p>Ein Tutorial-Video zum Haus und Gartenplaner wird hier ergänzt, sobald es bereitsteht.</p>
+          <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
         </section>
 
         <section class="program-info-block" aria-labelledby="advantages-title">
@@ -170,10 +257,13 @@
             <li>Läuft im Browser – ohne Installation und ohne Internet</li>
             <li>Grundrisse und Etagen mit echten Maßen</li>
             <li>Fünf Dachformen samt Dachkonstruktion und Stückliste</li>
-            <li>127 anpassbare Möbel und ein eigener Möbel-Editor</li>
+            <li>127 Bibliothekseinträge und ein eigener Möbel-Editor</li>
             <li>Jedes Möbelteil einzeln färbbar</li>
             <li>Garten- und Außenflächenplanung</li>
             <li>Ego-Ansicht zum Durchlaufen der Räume</li>
+            <li data-fv-text-extra>Einrichtungsvorlagen für den schnellen Start</li>
+            <li data-fv-text-extra>Eigene 3D-Modelle im Format .glb</li>
+            <li data-fv-text-extra>Kein Konto und keine Anmeldung</li>
           </ul>
         </section>
 
@@ -181,6 +271,17 @@
           <h2 id="target-title">Zielgruppe</h2>
           <p>Der Haus- und Gartenplaner eignet sich für alle, die vor einem Hausbau, einem Umzug, einer Renovierung oder einer Neugestaltung erst einmal in Ruhe planen möchten – vom einzelnen Zimmer über das ganze Haus bis zum Garten.</p>
           <p>Besonders hilfreich ist der Planer, um Möbelmaße vorab zu prüfen, Raumaufteilungen auszuprobieren und Ideen für Einrichtung und Garten sichtbar zu machen, bevor etwas gekauft oder gebaut wird.</p>
+          <ul class="feature-list feature-list--einspaltig" data-fv-text-extra>
+            <li>Wer vor dem Umzug wissen will, ob Sofa und Schrank in die neue Wohnung passen.</li>
+            <li>Bauherren, die Etagen und Dach durchspielen und eine erste Stückliste fürs Dach brauchen.</li>
+            <li>Heimwerker, die Möbel selbst bauen und vorher Maße und Aufbau festlegen.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title" data-fv-text-extra>
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Der Planer ist eine einzelne HTML-Datei, alle Bibliotheken stecken darin. Er läuft ohne Installation, ohne Konto und ohne Internetverbindung. Projekte und die automatische Sicherung legt er im Speicher deines Browsers ab; zum Sichern oder Umziehen speicherst du ein Projekt als Datei an einem Ort deiner Wahl.</p>
+          <p>Ins Netz geht der Planer nicht von sich aus. Nur die Links unter „3D-Modelle finden“ öffnen fremde Seiten mit freien Modellen – und das erst, wenn du sie anklickst.</p>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
