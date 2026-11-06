@@ -1,5 +1,5 @@
 :root {
-  --header-height: 66px;
+  --header-height: 100px;   /* Kopfleiste mit Besucherzaehler unter der Marke (06.11.2026) */
   --footer-space: 78px;
   --background-inset: 20px;
   --bg: #03050a;
@@ -3384,6 +3384,13 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
 .fv-warnfenster__schritte > div { display: flex; gap: 10px; align-items: baseline; }
 .fv-warnfenster__schritte > div > span { flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px;
   border-radius: 50%; background: rgba(49, 124, 255, .22); color: var(--blue-light); font-size: 12px; font-weight: 800; }
+.fv-warnfenster__pruefen { margin: 12px 22px 0; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(74, 217, 145, .35);
+  background: rgba(74, 217, 145, .07); color: var(--muted); font-size: 15px; line-height: 1.6; }
+.fv-warnfenster__pruefen strong { color: var(--text); }
+.fv-warnfenster__pruefen .fv-warnfenster__marke { color: #7fe3b0; }
+.fv-warnfenster__vt { display: inline-block; margin-top: 10px; padding: 7px 14px; border-radius: 999px; background: rgba(74, 217, 145, .16);
+  border: 1px solid rgba(74, 217, 145, .45); color: #c9f5de; font-size: 14px; font-weight: 700; text-decoration: none; }
+.fv-warnfenster__vt:hover { background: rgba(74, 217, 145, .26); color: #fff; }
 .fv-warnfenster__mehr { display: inline-block; margin: 14px 22px 20px; color: var(--blue-light); font-size: 14px; font-weight: 700; text-decoration: none; }
 .fv-warnfenster__mehr:hover { text-decoration: underline; }
 

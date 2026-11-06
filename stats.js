@@ -1,10 +1,10 @@
 /* Finnvelo Programmwelten - anonyme Besucher-/Ereignisanzeige.
  * Zaehlt Besucher (einmal pro Browser), Video-Klicks und Download-Klicks und
- * zeigt sie als dezentes Eck-Badge an:
- *   Startseite  -> oben rechts: Besucher gesamt
- *   Programmseite -> oben rechts: Besucher / Video-Klicks / Downloads
- * Das Badge gehoert zur Seite (position:absolute) und scrollt mit ihr weg -
- * es schwebt nicht ueber dem Inhalt mit (Wunsch Tatorasa, 05.11.2026).
+ * zeigt sie in der Kopfleiste direkt unter "Finnvelo Programmwelten" an:
+ *   Programmseite -> Besucher / Video-Klicks / Downloads dieser Seite
+ *   alle uebrigen Seiten mit Kopfleiste -> Besucher gesamt
+ * Fest eingebaut, auf jeder Seite an derselben Stelle, nicht verschiebbar;
+ * die Kopfleiste bleibt beim Scrollen stehen (Wunsch Tatorasa, 06.11.2026).
  * Keine Cookies, kein Tracking - es werden nur Zahlen gezaehlt. Der lokale
  * "schon gezaehlt"-Merker liegt anonym im localStorage des Browsers.
  * Faellt die Server-Komponente aus, bricht nichts - es wird nur "-" angezeigt.
@@ -99,180 +99,61 @@
 
   function injectStyles() {
     if (document.getElementById('fv-stats-style')) return;
-    /* Lage (05.11.2026, Wunsch Tatorasa): fest in der Kopfzeile, die beim
-       Scrollen stehen bleibt - immer sichtbar, aber nie ueber dem Text.
-       Wohin genau, rechnet platzieren() aus dem freien Platz aus. top/right
-       hier sind nur der Ausgangspunkt, bis platzieren() gelaufen ist.
-       z-index 25 liegt ueber der Kopfzeile (20), unter der Admin-Leiste. */
-    var css = '.fv-stats-badge{position:fixed;z-index:25;top:calc(14px + var(--fv-admin-hoehe, 0px));right:16px;font:12px/1.3 system-ui,"Segoe UI",Arial,sans-serif;'
-      + 'background:rgba(15,22,38,.85);color:#e8eef5;border:1px solid rgba(255,255,255,.16);'
-      + 'border-radius:999px;padding:6px 12px;box-shadow:0 6px 18px rgba(0,0,0,.3);'
-      + 'pointer-events:none;user-select:none;display:flex;gap:8px;align-items:center;white-space:nowrap;'
-      + '-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);}'
-        + '.fv-edit-on .fv-stats-badge{pointer-events:auto;cursor:grab;z-index:9999;}'
-        + '.fv-edit-on .fv-stats-badge:hover{border-color:rgba(120,170,255,.7);}'
-        + '.fv-stats-badge.fv-zieht{cursor:grabbing;opacity:.85;}'
-      /* Dreizeilige Form, wenn die Zeile zu schmal ist (setzt platzieren()) */
-      + '.fv-stats-badge--eng{flex-direction:column;align-items:flex-end;gap:0;border-radius:12px;font-size:11px;line-height:1.2;padding:4px 9px;white-space:normal;max-width:104px;text-align:right;}'
-      + '.fv-stats-badge--eng .fv-sep{display:none;}'
-      /* Umbrechen nur bei 'Besucher gesamt' - die drei Zeilen der Programmseiten bleiben je eine Zeile */
-      + '.fv-stats-badge--page.fv-stats-badge--eng{max-width:none;white-space:nowrap;}'
+    /* Lage (06.11.2026, Wunsch Tatorasa): fest in der Kopfleiste, direkt
+       unter dem Schriftzug "Finnvelo Programmwelten" und buendig mit ihm
+       (Logo 44 px + Abstand 12 px). Marke und Zaehler stecken dazu in einem
+       gemeinsamen Block .fv-kopf-marke. Die Kopfleiste ist sticky - der
+       Zaehler bleibt damit immer sichtbar, ohne Rechnerei und ohne Ziehen. */
+    var css = '.fv-kopf-marke{display:flex;flex-direction:column;align-items:flex-start;gap:3px;flex:none;max-width:100%;}'
+      + '.fv-stats-badge{display:inline-flex;flex-wrap:wrap;align-items:center;gap:2px 8px;margin-left:56px;max-width:calc(100% - 56px);'
+      + 'box-sizing:border-box;font:11.5px/1.35 system-ui,"Segoe UI",Arial,sans-serif;white-space:nowrap;user-select:none;'
+      + 'background:rgba(15,22,38,.85);color:#e8eef5;border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:2px 10px;}'
       + '.fv-stats-badge b{color:#9ad7ff;font-weight:700;}'
       + '.fv-stats-badge .fv-sep{opacity:.35;}'
+      /* Seite ohne Kopfleiste (Sonderfall): oben rechts in die Ecke */
+      + '.fv-stats-badge--frei{position:fixed;z-index:25;top:14px;right:16px;margin:0;}'
       + '.fv-video-facade{position:absolute;inset:0;width:100%;height:100%;border:0;padding:0;margin:0;cursor:pointer;background:#000 center/cover no-repeat;border-radius:inherit;display:block;}'
       + '.fv-video-facade::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.30);}'
       + '.fv-video-play{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:72px;height:50px;border-radius:14px;background:rgba(20,20,20,.85);z-index:1;transition:background .15s;}'
       + '.fv-video-play::before{content:"";position:absolute;top:50%;left:54%;transform:translate(-50%,-50%);border-style:solid;border-width:11px 0 11px 19px;border-color:transparent transparent transparent #fff;}'
       + '.fv-video-facade:hover .fv-video-play,.fv-video-facade:focus-visible .fv-video-play{background:#ff0000;}'
-      + '@media (max-width:760px){.fv-stats-badge{font-size:11px;padding:5px 10px;gap:5px;}}'
-      /* Sehr schmale Handys (320 px): eine Stufe kleiner und notfalls
-         zweizeilig, sonst ueberdeckt "Besucher gesamt" den Schriftzug. */
-      + '@media (max-width:360px){.fv-stats-badge{font-size:10px;padding:4px 8px;max-width:calc(100vw - 236px);white-space:normal;text-align:right;justify-content:flex-end;border-radius:12px;}}';
+      /* Handy: Logo 38 px. Die drei Werte der Programmseiten duerfen dort
+         umbrechen - dann ohne Trennpunkte, die stuenden sonst am Zeilenanfang. */
+      + '@media (max-width:520px){.fv-stats-badge{margin-left:50px;max-width:calc(100% - 50px);font-size:11px;gap:1px 10px;}'
+      + '.fv-stats-badge .fv-sep{display:none;}}';
     var style = document.createElement('style');
     style.id = 'fv-stats-style';
     style.textContent = css;
     document.head.appendChild(style);
   }
 
+  /* Setzt den Zaehler fest in die Kopfleiste: Marke und Zaehler kommen in
+     einen gemeinsamen Block, der Zaehler direkt unter den Schriftzug. Kein
+     <a>, kein strong/small - der Bearbeiten-Modus zaehlt ihn nicht mit, und
+     ein Klick darauf fuehrt nicht zur Startseite. */
   function makeBadge(kind) {
     injectStyles();
     var el = document.createElement('div');
     el.className = 'fv-stats-badge fv-stats-badge--' + kind;
-    (document.body || document.documentElement).appendChild(el);
-    if (!lageAnwenden(el)) platzieren(el);
-    var neu = function () { platzieren(el); };
-    window.addEventListener('resize', neu);
-    // Die Admin-Leiste schiebt die Kopfzeile nachtraeglich nach unten - sie
-    // meldet ihre Hoehe ueber das style-Attribut von <html>.
-    try { new MutationObserver(neu).observe(document.documentElement, { attributes: true, attributeFilter: ['style'] }); } catch (_e) {}
-    try { document.fonts.ready.then(neu); } catch (_e) {}
-    setTimeout(neu, 400); setTimeout(neu, 1500);
-    verschiebbarMachen(el);
+    var marke = document.querySelector('.site-header .brand');
+    if (marke && marke.parentNode) {
+      var block = document.createElement('div');
+      block.className = 'fv-kopf-marke';
+      marke.parentNode.insertBefore(block, marke);
+      block.appendChild(marke);
+      block.appendChild(el);
+    } else {
+      el.classList.add('fv-stats-badge--frei');      // Seite ohne Kopfleiste
+      (document.body || document.documentElement).appendChild(el);
+    }
     return el;
   }
 
-  /* Setzt das Badge an die freie Stelle der Kopfzeile. Die Kopfzeile ist
-     sticky - ihre Lage im Fenster haengt also nicht vom Scrollweg ab, und
-     das Badge kann fest im Fenster stehen.
-       - Menue in eigener Zeile (Handy, PC bis ~880 px): Ecke oben rechts
-         neben dem Schriftzug
-       - Menue in derselben Zeile: rechtsbuendig in der Luecke vor dem Menue
-       - passt es einzeilig nicht: dreizeilig (--eng)
-       - passt auch das nicht: notfalls direkt unter der Kopfzeile, rechts
-     Von Hand gezogen (Bearbeiten-Modus)? Dann bleibt es, wo es liegt. */
-  var gezogen = false;
-  function platzieren(el) {
-    if (!el || gezogen) return;
-    var kopf = document.querySelector('.site-header');
-    var marke = kopf && kopf.querySelector('.brand');
-    var menue = kopf && kopf.querySelector('nav');
-    el.classList.remove('fv-stats-badge--eng');
-    el.style.top = ''; el.style.left = ''; el.style.right = ''; el.style.bottom = '';
-    if (!kopf || !marke || !menue) return;          // anderer Seitenaufbau: CSS-Vorgabe
-    var k = kopf.getBoundingClientRect();
-    var m = marke.getBoundingClientRect();
-    var n = menue.getBoundingClientRect();
-    var breite = document.documentElement.clientWidth;
-    var RAND = 16, ABSTAND = 10;
-    function passt(platz, hoehe) { return el.offsetWidth <= platz && el.offsetHeight <= hoehe; }
-
-    if (n.top >= m.bottom - 4) {
-      if (!passt(breite - RAND - m.right - ABSTAND, Infinity)) el.classList.add('fv-stats-badge--eng');
-      el.style.top = Math.round(m.top) + 'px';
-      el.style.right = RAND + 'px';
-      return;
-    }
-    var luecke = n.left - m.right - 2 * ABSTAND;
-    var hoehe = k.height - 8;
-    if (!passt(luecke, hoehe)) el.classList.add('fv-stats-badge--eng');
-    if (passt(luecke, hoehe)) {
-      el.style.top = Math.round(k.top + (k.height - el.offsetHeight) / 2) + 'px';
-      el.style.left = Math.round(n.left - ABSTAND - el.offsetWidth) + 'px';
-      el.style.right = 'auto';
-      return;
-    }
-    el.classList.remove('fv-stats-badge--eng');
-    el.style.top = Math.round(k.bottom + 12) + 'px';
-    el.style.right = '20px';
-  }
-
-  /* Die Zaehlerleiste lag fest oben rechts - und damit je nach Fensterbreite
-     mitten im Menue. Sie laesst sich jetzt im Bearbeiten-Modus an eine freie
-     Stelle ziehen. Oben/links sind Fensterkoordinaten - das Badge steht fest
-     im Fenster. Die Lage merkt sich der Browser (localStorage, also je
-     Geraet): es ist reine Ansichtssache, Besucher sollen davon nichts
-     mitbekommen, und der Server bleibt aussen vor. */
-  var LAGE_SCHLUESSEL = 'fv_zaehler_lage';
-
-  function lageAnwenden(el) {
-    try {
-      var roh = localStorage.getItem(LAGE_SCHLUESSEL);
-      if (!roh) return false;
-      var l = JSON.parse(roh);
-      if (typeof l.oben !== 'number' || typeof l.links !== 'number') return false;
-      // Im sichtbaren Bereich halten - das Fenster kann seit dem Ablegen
-      // kleiner geworden sein, sonst waere die Leiste unerreichbar.
-      var maxL = Math.max(0, window.innerWidth - 140);
-      var maxO = Math.max(0, window.innerHeight - 40);
-      el.style.top = Math.min(l.oben, maxO) + 'px';
-      el.style.left = Math.min(l.links, maxL) + 'px';
-      el.style.right = 'auto';
-      el.style.bottom = 'auto';
-      gezogen = true;
-      return true;
-    } catch (_e) { return false; /* dann bleibt die Vorgabe */ }
-  }
-
-  function verschiebbarMachen(el) {
-    var zieht = false, dx = 0, dy = 0;
-
-    el.addEventListener('pointerdown', function (e) {
-      if (!document.body.classList.contains('fv-edit-on')) return;
-      zieht = true;
-      var r = el.getBoundingClientRect();
-      dx = e.clientX - r.left;
-      dy = e.clientY - r.top;
-      el.classList.add('fv-zieht');
-      try { el.setPointerCapture(e.pointerId); } catch (_e) {}
-      e.preventDefault();
-    });
-
-    el.addEventListener('pointermove', function (e) {
-      if (!zieht) return;
-      var links = Math.max(4, Math.min(window.innerWidth - el.offsetWidth - 4, e.clientX - dx));
-      var oben = Math.max(4, Math.min(window.innerHeight - el.offsetHeight - 4, e.clientY - dy));
-      el.style.left = links + 'px';
-      el.style.top = oben + 'px';
-      el.style.right = 'auto';
-      el.style.bottom = 'auto';
-    });
-
-    function ende() {
-      if (!zieht) return;
-      zieht = false;
-      gezogen = true;
-      el.classList.remove('fv-zieht');
-      try {
-        localStorage.setItem(LAGE_SCHLUESSEL, JSON.stringify({
-          oben: parseInt(el.style.top, 10) || 0,
-          links: parseInt(el.style.left, 10) || 0
-        }));
-      } catch (_e) {}
-    }
-    el.addEventListener('pointerup', ende);
-    el.addEventListener('pointercancel', ende);
-
-    // Doppelklick setzt sie an ihren Ausgangsplatz zurueck.
-    el.addEventListener('dblclick', function () {
-      if (!document.body.classList.contains('fv-edit-on')) return;
-      try { localStorage.removeItem(LAGE_SCHLUESSEL); } catch (_e) {}
-      gezogen = false;
-      platzieren(el);
-    });
-  }
+  /* Frueher liess sich der Zaehler im Bearbeiten-Modus verschieben, die Lage
+     lag im Browserspeicher. Den Eintrag einmalig wegraeumen. */
+  try { localStorage.removeItem('fv_zaehler_lage'); } catch (_e) {}
 
   var key = pageKey();
-  var isHome = (key === 'start');
   // Programmseite erkennen: entweder aus der festen Liste oder daran, dass die
   // Seite den Aufbau einer Programmseite hat (gilt auch fuer selbst angelegte).
   var isProgram = PROGRAM_PAGES.indexOf(key) !== -1
@@ -282,21 +163,20 @@
 
   function renderBadge() {
     if (!badgeEl) return;
-    if (isHome) {
-      /* Nur noch die Besucherzahl. "Planer" und "Mischwald" zaehlten Aufrufe
-         der Web-Fassungen - die gibt es nicht mehr, sie standen dauerhaft auf
-         "-". Die Zaehler bleiben im Server erhalten, nur die Anzeige ist fort. */
-      badgeEl.innerHTML =
-        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>';
-    } else if (isProgram) {
+    if (isProgram) {
       badgeEl.innerHTML =
         '<span>\uD83D\uDC41\uFE0F Besucher: <b>' + fmt(counts['views:' + key]) + '</b></span>'
         + '<span class="fv-sep">·</span>'
         + '<span>\u25B6 Video-Klicks: <b>' + fmt(counts['video:' + key]) + '</b></span>'
         + '<span class="fv-sep">·</span>'
         + '<span>\u2B07 Downloads: <b>' + fmt(counts['download:' + key]) + '</b></span>';
+    } else {
+      /* Startseite und alle uebrigen Seiten: nur die Besucherzahl. "Planer"
+         und "Mischwald" zaehlten Aufrufe der Web-Fassungen - die gibt es nicht
+         mehr; die Zaehler bleiben im Server erhalten, nur die Anzeige ist fort. */
+      badgeEl.innerHTML =
+        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>';
     }
-    platzieren(badgeEl);
   }
 
   function bump(metricKey) {
@@ -365,17 +245,15 @@
     setupVideoFacades();
 
     var keysToShow = null;
-    if (isHome) {
-      badgeEl = makeBadge('home');
-      badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
-      platzieren(badgeEl);
-      // Nur noch der eine Zaehler wird angezeigt - die anderen nicht mehr holen.
-      keysToShow = ['views:site'];
-    } else if (isProgram) {
+    if (isProgram) {
       badgeEl = makeBadge('page');
       badgeEl.innerHTML = '<span>Lädt…</span>';
-      platzieren(badgeEl);
       keysToShow = ['views:' + key, 'video:' + key, 'download:' + key];
+    } else if (document.querySelector('.site-header .brand')) {
+      // Alle uebrigen Seiten mit Kopfleiste: an derselben Stelle "Besucher gesamt"
+      badgeEl = makeBadge('home');
+      badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
+      keysToShow = ['views:site'];
     }
 
     if (keysToShow) {
@@ -6867,6 +6745,16 @@
         +     '<div><span>1</span><div><strong>„Weitere Informationen“</strong> anklicken.</div></div>'
         +     '<div><span>2</span><div><strong>„Trotzdem ausführen“</strong> wählen.</div></div>'
         +   '</div>'
+        + '</div>'
+        /* Wunsch Tatorasa (06.11.2026): Wer sichergehen will, prueft die Datei
+           selbst - bei VirusTotal, unabhaengig von dieser Seite. */
+        + '<div class="fv-warnfenster__pruefen">'
+        +   '<span class="fv-warnfenster__marke">Selbst prüfen</span>'
+        +   '<div>Wer sichergehen möchte, lässt die heruntergeladene Datei vor dem Öffnen kostenlos bei '
+        +   '<strong>VirusTotal</strong> prüfen: Datei dort hochladen – sie wird dann von vielen Virenscannern '
+        +   'gleichzeitig untersucht. Das geht am PC und am Handy.</div>'
+        +   '<a class="fv-warnfenster__vt" href="https://www.virustotal.com/gui/home/upload" target="_blank" rel="noopener noreferrer">'
+        +   'Datei bei VirusTotal prüfen ↗</a>'
         + '</div>'
         + '<a class="fv-warnfenster__mehr" href="/installation">Ausführliche Hilfe zur Installation →</a>';
       document.body.appendChild(d);
