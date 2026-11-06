@@ -80,76 +80,185 @@
       </div>
 
       <div class="program-detail__body">
+        <!-- Aufbau 06.11.2026 nach dem Muster der Lesezeit-Seite. Die Abschnittsreihenfolge
+             steht zusaetzlich im Block q0 (Bearbeiten-Modus) - neue Abschnitte dort eintragen. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Im Mittelpunkt stehen die Buchungen: Jede Einnahme und Ausgabe wird mit Datum, Konto und Kategorie erfasst – von Hand oder per Import. Der Finanzmanager übernimmt Umsatzlisten der Banken als CSV- oder PDF-Datei, erkennt dabei doppelte Buchungen und schlägt für regelmäßige Zahlungen wie Miete oder Verträge eine wiederkehrende Buchung vor.</p>
           <p>Wer sein Haushaltsbuch bisher in Excel oder auf Papier geführt hat, muss nicht von vorn beginnen. Tabellen werden Monat für Monat gelesen, fotografierte Seiten wertet eine Texterkennung direkt auf dem Rechner aus. Stimmt die Summe der erkannten Zeilen nicht mit der Summenzeile der Seite überein, weist das Programm darauf hin, statt still einen falschen Betrag zu übernehmen.</p>
           <p>Ein Zugang zum Onlinebanking ist nicht nötig, und es gibt kein Benutzerkonto: Alle Daten liegen als Dateien auf deinem Computer. Auf Wunsch schützt ein Programmpasswort den Bestand – mit Sicherheitsfragen und Master-Key, falls das Passwort einmal vergessen wird.</p>
+          <div data-fv-text-extra>
+            <p>Fünfzehn Seiten decken den ganzen Haushalt ab: Buchungen und Archivbuchungen, das Einlesen von Kontoauszügen, Monats- und Jahresübersicht, wiederkehrende Buchungen, Budgetplaner und Auswertung, dazu Sparziele, Wertpapiere, Kryptowährungen, Steuervorbereitung und eine Dokumentenbibliothek für Belege. Konten und Kategorien mit Unterkategorien legst du selbst an.</p>
+            <p>Wiederkehrende Zahlungen markierst du mit einem Klick auf „W“ direkt an der Buchung, steuerlich Relevantes mit „S“. Die Seite „Wiederkehrende Buchungen“ zeigt daraus den Jahresverlauf: was im Jahr hereinkommt, was an festen Kosten abgeht, was pro Monat übrig bleibt und welcher Monat am teuersten ist. Im Budgetplaner legst du monatliche Budgets fest und siehst sofort, wie viel davon schon verbraucht ist. Sparziele rechnen aus, wann du dein Ziel bei gleichbleibender Rate erreichst.</p>
+            <p>Mehrere Benutzer – etwa für jedes Familienmitglied – führen jeweils ihren eigenen Datenstand, Aussehen und Einstellungen gelten für alle. Laptop und PC zu Hause lassen sich koppeln und halten den gesamten Bestand gleich, Ende-zu-Ende verschlüsselt. Automatische Datensicherungen als ZIP-Datei laufen auf Wunsch beim Programmstart.</p>
+          </div>
 
-          <div class="feature-grid" aria-label="Kernfunktionen des Finnvelo Finanzmanagers">
-            <article>
-              <h3>Buchungen und Archiv</h3>
-              <p>Alle Einnahmen und Ausgaben in einer durchsuchbaren Tabelle; abgeschlossene Zeiträume wandern ins Archiv und bleiben jederzeit abrufbar.</p>
-            </article>
-            <article>
-              <h3>Kontoauszüge einlesen</h3>
-              <p>Umsätze aus CSV- und PDF-Dateien der Bank übernehmen – doppelte Buchungen werden erkannt und nicht zweimal gezählt.</p>
-            </article>
-            <article>
-              <h3>Haushaltsbuch übernehmen</h3>
-              <p>Excel-Tabellen einlesen oder handgeschriebene Seiten fotografieren. Unsichere Werte werden markiert und lassen sich vor der Übernahme prüfen.</p>
-            </article>
-            <article>
-              <h3>Übersichten und Auswertung</h3>
-              <p>Monats- und Jahresübersicht sowie eine Auswertung nach Kategorien zeigen auf einen Blick, wohin das Geld fließt.</p>
-            </article>
-            <article>
-              <h3>Budgets und feste Kosten</h3>
-              <p>Wiederkehrende Buchungen für Miete, Verträge und Abos; Budgets je Kategorie, deren Betrag sich ab einem Monat oder nur für einen einzelnen Monat ändern lässt.</p>
-            </article>
-            <article>
-              <h3>Vermögen und Ziele</h3>
-              <p>Konten, Sparziele, Wertpapiere und Kryptowährungen an einem Ort verfolgen.</p>
-            </article>
-            <article>
-              <h3>Steuer und Belege</h3>
-              <p>Steuerlich relevante Buchungen vormerken und Belege in der Dokumentenbibliothek ablegen – auf Wunsch mit Passwort verschlüsselt.</p>
-            </article>
-            <article>
-              <h3>Mehrere PCs, ein Bestand</h3>
-              <p>Laptop und PC zu Hause per Kopplungscode verbinden. Der Abgleich ist Ende-zu-Ende verschlüsselt – der Server sieht keine Inhalte.</p>
-            </article>
+          <div class="feature-grid" aria-label="Kernfunktionen">
+            <article><h3>Buchungen und Archiv</h3><p>Alle Einnahmen und Ausgaben in einer durchsuchbaren Tabelle; abgeschlossene Zeiträume wandern ins Archiv und bleiben jederzeit abrufbar.</p></article>
+            <article><h3>Kontoauszüge einlesen</h3><p>Umsätze aus CSV- und PDF-Dateien der Bank übernehmen – doppelte Buchungen werden erkannt und nicht zweimal gezählt.</p></article>
+            <article><h3>Haushaltsbuch übernehmen</h3><p>Excel-Tabellen einlesen oder handgeschriebene Seiten fotografieren. Unsichere Werte werden markiert und lassen sich vor der Übernahme prüfen.</p></article>
+            <article><h3>Übersichten und Auswertung</h3><p>Monats- und Jahresübersicht sowie eine Auswertung nach Kategorien zeigen auf einen Blick, wohin das Geld fließt.</p></article>
+            <article><h3>Budgets und feste Kosten</h3><p>Wiederkehrende Buchungen für Miete, Verträge und Abos; Budgets je Kategorie, deren Betrag sich ab einem Monat oder nur für einen einzelnen Monat ändern lässt.</p></article>
+            <article><h3>Vermögen und Ziele</h3><p>Konten, Sparziele mit Prognose, Wertpapiere und Kryptowährungen an einem Ort verfolgen.</p></article>
+            <article><h3>Steuer und Belege</h3><p>Steuerlich relevante Buchungen vormerken und Belege in der Dokumentenbibliothek ablegen – auf Wunsch mit Passwort verschlüsselt.</p></article>
+            <article><h3>Mehrere PCs, ein Bestand</h3><p>Laptop und PC zu Hause per Kopplungscode verbinden. Der Abgleich ist Ende-zu-Ende verschlüsselt – der Server sieht keine Inhalte.</p></article>
+            <article><h3>Mehrere Benutzer</h3><p>Jedes Familienmitglied bekommt einen eigenen Datenstand mit eigenen Buchungen, Konten und Planungen.</p></article>
+            <article><h3>Zuletzt eingetragen</h3><p>Ein Reiter am rechten Rand zeigt deine letzten Eintragungen nach Uhrzeit – auch vorgemerkte und nachgetragene.</p></article>
+            <article><h3>Rechtschreibung in Notizen</h3><p>Prüft die Notizen aller Buchungen und zeigt jeden Fund zum Bestätigen. Eigene Wörter wie Firmennamen kommen ins Wörterbuch.</p></article>
+            <article><h3>Eigene Farben und Tasten</h3><p>Helligkeit, Kontrast, Farben und Farbthemen frei wählbar, Tastenkürzel für alle Seiten selbst belegbar.</p></article>
           </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die folgenden Ansichten zeigen den Finnvelo Finanzmanager mit frei erfundenen Beispielkonten und -buchungen.</p>
-          <!-- Fotos 06.11.2026: Oberflaeche mit Beispieldaten, keine echten Inhalte.
-               data-fv-text-extra: zaehlt im Bearbeiten-Modus nach allen vorhandenen Feldern -->
-          <div class="program-media-grid" data-fv-text-extra aria-label="Ansichten des Finnvelo Finanzmanagers">
+          <p>Die folgenden Ansichten zeigen den Finnvelo Finanzmanager 1.1.20 mit frei erfundenen Beispielkonten und -buchungen für drei Monate. Ein Klick auf ein Bild öffnet es groß.</p>
+          <!-- Fotos 06.11.2026: Fassung 1.1.20 im Testbrowser, Beispieldaten ohne echte Inhalte. -->
+          <h3 class="program-media-gruppe">Buchen und Übersichten</h3>
+          <div class="program-media-grid" aria-label="Buchen und Übersichten">
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/finanzmanager-1.webp" width="1440" height="900" loading="lazy" alt="Buchungen eines Monats mit Kategorien, Konten und Beträgen">
-              <figcaption>Buchungen erfassen und im Monat überblicken</figcaption>
+              <img src="assets/images/oberflaeche/finanzmanager-01.webp" width="1440" height="900" loading="lazy" alt="Seite Buchungen mit Eingabezeile und den Buchungen des Monats">
+              <figcaption><strong>Buchungen</strong>Neue Buchung direkt in der Kopfzeile erfassen, darunter alle Buchungen des Monats mit Kategorie, Konto und Budget. Rechts die Knöpfe S und W für Steuer und wiederkehrend.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/finanzmanager-2.webp" width="1440" height="900" loading="lazy" alt="Monatsübersicht nach Kategorien mit Summen und Anteilen">
-              <figcaption>Monatsübersicht nach Kategorien</figcaption>
+              <img src="assets/images/oberflaeche/finanzmanager-02.webp" width="1440" height="900" loading="lazy" alt="Seite Transaktionen erfassen mit Import von Kontoauszügen">
+              <figcaption><strong>Transaktionen erfassen</strong>Kontoauszüge als CSV oder PDF, Excel-Tabellen oder Fotos hineinziehen, prüfen und übernehmen.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/finanzmanager-3.webp" width="1440" height="900" loading="lazy" alt="Jahresübersicht mit Einnahmen, Ausgaben und Ergebnis je Kategorie">
-              <figcaption>Jahresübersicht – Einnahmen, Ausgaben, Ergebnis</figcaption>
+              <img src="assets/images/oberflaeche/finanzmanager-03.webp" width="1440" height="900" loading="lazy" alt="Monatsübersicht nach Kategorien">
+              <figcaption><strong>Monatsübersicht</strong>Die Buchungen des Monats nach Kategorien gruppiert, mit Summe und Anteil.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/finanzmanager-4.webp" width="1440" height="900" loading="lazy" alt="Kontenliste mit aktuellem Kontostand und Ausgangswert">
-              <figcaption>Konten mit aktuellem Kontostand</figcaption>
+              <img src="assets/images/oberflaeche/finanzmanager-04.webp" width="1440" height="900" loading="lazy" alt="Jahresübersicht mit Einnahmen, Ausgaben und Ergebnis je Kategorie">
+              <figcaption><strong>Jahresübersicht</strong>Einnahmen, Ausgaben und Ergebnis je Kategorie über das ganze Jahr.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/finanzmanager-5.webp" width="1440" height="900" loading="lazy" alt="Haupt- und Unterkategorien verwalten">
-              <figcaption>Kategorien und Unterkategorien</figcaption>
+              <img src="assets/images/oberflaeche/finanzmanager-05.webp" width="1440" height="900" loading="lazy" alt="Wiederkehrende Buchungen mit Jahresverlauf und Kennzahlen">
+              <figcaption><strong>Wiederkehrende Buchungen</strong>Einnahmen und feste Kosten im Jahr, was pro Monat bleibt, teuerster Monat und Quartale.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/finanzmanager-06.webp" width="1440" height="900" loading="lazy" alt="Auswertung über alle Monate mit Filtern">
+              <figcaption><strong>Auswertung</strong>Alle Buchungen über frei wählbare Zeiträume, gefiltert nach Kategorie, Konto oder Text.</figcaption>
             </figure>
           </div>
+
+          <div data-fv-text-extra>
+            <h3 class="program-media-gruppe">Planen und Verwalten</h3>
+            <div class="program-media-grid" aria-label="Planen und Verwalten">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-07.webp" width="1440" height="900" loading="lazy" alt="Budgetplaner mit Budgets für Freizeit und Lebensmittel">
+                <figcaption><strong>Budgetplaner</strong>Monatliche Budgets mit Einnahmen, Ausgaben und dem, was noch verfügbar ist – samt zugeordneter Buchungen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-08.webp" width="1440" height="900" loading="lazy" alt="Sparziele mit Fortschritt und Prognose">
+                <figcaption><strong>Sparziele</strong>Fortschritt je Ziel und eine Prognose, wann es bei gleicher Rate erreicht ist.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-09.webp" width="1440" height="900" loading="lazy" alt="Kontenliste mit aktuellem Kontostand">
+                <figcaption><strong>Konten</strong>Girokonto, Sparkonto und Bargeld mit Anfangs- und aktuellem Kontostand.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-10.webp" width="1440" height="900" loading="lazy" alt="Hauptkategorien und Unterkategorien">
+                <figcaption><strong>Kategorien</strong>Haupt- und Unterkategorien mit Symbol und Farbe, dazu Notizvorlagen.</figcaption>
+              </figure>
+            </div>
+
+            <h3 class="program-media-gruppe">Einstellungen</h3>
+            <div class="program-media-grid" aria-label="Einstellungen">
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-11.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Farbe und Schrift">
+                <figcaption><strong>Farbe und Schrift</strong>Schriftgröße und -art, Helligkeit, Kontrast, Zeilenstreifen, Farben und gespeicherte Farbthemen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-12.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Verhalten mit Löschbestätigung, Erkennung beim Einlesen und Online-Schaltern">
+                <figcaption><strong>Verhalten</strong>Löschbestätigung, was beim Einlesen vorgeschlagen wird, und was online sein darf.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-13.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Tastenbelegung">
+                <figcaption><strong>Tastenbelegung</strong>Tastenkürzel für alle Seiten und Funktionen, frei belegbar.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-14.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Sicherheit und Daten mit Dokumentenordner, automatischer Sicherung, Passwort und Export">
+                <figcaption><strong>Sicherheit und Daten</strong>Dokumentenordner, automatische Datensicherung, App-Passwort, Export und Import.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-15.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Geräte abgleichen">
+                <figcaption><strong>Geräte</strong>Mehrere PCs koppeln und den Bestand verschlüsselt abgleichen.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-16.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Kursdienste mit Reihenfolge, Prüfen und Entfernen">
+                <figcaption><strong>Kursdienste</strong>Woher Kurse und Wechselkurse kommen – in fester Reihenfolge mit Ausweichdienst, prüf- und erweiterbar.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-17.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Erklärung mit Hilfe zu den Bereichen">
+                <figcaption><strong>Erklärung</strong>Die eingebaute Hilfe zu allen Bereichen des Programms.</figcaption>
+              </figure>
+              <figure class="program-media-card">
+                <img src="assets/images/oberflaeche/finanzmanager-18.webp" width="1440" height="900" loading="lazy" alt="Einstellungen Fenster mit Startseite, Fensterdarstellung und Breite">
+                <figcaption><strong>Fenster</strong>Startseite, Fensterdarstellung und Monitorbreite.</figcaption>
+              </figure>
+            </div>
+          </div>
           <div class="fv-gallery" data-fv-gallery></div>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title" data-fv-text-extra>
+          <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
+          <p>Das Einstellungsfenster hat vierzehn Reiter. Ein Überblick über alles, was sich einstellen lässt:</p>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>Fenster, Farbe und Schrift</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Startseite</strong>Welche Seite beim Programmstart erscheint.</li>
+                <li><strong>Fensterdarstellung und Breite</strong>Fenster mit Vollbilddarstellung oder normal, Monitorbreite automatisch erkannt oder fest.</li>
+                <li><strong>Schrift</strong>Schriftgröße und Schriftart mit Vorschau.</li>
+                <li><strong>Helligkeit und Kontrast</strong>Hintergrund, Schrift und Flächen von hell bis dunkel, Zeilenstreifen in Tabellen an oder aus.</li>
+                <li><strong>Farben</strong>Wie das System, hell oder dunkel – jede Farbe automatisch oder per Farbrad. Farbthemen lassen sich sichern, anwenden und löschen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Diagramme und Trennlinien</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Diagramme</strong>Darstellung der Diagramme in der Monatsübersicht.</li>
+                <li><strong>Trennlinien</strong>Senkrechte und waagerechte Trennlinien in Tabellen ein- oder ausblenden.</li>
+                <li><strong>Tastenbelegung</strong>Tastenkürzel für Seiten und Funktionen selbst festlegen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Verhalten und Markierungen</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Löschverhalten</strong>Löschbestätigung anzeigen oder nicht.</li>
+                <li><strong>Beim Einlesen erkennen</strong>Wiederkehrende Buchungen und steuerlich Relevantes vorschlagen – eingetragen wird nur, was du bestätigst.</li>
+                <li><strong>Online und Updates</strong>Online erlauben oder offline bleiben; Programm-Updates, Daten-Updates (Katalog, Steuerregeln) und Kurse einzeln an oder aus.</li>
+                <li><strong>Nicht mehr markiert</strong>Abgeschaltete S- und W-Vorschläge einsehen und wieder zurücknehmen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Prüfen und Helfen</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Rechtschreibung</strong>Notizen in Buchungen und Archivbuchungen prüfen, eigene Wörter ins Wörterbuch.</li>
+                <li><strong>Update</strong>Nach neuen Fassungen suchen, herunterladen und die Einrichtung starten – nichts startet von allein.</li>
+                <li><strong>Fehlerbericht</strong>Fassung, Umgebung, Anzahlen und Fehler seit dem Start – keine Buchungen, Beträge oder Kontonamen. Vorschau, Zwischenablage oder Datei.</li>
+                <li><strong>Erklärung</strong>Die eingebaute Hilfe zu allen Bereichen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Sicherheit und Daten</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Dokumentenordner</strong>Wo die Belege der Dokumentenbibliothek liegen – beim Wechsel ziehen die Dateien mit um.</li>
+                <li><strong>Automatische Datensicherung</strong>ZIP-Sicherung beim Programmstart, wie oft und wie viele behalten, in einem Ordner deiner Wahl.</li>
+                <li><strong>App-Passwort</strong>Einrichten, ändern, entfernen oder die App sofort sperren – mit Sicherheitsfragen und Master-Key.</li>
+                <li><strong>Datensicherung und Transfer</strong>Den Datensatz als ZIP exportieren oder ein Backup einlesen.</li>
+                <li><strong>Reset</strong>Den kompletten Datensatz zurücksetzen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Geräte und Kursdienste</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Geräte abgleichen</strong>PCs per Kopplungscode verbinden; der ganze Bestand bleibt auf allen gleich, dazu eine verschlüsselte Sicherung auf finnveloprogramme.com.</li>
+                <li><strong>Kursdienste</strong>Dienste für Kurse, Suche und Wechselkurse in fester Reihenfolge – fällt einer aus, springt der nächste ein. Jeder lässt sich prüfen, abschalten oder durch einen eigenen ergänzen.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block" aria-labelledby="advantages-title">
@@ -162,6 +271,9 @@
             <li>Budgets mit monatsgenau änderbaren Beträgen</li>
             <li>Optionaler Passwortschutz mit Sicherheitsfragen und Master-Key</li>
             <li>Verschlüsselter Abgleich zwischen mehreren PCs</li>
+            <li>Mehrere Benutzer mit getrenntem Datenstand</li>
+            <li>Automatische Datensicherung als ZIP</li>
+            <li>Offline nutzbar – Online-Funktionen einzeln abschaltbar</li>
           </ul>
         </section>
 
@@ -169,6 +281,18 @@
           <h2 id="target-title">Zielgruppe</h2>
           <p>Der Finanzmanager richtet sich an alle, die ihre Haushaltsfinanzen selbst im Blick behalten wollen – ohne Banking-App, Abonnement oder Cloud-Konto.</p>
           <p>Besonders hilfreich ist er für Haushalte, die bereits ein Haushaltsbuch auf Papier oder in Excel führen und dieses in eine übersichtliche, auswertbare Form überführen möchten.</p>
+          <ul class="feature-list feature-list--einspaltig">
+            <li>Familien, in denen jeder seine eigenen Finanzen führt, aber alle am selben PC arbeiten.</li>
+            <li>Wer feste Kosten, Verträge und Abos im Griff behalten und sehen will, was am Monatsende übrig bleibt.</li>
+            <li>Wer für ein Ziel spart – Urlaub, Auto, Notgroschen – und wissen will, wann es erreicht ist.</li>
+            <li>Wer zur Steuererklärung Belege und relevante Buchungen schon im Jahr sammeln möchte.</li>
+          </ul>
+        </section>
+
+        <section class="program-info-block program-info-block--wide" aria-labelledby="privacy-title">
+          <h2 id="privacy-title">Daten und Datenschutz</h2>
+          <p>Der Finanzmanager kommt ohne Benutzerkonto und ohne Zugang zum Onlinebanking aus. Buchungen, Konten, Planungen und Belege liegen als Dateien auf deinem Rechner. Mit gesetztem App-Passwort werden sie mit AES-256 verschlüsselt, ohne Passwort bleiben sie unverschlüsselt.</p>
+          <p>Ins Netz geht das Programm nur für das, was du erlaubst: die Prüfung auf neue Fassungen, Daten-Updates wie Katalog und Steuerregeln, Kurse für Wertpapiere und Kryptowährungen sowie den Abgleich gekoppelter PCs. Jeder Bereich lässt sich einzeln abschalten, und mit „Offline bleiben“ bleibt das Programm ganz vom Netz. Der Geräte-Abgleich ist Ende-zu-Ende verschlüsselt – der Server sieht keine Inhalte.</p>
         </section>
 
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
