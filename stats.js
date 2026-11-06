@@ -45,7 +45,7 @@
   'use strict';
 
   var API = '/api';
-  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'lesezeit', 'tester'];
+  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'lesezeit', 'lorcana', 'tester'];
 
   function pageKey() {
     var path = (location.pathname || '').toLowerCase();
@@ -3278,6 +3278,42 @@
                          'https://github.com/.../FINNVELO-Tourenplaner-Einrichtung-2.5.0.exe'),
         fest: { schluessel: 'FINNVELO-TOURENPLANER-PC' },
         vorgabe: { schluessel: 'FINNVELO-TOURENPLANER-PC', versionCode: 0, versionName: '', apk: '', hinweise: '' }
+      },
+
+      /* ---- Lorcana (06.11.2026) -------------------------------------- */
+      {
+        /* App und PC-Programm lesen /lorcana/android.json bzw. /lorcana/pc.json
+           und verlangen die Schluessel FINNVELO-LORCANA-ANDROID bzw. -PC.
+           Die App laedt nicht selbst, sie oeffnet "apk" im Browser - die
+           Adresse muss also direkt herunterladbar sein. Vorgabe = das, was der
+           Server ohne gespeicherten Eintrag ausliefert (worker.js). */
+        seite: 'lorcana', art: 'app',
+        ablage: 'lorcana-android',
+        pruef: '/lorcana/android.json',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.0.6' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 10006' },
+          { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
+            ph: 'https://github.com/.../FINNVELO-Lorcana-1.0.6.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-LORCANA-ANDROID' },
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-ANDROID', versionCode: 10006, versionName: '1.0.6',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-1.0.6.apk',
+                   hinweise: 'Neu: Verbundene Geräte – die App gleicht mit mehreren PCs und anderen Handys ab (Handy mit Handy, solange beide Apps offen sind). Verkaufsliste mit Zustand, kompakte Klick-Liste.' }
+      },
+      {
+        seite: 'lorcana', art: 'pc',
+        ablage: 'lorcana-pc',   // keine appAblage: es gab nie eine gemeinsame Datei
+        pruef: '/lorcana/pc.json',
+        titel: 'PC-Version', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10100',
+                         'https://github.com/.../FINNVELO-Lorcana-Einrichtung-1.1.0.exe'),
+        fest: { schluessel: 'FINNVELO-LORCANA-PC' },
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10100, versionName: '1.1.0',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.0.exe',
+                   hinweise: 'Neu: mehrere Handys gleichzeitig verbinden (auch als Kamera), Verkaufsliste mit Zustand und Notizen, Fenster „Bei Cardmarket eintragen“, Klick-Liste (kompakt oder groß), KI-Hilfe im Deckbau, Regler für nicht tintbare Karten im Deck-Generator.' }
       }
     ];
 

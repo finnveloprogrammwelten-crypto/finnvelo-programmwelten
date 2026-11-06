@@ -75,8 +75,10 @@ const RESERVIERT = [
   "tourenplaner",  // Programmseite des Tourenplaners
   "lesezeit",      // Programmseite Lesezeit
   "lesezeit",      // Ordner mit APK und Fassungsdatei
-  "klarschiff"     // Programmseite + Ordner mit APK; die Fassungsdatei
+  "klarschiff",    // Programmseite + Ordner mit APK; die Fassungsdatei
                    // kommt vom Worker, im Ordner darf keine liegen
+  "lorcana"        // Programmseite; /lorcana/pc.json und /android.json kommen
+                   // vom Worker (06.11.2026), im Ordner darf keine liegen
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
@@ -285,7 +287,11 @@ const VERSION_ABLAGEN = {
   "/tourenplaner/android.json": "tourenplaner-android",
   "/tourenplaner/pc.json": "tourenplaner-pc",
   // Lesezeit: die App fragt /lesezeit/version.json ab.
-  "/lesezeit/version.json": "lesezeit"
+  "/lesezeit/version.json": "lesezeit",
+  /* Lorcana (06.11.2026): PC-Programm und App mit je eigener Datei. Grund-
+     adresse in beiden Programmen: https://finnveloprogramme.com/lorcana */
+  "/lorcana/pc.json": "lorcana-pc",
+  "/lorcana/android.json": "lorcana-android"
 };
 
 export class Counter extends DurableObject {
@@ -1839,6 +1845,14 @@ export class Counter extends DurableObject {
                        eine zweite App daneben - mit leeren Daten. Nur der ANZEIGENAME
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
+        /* Lorcana: vorbelegt mit den am 06.11.2026 hochgeladenen Fassungen.
+           Sobald jemand die Kachel "Aktualisierung" speichert, gilt deren Eintrag. */
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10100, versionName: "1.1.0",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.0.exe",
+                        hinweise: "Neu: mehrere Handys gleichzeitig verbinden (auch als Kamera), Verkaufsliste mit Zustand und Notizen, Fenster „Bei Cardmarket eintragen“, Klick-Liste (kompakt oder groß), KI-Hilfe im Deckbau, Regler für nicht tintbare Karten im Deck-Generator." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10006, versionName: "1.0.6",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.6.apk",
+                             hinweise: "Neu: Verbundene Geräte – die App gleicht mit mehreren PCs und anderen Handys ab (Handy mit Handy, solange beide Apps offen sind). Verkaufsliste mit Zustand, kompakte Klick-Liste." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
