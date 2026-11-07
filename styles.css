@@ -3502,3 +3502,13 @@ body.fv-vorschau-an .fv-zieh-linie { display: none !important; }
 .fv-grossbild__text { margin-top: 12px; color: var(--muted); font-size: 15px; text-align: center; }
 .fv-grossbild__zu { position: fixed; top: 16px; right: 16px; width: 40px; height: 40px; border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, .25); background: rgba(10, 14, 22, .8); color: #fff; font-size: 16px; cursor: pointer; }
+
+/* Sprung zum Download (stats.js, 07.11.2026): Knopf oben unter der Einleitung.
+   scroll-margin-top haelt die Ueberschrift des Download-Bereichs unter der
+   klebenden Kopfleiste (98 px am PC, bis 160 px unter 1080 px Breite) frei. */
+.fv-download-sprung { margin-top: 22px; }
+.fv-download-sprung__knopf span { margin-right: 8px; font-size: 1.1em; }
+.program-download-block { scroll-margin-top: calc(var(--fv-admin-hoehe, 0px) + 118px); }
+@media (max-width: 1080px) {
+  .program-download-block { scroll-margin-top: calc(var(--fv-admin-hoehe, 0px) + 180px); }
+}

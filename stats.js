@@ -6889,3 +6889,54 @@
     });
   } catch (e) { /* niemals die Seite blockieren */ }
 })();
+
+/* =====================================================================
+ * Sprung zum Download (07.11.2026)
+ * ---------------------------------------------------------------------
+ * Die Download-Bereiche stehen weit unten; wer sie sucht, findet sie
+ * oft nicht. Deshalb steht oben auf jeder Programmseite unter der
+ * Einleitung ein Knopf "Zum Download". Er springt zum ersten SICHTBAREN
+ * Download-Bereich - ein per y0 ausgeblendeter Bereich (nur App oder nur
+ * PC) wird uebersprungen. Gilt auch fuer selbst angelegte Programmseiten.
+ * Der Knopf ist ein <a> in einem <div>: kein p, kein Bild, keine Klasse
+ * .status und nicht in .download-slot - er bekommt also keinen
+ * Bearbeitungs-Schluessel, verschiebt keine Nummern und zaehlt nicht
+ * als Download.
+ * ===================================================================== */
+(function () {
+  'use strict';
+  try {
+    function ziel() {
+      var bloecke = Array.prototype.slice.call(document.querySelectorAll('.program-download-block'));
+      var sichtbar = bloecke.filter(function (b) {
+        return !b.hidden && b.offsetParent !== null && !b.classList.contains('fv-bereich-aus');
+      });
+      return sichtbar[0] || bloecke[0] || null;
+    }
+    function bauen() {
+      var kopf = document.querySelector('.program-detail__summary');
+      if (!kopf || kopf.querySelector('.fv-download-sprung')) return;
+      var erster = document.querySelector('.program-download-block');
+      if (!erster) return;
+      var huelle = document.createElement('div');
+      huelle.className = 'fv-download-sprung';
+      var a = document.createElement('a');
+      a.className = 'button fv-download-sprung__knopf';
+      var ueberschrift = erster.querySelector('h2[id]');
+      a.href = ueberschrift ? '#' + ueberschrift.id : '#';
+      a.innerHTML = '<span aria-hidden="true">\u2193</span> Zum Download';
+      a.addEventListener('click', function (e) {
+        var z = ziel();
+        if (!z) return;
+        e.preventDefault();
+        z.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        var h = z.querySelector('h2');
+        if (h) { h.setAttribute('tabindex', '-1'); try { h.focus({ preventScroll: true }); } catch (f) {} }
+      });
+      huelle.appendChild(a);
+      kopf.appendChild(huelle);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bauen);
+    else bauen();
+  } catch (e) { /* niemals die Seite blockieren */ }
+})();
