@@ -291,7 +291,10 @@ const VERSION_ABLAGEN = {
   /* Lorcana (06.11.2026): PC-Programm und App mit je eigener Datei. Grund-
      adresse in beiden Programmen: https://finnveloprogramme.com/lorcana */
   "/lorcana/pc.json": "lorcana-pc",
-  "/lorcana/android.json": "lorcana-android"
+  "/lorcana/android.json": "lorcana-android",
+  /* Haus- und Gartenplaner (06.11.2026, ab Fassung 1.0.1): Die HTML-Datei fragt genau diese Adresse ab.
+     Felder: version, url, notes. */
+  "/haus-und-gartenplaner/version.json": "haus-und-gartenplaner"
 };
 
 export class Counter extends DurableObject {
@@ -1854,6 +1857,11 @@ export class Counter extends DurableObject {
         "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10010, versionName: "1.0.10",
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-Lorcana-1.0.10.apk",
                              hinweise: "Neu: Seiten durch seitliches Wischen wechseln (nach links: nächste Seite, nach rechts: vorige – abschaltbar unter Einstellungen → Bedienung). Notizen bei „Verkaufen“ und „Einkaufen“ zweizeilig." },
+        /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
+           Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
+        "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
+            url: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Finnvelo-Haus-und-Gartenplaner/FINNVELO-Haus-und-Gartenplaner-1.0.1.html",
+            notes: "Dach und Möbel in der Gesamtansicht an der richtigen Stelle, Kamera zeigt das ganze Haus, lesbare Eingabefelder in schmalen Fenstern." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
