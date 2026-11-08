@@ -1865,14 +1865,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           08.11.2026: PC 1.3.0, App 1.2.0). Ein in der Kachel "Aktualisierung"
+           08.11.2026: PC 1.3.1, App 1.2.1). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10300, versionName: "1.3.0",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.0.exe",
-                        hinweise: "Neu: Das Programm heißt jetzt FINNVELO TCG Sammelmappe und sammelt neben Lorcana auch Pokémon, Magic, One Piece und Yu-Gi-Oh! – mit Scanner, Preisen, Deckbau, Verkaufen, Einkaufen und Zähler. Die Kartendaten eines Spiels lädt das Programm beim ersten Öffnen (Yu-Gi-Oh!: Kartenbilder ca. 390 MB nach Rückfrage). Turnierdecks von TopDeck.gg für alle Spiele – freiwillig, mit eigenem kostenlosem Schlüssel. Neue Karten prüft das Programm einmal am Tag. Sammlung, Decks und Einstellungen bleiben erhalten." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10200, versionName: "1.2.0",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.0.apk",
-                             hinweise: "Neu: Die App heißt jetzt FINNVELO TCG Sammelmappe und sammelt neben Lorcana auch Pokémon, Magic, One Piece und Yu-Gi-Oh! – mit Kamera-Scanner, Preisen, Deckbau, Verkaufen, Einkaufen und Zähler im Vollbild. Die Kartendaten eines Spiels lädt die App beim ersten Öffnen (Yu-Gi-Oh!: Kartenbilder ca. 390 MB nach Rückfrage, am besten im WLAN). Turnierdecks von TopDeck.gg kommen vom verbundenen PC. Sammlung, Decks und Einstellungen bleiben erhalten." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10301, versionName: "1.3.1",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.1.exe",
+                        hinweise: "Neu: Knöpfe DE | EN neben dem Kartennamen schalten die Kartentexte um. Fehlende deutsche Kartentexte bei Magic, Pokémon und Yu-Gi-Oh! sind maschinell übersetzt (wird automatisch nachgeladen). Schärfere Yu-Gi-Oh!-Kartenbilder mit lesbarem Text, kräftigere Farben bei alten Magic-Karten, schnellerer Start und schnellere Kartensuche." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10201, versionName: "1.2.1",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.1.apk",
+                             hinweise: "Neu: Knöpfe DE | EN neben dem Kartennamen schalten die Kartentexte um. Fehlende deutsche Kartentexte bei Magic, Pokémon und Yu-Gi-Oh! sind maschinell übersetzt (wird automatisch nachgeladen). Schärfere Yu-Gi-Oh!-Kartenbilder mit lesbarem Text, kräftigere Farben bei alten Magic-Karten, schnellerer Start und schnellere Kartensuche." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
