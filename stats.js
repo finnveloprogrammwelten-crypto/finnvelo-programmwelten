@@ -2,7 +2,7 @@
  * Zaehlt Besucher (einmal pro Browser), Video-Klicks und Download-Klicks und
  * zeigt sie in der Kopfleiste direkt unter "Finnvelo Programmwelten" an:
  *   Programmseite -> Besucher / Video-Klicks / Downloads dieser Seite
- *   alle uebrigen Seiten mit Kopfleiste -> Besucher gesamt
+ *   alle uebrigen Seiten mit Kopfleiste -> Besucher gesamt und Downloads gesamt
  * Fest eingebaut, auf jeder Seite an derselben Stelle, nicht verschiebbar;
  * die Kopfleiste bleibt beim Scrollen stehen (Wunsch Tatorasa, 06.11.2026).
  * Keine Cookies, kein Tracking - es werden nur Zahlen gezaehlt. Der lokale
@@ -176,8 +176,12 @@
       /* Startseite und alle uebrigen Seiten: nur die Besucherzahl. "Planer"
          und "Mischwald" zaehlten Aufrufe der Web-Fassungen - die gibt es nicht
          mehr; die Zaehler bleiben im Server erhalten, nur die Anzeige ist fort. */
+      /* Dahinter "Downloads gesamt" (08.11.2026, Wunsch Tatorasa): Summe aller
+         Download-Klicks auf allen Seiten, vom Server berechnet. */
       badgeEl.innerHTML =
-        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>';
+        '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>' + fmt(counts['views:site']) + '</b></span>'
+        + '<span class="fv-sep">\u00B7</span>'
+        + '<span>\u2B07 Downloads gesamt: <b>' + fmt(counts['download:gesamt']) + '</b></span>';
     }
   }
 
@@ -254,8 +258,9 @@
     } else if (document.querySelector('.site-header .brand')) {
       // Alle uebrigen Seiten mit Kopfleiste: an derselben Stelle "Besucher gesamt"
       badgeEl = makeBadge('home');
-      badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>';
-      keysToShow = ['views:site'];
+      badgeEl.innerHTML = '<span>\uD83D\uDC41\uFE0F Besucher gesamt: <b>…</b></span>'
+        + '<span class="fv-sep">·</span><span>\u2B07 Downloads gesamt: <b>…</b></span>';
+      keysToShow = ['views:site', 'download:gesamt'];
     }
 
     if (keysToShow) {

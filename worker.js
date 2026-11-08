@@ -553,7 +553,19 @@ export class Counter extends DurableObject {
       const keys = (url.searchParams.get("keys") || "")
         .split(",").map((k) => k.trim()).filter(isValidKey).slice(0, 30);
       const counts = {};
-      for (const k of keys) counts[k] = this.readCount(k);
+      for (const k of keys) {
+        /* "download:gesamt" (08.11.2026, Wunsch Tatorasa): kein eigener Zaehler,
+           sondern die Summe aller Download-Zaehler aller Seiten - fuer die Anzeige
+           "Downloads gesamt" neben "Besucher gesamt". */
+        if (k === "download:gesamt") {
+          const r = this.sql.exec(
+            "SELECT COALESCE(SUM(value), 0) AS s FROM counter_values WHERE key LIKE 'download:%' AND key <> 'download:gesamt'"
+          ).toArray();
+          counts[k] = r.length ? Number(r[0].s) : 0;
+        } else {
+          counts[k] = this.readCount(k);
+        }
+      }
       return json({ counts });
     }
 
@@ -562,6 +574,8 @@ export class Counter extends DurableObject {
       try { body = await request.json(); } catch (_e) { body = {}; }
       const key = body && body.key;
       if (!isValidKey(key)) return json({ error: "invalid_key" }, 400);
+      // Die Summe wird berechnet, nicht hochgezaehlt
+      if (key === "download:gesamt") return json({ error: "invalid_key" }, 400);
       this.sql.exec(
         "INSERT INTO counter_values (key, value) VALUES (?, 1) ON CONFLICT(key) DO UPDATE SET value = value + 1",
         key
