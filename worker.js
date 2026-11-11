@@ -1865,11 +1865,11 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           11.11.2026: PC 1.3.1, App 1.2.5). Ein in der Kachel "Aktualisierung"
+           11.11.2026: PC 1.3.2, App 1.2.5). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10301, versionName: "1.3.1",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.1.exe",
-                        hinweise: "Neu: Knöpfe DE | EN neben dem Kartennamen schalten die Kartentexte um. Fehlende deutsche Kartentexte bei Magic, Pokémon und Yu-Gi-Oh! sind maschinell übersetzt (wird automatisch nachgeladen). Schärfere Yu-Gi-Oh!-Kartenbilder mit lesbarem Text, kräftigere Farben bei alten Magic-Karten, schnellerer Start und schnellere Kartensuche." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10302, versionName: "1.3.2",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.2.exe",
+                        hinweise: "Neu: Der Deck-Generator baut nach dem Vorbild echter Turnier- und Themendecks und speichert laufend – fertige Decks landen selbst in „Meine Decks“, nach einem Abbruch geht nichts verloren. Deckbau: „Karten ersetzen“. Druckvorlage wahlweise doppelseitig mit Rückseiten, feinere gestrichelte Schnittlinien und Größenausgleich für Drucker, die verkleinern. Yu-Gi-Oh!: dieselbe Karte unter mehreren Kennungen nur noch einmal, mit Auswahl der Kennung." },
         "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10205, versionName: "1.2.5",
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.5.apk",
                              hinweise: "Neu: Druckvorlage mit Größenausgleich – druckt dein Drucker die Karten zu klein, miss den 50-mm-Kontrollstrich auf dem Ausdruck und trag die Länge im Druckdialog ein; die Vorlage gleicht das aus. Deck-Generator mit Thema (z. B. Detektive) baut nach dem Vorbild echter Themendecks. Die Test-KI spielt Karten wie Judy Hopps in der richtigen Reihenfolge." },
