@@ -1865,14 +1865,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           11.11.2026: PC 1.3.3, App 1.2.6). Ein in der Kachel "Aktualisierung"
+           11.11.2026: PC 1.3.4, App 1.2.7). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10303, versionName: "1.3.3",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.3.exe",
-                        hinweise: "Neu: Yu-Gi-Oh!-Preise aus allen Märkten – TCGplayer je Druck (in Euro umgerechnet) und Cardmarket ab dem günstigsten Druck, immer mit dem Markt dahinter. Die Kopfleiste passt jetzt auch in kleinere Fenster." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10206, versionName: "1.2.6",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.6.apk",
-                             hinweise: "Neu: Yu-Gi-Oh!-Preise aus allen Märkten – TCGplayer je Druck (in Euro umgerechnet) und Cardmarket ab dem günstigsten Druck, immer mit dem Markt dahinter. Wird der Speicher knapp, lädt die App die Anzeige neu statt abzustürzen. Auf Tablets nutzt die App die ganze Bildschirmbreite." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10304, versionName: "1.3.4",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.4.exe",
+                        hinweise: "Neu im Zähler: Lorcana-Format Coconut (3–4 Spieler, Ziel 25), Konfetti für den Sieger, Startspieler wählbar, Rundenzähler mit „wer ist dran“, Spielzeit oder Schachuhr je Spieler und ein Timeout-Modus mit den restlichen Zügen." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10207, versionName: "1.2.7",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.7.apk",
+                             hinweise: "Neu im Zähler: Lorcana-Format Coconut (3–4 Spieler, Ziel 25), Konfetti für den Sieger, Startspieler wählbar, Rundenzähler mit „wer ist dran“, Spielzeit oder Schachuhr je Spieler und ein Timeout-Modus mit den restlichen Zügen." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
