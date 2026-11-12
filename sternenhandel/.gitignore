@@ -1,0 +1,11 @@
+# Von Godot erzeugte Zwischendateien
+.godot/
+# Android-Export und Build-Ausgaben
+android/
+export/
+*.apk
+*.aab
+# Signaturschlüssel niemals einchecken
+*.keystore
+*.jks
+export_credentials.cfg

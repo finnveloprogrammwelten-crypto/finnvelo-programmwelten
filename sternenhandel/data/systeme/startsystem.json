@@ -1,0 +1,227 @@
+{
+	"id": "helios",
+	"name": "Helios-System",
+	"beschreibung": "Ein ruhiges Randsystem mit gut ausgebauter Industrie. Hier beginnt deine Laufbahn als Händler.",
+	"objekte": [
+		{
+			"id": "helios",
+			"name": "Helios",
+			"typ": "sonne",
+			"orbit_radius": 0,
+			"winkel": 0,
+			"groesse": 46,
+			"farbe": "#ffcc44",
+			"bild": "res://assets/platzhalter/sonne.png",
+			"beschreibung": "Ein gelber Hauptreihenstern, etwas älter als die alte Sonne der Menschheit.",
+			"statistik": {
+				"Spektralklasse": "G4 V",
+				"Alter": "5,9 Mrd. Jahre",
+				"Oberflächentemperatur": "5.650 K"
+			}
+		},
+		{
+			"id": "aquaris",
+			"name": "Aquaris",
+			"typ": "planet",
+			"orbit_radius": 230,
+			"winkel": 230,
+			"groesse": 20,
+			"farbe": "#3d8bff",
+			"bild": "res://assets/platzhalter/planet_ozean.png",
+			"beschreibung": "Ein Ozeanplanet mit schwimmenden Agrarstädten. Liefert Nahrung, Medikamente und den berühmten Synthwein.",
+			"statistik": {
+				"Planetentyp": "Ozeanwelt",
+				"Bevölkerung": "820 Mio.",
+				"Wirtschaft": "Landwirtschaft, Pharmazie",
+				"Schwerkraft": "0,94 g"
+			},
+			"markt": {
+				"nahrungsrationen": { "lager": 700, "ziel": 400, "produktion": 14 },
+				"medikamente":      { "lager": 260, "ziel": 150, "produktion": 4 },
+				"synthwein":        { "lager": 150, "ziel": 100, "produktion": 2 },
+				"wassereis":        { "lager": 200, "ziel": 300, "verbrauch": 3 },
+				"stahl":            { "lager": 120, "ziel": 200, "verbrauch": 3 },
+				"maschinenteile":   { "lager": 60,  "ziel": 120, "verbrauch": 2 },
+				"elektronik":       { "lager": 40,  "ziel": 80,  "verbrauch": 1 },
+				"treibstoffzellen": { "lager": 150, "ziel": 250, "verbrauch": 4 }
+			}
+		},
+		{
+			"id": "ferron",
+			"name": "Ferron",
+			"typ": "planet",
+			"orbit_radius": 340,
+			"winkel": 340,
+			"groesse": 18,
+			"farbe": "#b0703c",
+			"bild": "res://assets/platzhalter/planet_gestein.png",
+			"beschreibung": "Ein rostroter, staubiger Gesteinsplanet voller Minen. Hier wird Erz für das ganze System gefördert.",
+			"statistik": {
+				"Planetentyp": "Gesteinsplanet",
+				"Bevölkerung": "45 Mio.",
+				"Wirtschaft": "Bergbau",
+				"Schwerkraft": "0,71 g"
+			},
+			"markt": {
+				"eisenerz":         { "lager": 700, "ziel": 400, "produktion": 16 },
+				"kupfererz":        { "lager": 500, "ziel": 300, "produktion": 10 },
+				"siliziumerz":      { "lager": 450, "ziel": 300, "produktion": 9 },
+				"nahrungsrationen": { "lager": 150, "ziel": 300, "verbrauch": 6 },
+				"medikamente":      { "lager": 30,  "ziel": 80,  "verbrauch": 1 },
+				"maschinenteile":   { "lager": 50,  "ziel": 120, "verbrauch": 3 },
+				"treibstoffzellen": { "lager": 100, "ziel": 200, "verbrauch": 4 }
+			}
+		},
+		{
+			"id": "schmelztiegel",
+			"name": "Station Schmelztiegel",
+			"typ": "station",
+			"orbit_radius": 420,
+			"winkel": 20,
+			"groesse": 12,
+			"farbe": "#ff7a3d",
+			"bild": "res://assets/platzhalter/station.png",
+			"beschreibung": "Eine riesige Raffinerie im Orbit. Sie schmilzt Erze zu Stahl, Draht und Wafern und füllt Treibstoffzellen ab.",
+			"statistik": {
+				"Stationstyp": "Raffinerie",
+				"Besatzung": "12.000",
+				"Betreiber": "Helios Schwerindustrie AG"
+			},
+			"markt": {
+				"stahl":            { "lager": 450, "ziel": 300, "produktion": 8 },
+				"kupferdraht":      { "lager": 300, "ziel": 200, "produktion": 5 },
+				"siliziumscheiben": { "lager": 220, "ziel": 150, "produktion": 4 },
+				"treibstoffzellen": { "lager": 500, "ziel": 300, "produktion": 10 },
+				"eisenerz":         { "lager": 200, "ziel": 500, "verbrauch": 14 },
+				"kupfererz":        { "lager": 150, "ziel": 350, "verbrauch": 9 },
+				"siliziumerz":      { "lager": 150, "ziel": 300, "verbrauch": 8 },
+				"wasserstoff":      { "lager": 200, "ziel": 400, "verbrauch": 9 },
+				"nahrungsrationen": { "lager": 80,  "ziel": 150, "verbrauch": 3 }
+			}
+		},
+		{
+			"id": "nexus",
+			"name": "Nexus Prime",
+			"typ": "planet",
+			"orbit_radius": 520,
+			"winkel": 130,
+			"groesse": 24,
+			"farbe": "#9aa6b8",
+			"bild": "res://assets/platzhalter/planet_industrie.png",
+			"beschreibung": "Die Hauptwelt des Systems: eine einzige, leuchtende Industriestadt. Hier werden Elektronik und Maschinenteile gefertigt.",
+			"statistik": {
+				"Planetentyp": "Stadtwelt",
+				"Bevölkerung": "3,4 Mrd.",
+				"Wirtschaft": "Hochtechnologie, Maschinenbau",
+				"Schwerkraft": "1,08 g"
+			},
+			"markt": {
+				"elektronik":       { "lager": 200, "ziel": 120, "produktion": 3 },
+				"maschinenteile":   { "lager": 300, "ziel": 200, "produktion": 5 },
+				"stahl":            { "lager": 150, "ziel": 350, "verbrauch": 6 },
+				"kupferdraht":      { "lager": 100, "ziel": 250, "verbrauch": 4 },
+				"siliziumscheiben": { "lager": 60,  "ziel": 180, "verbrauch": 3 },
+				"nahrungsrationen": { "lager": 300, "ziel": 600, "verbrauch": 10 },
+				"medikamente":      { "lager": 80,  "ziel": 150, "verbrauch": 2 },
+				"synthwein":        { "lager": 40,  "ziel": 100, "verbrauch": 1.5 },
+				"raumkraut":        { "lager": 5,   "ziel": 40,  "verbrauch": 0.5 }
+			}
+		},
+		{
+			"id": "kreuzweg",
+			"name": "Handelsstation Kreuzweg",
+			"typ": "station",
+			"orbit_radius": 150,
+			"winkel": 90,
+			"groesse": 12,
+			"farbe": "#7de0c0",
+			"bild": "res://assets/platzhalter/station.png",
+			"beschreibung": "Der zentrale Umschlagplatz nahe der Sonne. Kauft und verkauft fast alles, aber ohne große Preisausschläge.",
+			"statistik": {
+				"Stationstyp": "Handelsstation",
+				"Besatzung": "3.500",
+				"Betreiber": "Freie Händlergilde"
+			},
+			"markt": {
+				"nahrungsrationen": { "lager": 200, "ziel": 200 },
+				"treibstoffzellen": { "lager": 200, "ziel": 200, "verbrauch": 2 },
+				"stahl":            { "lager": 150, "ziel": 150 },
+				"kupferdraht":      { "lager": 100, "ziel": 100 },
+				"maschinenteile":   { "lager": 80,  "ziel": 80 },
+				"elektronik":       { "lager": 50,  "ziel": 50 },
+				"medikamente":      { "lager": 60,  "ziel": 60 },
+				"synthwein":        { "lager": 30,  "ziel": 30, "verbrauch": 0.5 }
+			}
+		},
+		{
+			"id": "boreas",
+			"name": "Boreas",
+			"typ": "planet",
+			"orbit_radius": 780,
+			"winkel": 290,
+			"groesse": 34,
+			"farbe": "#d9b07a",
+			"bild": "res://assets/platzhalter/planet_gas.png",
+			"beschreibung": "Ein gewaltiger Gasriese. Schwebende Schöpfwerke ziehen Wasserstoff aus seiner Atmosphäre.",
+			"statistik": {
+				"Planetentyp": "Gasriese",
+				"Bevölkerung": "2 Mio. (Schwebestädte)",
+				"Wirtschaft": "Gasförderung",
+				"Monde": "1"
+			},
+			"markt": {
+				"wasserstoff":      { "lager": 900, "ziel": 500, "produktion": 18 },
+				"nahrungsrationen": { "lager": 60,  "ziel": 150, "verbrauch": 2 },
+				"maschinenteile":   { "lager": 30,  "ziel": 80,  "verbrauch": 1 },
+				"synthwein":        { "lager": 10,  "ziel": 40,  "verbrauch": 0.5 }
+			}
+		},
+		{
+			"id": "glacis",
+			"name": "Glacis",
+			"typ": "mond",
+			"eltern": "boreas",
+			"orbit_radius": 90,
+			"winkel": 200,
+			"groesse": 9,
+			"farbe": "#cfeaff",
+			"bild": "res://assets/platzhalter/mond_eis.png",
+			"beschreibung": "Ein vereister Mond des Boreas. Unter seiner Kruste liegt ein Ozean, aus dem Wassereis gebrochen wird.",
+			"statistik": {
+				"Mondtyp": "Eismond",
+				"Bevölkerung": "600.000",
+				"Wirtschaft": "Eisabbau",
+				"Schwerkraft": "0,12 g"
+			},
+			"markt": {
+				"wassereis":        { "lager": 800, "ziel": 400, "produktion": 12 },
+				"nahrungsrationen": { "lager": 40,  "ziel": 120, "verbrauch": 2 },
+				"medikamente":      { "lager": 10,  "ziel": 40,  "verbrauch": 0.5 },
+				"treibstoffzellen": { "lager": 60,  "ziel": 150, "verbrauch": 3 }
+			}
+		},
+		{
+			"id": "schattenhafen",
+			"name": "Schattenhafen",
+			"typ": "station",
+			"orbit_radius": 640,
+			"winkel": 200,
+			"groesse": 10,
+			"farbe": "#a35cff",
+			"bild": "res://assets/platzhalter/station_dunkel.png",
+			"beschreibung": "Ein ausgehöhlter Asteroid, offiziell eine Bergbaukolonie. Hier fragt niemand, woher die Ware stammt.",
+			"statistik": {
+				"Stationstyp": "Asteroidenbasis",
+				"Besatzung": "unbekannt",
+				"Betreiber": "keiner (angeblich)"
+			},
+			"markt": {
+				"raumkraut":        { "lager": 120, "ziel": 80,  "produktion": 1.5 },
+				"elektronik":       { "lager": 15,  "ziel": 50,  "verbrauch": 0.5 },
+				"medikamente":      { "lager": 20,  "ziel": 60,  "verbrauch": 1 },
+				"synthwein":        { "lager": 10,  "ziel": 40,  "verbrauch": 0.5 },
+				"treibstoffzellen": { "lager": 50,  "ziel": 120, "verbrauch": 2 }
+			}
+		}
+	]
+}

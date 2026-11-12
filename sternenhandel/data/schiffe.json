@@ -1,0 +1,17 @@
+{
+	"schiffe": [
+		{
+			"id": "frachter_kolibri",
+			"name": "Kolibri-Frachter",
+			"klasse": "Kleiner Frachter",
+			"bild": "res://assets/platzhalter/frachter.png",
+			"laderaum": 60,
+			"geschwindigkeit": 45,
+			"hyperraum": false,
+			"huelle": 100,
+			"preis": 15000,
+			"unterhalt_pro_tag": 20,
+			"beschreibung": "Ein alter, zuverlässiger Kurzstreckenfrachter. Ohne Sprungantrieb, also nur innerhalb eines Sonnensystems einsetzbar."
+		}
+	]
+}

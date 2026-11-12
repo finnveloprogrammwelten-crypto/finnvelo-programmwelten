@@ -1,0 +1,20 @@
+{
+	"start": {
+		"credits": 2000,
+		"system": "res://data/systeme/startsystem.json",
+		"schiff": "frachter_kolibri",
+		"schiff_name": "Glückspilz",
+		"standort": "nexus"
+	},
+	"zeit": {
+		"spielstunden_pro_sekunde": 1.0,
+		"zeitraffer_stufen": [1, 2, 5, 10]
+	},
+	"markt": {
+		"elastizitaet": 0.8,
+		"preis_min_faktor": 0.3,
+		"preis_max_faktor": 3.0,
+		"handelsspanne": 0.08,
+		"max_faktor_standard": 3.0
+	}
+}
