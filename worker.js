@@ -1865,14 +1865,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           12.11.2026: PC 1.3.5, App 1.2.8). Ein in der Kachel "Aktualisierung"
+           12.11.2026: PC 1.3.6, App 1.2.9). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10305, versionName: "1.3.5",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.5.exe",
-                        hinweise: "Neu: Der Deck-Generator nimmt genug Karten zum Nachziehen ins Deck (wie Turnierdecks, mindestens 13) – auch schnelle Decks bleiben so nicht ohne Karten auf der Hand." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10208, versionName: "1.2.8",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.8.apk",
-                             hinweise: "Neu: Der Zähler startet sofort, alle Einstellungen liegen im Fenster ⚙. Kamera-Erfassung aufgeräumt: oben das Kamerabild, darunter viel Platz für die erkannten Karten, die Einstellungen im Fenster ⚙. Der Deck-Generator nimmt genug Karten zum Nachziehen ins Deck." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10306, versionName: "1.3.6",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.6.exe",
+                        hinweise: "Neu bei Yu-Gi-Oh!: Cardmarket-Preise für fast alle Drucke – wo Cardmarket die Seltenheit nicht eindeutig führt, als Preisspanne mit dem Zusatz „Version unklar“. Die Kartendaten laden sich dafür einmal still neu." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10209, versionName: "1.2.9",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.9.apk",
+                             hinweise: "Neu bei Yu-Gi-Oh!: Cardmarket-Preise für fast alle Drucke – wo Cardmarket die Seltenheit nicht eindeutig führt, als Preisspanne mit dem Zusatz „Version unklar“. Die Kartendaten laden sich dafür einmal still neu." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
