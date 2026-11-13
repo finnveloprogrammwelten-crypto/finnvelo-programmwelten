@@ -1865,14 +1865,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           12.11.2026: PC 1.3.7, App 1.2.10). Ein in der Kachel "Aktualisierung"
+           13.11.2026: PC 1.3.8, App 1.2.11). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10307, versionName: "1.3.7",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.7.exe",
-                        hinweise: "Yu-Gi-Oh!: Fehlt ein Kartenbild auf dem Gerät, holt das Programm es jetzt einmal selbst nach – Karten, die vorher nur mit Namen dastanden, bekommen ihr Bild." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10210, versionName: "1.2.10",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.10.apk",
-                             hinweise: "Yu-Gi-Oh!: Fehlt ein Kartenbild auf dem Gerät, holt das Programm es jetzt einmal selbst nach – Karten, die vorher nur mit Namen dastanden, bekommen ihr Bild." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10308, versionName: "1.3.8",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.8.exe",
+                        hinweise: "Neuer Zähler: Spielerfelder über die ganze Fläche, Play-Knopf je Spieler mit Runden und Uhr, Würfel in der Mitte, Teamspiel mit drei Wertungen. Deck-Generator: Wird die App geschlossen oder stürzt sie ab, liegt das bisher beste Deck in „Meine Decks“, und „Weiterbauen“ macht dort weiter. Kartendaten und Bilder laden in einer kleinen Anzeige unten – du kannst solange weiterarbeiten." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10211, versionName: "1.2.11",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.11.apk",
+                             hinweise: "Neuer Zähler: Spielerfelder über die ganze Fläche, Play-Knopf je Spieler mit Runden und Uhr, Würfel in der Mitte, Teamspiel mit drei Wertungen. Deck-Generator: Wird die App geschlossen oder stürzt sie ab, liegt das bisher beste Deck in „Meine Decks“, und „Weiterbauen“ macht dort weiter. Kartendaten und Bilder laden in einer kleinen Anzeige unten – du kannst solange weiterarbeiten." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
