@@ -1865,14 +1865,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           13.11.2026: PC 1.3.9, App 1.2.12). Ein in der Kachel "Aktualisierung"
+           13.11.2026: PC 1.3.10, App 1.2.13). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10309, versionName: "1.3.9",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.9.exe",
-                        hinweise: "Neues Design: Meine Decks mit Auswahlliste und „Bearbeiten“, Deckliste und Vergleich mit Kartenbildern, Filter einklappbar, Sets nach Erscheinungsjahr, Kamera-Erfassung am Handy mit Kartenleiste links. Deck-Generator: neue Spielarten Tempo und Combo, Themen mit Schiebeschaltern. Neu: Format Coconut mit den 18 Coconut-Karten in Karten, Deckbau und Generator." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10212, versionName: "1.2.12",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.12.apk",
-                             hinweise: "Neues Design: Meine Decks mit Auswahlliste und „Bearbeiten“, Deckliste und Vergleich mit Kartenbildern, Filter einklappbar, Sets nach Erscheinungsjahr, Kamera-Erfassung am Handy mit Kartenleiste links. Deck-Generator: neue Spielarten Tempo und Combo, Themen mit Schiebeschaltern. Neu: Format Coconut mit den 18 Coconut-Karten in Karten, Deckbau und Generator." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10310, versionName: "1.3.10",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.10.exe",
+                        hinweise: "Sammlung mit Info, Suche und Filter in einem Block, Filter dunkel und über die volle Breite, Verkaufsliste mit Suchfeld. Zähler: Würfel fallen über das Brett, Münze, W6 und W20 wählbar, jeder kann selbst würfeln. Kamera-Erfassung: größeres Bild, Foil-Stapel als Knopf, neu „In die Einkaufsliste“ und Helligkeit gegen Spiegelungen. Vergleich übersichtlicher, Ladebalken beim Spielwechsel, Neubau mit „Behalten“. Updates der App öffnen sich jetzt in einem Fenster über der App." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10213, versionName: "1.2.13",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.13.apk",
+                             hinweise: "Sammlung mit Info, Suche und Filter in einem Block, Filter dunkel und über die volle Breite, Verkaufsliste mit Suchfeld. Zähler: Würfel fallen über das Brett, Münze, W6 und W20 wählbar, jeder kann selbst würfeln. Kamera-Erfassung: größeres Bild, Foil-Stapel als Knopf, neu „In die Einkaufsliste“ und Helligkeit gegen Spiegelungen. Vergleich übersichtlicher, Ladebalken beim Spielwechsel, Neubau mit „Behalten“. Updates der App öffnen sich jetzt in einem Fenster über der App." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
