@@ -1865,14 +1865,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           13.11.2026: PC 1.3.11, App 1.2.14). Ein in der Kachel "Aktualisierung"
+           13.11.2026: PC 1.3.12, App 1.2.15). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10311, versionName: "1.3.11",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.11.exe",
-                        hinweise: "Karte antippen zeigt sie groß mit allen Angaben. Kartenbilder am Handy deutlich schneller, fehlende Pokémon-Bilder aus einer zweiten Quelle. Kamera: Bildaufbereitung bei dunklem Licht und alten Kameras. Coconut mit allen 24 Karten, neue Sets kommen automatisch zu Core und Infinity. Deck-Generator versteht Madam Mim (zurück auf die Hand, neu ausspielen). Zähler mit Hintergrundbild je Spieler und größeren Knöpfen." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10214, versionName: "1.2.14",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.14.apk",
-                             hinweise: "Karte antippen zeigt sie groß mit allen Angaben. Kartenbilder am Handy deutlich schneller, fehlende Pokémon-Bilder aus einer zweiten Quelle. Kamera: Bildaufbereitung bei dunklem Licht und alten Kameras. Coconut mit allen 24 Karten, neue Sets kommen automatisch zu Core und Infinity. Deck-Generator versteht Madam Mim (zurück auf die Hand, neu ausspielen). Zähler mit Hintergrundbild je Spieler und größeren Knöpfen." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10312, versionName: "1.3.12",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.12.exe",
+                        hinweise: "Der Deck-Generator lernt jetzt dazu: was sich in früheren Läufen bewährt hat, fließt in neue Decks ein. Mehr Film-Themen (alle Filme ab 12 Karten). Mehr Pokémon-Bilder aus weiteren Quellen. Beim App-Update neu: „Geladene Datei öffnen“, falls man „Öffnen“ verpasst hat." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10215, versionName: "1.2.15",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.15.apk",
+                             hinweise: "Der Deck-Generator lernt jetzt dazu: was sich in früheren Läufen bewährt hat, fließt in neue Decks ein. Mehr Film-Themen (alle Filme ab 12 Karten). Mehr Pokémon-Bilder aus weiteren Quellen. Beim App-Update neu: „Geladene Datei öffnen“, falls man „Öffnen“ verpasst hat." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
