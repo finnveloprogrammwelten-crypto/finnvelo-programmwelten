@@ -1873,14 +1873,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           14.11.2026: PC 1.3.17, App 1.2.21). Ein in der Kachel "Aktualisierung"
+           14.11.2026: PC 1.3.18, App 1.2.22). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10317, versionName: "1.3.17",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.17.exe",
-                        hinweise: "Bis zu 3.000 Online-Decks statt 1.500 – mehr Turnierdecks für den Deck-Generator. Hinweis: „Gründlich“ baut gemessen deutlich stärkere Decks." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10221, versionName: "1.2.21",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.21.apk",
-                             hinweise: "Bis zu 3.000 Online-Decks statt 1.500 – mehr Turnierdecks für den Deck-Generator. Hinweis: „Gründlich“ baut gemessen deutlich stärkere Decks." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10318, versionName: "1.3.18",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.18.exe",
+                        hinweise: "Filter nach Klassen; Suche findet ähnliche Namen; Flächenfarben; Kamera: „Foto machen“ und schnellere Erkennung; Zähler-Knöpfe rechts; schnellerer Spielwechsel; künftige Updates laufen im Programm und starten es von selbst neu." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10222, versionName: "1.2.22",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.22.apk",
+                             hinweise: "Eigene Tastatur, nichts verschiebt sich mehr; Auswahllisten am Feld; Filter nach Klassen; Suche findet ähnliche Namen; Kamera: „Foto machen“, schnellere Erkennung mit Vermutung, Basis-Energien; Zähler-Knöpfe auf der Seite der Hand; Flächenfarben; schnellerer Spielwechsel." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10317, versionName: "1.3.17",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.17-universal.dmg",
