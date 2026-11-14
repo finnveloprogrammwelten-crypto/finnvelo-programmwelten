@@ -3199,6 +3199,30 @@
         vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10104, versionName: '1.1.4',
                    apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.4.exe',
                    hinweise: 'Neu: „Verkaufen“ und „Einkaufen“ nutzen die volle Fensterbreite, die Notiz je Karte ist deutlich breiter und hat zwei Zeilen Platz.' }
+      },
+
+      /* ---- Command Control (14.11.2026) ------------------------------ */
+      {
+        /* Die Handy-App liest /command-control/android.json, verlangt den
+           Schluessel FINNVELO-COMMAND-CONTROL-ANDROID, laedt die APK SELBST aus
+           "apk" (folgt der GitHub-Weiterleitung) und vergleicht Paketname und
+           versionCode der geladenen Datei - versionCode muss exakt zur APK
+           passen. Das PC-Programm fragt keine Fassungsdatei ab. */
+        seite: 'command-control', art: 'app',
+        ablage: 'command-control-android',
+        pruef: '/command-control/android.json',
+        titel: 'Android-App', hinweis: HINWEIS_APP,
+        felder: [
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.0' },
+          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch, exakt wie in der APK)', typ: 'zahl', ph: 'z. B. 10000' },
+          { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
+            ph: 'https://github.com/.../FINNVELO-Command-Control-1.0.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+        ],
+        fest: { schluessel: 'FINNVELO-COMMAND-CONTROL-ANDROID' },
+        vorgabe: { schluessel: 'FINNVELO-COMMAND-CONTROL-ANDROID', versionCode: 10000, versionName: '1.0',
+                   apk: GH + 'CommandControl/FINNVELO-Command-Control-1.0.apk',
+                   hinweise: 'Erste Fassung: Finnvelo Command Control vom Handy aus steuern – Tasten auslösen und anlegen, Dock zeigen, PC ein- und ausschalten.' }
       }
     ];
 
