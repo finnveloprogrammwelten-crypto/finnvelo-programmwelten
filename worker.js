@@ -1882,12 +1882,12 @@ export class Counter extends DurableObject {
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.21.apk",
                              hinweise: "Bis zu 3.000 Online-Decks statt 1.500 – mehr Turnierdecks für den Deck-Generator. Hinweis: „Gründlich“ baut gemessen deutlich stärkere Decks." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10316, versionName: "1.3.16",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.16-universal.dmg",
-                         hinweise: "Mac und Steam Deck lesen jetzt wie Windows Bildschirmfotos der offiziellen Lorcana-App ein." },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10316, versionName: "1.3.16",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.16-x86_64.AppImage",
-                           hinweise: "Mac und Steam Deck lesen jetzt wie Windows Bildschirmfotos der offiziellen Lorcana-App ein." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10317, versionName: "1.3.17",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.17-universal.dmg",
+                         hinweise: "Bis zu 3.000 Online-Decks statt 1.500 – mehr Turnierdecks für den Deck-Generator. Hinweis: „Gründlich“ baut gemessen deutlich stärkere Decks." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10317, versionName: "1.3.17",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.17-x86_64.AppImage",
+                           hinweise: "Bis zu 3.000 Online-Decks statt 1.500 – mehr Turnierdecks für den Deck-Generator. Hinweis: „Gründlich“ baut gemessen deutlich stärkere Decks." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
