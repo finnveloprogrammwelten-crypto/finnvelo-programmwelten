@@ -1873,14 +1873,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           14.11.2026: PC 1.3.15, App 1.2.19). Ein in der Kachel "Aktualisierung"
+           14.11.2026: PC 1.3.16, App 1.2.20). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10315, versionName: "1.3.15",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.15.exe",
-                        hinweise: "Vergleich: Ein Rahmen in der Farbe des Decks zeigt Karten, die nur dort stecken; gestrichelt heißt andere Anzahl – die Anzahl im anderen Deck steht in Klammern." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10219, versionName: "1.2.19",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.19.apk",
-                             hinweise: "Kamera-Erfassung: Foil-Stapel direkt neben „Jetzt aufnehmen“, oben Einstellungen und Schließen nebeneinander. Die Einzelerfassung nutzt wieder die ganze Breite, auf kleinen Handys wird nichts mehr abgeschnitten." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10316, versionName: "1.3.16",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.16.exe",
+                        hinweise: "Mac und Steam Deck lesen jetzt wie Windows Bildschirmfotos der offiziellen Lorcana-App ein." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10220, versionName: "1.2.20",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.20.apk",
+                             hinweise: "Bildschirmfotos der offiziellen Lorcana-App lassen sich jetzt direkt am Handy einlesen. Updates erscheinen als Fenster über der App, Auswahllisten passen jetzt zum Stil der App." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10315, versionName: "1.3.15",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-universal.dmg",
