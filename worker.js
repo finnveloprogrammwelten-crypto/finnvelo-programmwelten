@@ -1869,14 +1869,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           14.11.2026: PC 1.3.13, App 1.2.16). Ein in der Kachel "Aktualisierung"
+           14.11.2026: PC 1.3.14, App 1.2.17). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10313, versionName: "1.3.13",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.13.exe",
-                        hinweise: "Deck-Generator: Aggro-Decks nach echten Aggro-Decks, frühe Siege und Gesamtzüge im Ergebnis, Preisgrenze für fehlende Karten, Bericht beim Deck. Zähler: Hintergrund als Farbe, eigenes Bild oder Lorcana-Motiv, echtes Konfetti. Druckvorlage mit eigener Rückseite. Vergleich: beide Decks bündig." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10216, versionName: "1.2.16",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.16.apk",
-                             hinweise: "Der Deck-Generator rechnet jetzt im Hintergrund weiter und meldet sich mit „Deck fertig“. Aggro-Decks entstehen nach echten Aggro-Decks, mit Preisgrenze für fehlende Karten und Bericht beim Deck. Zähler: Hintergrund als Farbe, eigenes Bild oder Lorcana-Motiv, dazu echtes Konfetti. Updates laden ab jetzt in der App. Druckvorlage mit eigener Rückseite." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10314, versionName: "1.3.14",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.14.exe",
+                        hinweise: "Deck-Generator: höchstens die Hälfte der Karten aus einem fremden Deck (kein Nachbau), Vergleich mit echten Turnierpartien unter den Kennzahlen, Korrekturen an einigen Karten in der Simulation (u. a. Bruder Tack, Anna, Kristoffs Laute)." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10217, versionName: "1.2.17",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.17.apk",
+                             hinweise: "Der Deck-Generator übernimmt aus einem fremden Deck höchstens die Hälfte der Karten – kein Nachbau. Er rechnet jetzt auch weiter, wenn die App aus der App-Übersicht weggewischt wird. Unter den Kennzahlen steht ein Vergleich mit echten Turnierpartien. Dazu Korrekturen an einigen Karten in der Simulation (u. a. Bruder Tack, Anna, Kristoffs Laute)." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
