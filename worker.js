@@ -292,6 +292,10 @@ const VERSION_ABLAGEN = {
      adresse in beiden Programmen: https://finnveloprogramme.com/lorcana */
   "/lorcana/pc.json": "lorcana-pc",
   "/lorcana/android.json": "lorcana-android",
+  /* Mac- und Linux-Fassung (14.11.2026, ab 1.3.15, gebaut über GitHub Actions im privaten Repo
+     finnvelo-lorcana): Aufbau wie pc.json, das Programm prüft auf allen Systemen FINNVELO-LORCANA-PC. */
+  "/lorcana/mac.json": "lorcana-mac",
+  "/lorcana/linux.json": "lorcana-linux",
   /* Haus- und Gartenplaner (06.11.2026, ab Fassung 1.0.1): Die HTML-Datei fragt genau diese Adresse ab.
      Felder: version, url, notes. */
   "/haus-und-gartenplaner/version.json": "haus-und-gartenplaner",
@@ -1877,6 +1881,13 @@ export class Counter extends DurableObject {
         "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10218, versionName: "1.2.18",
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.18.apk",
                              hinweise: "Vergleich: Ein Rahmen in der Farbe des Decks zeigt Karten, die nur dort stecken; gestrichelt heißt andere Anzahl – die Anzahl im anderen Deck steht in Klammern." },
+        /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10315, versionName: "1.3.15",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-universal.dmg",
+                         hinweise: "Vergleich: Ein Rahmen in der Farbe des Decks zeigt Karten, die nur dort stecken; gestrichelt heißt andere Anzahl – die Anzahl im anderen Deck steht in Klammern." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10315, versionName: "1.3.15",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-x86_64.AppImage",
+                           hinweise: "Vergleich: Ein Rahmen in der Farbe des Decks zeigt Karten, die nur dort stecken; gestrichelt heißt andere Anzahl – die Anzahl im anderen Deck steht in Klammern." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
@@ -2593,7 +2604,8 @@ export default {
     // Fest eingebaute Update-Adressen (bleiben immer erreichbar)
     const VERSION_ROUTEN = VERSION_ABLAGEN;
     if (versionPfad.endsWith("/version.json") || versionPfad.endsWith("/android.json")
-        || versionPfad.endsWith("/pc.json")) {
+        || versionPfad.endsWith("/pc.json") || versionPfad.endsWith("/mac.json")
+        || versionPfad.endsWith("/linux.json")) {
       let ablage = VERSION_ROUTEN[versionPfad];
       if (!ablage) {
         // Selbst angelegte Adressen aus dem Verzeichnis

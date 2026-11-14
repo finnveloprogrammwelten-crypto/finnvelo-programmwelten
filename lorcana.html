@@ -285,6 +285,27 @@
             <h3>Hinweis</h3>
             <p>Windows meldet bei unbekannten Programmen einen Warnhinweis. Über „Weitere Informationen“ → „Trotzdem ausführen“ lässt sich die Einrichtung fortsetzen. Neue Fassungen meldet das Programm selbst.</p>
           </div>
+          <!-- Mac und Steam Deck (14.11.2026): als Zusatztexte (data-fv-text-extra) und mit den Knöpfen hinter dem
+               Windows-Knopf - so behalten alle bisherigen Text- und Knopfnummern ihren Platz. -->
+          <div class="download-slot" data-fv-text-extra>
+            <h3>Mac (Intel und Apple-Chip) · Fassung 1.3.15</h3>
+            <p>Eine Datei für Macs mit Intel- und mit Apple-Chip (DMG, rund 175 MB), ab macOS 10.15. Der Funktionsumfang ist derselbe wie unter Windows – nur die Texterkennung für Bildschirmfotos gibt es ausschließlich in der Windows-Fassung.</p>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-universal.dmg" target="_blank" rel="noopener">Mac-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted" data-fv-text-extra>
+            <h3>So startest du sie am Mac</h3>
+            <p>Die Mac-Fassung ist ohne Apple-Entwicklerkonto gebaut und deshalb nicht von Apple beglaubigt. DMG öffnen und die Sammelmappe in „Programme“ ziehen. Beim ersten Start blockt macOS das Programm – unter Systemeinstellungen → Datenschutz &amp; Sicherheit „Trotzdem öffnen“ wählen.</p>
+            <p>Meldet macOS, die App sei „beschädigt“, hilft im Terminal: <code>xattr -dr com.apple.quarantine "/Applications/FINNVELO TCG Sammelmappe.app"</code></p>
+          </div>
+          <div class="download-slot" data-fv-text-extra>
+            <h3>Steam Deck / Linux · Fassung 1.3.15</h3>
+            <p>AppImage für Linux (x86_64, rund 109 MB) – auf dem Steam Deck im Desktop-Modus. Der Funktionsumfang ist derselbe wie unter Windows – nur die Texterkennung für Bildschirmfotos gibt es ausschließlich in der Windows-Fassung.</p>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-x86_64.AppImage" target="_blank" rel="noopener">Steam-Deck-/Linux-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted" data-fv-text-extra>
+            <h3>So startest du sie auf dem Steam Deck</h3>
+            <p>In den Desktop-Modus wechseln und die AppImage herunterladen. Rechtsklick auf die Datei → Eigenschaften → Berechtigungen → „Ist ausführbar“ ankreuzen, dann doppelklicken.</p>
+          </div>
         </section>
       </div>
     </article>

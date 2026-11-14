@@ -3200,6 +3200,31 @@
                    apk: GH + 'FinnveloLorcana/FINNVELO-Lorcana-Einrichtung-1.1.4.exe',
                    hinweise: 'Neu: „Verkaufen“ und „Einkaufen“ nutzen die volle Fensterbreite, die Notiz je Karte ist deutlich breiter und hat zwei Zeilen Platz.' }
       },
+      {
+        /* Mac und Linux/Steam Deck (14.11.2026, ab 1.3.15): gebaut über GitHub
+           Actions im privaten Repo finnvelo-lorcana. Aufbau wie pc.json, das
+           Programm prüft auf allen Systemen den Schlüssel FINNVELO-LORCANA-PC. */
+        seite: 'lorcana', art: 'pc',
+        ablage: 'lorcana-mac',
+        pruef: '/lorcana/mac.json',
+        titel: 'Mac-Version (DMG)', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10315',
+                         'https://github.com/.../FINNVELO-TCG-Sammelmappe-1.3.15-universal.dmg'),
+        fest: { schluessel: 'FINNVELO-LORCANA-PC' },
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10315, versionName: '1.3.15',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-universal.dmg', hinweise: '' }
+      },
+      {
+        seite: 'lorcana', art: 'pc',
+        ablage: 'lorcana-linux',
+        pruef: '/lorcana/linux.json',
+        titel: 'Steam Deck / Linux (AppImage)', hinweis: HINWEIS_PC,
+        felder: pcFelder('major x 10000 + minor x 100 + patch', '10315',
+                         'https://github.com/.../FINNVELO-TCG-Sammelmappe-1.3.15-x86_64.AppImage'),
+        fest: { schluessel: 'FINNVELO-LORCANA-PC' },
+        vorgabe: { schluessel: 'FINNVELO-LORCANA-PC', versionCode: 10315, versionName: '1.3.15',
+                   apk: GH + 'FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-x86_64.AppImage', hinweise: '' }
+      },
 
       /* ---- Command Control (14.11.2026) ------------------------------ */
       {
