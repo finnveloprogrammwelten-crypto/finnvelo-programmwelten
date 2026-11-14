@@ -1895,9 +1895,9 @@ export class Counter extends DurableObject {
             notes: "Dach und Möbel in der Gesamtansicht an der richtigen Stelle, Kamera zeigt das ganze Haus, lesbare Eingabefelder in schmalen Fenstern." },
         /* Command Control Handy-App: vorbelegt mit Fassung 1.0 (versionCode muss exakt zur APK passen:
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
-        "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10100, versionName: "1.1",
-            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.1.apk",
-            hinweise: "Seiten wischen, Tasten wie am PC mit Bildern, Farben und Statusanzeigen (stumm/aktiv) live, Verbindung bleibt im WLAN bestehen, Einstellungen für Handy und PC-Programm, Tasten mit Dateiauswahl am PC anlegen. Für alles Neue am PC Finnvelo Command Control 1.2.0 installieren." },
+        "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10200, versionName: "1.2",
+            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.2.apk",
+            hinweise: "Neu: Das Handy als Maus und Tastatur für den PC (Touchpad, Tippen, Tastenkürzel, Lautstärke und Musik). Links und Texte aus jeder App über „Teilen → An PC senden“. Suche über alle Tasten, die meistgenutzten Tasten direkt am App-Symbol, PC sperren, Bildschirm aus und Energiesparen. Dafür am PC Finnvelo Command Control 1.3.0 installieren." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
