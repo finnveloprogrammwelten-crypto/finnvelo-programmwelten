@@ -1882,12 +1882,12 @@ export class Counter extends DurableObject {
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.23.apk",
                              hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10318, versionName: "1.3.18",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.18-universal.dmg",
-                         hinweise: "Filter nach Klassen; Suche findet ähnliche Namen; Flächenfarben; Kamera: „Foto machen“ und schnellere Erkennung; Zähler-Knöpfe rechts; schnellerer Spielwechsel; künftige Updates laufen im Programm und starten es von selbst neu." },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10318, versionName: "1.3.18",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.18-x86_64.AppImage",
-                           hinweise: "Filter nach Klassen; Suche findet ähnliche Namen; Flächenfarben; Kamera: „Foto machen“ und schnellere Erkennung; Zähler-Knöpfe rechts; schnellerer Spielwechsel; künftige Updates laufen im Programm und starten es von selbst neu." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10319, versionName: "1.3.19",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.19-universal.dmg",
+                         hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10319, versionName: "1.3.19",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.19-x86_64.AppImage",
+                           hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
