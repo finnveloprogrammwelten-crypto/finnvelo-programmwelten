@@ -1895,9 +1895,9 @@ export class Counter extends DurableObject {
             notes: "Dach und Möbel in der Gesamtansicht an der richtigen Stelle, Kamera zeigt das ganze Haus, lesbare Eingabefelder in schmalen Fenstern." },
         /* Command Control Handy-App: vorbelegt mit Fassung 1.0 (versionCode muss exakt zur APK passen:
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
-        "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10000, versionName: "1.0",
-            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.0.apk",
-            hinweise: "Erste Fassung: Finnvelo Command Control vom Handy aus steuern – Tasten auslösen und anlegen, Dock zeigen, PC ein- und ausschalten." },
+        "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10100, versionName: "1.1",
+            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.1.apk",
+            hinweise: "Seiten wischen, Tasten wie am PC mit Bildern, Farben und Statusanzeigen (stumm/aktiv) live, Verbindung bleibt im WLAN bestehen, Einstellungen für Handy und PC-Programm, Tasten mit Dateiauswahl am PC anlegen. Für alles Neue am PC Finnvelo Command Control 1.2.0 installieren." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
