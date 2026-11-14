@@ -1882,12 +1882,12 @@ export class Counter extends DurableObject {
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.20.apk",
                              hinweise: "Bildschirmfotos der offiziellen Lorcana-App lassen sich jetzt direkt am Handy einlesen. Updates erscheinen als Fenster über der App, Auswahllisten passen jetzt zum Stil der App." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10315, versionName: "1.3.15",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-universal.dmg",
-                         hinweise: "Vergleich: Ein Rahmen in der Farbe des Decks zeigt Karten, die nur dort stecken; gestrichelt heißt andere Anzahl – die Anzahl im anderen Deck steht in Klammern." },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10315, versionName: "1.3.15",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.15-x86_64.AppImage",
-                           hinweise: "Vergleich: Ein Rahmen in der Farbe des Decks zeigt Karten, die nur dort stecken; gestrichelt heißt andere Anzahl – die Anzahl im anderen Deck steht in Klammern." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10316, versionName: "1.3.16",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.16-universal.dmg",
+                         hinweise: "Mac und Steam Deck lesen jetzt wie Windows Bildschirmfotos der offiziellen Lorcana-App ein." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10316, versionName: "1.3.16",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.16-x86_64.AppImage",
+                           hinweise: "Mac und Steam Deck lesen jetzt wie Windows Bildschirmfotos der offiziellen Lorcana-App ein." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
