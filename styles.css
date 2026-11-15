@@ -1770,6 +1770,23 @@ body.fv-admin-on .site-header { top: 44px; }
   .program-media-grid--hoch { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* Videos in der Bildergalerie (15.11.2026): sehen aus wie die Bilder daneben,
+   mit Vorschaubild (poster) und Bedienleiste. */
+.program-media-card video {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.30);
+}
+.program-media-grid--hoch video { border-radius: 14px; }
+/* Handy-Aufnahmen im Format 1080 x 2400 (z. B. Command Control 1.4.1)
+   vollstaendig zeigen statt auf 1080 x 2340 zuzuschneiden. */
+.program-media-grid--hoch-voll img,
+.program-media-grid--hoch-voll video { aspect-ratio: 9 / 20; }
+
 /* Bildunterschrift mit Titel: <figcaption><strong>Titel</strong>Erklaerung</figcaption> */
 .program-media-card figcaption strong {
   display: block;

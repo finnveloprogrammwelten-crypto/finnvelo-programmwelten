@@ -115,7 +115,7 @@
             </article>
             <article>
               <h3>Windows-Integration</h3>
-              <p>Rechtsklick auf Dateien oder Ordner: „Mit Finnvelo Archivar archivieren“. Auf freier Fläche im Ordner: „Finnvelo Archivar hier öffnen“.</p>
+              <p>Rechtsklick auf Dateien oder Ordner: „Mit Finnvelo Archivar archivieren“. Auf freier Fläche im Ordner: „Finnvelo Archivar hier öffnen“. Unter Windows 11 stehen die Einträge unter „Weitere Optionen anzeigen“ – oder direkt mit Umschalt + Rechtsklick.</p>
             </article>
             <article>
               <h3>Mehrsprachige Oberfläche</h3>
@@ -150,14 +150,26 @@
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die folgenden Ansichten zeigen den Finnvelo Archivar 1.1.0 mit einem erfundenen Beispielordner. Ein Klick auf ein Bild öffnet es groß.</p>
+          <p>Die folgenden Ansichten zeigen den Finnvelo Archivar mit erfundenen Beispieldaten – die ersten beiden Bilder, das Video und der Kopierer stammen aus Fassung 1.2.0, die übrigen aus 1.1.0. Ein Klick auf ein Bild öffnet es groß, das Video startet mit dem Abspielknopf.</p>
           <!-- Fotos 06.11.2026: Fassung 1.1.0 im Testbrowser, Beispielordner ohne echte Daten.
-               Die erste Bildgruppe ist Grundbestand (Bildunterschriften t20-t23), nicht verschieben. -->
+               15.11.2026: Archiv erstellen, Kopierer und Video aus Fassung 1.2.0 (geliefert von der Command-Control-Sitzung).
+               Die erste Bildgruppe ist Grundbestand (Bildunterschriften t20-t23), nicht verschieben;
+               zusaetzliche Bilder darin nur als figure mit data-fv-text-extra. -->
           <h3 class="program-media-gruppe" data-fv-text-extra>Archivieren und Entpacken</h3>
           <div class="program-media-grid" aria-label="Archivieren und Entpacken">
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/archivar-01.webp" width="1280" height="709" loading="lazy" alt="Archivar mit Quellordner, Ablageort, Passwortfeld, Root-Ordner und leeren Ordnern">
-              <figcaption><strong>Archiv erstellen</strong>Quelle hineinziehen oder auswählen, Ablageort wählen, Passwort, Root-Ordner und leere Ordner festlegen.</figcaption>
+              <img src="assets/images/oberflaeche/archivar-mehrere-quellen.webp" width="1000" height="903" loading="lazy" alt="Archivar mit sechs ausgewählten Quellen, die zu einem Archiv zusammengefasst werden">
+              <figcaption><strong>Mehrere Quellen, ein Archiv</strong>Sechs markierte Dateien und Ordner – sie werden zu einem Archiv zusammengefasst.</figcaption>
+            </figure>
+            <figure class="program-media-card" data-fv-text-extra>
+              <img src="assets/images/oberflaeche/archivar-archiv-erstellt.webp" width="1000" height="944" loading="lazy" alt="Meldung Archiv erstellt und geprüft mit dem Pfad des fertigen ZIP-Archivs">
+              <figcaption><strong>Archiv erstellt</strong>Fertig: Archiv erstellt und automatisch geprüft.</figcaption>
+            </figure>
+            <figure class="program-media-card" data-fv-text-extra>
+              <video controls playsinline preload="none" width="1000" height="902" poster="assets/videos/archivar-mehrere-dateien.webp" aria-label="Video: Mehrere Dateien in ein Archiv">
+                <source src="assets/videos/archivar-mehrere-dateien.mp4" type="video/mp4">
+              </video>
+              <figcaption><strong>Video: Mehrere Dateien in ein Archiv</strong>13 Sekunden, ohne Ton.</figcaption>
             </figure>
             <figure class="program-media-card">
               <img src="assets/images/oberflaeche/archivar-02.webp" width="1280" height="800" loading="lazy" alt="Erweiterte Archivoptionen mit Format, Kompression, Wörterbuch, Threads und Verschlüsselung">
@@ -176,8 +188,8 @@
             <h3 class="program-media-gruppe">Kopierer und Einstellungen</h3>
             <div class="program-media-grid" aria-label="Kopierer und Einstellungen">
               <figure class="program-media-card">
-                <img src="assets/images/oberflaeche/archivar-05.webp" width="1280" height="697" loading="lazy" alt="Kopierer mit Kopiervorlage, Quelle, Zielordner, Kopierschleife und Vorschau der nächsten Kopie">
-                <figcaption><strong>Kopierer mit Vorlage</strong>Vorlage laden oder speichern, Quelle und Zielordner, Kopierschleife und Vorschau der nächsten Kopie.</figcaption>
+                <img src="assets/images/oberflaeche/archivar-kopierer.webp" width="1000" height="902" loading="lazy" alt="Kopierer mit Kopiervorlagen, Quelle, Zielordner, Kopierschleife und nächster Kopie">
+                <figcaption><strong>Der Kopierer</strong>Dateien und Ordner mit Vorlagen kopieren – Quelle, Zielordner, Kopierschleife und Vorschau der nächsten Kopie.</figcaption>
               </figure>
               <figure class="program-media-card">
                 <img src="assets/images/oberflaeche/archivar-06.webp" width="1280" height="697" loading="lazy" alt="Auswahlregeln des Kopierers">
@@ -312,9 +324,9 @@
           <h2 id="download-title">Download (Android-App)</h2>
           <div class="download-slot">
             <h3>Hauptdatei</h3>
-            <p>Finnvelo Archivar Setup 1.0.1 · Windows-Installationsdatei.</p>
-            <p style="margin-top:4px;color:var(--soft);font-size:.92rem;"><strong>Letztes Update:</strong> 02.06.2026, 18:00 Uhr</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/archivar-v1.0.1/Finnvelo.Archivar.Setup.1.0.1.exe" target="_blank" rel="noopener">Download starten</a>
+            <p>Finnvelo Archivar Setup 1.2.0 · Windows-Installations- und Updatedatei</p>
+            <p style="margin-top:4px;color:var(--soft);font-size:.92rem;"><strong>Letztes Update:</strong> 15.11.2026</p>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/archivar-v1.0.1/Finnvelo.Archivar.Setup.1.2.0.exe" target="_blank" rel="noopener">Download starten</a>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Weitere Versionen und Patches</h3>
@@ -324,9 +336,19 @@
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
           <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
-            <h3>Programm herunterladen</h3>
+            <h3>Fassung 1.2.0</h3>
             <p>Installationsprogramm f&uuml;r Windows. Der Archivar pr&uuml;ft selbst, ob eine neuere Fassung bereitsteht.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases" target="_blank" rel="noopener">PC-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/archivar-v1.0.1/Finnvelo.Archivar.Setup.1.2.0.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted" data-fv-text-extra>
+            <h3>Neu in Fassung 1.2.0</h3>
+            <ul class="feature-list feature-list--einspaltig">
+              <li>Mehrere Dateien und Ordner im Explorer markieren, Rechtsklick und archivieren – alle kommen in ein gemeinsames Archiv (vorher kam nur die erste Datei an).</li>
+              <li>Die Zeitstempel im ZIP stimmen (Ortszeit; vorher ein bis zwei Stunden zu früh).</li>
+              <li>Die Dateiauswahl startet auf dem Desktop.</li>
+              <li>Geprüft: ZIP und 7z, mit Passwort, Entpacken, Archiv prüfen, Auswahlregeln und Kopierer.</li>
+            </ul>
+            <p>Unter Windows 11 steht der Eintrag im Rechtsklick-Menü unter „Weitere Optionen anzeigen“ – oder direkt mit Umschalt + Rechtsklick.</p>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Hinweis</h3>
