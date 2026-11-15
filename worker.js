@@ -2220,6 +2220,31 @@ function kopfErsetzen(html, kopf) {
   return html;
 }
 
+// Liefert ein Video aus dem Dateispeicher ganz (200) oder als Teilbereich (206)
+// nach dem Range-Kopf der Anfrage ("bytes=von-bis", "bytes=von-", "bytes=-letzte").
+// Grund und Weg: siehe /medien/videos/ in bearbeiten().
+async function videoMitBereich(request, datei) {
+  if (!datei.ok) return new Response("Not found", { status: 404 });
+  const daten = new Uint8Array(await datei.arrayBuffer());
+  const gesamt = daten.length;
+  const kopf = { "content-type": "video/mp4", "accept-ranges": "bytes", "cache-control": "public, max-age=86400" };
+  const ohneInhalt = request.method === "HEAD";
+  const bereich = /^bytes=(\d*)-(\d*)$/.exec((request.headers.get("range") || "").trim());
+  if (!bereich || (bereich[1] === "" && bereich[2] === "")) {
+    kopf["content-length"] = String(gesamt);
+    return new Response(ohneInhalt ? null : daten, { status: 200, headers: kopf });
+  }
+  let von, bis;
+  if (bereich[1] === "") { von = Math.max(0, gesamt - Number(bereich[2])); bis = gesamt - 1; }
+  else { von = Number(bereich[1]); bis = bereich[2] === "" ? gesamt - 1 : Math.min(Number(bereich[2]), gesamt - 1); }
+  if (von >= gesamt || von > bis) {
+    return new Response(null, { status: 416, headers: { "content-range": "bytes */" + gesamt, "accept-ranges": "bytes" } });
+  }
+  kopf["content-range"] = "bytes " + von + "-" + bis + "/" + gesamt;
+  kopf["content-length"] = String(bis - von + 1);
+  return new Response(ohneInhalt ? null : daten.slice(von, bis + 1), { status: 206, headers: kopf });
+}
+
 async function versionsRouten(env) {
   try {
     if (!env || !env.COUNTERS) return {};
@@ -2290,6 +2315,18 @@ export default {
 
   async bearbeiten(request, env, ctx) {
     const url = new URL(request.url);
+
+    // Videos der Programmseiten mit Teilbereichen ausliefern (15.11.2026).
+    // Echte Dateien (/assets/videos/...) kommen direkt aus dem Dateispeicher,
+    // und der beantwortet eine Range-Anfrage gemessen mit der ganzen Datei
+    // (200 statt 206). Safari auf iPhone und iPad spielt MP4 aber nur ab, wenn
+    // Teilbereiche kommen. Darum binden die Seiten /medien/videos/<name>.mp4
+    // ein: dort liegt keine Datei, die Anfrage landet hier und wird aus
+    // /assets/videos/ bedient. Die Videos sind klein (unter 1 MB).
+    const videoName = /^\/medien\/videos\/([a-z0-9-]+\.mp4)$/.exec(url.pathname);
+    if (videoName && env && env.ASSETS && (request.method === "GET" || request.method === "HEAD")) {
+      return videoMitBereich(request, await env.ASSETS.fetch(new Request(url.origin + "/assets/videos/" + videoName[1])));
+    }
 
     /* =================================================================
      * DAUERHAFTE WEITERLEITUNGEN (301)
