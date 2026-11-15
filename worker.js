@@ -1873,21 +1873,21 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           14.11.2026: PC 1.3.19, App 1.2.23). Ein in der Kachel "Aktualisierung"
+           15.11.2026: PC 1.3.20, App 1.2.24). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10319, versionName: "1.3.19",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.19.exe",
-                        hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10223, versionName: "1.2.23",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.23.apk",
-                             hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10320, versionName: "1.3.20",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.20.exe",
+                        hinweise: "Testspiele (vorher „Kämpfe“) als ganze Seite am Spieltisch: Hand unten wie beim Poker, Zug für Zug durchblättern. Druckvorlage mit offiziellen Kartenrückseiten und Aufdruck „FINNVELO Testdruck“. Deckbau: drei Viertel Kartensuche, rechts das Deck; am Handy Deckstreifen im Reiter „Karten“. Filter (Klassen, Schlüsselwörter, Rollen) in sauberen Spalten." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10224, versionName: "1.2.24",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.24.apk",
+                             hinweise: "Testspiele (vorher „Kämpfe“) als ganze Seite am Spieltisch: Hand unten wie beim Poker, Zug für Zug durchblättern. Druckvorlage mit offiziellen Kartenrückseiten und Aufdruck „FINNVELO Testdruck“. Deckbau: drei Viertel Kartensuche, rechts das Deck; am Handy Deckstreifen im Reiter „Karten“. Filter (Klassen, Schlüsselwörter, Rollen) in sauberen Spalten." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10319, versionName: "1.3.19",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.19-universal.dmg",
-                         hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10319, versionName: "1.3.19",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.19-x86_64.AppImage",
-                           hinweise: "Kamera-Erkennung sicherer und schneller – keine falschen Karten mehr bei leerem Bild." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10320, versionName: "1.3.20",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.20-universal.dmg",
+                         hinweise: "Testspiele (vorher „Kämpfe“) als ganze Seite am Spieltisch: Hand unten wie beim Poker, Zug für Zug durchblättern. Druckvorlage mit offiziellen Kartenrückseiten und Aufdruck „FINNVELO Testdruck“. Deckbau: drei Viertel Kartensuche, rechts das Deck; am Handy Deckstreifen im Reiter „Karten“. Filter (Klassen, Schlüsselwörter, Rollen) in sauberen Spalten." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10320, versionName: "1.3.20",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.20-x86_64.AppImage",
+                           hinweise: "Testspiele (vorher „Kämpfe“) als ganze Seite am Spieltisch: Hand unten wie beim Poker, Zug für Zug durchblättern. Druckvorlage mit offiziellen Kartenrückseiten und Aufdruck „FINNVELO Testdruck“. Deckbau: drei Viertel Kartensuche, rechts das Deck; am Handy Deckstreifen im Reiter „Karten“. Filter (Klassen, Schlüsselwörter, Rollen) in sauberen Spalten." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
