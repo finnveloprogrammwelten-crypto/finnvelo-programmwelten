@@ -1895,9 +1895,9 @@ export class Counter extends DurableObject {
             notes: "Dach und Möbel in der Gesamtansicht an der richtigen Stelle, Kamera zeigt das ganze Haus, lesbare Eingabefelder in schmalen Fenstern." },
         /* Command Control Handy-App: vorbelegt mit Fassung 1.0 (versionCode muss exakt zur APK passen:
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
-        "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10300, versionName: "1.3",
-            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.3.apk",
-            hinweise: "Neu: Eigene Tastatur mit deutschem Layout statt Handy-Tastatur, im Querformat Touchpad und Tastatur nebeneinander (Touchpad links oder rechts). Im Reiter Medien siehst du, was am PC läuft, und steuerst es gezielt – auch Spulen bei Hörbüchern. Dafür am PC Finnvelo Command Control 1.4.0 installieren." },
+        "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10400, versionName: "1.4",
+            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.4.apk",
+            hinweise: "Neu in 1.4: Optionale App-Sperre mit Passwort und Fingerabdruck – die Daten der App werden dann verschlüsselt, Zurücksetzen über Sicherheitsfragen oder Master-Key. Tasten am Handy bearbeiten wie am PC (alle Aktionen, Programmsuche, Bildvorlagen) und Seiten umbenennen – dafür am PC Finnvelo Command Control 1.4.2 installieren." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
