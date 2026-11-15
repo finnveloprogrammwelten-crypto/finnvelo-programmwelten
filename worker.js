@@ -1873,14 +1873,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           15.11.2026: PC 1.3.21, App 1.2.25). Ein in der Kachel "Aktualisierung"
+           15.11.2026: PC 1.3.21, App 1.2.26). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
         "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10321, versionName: "1.3.21",
                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.21.exe",
                         hinweise: "Deck-Generator erkennt Zusammenspiel: Karten, die Turnierspieler zusammen spielen (z. B. Lilo & Stitch), probiert er als Paket aus und nennt sie unter „Warum diese Karten“. Vergleich mit echten Turnierpartien jetzt aus 27 Partien (London, Bangkok, Milwaukee, EM)." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10225, versionName: "1.2.25",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.25.apk",
-                             hinweise: "Deck-Generator erkennt Zusammenspiel: Karten, die Turnierspieler zusammen spielen (z. B. Lilo & Stitch), probiert er als Paket aus und nennt sie unter „Warum diese Karten“. Vergleich mit echten Turnierpartien jetzt aus 27 Partien (London, Bangkok, Milwaukee, EM)." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10226, versionName: "1.2.26",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.26.apk",
+                             hinweise: "Updates kommen künftig meist ohne Neuinstallation: „Jetzt aktualisieren“ antippen, die App lädt die neue Fassung und startet neu – ohne Chrome und ohne Installer. Diese Fassung kommt noch einmal als App-Datei." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10321, versionName: "1.3.21",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.21-universal.dmg",
