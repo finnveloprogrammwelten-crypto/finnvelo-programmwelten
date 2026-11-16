@@ -1885,9 +1885,9 @@ export class Counter extends DurableObject {
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10323, versionName: "1.3.23",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.23-universal.dmg",
                          hinweise: "Jede Karte groß ansehen (antippen, im Deckbau 2 Sekunden halten) · Generator prüft in 20-%-Schritten und überarbeitet Decks unter 65 % · Testspiele am Spieltisch je Runde, auch beim gespeicherten Deck · neue Seiten: Coconut Commander (Lorcana), Leader (One Piece), Commander (Magic) · Kopfleiste passt aufs Steam Deck · Coconut-Format im Generator repariert" },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10323, versionName: "1.3.23",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.23-x86_64.AppImage",
-                           hinweise: "Jede Karte groß ansehen (antippen, im Deckbau 2 Sekunden halten) · Generator prüft in 20-%-Schritten und überarbeitet Decks unter 65 % · Testspiele am Spieltisch je Runde, auch beim gespeicherten Deck · neue Seiten: Coconut Commander (Lorcana), Leader (One Piece), Commander (Magic) · Kopfleiste passt aufs Steam Deck · Coconut-Format im Generator repariert" },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10324, versionName: "1.3.24",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.24-x86_64.AppImage",
+                           hinweise: "Steam Deck: Die Sammelmappe richtet sich jetzt selbst ein – beim Start ‚Auf diesem Gerät einrichten?‘ (Startmenü, Desktop, Ordner ‚Applications‘); danach im Startmenü ‚Zu Steam hinzufügen‘ (‚Add to Steam‘) für den Spielmodus." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
