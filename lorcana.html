@@ -340,6 +340,64 @@
     <a href="/impressum">Impressum</a>
     <a href="/datenschutz">Datenschutz</a>
   </footer>
+  <!-- Steam Deck (16.11.2026, Wunsch Tatorasa): Ein Klick auf den AppImage-Download zeigt zusaetzlich,
+       wie man die Sammelmappe einrichtet. Der Download startet trotzdem sofort - im selben Tab, die
+       Seite bleibt offen (die Datei kommt als Anhang). Das Fenster entsteht erst beim Klick per Skript,
+       damit es keine Editor-Nummern verschiebt; im Bearbeiten-Modus greift es nicht. Der Klick auf den
+       Knopf zaehlt wie bisher als Download (stats.js); "noch einmal starten" zaehlt nicht doppelt. -->
+  <script>
+  (function () {
+    var fenster = null;
+    function bauen() {
+      var d = document.createElement('dialog');
+      d.className = 'fv-warnfenster';
+      d.setAttribute('aria-labelledby', 'fv-steamdeck-titel');
+      d.innerHTML =
+          '<div class="fv-warnfenster__kopf">'
+        + '<strong id="fv-steamdeck-titel">So richtest du die Sammelmappe auf dem Steam Deck ein</strong>'
+        + '<button type="button" class="fv-warnfenster__zu" aria-label="Schließen">✕</button>'
+        + '</div>'
+        + '<div class="fv-warnfenster__teil">'
+        +   '<span class="fv-warnfenster__marke">Steam Deck</span>'
+        +   '<div class="fv-warnfenster__schritte">'
+        +     '<div><span>1</span><div>In den <strong>Desktop-Modus</strong> wechseln: Steam-Taste → Ein/Aus → „Zum Desktop wechseln“.</div></div>'
+        +     '<div><span>2</span><div>Die Datei <strong data-datei></strong> lädt gerade herunter – sie landet im Ordner „Downloads“.</div></div>'
+        +     '<div><span>3</span><div>Im Dateimanager (Dolphin) die Datei mit der rechten Maustaste (bzw. L2 / langes Tippen) anklicken → „Eigenschaften“ → Reiter „Berechtigungen“ → Haken bei <strong>„Ist ausführbar“</strong> setzen → OK. Ohne diesen Schritt fragt das Steam Deck nur, mit welchem Programm die Datei geöffnet werden soll.</div></div>'
+        +     '<div><span>4</span><div><strong>Doppelklick</strong> auf die Datei – die Sammelmappe startet.</div></div>'
+        +     '<div><span>5</span><div>Optional für den Spielmodus: Rechtsklick auf die Datei → „Zu Steam hinzufügen“. Danach steht sie in der Bibliothek unter „Nicht-Steam“.</div></div>'
+        +   '</div>'
+        + '</div>'
+        + '<div class="fv-warnfenster__teil">'
+        +   '<span class="fv-warnfenster__marke">Updates</span>'
+        +   '<div>Neue Fassungen lädt das Programm selbst – es ersetzt die AppImage-Datei und startet neu, deine Daten bleiben. '
+        +   'Die Datei deshalb an ihrem Platz lassen (oder vorher in einen festen Ordner verschieben, z. B. „Anwendungen“ im persönlichen Ordner, und von dort starten).</div>'
+        + '</div>'
+        + '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:16px 22px 22px;">'
+        +   '<button type="button" class="button" style="border:0;cursor:pointer;font:inherit;font-weight:800;" data-nochmal>Download noch einmal starten</button>'
+        +   '<button type="button" class="button secondary" style="border:0;cursor:pointer;font:inherit;font-weight:800;" data-zu>Schließen</button>'
+        + '</div>';
+      document.body.appendChild(d);
+      var zu = function () { d.close(); };
+      d.querySelector('.fv-warnfenster__zu').addEventListener('click', zu);
+      d.querySelector('[data-zu]').addEventListener('click', zu);
+      d.addEventListener('click', function (e) { if (e.target === d) zu(); });
+      return d;
+    }
+    document.addEventListener('click', function (e) {
+      var a = e.target && e.target.closest ? e.target.closest('a.button[href*=".AppImage"]') : null;
+      if (!a || document.body.classList.contains('fv-edit-on')) return;
+      if (e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;   // neuer Tab o. Ae.: wie gewohnt
+      if (!window.HTMLDialogElement) return;                                             // sehr alte Browser: nur Download
+      e.preventDefault();
+      var url = a.href;
+      if (!fenster) fenster = bauen();
+      fenster.querySelector('[data-datei]').textContent = decodeURIComponent(url.split('/').pop());
+      fenster.querySelector('[data-nochmal]').onclick = function () { window.location.assign(url); };
+      if (!fenster.open) fenster.showModal();
+      window.location.assign(url);
+    });
+  })();
+  </script>
   <script src="stats.js" defer></script>
 </body>
 </html>
