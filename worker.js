@@ -1901,17 +1901,17 @@ export class Counter extends DurableObject {
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10500, versionName: "1.5.0",
             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.5.0.apk",
-            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.4)." },
+            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.5)." },
         /* Command Control PC-Programm (ab 1.5.3): eigener Aufbau mit datei/groesse/sha256 statt apk. Bewusst
            ohne Kachel "Aktualisierung" - deren PC-Kacheln bauen den Eintrag nur aus apk/hinweise neu und
            wuerden groesse und sha256 verlieren. Gepflegt wird der Eintrag direkt in der Datenbank. */
         "command-control-pc": { schluessel: "FINNVELO-COMMAND-CONTROL-PC",
-                                versionCode: 10504,
-                                versionName: "1.5.4",
-                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.4.exe",
-                                groesse: 378862800,
-                                sha256: "2b7637b4867d83a38206fd30f814950940f2a2ee5cd0d65fb84ae35bd30a5f9f",
-                                hinweise: "Neu in 1.5.4: Die Bedienknöpfe der Playlist-Tasten (Play/Pause, Stopp, Weiter, Werbung überspringen, Lautstärke …) gibt es jetzt auch in der Handy-App – genau wie am PC." },
+                                versionCode: 10505,
+                                versionName: "1.5.5",
+                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.5.exe",
+                                groesse: 378856855,
+                                sha256: "690db586400a689d674eaee69470ba673954622d35ade9bc3c10f78157586ea0",
+                                hinweise: "Neu in 1.5.5: Die Audioauswahl zeigt jetzt alle Geräte einzeln mit vollem Namen (z. B. jeden Monitor-Lautsprecher und „Chat Sound“/„7.1 Game Sound“ getrennt) und lädt schneller. Umlaute in Gerätenamen stimmen, Mikrofon-Tasten zeigen ein Mikrofon-Symbol, und die Handy-App bekommt alle Tastenbilder." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
