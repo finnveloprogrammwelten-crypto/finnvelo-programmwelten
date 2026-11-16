@@ -301,8 +301,12 @@ const VERSION_ABLAGEN = {
   "/haus-und-gartenplaner/version.json": "haus-und-gartenplaner",
   /* Command Control Handy-App (14.11.2026, ab 1.0): Die App fragt genau diese Adresse ab, prueft den
      Schluessel, laedt die APK selbst aus "apk" und vergleicht Paketname + versionCode der Datei.
-     Im Ordner /command-control/ darf keine echte android.json liegen. Das PC-Programm fragt nichts ab. */
-  "/command-control/android.json": "command-control-android"
+     Im Ordner /command-control/ darf keine echte android.json liegen. */
+  "/command-control/android.json": "command-control-android",
+  /* Command Control PC-Programm (16.11.2026, ab 1.5.3): Selbst-Update. Das Programm fragt diese Adresse
+     (mit ?t=<Zeit>) ab, prueft den Schluessel FINNVELO-COMMAND-CONTROL-PC und laedt "datei" (https,
+     GitHub-Weiterleitung erlaubt), prueft groesse und sha256. Auch hier keine echte Datei ablegen. */
+  "/command-control/pc.json": "command-control-pc"
 };
 
 export class Counter extends DurableObject {
@@ -1897,7 +1901,17 @@ export class Counter extends DurableObject {
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10500, versionName: "1.5.0",
             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.5.0.apk",
-            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.0)." },
+            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.3)." },
+        /* Command Control PC-Programm (ab 1.5.3): eigener Aufbau mit datei/groesse/sha256 statt apk. Bewusst
+           ohne Kachel "Aktualisierung" - deren PC-Kacheln bauen den Eintrag nur aus apk/hinweise neu und
+           wuerden groesse und sha256 verlieren. Gepflegt wird der Eintrag direkt in der Datenbank. */
+        "command-control-pc": { schluessel: "FINNVELO-COMMAND-CONTROL-PC",
+                                versionCode: 10503,
+                                versionName: "1.5.3",
+                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.3.exe",
+                                groesse: 378890668,
+                                sha256: "9fae3f295539c330972223e4a887904bb57bcf4ebb6bf7901695088bf1913d79",
+                                hinweise: "Neu in 1.5.3: Das Programm aktualisiert sich künftig selbst (Windows-Benachrichtigung und Knopf in den Einstellungen). Audioausgabe und -eingang wechseln funktioniert wieder. Im Tasten-Editor reagieren Löschen, Abbrechen und Speichern zuverlässig auf die Maus, Umbenennen vom Handy wird übernommen." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
