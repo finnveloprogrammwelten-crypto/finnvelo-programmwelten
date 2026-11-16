@@ -296,11 +296,11 @@
             <h3>So installierst du sie am Mac</h3>
             <ol class="hilfe-schritte" style="margin-top:10px;">
               <li>„Mac-Version herunterladen“. Die DMG-Datei landet in „Downloads“.</li>
-              <li>DMG doppelklicken und im Fenster die „FINNVELO TCG Sammelmappe“ auf den Ordner „Programme“ ziehen. Danach das DMG auswerfen.</li>
-              <li>Erster Start: In „Programme“ die Sammelmappe doppelklicken. macOS meldet, dass Apple das Programm nicht prüfen konnte. Auf „Fertig“ klicken, nicht auf „In den Papierkorb legen“.<br>Grund: Die Mac-Fassung ist ohne Apple-Entwicklerkonto gebaut und deshalb nicht von Apple beglaubigt.</li>
-              <li>Apfelmenü → Systemeinstellungen → „Datenschutz &amp; Sicherheit“ → ganz nach unten → bei „FINNVELO TCG Sammelmappe wurde blockiert …“ auf „Dennoch öffnen“ → mit Passwort oder Touch ID bestätigen → „Öffnen“.<br>Bis macOS 14 geht es auch so: Rechtsklick (Ctrl-Klick) auf die App → „Öffnen“ → „Öffnen“.</li>
-              <li>Ab dann startet die Sammelmappe normal. Bei einem Update öffnet sie das neue DMG; die App wieder in „Programme“ ziehen und die alte ersetzen.</li>
-              <li>Meldet macOS, die App sei „beschädigt“, im Terminal eingeben: <code>xattr -dr com.apple.quarantine "/Applications/FINNVELO TCG Sammelmappe.app"</code> – danach wie Schritt 3 und 4.</li>
+              <li>DMG doppelklicken und im Fenster die „FINNVELO TCG Sammelmappe“ auf den Ordner „Programme“ („Applications“) ziehen. Danach das DMG auswerfen („Eject“).</li>
+              <li>Erster Start: In „Programme“ („Applications“) die Sammelmappe doppelklicken. macOS meldet, dass Apple das Programm nicht prüfen konnte („Apple could not verify …“). Auf „Fertig“ („Done“) klicken, nicht auf „In den Papierkorb legen“ („Move to Trash“).<br>Grund: Die Mac-Fassung ist ohne Apple-Entwicklerkonto gebaut und deshalb nicht von Apple beglaubigt.</li>
+              <li>Apfelmenü (Apple menu) → Systemeinstellungen („System Settings“, bis macOS 12 „System Preferences“) → „Datenschutz &amp; Sicherheit“ („Privacy &amp; Security“) → ganz nach unten → bei „FINNVELO TCG Sammelmappe wurde blockiert …“ („… was blocked …“) auf „Dennoch öffnen“ („Open Anyway“) → mit Passwort oder Touch ID bestätigen → „Öffnen“ („Open“).<br>Bis macOS 14 geht es auch so: Rechtsklick (Ctrl-Klick) auf die App → „Öffnen“ („Open“) → „Öffnen“ („Open“).</li>
+              <li>Ab dann startet die Sammelmappe normal. Bei einem Update öffnet sie das neue DMG; die App wieder in „Programme“ („Applications“) ziehen und die alte ersetzen („Replace“).</li>
+              <li>Meldet macOS, die App sei „beschädigt“ („damaged“), im Terminal eingeben: <code>xattr -dr com.apple.quarantine "/Applications/FINNVELO TCG Sammelmappe.app"</code> – danach wie Schritt 3 und 4.</li>
             </ol>
           </div>
           <div class="download-slot" data-fv-text-extra>
@@ -311,12 +311,12 @@
           <div class="download-slot download-slot--muted" data-fv-text-extra>
             <h3>So installierst du sie auf dem Steam Deck</h3>
             <ol class="hilfe-schritte" style="margin-top:10px;">
-              <li>In den Desktop-Modus wechseln: Steam-Taste → Ein/Aus → „Zum Desktop wechseln“.</li>
+              <li>In den Desktop-Modus („Desktop Mode“) wechseln: Steam-Taste → Ein/Aus („Power“) → „Zum Desktop wechseln“ („Switch to Desktop“).</li>
               <li>Im Browser diese Seite öffnen und „Steam-Deck-/Linux-Version herunterladen“ antippen. Die Datei landet im Ordner „Downloads“.</li>
-              <li>Wichtig: Die Datei noch nicht doppelklicken. Erst den Dateimanager (Dolphin) öffnen → „Downloads“ → Rechtsklick auf FINNVELO-TCG-Sammelmappe-…-x86_64.AppImage (linke Schultertaste L2 oder lange auf die Datei tippen) → „Eigenschaften“ → Reiter „Berechtigungen“ → Haken bei „Ist ausführbar“ → OK.<br>Fragt das Steam Deck „Choose an application to open …“, fehlt genau dieser Haken. Dann abbrechen und den Haken setzen.</li>
-              <li>Tipp: Die Datei vorher in einen festen Ordner verschieben, z. B. „Anwendungen“ im persönlichen Ordner. Updates ersetzen sie später an derselben Stelle.</li>
+              <li>Wichtig: Die Datei noch nicht doppelklicken. Erst den Dateimanager (Dolphin) öffnen → „Downloads“ → Rechtsklick auf FINNVELO-TCG-Sammelmappe-…-x86_64.AppImage (linke Schultertaste L2 oder lange auf die Datei tippen) → „Eigenschaften“ („Properties“) → Reiter „Berechtigungen“ („Permissions“) → Haken bei „Ist ausführbar“ („Is executable“) → OK.<br>Fragt das Steam Deck „Choose an application to open …“, fehlt genau dieser Haken. Dann abbrechen („Cancel“) und den Haken setzen.</li>
+              <li>Tipp: Die Datei vorher in einen festen Ordner verschieben, z. B. „Anwendungen“ („Applications“) im persönlichen Ordner („Home“). Updates ersetzen sie später an derselben Stelle.</li>
               <li>Doppelklick auf die Datei, dann startet die Sammelmappe. Neue Fassungen lädt sie danach selbst.</li>
-              <li>Für den Spielmodus: Steam im Desktop-Modus öffnen → „Spiele“ → „Ein Nicht-Steam-Spiel zu meiner Bibliothek hinzufügen …“ → „Durchsuchen …“ → die AppImage-Datei wählen → „Ausgewählte Programme hinzufügen“. Danach steht die Sammelmappe in der Bibliothek unter „Nicht-Steam“.</li>
+              <li>Für den Spielmodus („Gaming Mode“): Steam im Desktop-Modus („Desktop Mode“) öffnen → „Spiele“ („Games“) → „Ein Nicht-Steam-Spiel zu meiner Bibliothek hinzufügen …“ („Add a Non-Steam Game to My Library …“) → „Durchsuchen …“ („Browse …“) → die AppImage-Datei wählen → „Ausgewählte Programme hinzufügen“ („Add Selected Programs“). Danach steht die Sammelmappe in der Bibliothek („Library“) unter „Nicht-Steam“ („Non-Steam“).</li>
             </ol>
           </div>
         </section>
@@ -360,17 +360,17 @@
         + '<div class="fv-warnfenster__teil">'
         +   '<span class="fv-warnfenster__marke">Steam Deck</span>'
         +   '<div class="fv-warnfenster__schritte">'
-        +     '<div><span>1</span><div>In den <strong>Desktop-Modus</strong> wechseln: Steam-Taste → Ein/Aus → „Zum Desktop wechseln“.</div></div>'
+        +     '<div><span>1</span><div>In den <strong>Desktop-Modus</strong> („Desktop Mode“) wechseln: Steam-Taste → Ein/Aus („Power“) → „Zum Desktop wechseln“ („Switch to Desktop“).</div></div>'
         +     '<div><span>2</span><div>Die Datei <strong data-datei></strong> lädt gerade herunter – sie landet im Ordner „Downloads“.</div></div>'
-        +     '<div><span>3</span><div>Im Dateimanager (Dolphin) die Datei mit der rechten Maustaste (bzw. L2 / langes Tippen) anklicken → „Eigenschaften“ → Reiter „Berechtigungen“ → Haken bei <strong>„Ist ausführbar“</strong> setzen → OK. Ohne diesen Schritt fragt das Steam Deck nur, mit welchem Programm die Datei geöffnet werden soll.</div></div>'
+        +     '<div><span>3</span><div>Im Dateimanager (Dolphin) die Datei mit der rechten Maustaste (bzw. L2 / langes Tippen) anklicken → „Eigenschaften“ („Properties“) → Reiter „Berechtigungen“ („Permissions“) → Haken bei <strong>„Ist ausführbar“</strong> („Is executable“) setzen → OK. Ohne diesen Schritt fragt das Steam Deck nur, mit welchem Programm die Datei geöffnet werden soll („Choose an application to open …“).</div></div>'
         +     '<div><span>4</span><div><strong>Doppelklick</strong> auf die Datei – die Sammelmappe startet.</div></div>'
-        +     '<div><span>5</span><div>Optional für den Spielmodus: Rechtsklick auf die Datei → „Zu Steam hinzufügen“. Danach steht sie in der Bibliothek unter „Nicht-Steam“.</div></div>'
+        +     '<div><span>5</span><div>Optional für den Spielmodus („Gaming Mode“): Rechtsklick auf die Datei → „Zu Steam hinzufügen“ („Add to Steam“). Danach steht sie in der Bibliothek („Library“) unter „Nicht-Steam“ („Non-Steam“).</div></div>'
         +   '</div>'
         + '</div>'
         + '<div class="fv-warnfenster__teil">'
         +   '<span class="fv-warnfenster__marke">Updates</span>'
         +   '<div>Neue Fassungen lädt das Programm selbst – es ersetzt die AppImage-Datei und startet neu, deine Daten bleiben. '
-        +   'Die Datei deshalb an ihrem Platz lassen (oder vorher in einen festen Ordner verschieben, z. B. „Anwendungen“ im persönlichen Ordner, und von dort starten).</div>'
+        +   'Die Datei deshalb an ihrem Platz lassen (oder vorher in einen festen Ordner verschieben, z. B. „Anwendungen“ („Applications“) im persönlichen Ordner („Home“), und von dort starten).</div>'
         + '</div>'
         + '<div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:16px 22px 22px;">'
         +   '<button type="button" class="button" style="border:0;cursor:pointer;font:inherit;font-weight:800;" data-nochmal>Download noch einmal starten</button>'
