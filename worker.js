@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           17.11.2026: PC 1.3.26, App 1.2.31). Ein in der Kachel "Aktualisierung"
+           17.11.2026: PC 1.3.27, App 1.2.32). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10326, versionName: "1.3.26",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.26.exe",
-                        hinweise: "Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10231, versionName: "1.2.31",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.31.apk",
-                             hinweise: "Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10327, versionName: "1.3.27",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.27.exe",
+                        hinweise: "Neu: „Deck einscannen“ in „Meine Decks“ – die Karten eines echten Decks nacheinander vor die Kamera halten, daraus wird ein neues Deck. Der Bericht des Deck-Generators ist übersichtlicher gegliedert: je Punkt eine Überschrift, darunter die Erklärung. Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10232, versionName: "1.2.32",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.32.apk",
+                             hinweise: "Neu: „Deck einscannen“ in „Meine Decks“ – die Karten eines echten Decks nacheinander vor die Kamera halten, daraus wird ein neues Deck. Der Bericht des Deck-Generators ist übersichtlicher gegliedert: je Punkt eine Überschrift, darunter die Erklärung. Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10326, versionName: "1.3.26",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.26-universal.dmg",
