@@ -1886,12 +1886,12 @@ export class Counter extends DurableObject {
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.31.apk",
                              hinweise: "Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10325, versionName: "1.3.25",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.25-universal.dmg",
-                         hinweise: "Yu-Gi-Oh!-Kamera: Der Schalter „Foil-Druck“ wählt den Foil- oder den normalen Druck derselben Kartennummer. Der Bericht des Deck-Generators zeigt den Spielplan wieder vollständig, auch bei schon gespeicherten Decks. Die große Karte in der Sammlung öffnet sich von oben. Kamerafenster: Ein langer Kameraname verschiebt das Kamerabild nicht mehr." },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10325, versionName: "1.3.25",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.25-x86_64.AppImage",
-                           hinweise: "Yu-Gi-Oh!-Kamera: Der Schalter „Foil-Druck“ wählt den Foil- oder den normalen Druck derselben Kartennummer. Der Bericht des Deck-Generators zeigt den Spielplan wieder vollständig, auch bei schon gespeicherten Decks. Die große Karte in der Sammlung öffnet sich von oben. Kamerafenster: Ein langer Kameraname verschiebt das Kamerabild nicht mehr." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10326, versionName: "1.3.26",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.26-universal.dmg",
+                         hinweise: "Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10326, versionName: "1.3.26",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.26-x86_64.AppImage",
+                           hinweise: "Commander-Seiten lassen sich wieder rollen – am PC, auf dem Steam Deck und am Handy; am PC vier Spalten. Kartenseite: Am Handy schließt ein Knopf auf dem Kartenbild die Karte, am PC sind die Details rechts breiter. „Karte groß“ öffnet sich jetzt schon nach 1 Sekunde Halten – einstellbar unter Einstellungen → Bedienung." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
