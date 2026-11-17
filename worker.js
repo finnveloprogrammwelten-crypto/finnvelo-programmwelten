@@ -1877,21 +1877,21 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           16.11.2026: PC 1.3.23, App 1.2.29). Ein in der Kachel "Aktualisierung"
+           17.11.2026: PC 1.3.25, App 1.2.30). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10323, versionName: "1.3.23",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.23.exe",
-                        hinweise: "Jede Karte groß ansehen (antippen, im Deckbau 2 Sekunden halten) · Generator prüft in 20-%-Schritten und überarbeitet Decks unter 65 % · Testspiele am Spieltisch je Runde, auch beim gespeicherten Deck · neue Seiten: Coconut Commander (Lorcana), Leader (One Piece), Commander (Magic) · Kopfleiste passt aufs Steam Deck · Coconut-Format im Generator repariert" },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10229, versionName: "1.2.29",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.29.apk",
-                             hinweise: "Jede Karte groß ansehen (antippen, im Deckbau 2 Sekunden halten) · Generator prüft in 20-%-Schritten und überarbeitet Decks unter 65 % · Testspiele am Spieltisch je Runde, auch beim gespeicherten Deck · neue Seiten: Coconut Commander (Lorcana), Leader (One Piece), Commander (Magic) · Kopfleiste passt aufs Steam Deck · Coconut-Format im Generator repariert" },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10325, versionName: "1.3.25",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.25.exe",
+                        hinweise: "Yu-Gi-Oh!-Kamera: Der Schalter „Foil-Druck“ wählt den Foil- oder den normalen Druck derselben Kartennummer. Der Bericht des Deck-Generators zeigt den Spielplan wieder vollständig, auch bei schon gespeicherten Decks. Die große Karte in der Sammlung öffnet sich von oben. Kamerafenster: Ein langer Kameraname verschiebt das Kamerabild nicht mehr." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10230, versionName: "1.2.30",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.30.apk",
+                             hinweise: "Yu-Gi-Oh!-Kamera: Der Schalter „Foil-Druck“ wählt den Foil- oder den normalen Druck derselben Kartennummer. Der Bericht des Deck-Generators zeigt den Spielplan wieder vollständig, auch bei schon gespeicherten Decks. Die große Karte in der Sammlung öffnet sich von oben. Kamerafenster: Ein langer Kameraname verschiebt das Kamerabild nicht mehr." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10323, versionName: "1.3.23",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.23-universal.dmg",
-                         hinweise: "Jede Karte groß ansehen (antippen, im Deckbau 2 Sekunden halten) · Generator prüft in 20-%-Schritten und überarbeitet Decks unter 65 % · Testspiele am Spieltisch je Runde, auch beim gespeicherten Deck · neue Seiten: Coconut Commander (Lorcana), Leader (One Piece), Commander (Magic) · Kopfleiste passt aufs Steam Deck · Coconut-Format im Generator repariert" },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10324, versionName: "1.3.24",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.24-x86_64.AppImage",
-                           hinweise: "Steam Deck: Die Sammelmappe richtet sich jetzt selbst ein – beim Start ‚Auf diesem Gerät einrichten?‘ (Startmenü, Desktop, Ordner ‚Applications‘); danach im Startmenü ‚Zu Steam hinzufügen‘ (‚Add to Steam‘) für den Spielmodus." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10325, versionName: "1.3.25",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.25-universal.dmg",
+                         hinweise: "Yu-Gi-Oh!-Kamera: Der Schalter „Foil-Druck“ wählt den Foil- oder den normalen Druck derselben Kartennummer. Der Bericht des Deck-Generators zeigt den Spielplan wieder vollständig, auch bei schon gespeicherten Decks. Die große Karte in der Sammlung öffnet sich von oben. Kamerafenster: Ein langer Kameraname verschiebt das Kamerabild nicht mehr." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10325, versionName: "1.3.25",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.25-x86_64.AppImage",
+                           hinweise: "Yu-Gi-Oh!-Kamera: Der Schalter „Foil-Druck“ wählt den Foil- oder den normalen Druck derselben Kartennummer. Der Bericht des Deck-Generators zeigt den Spielplan wieder vollständig, auch bei schon gespeicherten Decks. Die große Karte in der Sammlung öffnet sich von oben. Kamerafenster: Ein langer Kameraname verschiebt das Kamerabild nicht mehr." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",

@@ -105,6 +105,18 @@
         </div>
       </div>
       <div class="program-detail__body program-detail__body--archivar">
+        <!-- Trailer 17.11.2026 (geliefert von der Lorcana-Sitzung): MP4 mit Ton in assets/videos, ueber /medien/videos/,
+             kein Autoplay. Musiknachweis nach CC BY 3.0 (Titel, Urheber, Quelle, Lizenz, Aenderung). -->
+        <section class="program-info-block program-info-block--wide" aria-labelledby="trailer-title" data-fv-text-extra>
+          <h2 id="trailer-title">Die Sammelmappe in einer Minute</h2>
+          <figure class="program-media-card" style="max-width:980px;margin-top:clamp(18px,2.2vw,30px);">
+            <video controls playsinline preload="none" width="1280" height="720" poster="assets/videos/lorcana-trailer.webp" aria-label="Trailer der TCG Sammelmappe: Startseite mit fünf Kartenspielen, Sammlung und große Kartenansicht, die Kamera erkennt Lorcana-Karten, Deck-Generator, Bericht zum Deck, Coconut-Commander-Seite und Abspann mit der Webadresse.">
+              <source src="medien/videos/lorcana-trailer.mp4" type="video/mp4">
+            </video>
+            <figcaption><strong>FINNVELO TCG Sammelmappe – Trailer</strong>Fünf Kartenspiele, die Sammlung mit Bildern, Karten mit der Kamera erfassen, der Deck-Generator mit Bericht, Coconut Commander und der Zähler. Rund 1 Minute, mit Musik.<br>Musik: „Intended Force“ – Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>), Lizenz <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>, Quelle: <a href="https://commons.wikimedia.org/wiki/File:Intended_Force_(ISRC_USUAN1100195).mp3" target="_blank" rel="noopener">Wikimedia Commons</a>; gekürzt und am Ende ausgeblendet.</figcaption>
+          </figure>
+        </section>
+
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Die Finnvelo TCG Sammelmappe verbindet Sammlungsverwaltung und Deckbau für fünf Sammelkartenspiele: Disney Lorcana, Pokémon, Magic: The Gathering, One Piece und Yu-Gi-Oh! Die Kartendaten eines Spiels lädt das Programm beim ersten Öffnen. Karten werden per Webcam oder Handy-Kamera erkannt – auch Foil-Karten – oder aus vorhandenen Listen von Dreamborn, TCGplayer und Cardmarket übernommen. Der Kartenkatalog umfasst alle Sets, zu jeder Karte steht der Cardmarket-Preistrend bereit.</p>
@@ -128,20 +140,44 @@
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Aufgenommen mit einer Beispielsammlung. Kartenbilder sind auf diesen Fotos bewusst ausgeblendet.</p>
+          <p>Die Bilder vom Windows-Programm zeigen Fassung 1.3.25. Die Handy-Bilder stammen noch aus einer früheren Fassung, neue folgen. Ein Klick auf ein Bild öffnet es groß.</p>
           <!-- Bilder spaeter im Bearbeiten-Modus per "+" hinzufuegen -->
           <div class="program-media-grid" data-fv-text-extra aria-label="Ansichten des Windows-Programms">
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lorcana-pc-1.webp" width="1280" height="800" loading="lazy" alt="Sammlung im Windows-Programm mit Preisen, Wert und den Wegen zum Erfassen">
-              <figcaption>Sammlung mit Preisen und Wert – erfassen per Webcam, Handy-Kamera oder Import</figcaption>
+              <img src="assets/images/oberflaeche/lorcana-pc-start.webp" width="1280" height="800" loading="lazy" alt="Startseite der TCG Sammelmappe mit Kacheln für Lorcana, Pokémon, Magic, One Piece und Yu-Gi-Oh! und der Übersicht über die Sammlung.">
+              <figcaption><strong>Startseite</strong>Fünf Kartenspiele, deine Sammlung, Decks und Datenstand auf einen Blick.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lorcana-pc-2.webp" width="1280" height="800" loading="lazy" alt="Fenster Deck ergänzen der KI-Hilfe mit erkanntem Spielstil und Thema">
-              <figcaption>Deckbau mit KI-Hilfe – Spielstil und Thema erkannt, Fehlendes benannt</figcaption>
+              <img src="assets/images/oberflaeche/lorcana-pc-sammlung.webp" width="1280" height="800" loading="lazy" alt="Sammlungsseite mit Kartenliste in Bildern, Zählern für normal und Foil und den Bereichen zum Übernehmen und Scannen.">
+              <figcaption><strong>Sammlung</strong>Jede Karte mit Bild, Werten, Preis und Bestand, normal und Foil.</figcaption>
             </figure>
             <figure class="program-media-card">
-              <img src="assets/images/oberflaeche/lorcana-pc-3.webp" width="1280" height="800" loading="lazy" alt="Deck-Generator mit fertigem Detektiv-Deck, Siegquote aus Testpartien und Spielplan">
-              <figcaption>Deck-Generator – fertiges Detektiv-Deck mit 90 % Siegquote aus 420 Testpartien gegen 14 Turnierdecks, samt Spielplan</figcaption>
+              <img src="assets/images/oberflaeche/lorcana-pc-karte-gross.webp" width="1280" height="800" loading="lazy" alt="Die Lorcana-Karte Elsa – Amtierende Königin groß im Fenster, darunter Werte, Preis und Bestand.">
+              <figcaption><strong>Karte groß ansehen</strong>Antippen zeigt die Karte groß, mit Werten und Kartentext auf Deutsch oder Englisch.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/lorcana-pc-kamera.webp" width="1280" height="800" loading="lazy" alt="Kamera-Erfassung mit einer Lorcana-Karte im Bild und drei erkannten Karten in der Liste daneben.">
+              <figcaption><strong>Karten mit der Kamera erfassen</strong>Karte ins Bild halten – erkannt –, rechts sammelt sich die Liste.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/lorcana-pc-deck-generator.webp" width="1280" height="800" loading="lazy" alt="Deck-Generator mit Auswahl von Format, den Farben Bernstein und Amethyst, dem Grundtempo Midrange und Themen.">
+              <figcaption><strong>Deck-Generator</strong>Format, Farben, Grundtempo und Thema wählen – der Generator baut und testet das Deck.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/lorcana-pc-bericht.webp" width="1280" height="800" loading="lazy" alt="Bericht des Deck-Generators mit 82 % Siegquote, den Abschnitten „Was getestet wurde“ und „Der Gedanke dahinter“.">
+              <figcaption><strong>Bericht zum Deck</strong>Was getestet wurde, der Gedanke dahinter und wie man das Deck spielt.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/lorcana-pc-spieltisch.webp" width="1280" height="800" loading="lazy" alt="Spieltisch eines Testspiels in Runde 3 mit den Händen beider Spieler, Tintenfeldern und ausgespielten Karten mit Beschriftungen wie „erkundet“.">
+              <figcaption><strong>Testspiel am Spieltisch</strong>Jede Runde ein Bild: Hände, Tinte und ausgespielte Karten, wer erkundet und wer herausfordert.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/lorcana-pc-meine-decks.webp" width="1280" height="800" loading="lazy" alt="Seite „Meine Decks“ mit einem vom Generator gebauten Deck in Bildern, Siegquote und Knöpfen für Bericht, Druckvorlage und Einkaufsliste.">
+              <figcaption><strong>Meine Decks</strong>Alle Decks mit Kartenbildern, Wert, fehlenden Karten und Bericht.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <img src="assets/images/oberflaeche/lorcana-pc-coconut-commander.webp" width="1280" height="800" loading="lazy" alt="Seite Coconut Commander mit den Commandern nach Farben, darunter Arielle, Pocahontas und Stitch, je mit Kartentext und Knöpfen zum Drucken.">
+              <figcaption><strong>Coconut Commander</strong>Alle Commander des Coconut-Formats mit Text auf Deutsch und Englisch, zum Drucken in Originalgröße.</figcaption>
             </figure>
           </div>
           <div class="program-media-grid program-media-grid--hoch" data-fv-text-extra aria-label="Ansichten der Android-App">
@@ -219,9 +255,31 @@
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
-          <h2 id="tutorial-title">Tutorial-Video</h2>
-          <p>Ein Tutorial-Video wird hier ergänzt, sobald es bereitsteht.</p>
+          <h2 id="tutorial-title">So funktioniert's</h2>
+          <p>Kurze Videos ohne Ton zeigen die wichtigsten Abläufe im Windows-Programm – aufgenommen mit Fassung 1.3.25. Weitere folgen.</p>
           <!-- Video spaeter im Bearbeiten-Modus per Knopf "Video setzen" hinzufuegen -->
+          <!-- Tutorials 17.11.2026 (geliefert von der Lorcana-Sitzung): MP4 in assets/videos, ausgeliefert ueber
+               /medien/videos/ (Teilbereiche fuer Safari), Vorschaubild als poster, Laden erst beim Abspielen. -->
+          <div class="program-media-grid" data-fv-text-extra aria-label="Tutorial-Videos">
+            <figure class="program-media-card">
+              <video controls playsinline preload="none" width="1280" height="720" poster="assets/videos/lorcana-tutorial-1-erste-schritte.webp" aria-label="Bildschirmaufnahme der TCG Sammelmappe: Startseite mit den fünf Kartenspielen, Suche in der Sammlung, eine Karte groß mit Werten, der Kartenkatalog und der Zähler.">
+                <source src="medien/videos/lorcana-tutorial-1-erste-schritte.mp4" type="video/mp4">
+              </video>
+              <figcaption><strong>Erste Schritte</strong>Startseite und Spielwahl, Sammlung durchsuchen, eine Karte groß ansehen, Kartenkatalog und Legenden-Zähler. 38 Sekunden.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <video controls playsinline preload="none" width="1280" height="720" poster="assets/videos/lorcana-tutorial-2-kamera.webp" aria-label="Bildschirmaufnahme: Die Kamera-Erfassung erkennt nacheinander vier Lorcana-Karten und sammelt sie rechts in einer Liste zum Übernehmen.">
+                <source src="medien/videos/lorcana-tutorial-2-kamera.mp4" type="video/mp4">
+              </video>
+              <figcaption><strong>Karten mit der Kamera erfassen</strong>Karte für Karte ins Bild halten. Das Programm erkennt Name und Set-Nummer, Foils über den Foil-Stapel oder die geteilte Kamera, dann übernehmen in Sammlung, Verkaufs- oder Einkaufsliste. 37 Sekunden.</figcaption>
+            </figure>
+            <figure class="program-media-card">
+              <video controls playsinline preload="none" width="1280" height="720" poster="assets/videos/lorcana-tutorial-3-generator.webp" aria-label="Bildschirmaufnahme: Deck-Generator mit Farbwahl und Kartensuche mit Bildern, der Bericht zum fertigen Deck und ein Testspiel am Spieltisch.">
+                <source src="medien/videos/lorcana-tutorial-3-generator.mp4" type="video/mp4">
+              </video>
+              <figcaption><strong>Deck-Generator</strong>Farben, Grundtempo und Pflichtkarten wählen (Kartensuche mit Bild). Ziel sind 70 % Siegquote gegen echte Turnierdecks. Danach der Bericht zum Deck und die Testspiele Runde für Runde am Spieltisch. 55 Sekunden.</figcaption>
+            </figure>
+          </div>
         </section>
 
         <section class="program-info-block" aria-labelledby="advantages-title">
@@ -265,9 +323,9 @@
         <section class="program-info-block program-download-block" aria-labelledby="download-title">
           <h2 id="download-title">Download (Android-App)</h2>
           <div class="download-slot">
-            <h3>Fassung 1.2.29</h3>
+            <h3>Fassung 1.2.30</h3>
             <p>Die Android-App als Installationsdatei (APK, rund 7,1 MB) für Android 7 oder neuer. Sie kommt nicht aus dem Play Store, deshalb fragen Chrome und Android beim Herunterladen und Installieren nach. Was dann zu tun ist, erklärt „Warum warnt mein Gerät?“.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.29.apk" target="_blank" rel="noopener">Download starten</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.30.apk" target="_blank" rel="noopener">Download starten</a>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Aktualisierungen</h3>
@@ -277,9 +335,9 @@
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
           <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
-            <h3>Fassung 1.3.23</h3>
+            <h3>Fassung 1.3.25</h3>
             <p>Installationsprogramm für Windows 10 und 11 (64 Bit, rund 87 MB). Das Programm bietet denselben Funktionsumfang wie die App und gleicht sich mit ihr im WLAN ab.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.23.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.25.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Hinweis</h3>
@@ -288,9 +346,9 @@
           <!-- Mac und Steam Deck (14.11.2026): als Zusatztexte (data-fv-text-extra) und mit den Knöpfen hinter dem
                Windows-Knopf - so behalten alle bisherigen Text- und Knopfnummern ihren Platz. -->
           <div class="download-slot" data-fv-text-extra>
-            <h3>Mac (Intel und Apple-Chip) · Fassung 1.3.23</h3>
+            <h3>Mac (Intel und Apple-Chip) · Fassung 1.3.25</h3>
             <p>Eine Datei für Macs mit Intel- und mit Apple-Chip (DMG, rund 182 MB), ab macOS 10.15. Der Funktionsumfang ist derselbe wie unter Windows – auch Bildschirmfotos der offiziellen Lorcana-App liest sie ein.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.23-universal.dmg" target="_blank" rel="noopener">Mac-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.25-universal.dmg" target="_blank" rel="noopener">Mac-Version herunterladen</a>
           </div>
           <div class="download-slot download-slot--muted" data-fv-text-extra>
             <h3>So installierst du sie am Mac</h3>
@@ -305,9 +363,9 @@
             </ol>
           </div>
           <div class="download-slot" data-fv-text-extra>
-            <h3>Steam Deck / Linux · Fassung 1.3.24</h3>
+            <h3>Steam Deck / Linux · Fassung 1.3.25</h3>
             <p>AppImage für Linux (x86_64, rund 116 MB) – auf dem Steam Deck im Desktop-Modus. Der Funktionsumfang ist derselbe wie unter Windows – auch Bildschirmfotos der offiziellen Lorcana-App liest sie ein.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.24-x86_64.AppImage" target="_blank" rel="noopener">Steam-Deck-/Linux-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.25-x86_64.AppImage" target="_blank" rel="noopener">Steam-Deck-/Linux-Version herunterladen</a>
           </div>
           <div class="download-slot download-slot--muted" data-fv-text-extra>
             <h3>So installierst du sie auf dem Steam Deck</h3>
