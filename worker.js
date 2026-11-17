@@ -1901,17 +1901,17 @@ export class Counter extends DurableObject {
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10500, versionName: "1.5.0",
             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.5.0.apk",
-            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.7)." },
+            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.8)." },
         /* Command Control PC-Programm (ab 1.5.3): eigener Aufbau mit datei/groesse/sha256 statt apk. Bewusst
            ohne Kachel "Aktualisierung" - deren PC-Kacheln bauen den Eintrag nur aus apk/hinweise neu und
            wuerden groesse und sha256 verlieren. Gepflegt wird der Eintrag direkt in der Datenbank. */
         "command-control-pc": { schluessel: "FINNVELO-COMMAND-CONTROL-PC",
-                                versionCode: 10507,
-                                versionName: "1.5.7",
-                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.7.exe",
-                                groesse: 378862863,
-                                sha256: "b25c2c128b4811c04983c3c9065a2fa2c4ae76fe5aed4ac6fe661830ed4b4237",
-                                hinweise: "Neu in 1.5.7: „Bildschirme am PC aus“ schaltet die Monitore jetzt wirklich aus statt nur in den Energiesparmodus (über DDC/CI, wie mit dem Knopf am Monitor) und „Bildschirme am PC an“ wieder ein. Monitore ohne DDC/CI gehen wie bisher in den Energiesparmodus." },
+                                versionCode: 10508,
+                                versionName: "1.5.8",
+                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.8.exe",
+                                groesse: 378883610,
+                                sha256: "d782df488aeb3f00fdaac1fd8fc26c91be60d5650cf2a32309b736535ed042d0",
+                                hinweise: "Windows-Apps wie Paint, Rechner oder Fotos aus der Programmsuche starten jetzt richtig und bekommen ihr echtes Symbol." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);

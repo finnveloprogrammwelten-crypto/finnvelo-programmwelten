@@ -150,7 +150,7 @@
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
           <h2 id="surface-title">Oberfläche</h2>
-          <p>Die folgenden Ansichten zeigen Finnvelo Command Control 1.5.0 am PC und die Handy-App 1.4.1 mit einer erfundenen Beispielbelegung auf „MEIN-PC“. Ein Klick auf ein Bild öffnet es groß, die Videos starten mit dem Abspielknopf.</p>
+          <p>Die folgenden Ansichten zeigen Finnvelo Command Control 1.5.0 am PC und die Handy-App 1.4.1 mit einer erfundenen Beispielbelegung auf „MEIN-PC“. Ein Klick auf ein Bild öffnet es groß. Ein Video mit allen Abläufen findest du weiter unten unter „So funktioniert's“.</p>
           <!-- Fotos und Videos 15.11.2026: PC 1.5.0 und App 1.4.1, nur Beispieldaten (geliefert von der Command-Control-Sitzung). -->
           <div data-fv-text-extra>
             <h3 class="program-media-gruppe">PC-Programm</h3>
@@ -166,12 +166,6 @@
               <figure class="program-media-card">
                 <img src="assets/images/oberflaeche/command-control-pc-handy-steuerung.webp" width="900" height="578" loading="lazy" alt="Einstellungen Handy-Steuerung mit sechsstelligem Kopplungscode und gekoppeltem Android-Handy">
                 <figcaption><strong>Handy-Steuerung</strong>Handy mit einem 6-stelligen Code koppeln.</figcaption>
-              </figure>
-              <figure class="program-media-card">
-                <video controls playsinline preload="none" width="664" height="618" poster="assets/videos/command-control-pc-taste-anlegen.webp" aria-label="Video: Am PC eine Taste anlegen">
-                  <source src="medien/videos/command-control-pc-taste-anlegen.mp4" type="video/mp4">
-                </video>
-                <figcaption><strong>Video: Am PC eine Taste anlegen</strong>14 Sekunden, ohne Ton.</figcaption>
               </figure>
             </div>
 
@@ -204,12 +198,6 @@
               <figure class="program-media-card">
                 <img src="assets/images/oberflaeche/command-control-app-sperre.webp" width="540" height="1200" loading="lazy" alt="Gesperrte App mit Passwortfeld, Entsperren per Fingerabdruck und Passwort vergessen">
                 <figcaption><strong>App-Sperre</strong>Optional, mit Passwort und Fingerabdruck.</figcaption>
-              </figure>
-              <figure class="program-media-card">
-                <video controls playsinline preload="none" width="540" height="1200" poster="assets/videos/command-control-app-taste-anlegen.webp" aria-label="Video: Am Handy eine Taste anlegen">
-                  <source src="medien/videos/command-control-app-taste-anlegen.mp4" type="video/mp4">
-                </video>
-                <figcaption><strong>Video: Am Handy eine Taste anlegen</strong>36 Sekunden, ohne Ton.</figcaption>
               </figure>
             </div>
           </div>
@@ -314,8 +302,18 @@
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
-          <h2 id="tutorial-title">Tutorial-Video</h2>
-          <p>Ein Tutorial-Video zu Finnvelo Command Control folgt in Kürze.</p>
+          <h2 id="tutorial-title">So funktioniert's</h2>
+          <p>Ein Video zeigt, wie du Command Control bedienst – erst am PC, dann in der Handy-App.</p>
+          <!-- Tutorial 17.11.2026 (geliefert von der Command-Control-Sitzung): ersetzt die zwei kurzen Galerie-Videos und das
+               YouTube-Video (v0 auf Wunsch Tatorasa geleert). MP4 mit Ton ueber /medien/videos/, kein Autoplay. -->
+          <div data-fv-text-extra>
+            <figure class="program-media-card" style="max-width:980px;margin-top:clamp(18px,2.2vw,30px);">
+              <video controls playsinline preload="none" width="1280" height="720" poster="assets/videos/command-control-tutorial.webp" aria-label="Tutorial zu Finnvelo Command Control: am PC Seiten wechseln, Tasten per Rechtsklick anlegen, Programmsuche, Webseiten-Taste, Playlist-Knöpfe und Einstellungen, danach die Handy-App mit Tasten, Seiten, Taste bearbeiten und anlegen, Maus und Tastatur, Menü und Einstellungen.">
+                <source src="medien/videos/command-control-tutorial.mp4" type="video/mp4">
+              </video>
+              <figcaption><strong>So bedienst du Command Control</strong>Tasten anlegen (Programmsuche und Webseiten), Seiten, Playlist-Knöpfe und Einstellungen am PC, danach die Handy-App. 2 Minuten 40 Sekunden, mit Musik.<br>Musik: „Cipher“ – Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener">incompetech.com</a>), Lizenz <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>, Quelle: <a href="https://commons.wikimedia.org/wiki/File:Cipher_(ISRC_USUAN1100844).mp3" target="_blank" rel="noopener">Wikimedia Commons</a>; gekürzt, ein- und ausgeblendet.</figcaption>
+            </figure>
+          </div>
           <!-- VIDEO SPÄTER EINFÜGEN:
                Die YouTube-Video-ID unten zweimal eintragen (im iframe-src und im Link),
                dann diesen Block einkommentieren.
@@ -379,9 +377,13 @@
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
           <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
-            <h3>Fassung 1.5.7</h3>
+            <h3>Fassung 1.5.8</h3>
             <p>Installationsprogramm f&uuml;r Windows, mit Handy-Steuerung f&uuml;r die App &ndash; ab dieser Fassung aktualisiert sich das Programm selbst, laufende Programme lassen sich vom Handy aus schlie&szlig;en, die Programmsuche findet auch Windows-Apps und alle Startmen&uuml;-Eintr&auml;ge, und mehrere markierte Dateien kommen per Rechtsklick in ein gemeinsames Archiv. Einen Autostart richtet Command Control nur ein, wenn du ihn in den Einstellungen selbst einschaltest.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.7.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.8.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
+          </div>
+          <div class="download-slot download-slot--muted" data-fv-text-extra>
+            <h3>Neu in Fassung 1.5.8</h3>
+            <p>Windows-Apps wie Paint, Rechner oder Fotos aus der Programmsuche starten jetzt richtig und bekommen ihr echtes Symbol.</p>
           </div>
           <div class="download-slot download-slot--muted" data-fv-text-extra>
             <h3>Neu in Fassung 1.5.7</h3>
