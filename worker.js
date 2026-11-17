@@ -1901,17 +1901,17 @@ export class Counter extends DurableObject {
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10500, versionName: "1.5.0",
             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.5.0.apk",
-            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.5)." },
+            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.6)." },
         /* Command Control PC-Programm (ab 1.5.3): eigener Aufbau mit datei/groesse/sha256 statt apk. Bewusst
            ohne Kachel "Aktualisierung" - deren PC-Kacheln bauen den Eintrag nur aus apk/hinweise neu und
            wuerden groesse und sha256 verlieren. Gepflegt wird der Eintrag direkt in der Datenbank. */
         "command-control-pc": { schluessel: "FINNVELO-COMMAND-CONTROL-PC",
-                                versionCode: 10505,
-                                versionName: "1.5.5",
-                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.5.exe",
-                                groesse: 378856855,
-                                sha256: "690db586400a689d674eaee69470ba673954622d35ade9bc3c10f78157586ea0",
-                                hinweise: "Neu in 1.5.5: Die Audioauswahl zeigt jetzt alle Geräte einzeln mit vollem Namen (z. B. jeden Monitor-Lautsprecher und „Chat Sound“/„7.1 Game Sound“ getrennt) und lädt schneller. Umlaute in Gerätenamen stimmen, Mikrofon-Tasten zeigen ein Mikrofon-Symbol, und die Handy-App bekommt alle Tastenbilder." },
+                                versionCode: 10506,
+                                versionName: "1.5.6",
+                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.6.exe",
+                                groesse: 378871554,
+                                sha256: "e8592ade6a7f22c6f83571b18b69abdc673792f517aa723c8c30726411c95b41",
+                                hinweise: "Neu in 1.5.6: Webseiten, die du über eine Taste geöffnet hast (z. B. YouTube), lassen sich vom Handy aus wieder schließen – nur die Seite, der Browser bleibt offen. Die Bildschirme am PC lassen sich vom Handy aus- und wieder einschalten (das Ausschalten und der Energiesparmodus vom Handy funktionierten vorher nicht)." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
