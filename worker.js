@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           19.11.2026: PC 1.3.32, App 1.2.37). Ein in der Kachel "Aktualisierung"
+           19.11.2026: PC 1.3.33, App 1.2.38). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10332, versionName: "1.3.32",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.32.exe",
-                        hinweise: "Deck-Generator: Kernkarten – bis zu drei Karten, um die das Deck mit passenden Kombos gebaut wird. Deck-Generator: höchste Kosten und Kostenkurve von Hand einstellbar. Deck-Generator: Abbrechen wirkt sofort; die Laufzeit wird je Gerät gemessen und als Restzeit angezeigt. Kamera-Erfassung: sucht im Streifen in der Bildmitte nach echten Karten – kaum noch Fehlalarme. Erfasste Karten: Set, Nummer und Seltenheit in Klartext, Auswahl von Druck und Ausführung (Foil, 1. Auflage). Coconut Commander: alle 30 Karten wie in der offiziellen App. Eigene Rückfragen statt Windows-Fenster." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10237, versionName: "1.2.37",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.37.apk",
-                             hinweise: "Deck-Generator: Kernkarten – bis zu drei Karten, um die das Deck mit passenden Kombos gebaut wird. Deck-Generator: höchste Kosten und Kostenkurve von Hand einstellbar. Deck-Generator: Abbrechen wirkt sofort; die Laufzeit wird je Gerät gemessen und als Restzeit angezeigt. Kamera-Erfassung: sucht im Streifen in der Bildmitte nach echten Karten – kaum noch Fehlalarme. Erfasste Karten: Set, Nummer und Seltenheit in Klartext, Auswahl von Druck und Ausführung (Foil, 1. Auflage). Coconut Commander: alle 30 Karten wie in der offiziellen App. Eigene Rückfragen statt Windows-Fenster." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10333, versionName: "1.3.33",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.33.exe",
+                        hinweise: "Coconut Commander: alle 30 Karten mit Bild wie in der offiziellen App – auch die sechs neuen. Coconut Commander: jede Karte zusätzlich auf Deutsch übersetzt zum Ausdrucken (Umschalter DE/EN). Coconut Commander am Handy: Druckvorlage jetzt auch als PDF." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10238, versionName: "1.2.38",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.38.apk",
+                             hinweise: "Coconut Commander: alle 30 Karten mit Bild wie in der offiziellen App – auch die sechs neuen. Coconut Commander: jede Karte zusätzlich auf Deutsch übersetzt zum Ausdrucken (Umschalter DE/EN). Coconut Commander am Handy: Druckvorlage jetzt auch als PDF." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10332, versionName: "1.3.32",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.32-universal.dmg",
