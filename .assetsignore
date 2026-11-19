@@ -63,3 +63,6 @@ _vorlage-programm.html
 #   downloads/  Downloads liegen auf GitHub und werden von dort verlinkt
 tess
 downloads
+
+# Leitfaeden/Prompts - nur fuer den Betreiber, nicht oeffentlich
+leitfaden/
