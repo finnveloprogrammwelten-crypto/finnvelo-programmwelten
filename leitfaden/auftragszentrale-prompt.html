@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auftragszentrale Leitfaden</title>
+<style>
+:root{
+  --bg:#f6f5f2; --card:#ffffff; --ink:#1d1f23; --muted:#5d636d; --line:#e1ded7;
+  --accent:#b4530f; --accent-soft:#fbeee3; --ok:#2f7d4f; --ok-soft:#e5f3ea;
+  --part:#9a6b00; --part-soft:#fbf2d9; --new:#2c5aa0; --new-soft:#e5edf9;
+  --note:#fffbea; --note-line:#e9dca0; --code:#f0eee9;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#16171a; --card:#1f2125; --ink:#e9e7e2; --muted:#a2a7b0; --line:#33363c;
+    --accent:#f08a3e; --accent-soft:#3a2617; --ok:#6cc690; --ok-soft:#1d3226;
+    --part:#e3b54a; --part-soft:#3a3018; --new:#7ea8ec; --new-soft:#1c2a40;
+    --note:#26241a; --note-line:#4d4628; --code:#2a2c31;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16171a; --card:#1f2125; --ink:#e9e7e2; --muted:#a2a7b0; --line:#33363c;
+  --accent:#f08a3e; --accent-soft:#3a2617; --ok:#6cc690; --ok-soft:#1d3226;
+  --part:#e3b54a; --part-soft:#3a3018; --new:#7ea8ec; --new-soft:#1c2a40;
+  --note:#26241a; --note-line:#4d4628; --code:#2a2c31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.az-wrap{max-width:980px;margin:0 auto;padding:24px 16px 120px}
+header.az-head h1{font-size:1.9rem;margin:0 0 4px;letter-spacing:-.01em}
+header.az-head p{margin:0;color:var(--muted)}
+.az-bar{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin:18px -16px 18px;padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.az-bar button,.az-btn{font:inherit;font-size:.9rem;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer}
+.az-bar button:hover,.az-btn:hover{border-color:var(--accent)}
+.az-bar .az-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.az-bar .az-spacer{flex:1}
+.az-msg{font-size:.85rem;color:var(--ok)}
+.az-toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 18px;margin-bottom:22px}
+.az-toc h2{font-size:1rem;margin:0 0 8px}
+.az-toc ol{margin:0;padding-left:20px;columns:2;column-gap:28px}
+.az-toc li{break-inside:avoid;font-size:.92rem}
+.az-toc a{color:var(--ink);text-decoration:none}
+.az-toc a:hover{color:var(--accent)}
+.az-toc .az-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:6px;vertical-align:middle;background:var(--line)}
+.az-dot[data-s="vorhanden"]{background:var(--ok)}
+.az-dot[data-s="teilweise"]{background:var(--part)}
+.az-dot[data-s="neu"]{background:var(--new)}
+.az-sec{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:16px;scroll-margin-top:70px}
+.az-sec-h{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:6px}
+.az-sec-h h2{font-size:1.2rem;margin:0;flex:1;min-width:200px}
+.az-sec-h select{font:inherit;font-size:.85rem;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.az-sec-h label.az-inc{font-size:.85rem;color:var(--muted);display:flex;gap:5px;align-items:center}
+.az-sec[data-status="vorhanden"]{border-left:5px solid var(--ok)}
+.az-sec[data-status="teilweise"]{border-left:5px solid var(--part)}
+.az-sec[data-status="neu"]{border-left:5px solid var(--new)}
+.az-sec.az-off{opacity:.55}
+.az-txt h3{font-size:.98rem;margin:14px 0 4px}
+.az-txt p{margin:6px 0}
+.az-txt ul{margin:4px 0 8px;padding-left:22px}
+.az-txt li{margin:2px 0}
+.az-txt code{background:var(--code);padding:1px 5px;border-radius:4px;font-size:.88em}
+.az-idee{background:var(--accent-soft);border-radius:8px;padding:8px 12px;margin:10px 0 4px;font-size:.92rem}
+.az-idee b{color:var(--accent)}
+.az-note{margin-top:12px}
+.az-note label{display:block;font-size:.82rem;font-weight:600;color:var(--muted);margin-bottom:4px}
+.az-note textarea,.az-field textarea,.az-field input{width:100%;font:inherit;font-size:.93rem;color:var(--ink);background:var(--note);border:1px solid var(--note-line);border-radius:8px;padding:8px 10px;resize:vertical;min-height:64px}
+.az-field input{min-height:0}
+.az-field{margin:10px 0}
+.az-field label{display:block;font-size:.85rem;font-weight:600;margin-bottom:4px}
+.az-badge{display:inline-block;font-size:.7rem;font-weight:600;letter-spacing:.02em;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:3px}
+.az-del{font-size:.8rem;border:none;background:none;color:var(--muted);cursor:pointer;text-decoration:underline}
+.az-custom-title{font:inherit;font-size:1.15rem;font-weight:700;border:1px dashed var(--line);border-radius:6px;padding:3px 8px;background:transparent;color:var(--ink);flex:1;min-width:200px}
+.az-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted);margin:6px 0 0}
+.az-legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.az-legend .l1::before{background:var(--ok)} .az-legend .l2::before{background:var(--part)} .az-legend .l3::before{background:var(--new)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink);width:min(900px,calc(100vw - 32px));max-height:85vh;padding:0}
+dialog .az-dlg-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace,Menlo,Consolas,monospace;max-height:65vh;overflow:auto}
+@media (max-width:640px){.az-toc ol{columns:1}header.az-head h1{font-size:1.5rem}}
+@media print{.az-bar,.az-note textarea:placeholder-shown{display:none}.az-sec{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="az-wrap">
+
+<header class="az-head">
+  <h1>Auftragszentrale – Prompt &amp; Leitfaden</h1>
+  <p>Bau-Prompt für die Weiterentwicklung der Handwerker-Software. Jeder Abschnitt hat einen Status und ein Notizfeld. „Prompt kopieren“ setzt alles (inkl. Status und Notizen) zu einem fertigen Prompt zusammen.</p>
+  <div class="az-legend"><span class="l1">vorhanden</span><span class="l2">teilweise gebaut</span><span class="l3">neu bauen</span><span class="az-badge" style="margin:0">Ideen-Vorschlag</span> = zusätzliche Idee von Claude – Häkchen „in Prompt“ entfernen, wenn nicht gewünscht</div>
+</header>
+
+<div class="az-bar">
+  <button class="az-primary" id="az-copy">Prompt kopieren</button>
+  <button id="az-show">Prompt ansehen</button>
+  <button id="az-add">+ Eigener Abschnitt</button>
+  <button id="az-save">Als Datei sichern</button>
+  <button id="az-theme" title="Hell/Dunkel">◐</button>
+  <span class="az-spacer"></span>
+  <span class="az-msg" id="az-msg"></span>
+</div>
+
+<nav class="az-toc"><h2>Inhalt</h2><ol id="az-toc"></ol></nav>
+
+<main id="az-main">
+
+<!-- ============ STECKBRIEF ============ -->
+<section class="az-sec" data-id="steckbrief" data-fixed="1">
+  <div class="az-sec-h"><h2>Projekt-Steckbrief (bitte ausfüllen)</h2></div>
+  <div class="az-txt"><p>Diese Angaben stehen ganz oben im Prompt. Leere Felder werden weggelassen.</p></div>
+  <div class="az-field"><label for="f-stack">Technik / Programmiersprache / Plattform des bestehenden Programms</label><input id="f-stack" data-key="stack" placeholder="z. B. Electron + SQLite, Python/Qt, C#/WPF, Web-App …"></div>
+  <div class="az-field"><label for="f-done">Was ist schon gebaut und funktioniert?</label><textarea id="f-done" data-key="done" placeholder="z. B. Angebote mit PDF, Kundenverwaltung, Handwerkerzuschläge, XRechnung + ZUGFeRD …"></textarea></div>
+  <div class="az-field"><label for="f-files">Wichtige Dateien / Ordner / Datenbank-Tabellen</label><textarea id="f-files" data-key="files" placeholder="Wo liegt was im Code?"></textarea></div>
+  <div class="az-field"><label for="f-betrieb">Zielbetrieb (Gewerk, Größe)</label><input id="f-betrieb" data-key="betrieb" placeholder="z. B. Elektro, 3–25 Mitarbeiter, 2–10 Fahrzeuge"></div>
+  <div class="az-field"><label for="f-next">Was soll als Nächstes gebaut werden?</label><textarea id="f-next" data-key="next" placeholder="Leer lassen = Claude schlägt eine Reihenfolge vor."></textarea></div>
+</section>
+
+<!-- ============ 0 ROLLE ============ -->
+<section class="az-sec" data-id="rolle" data-title="Rolle, Ziel und Arbeitsweise">
+  <div class="az-txt">
+    <p>Du bist erfahrener Softwareentwickler und kennst den Alltag deutscher Handwerksbetriebe. Wir entwickeln die <b>Auftragszentrale</b> weiter: ein Programm, mit dem ein Handwerksbetrieb seinen gesamten Ablauf steuert – vom Kundenwunsch über Aufmaß, Angebot, Auftrag, Einsatzplanung und Rechnung bis zur Nachkontrolle, dazu Personal, Teams, Fahrzeuge, Maschinen und Lieferantenkataloge.</p>
+    <h3>Regeln für die Zusammenarbeit</h3>
+    <ul>
+      <li>Das Programm ist teilweise gebaut und funktioniert gut. <b>Lies zuerst den vorhandenen Code</b>, bevor du etwas änderst. Nichts darf kaputtgehen (Anti-Regression hat Vorrang).</li>
+      <li>Bestehende Datenstrukturen, Namen und Werte exakt übernehmen und erweitern, nicht „ungefähr“ neu schreiben.</li>
+      <li>Bei jedem Abschnitt steht ein Status: <i>vorhanden</i> = nur prüfen und ggf. verbessern; <i>teilweise</i> = Lücken schließen; <i>neu</i> = neu bauen. Die Notizen des Auftraggebers haben Vorrang vor diesem Text.</li>
+      <li>Ideen von Marktprodukten (Lexware, HERO, plancraft, ToolTime, Das Programm, openHandwerk u. a.) sind nur Inspiration. <b>Wir bauen nichts nach</b> – eigene Oberfläche, eigene Namen, eigene Lösungen.</li>
+      <li>In kleinen, testbaren Schritten arbeiten. Nach jedem Schritt: kurze Aufzählung der Änderungen und wie man sie testet. Wirklich testen, nicht nur behaupten.</li>
+      <li>Oberfläche und Texte auf Deutsch, verständlich für Leute, die keine Computerexperten sind. Große Bedienelemente, auch auf dem Handy und mit Handschuhen auf der Baustelle bedienbar.</li>
+      <li>Bei echter Unklarheit nachfragen, statt zu raten. Rechtliche Vorgaben (E-Rechnung, GoBD, DSGVO) mit Stand und Quelle benennen.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Eigene Regeln, Wünsche zur Zusammenarbeit …"></textarea></div>
+</section>
+
+<!-- ============ 1 ARCHITEKTUR ============ -->
+<section class="az-sec" data-id="architektur" data-title="Grundgerüst: Datenmodell und Ablauf">
+  <div class="az-txt">
+    <p>Alles hängt an einem durchgehenden <b>Vorgang</b> (Projekt), damit nie doppelt erfasst wird:</p>
+    <p><code>Anfrage → Aufmaß → Angebot (Versionen) → Auftrag → Einsatzplanung → Ausführung (Zeiten, Material, Fotos, Checklisten) → Abnahme → Rechnung(en) → Zahlung/Mahnung → Nachkontrolle/Gewährleistung</code></p>
+    <h3>Kernobjekte</h3>
+    <ul>
+      <li>Kunde, Ansprechpartner, Objekt/Baustelle (eigene Adresse, Zugangshinweise, Fotos)</li>
+      <li>Vorgang mit Status-Leiste, Historie (wer hat wann was geändert) und allen Dokumenten</li>
+      <li>Positionen: Artikel (Material), Leistung (Lohn), Leistungsvorlage (Material + Zeit + benötigte Werkzeuge), Textposition, Titel/Gewerk</li>
+      <li>Mitarbeiter, Team, Fahrzeug, Maschine/Gerät, Termin/Einsatz, Checkliste, Dokument</li>
+    </ul>
+    <h3>Anforderungen</h3>
+    <ul>
+      <li>Jeder Schritt übernimmt die Daten des vorigen per Knopfdruck (Angebot → Auftragsbestätigung → Abschlag → Schlussrechnung).</li>
+      <li>Eindeutige, lückenlose Nummernkreise je Belegart (einstellbar, z. B. <code>AN-2026-0001</code>, <code>RE-2026-0001</code>).</li>
+      <li>Datenmodell so anlegen, dass es später über einen Server synchronisiert werden kann (eindeutige IDs wie UUID, Zeitstempel für Änderungen, „gelöscht“-Markierung statt hartem Löschen).</li>
+      <li>Datenbank-Migrationen versioniert, damit Updates bestehende Daten nicht zerstören.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="z. B. vorhandene Tabellen, Abweichungen …"></textarea></div>
+</section>
+
+<!-- ============ 2 KUNDEN ============ -->
+<section class="az-sec" data-id="kunden" data-title="Kunden, Objekte und Anfragen">
+  <div class="az-txt">
+    <ul>
+      <li>Privat- und Geschäftskunden; bei Geschäftskunden Felder für E-Rechnung: USt-IdNr., <b>Leitweg-ID</b> (öffentliche Auftraggeber), bevorzugtes Format (XRechnung/ZUGFeRD), E-Mail für Rechnungseingang.</li>
+      <li>Mehrere Objekte/Baustellen je Kunde, mit Karte/Navigation, Schlüssel- und Zugangsinfos.</li>
+      <li>Anfrage schnell erfassen (Telefon, E-Mail, vor Ort am Handy) inkl. Fotos und Sprachnotiz → wird zum Vorgang.</li>
+      <li>Kundenakte: alle Vorgänge, Dokumente, offene Posten, Wartungstermine, Notizen.</li>
+      <li>DSGVO: Einwilligungen vermerken, Auskunft/Export und Löschung nach Ablauf der Aufbewahrungsfristen.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 3 AUFMASS ============ -->
+<section class="az-sec" data-id="aufmass" data-title="Aufmaß → Angebot">
+  <div class="az-txt">
+    <ul>
+      <li>Aufmaß vor Ort am Handy/Tablet oder am PC: Gebäude → Etage → Raum → Bauteil (Wand, Boden, Decke, Leitungsweg …).</li>
+      <li>Maße eingeben, Formeln automatisch: Fläche, Umfang, Volumen, laufende Meter, Stückzahl; Abzüge für Fenster/Türen/Öffnungen; Rechenweg sichtbar und nachvollziehbar (prüfbar für Kunde und Abrechnung nach VOB/C).</li>
+      <li>Fotos, Skizze und Notiz je Raum/Bauteil.</li>
+      <li><b>Mengen fließen automatisch ins Angebot:</b> Aus dem Aufmaß wählt man Leistungsvorlagen (z. B. „Steckdose setzen, Unterputz“ = Schalterdose + Steckdoseneinsatz + Rahmen + 0,3 h Lohn). Die Menge kommt aus dem Aufmaß, Material und Zeit aus der Vorlage.</li>
+      <li>Ändert sich das Aufmaß, zeigt das Angebot an, welche Positionen betroffen sind, und bietet die Aktualisierung an.</li>
+      <li>Später: dasselbe Aufmaß als Grundlage für die Abrechnung (Soll aus Angebot vs. Ist nach Ausführung).</li>
+    </ul>
+    <div class="az-idee"><b>Idee aus dem Markt:</b> Einige Anbieter koppeln Laser-Entfernungsmesser per Bluetooth oder bieten Raumscans mit dem Handy an. Als spätere Ausbaustufe vormerken, nicht als Pflicht.</div>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 4 ANGEBOT ============ -->
+<section class="az-sec" data-id="angebot" data-title="Angebotserstellung und PDF">
+  <div class="az-txt">
+    <ul>
+      <li>Angebot mit Titeln/Gewerken, Positionen, Zwischensummen; Positionsarten: normal, Alternativ, Bedarf/Eventual (nicht in der Summe), Pauschal, Textposition.</li>
+      <li>Artikel aus Lieferantenkatalogen, eigenen Artikeln und Leistungsvorlagen per Suche einfügen (Volltext, Artikelnummer, EAN).</li>
+      <li><b>Textbausteine</b> mit Platzhaltern (<code>{Kunde.Anrede}</code>, <code>{Objekt.Adresse}</code>, <code>{Gültig_bis}</code> …) für Einleitung, Schluss, Zahlungs- und Ausführungsbedingungen, Hinweise. Bausteine verwalten, kategorisieren, je Gewerk.</li>
+      <li>Kalkulation je Position sichtbar (nur intern): Einkauf, Aufschlag, Lohnzeit, Zuschläge, Rohertrag.</li>
+      <li>Ausweis des <b>Lohnanteils</b> (für Privatkunden, Steuerermäßigung nach § 35a EStG).</li>
+      <li>Versionen (V1, V2 …) mit Vergleich, was sich geändert hat.</li>
+      <li>PDF in eigenem Briefpapier (Logo, Farben, Fußzeile mit Bank/Steuernummer), Vorschau vor dem Speichern, Versand per E-Mail aus dem Programm.</li>
+      <li>Status: Entwurf, versendet, nachgefasst, angenommen, abgelehnt (mit Grund), abgelaufen. Wiedervorlage „Nachfassen nach X Tagen“.</li>
+      <li>Annahme durch den Kunden: Unterschrift am Tablet oder Bestätigungslink → Vorgang wird automatisch Auftrag.</li>
+      <li>GAEB-Import/Export (Leistungsverzeichnisse von Architekten/öffentlichen Ausschreibungen) als Ausbaustufe.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 5 KALKULATION ============ -->
+<section class="az-sec" data-id="kalkulation" data-title="Kalkulation und Handwerkerzuschläge">
+  <div class="az-txt">
+    <ul>
+      <li>Stundenverrechnungssätze je Lohngruppe (Meister, Geselle, Helfer, Azubi), zentral einstellbar.</li>
+      <li>Materialaufschläge je Warengruppe/Lieferant/Rabattgruppe; Gemeinkosten, Wagnis &amp; Gewinn.</li>
+      <li>Zuschläge: Überstunden, Nacht, Samstag, Sonn-/Feiertag, Notdienst, Schmutz/Erschwernis, Anfahrt (Pauschale oder km/Zone), Kleinmengenzuschlag.</li>
+      <li>Zuschläge sind teilweise schon vorhanden – bestehende Logik prüfen und gleich weiterverwenden, nicht doppelt bauen.</li>
+      <li><b>Nachkalkulation:</b> Soll (Angebot) gegen Ist (erfasste Stunden, verbautes Material, Fahrten) je Auftrag; Ampel bei Abweichung.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 6 AUFTRAG ============ -->
+<section class="az-sec" data-id="auftrag" data-title="Auftrag und Vertragsabwicklung">
+  <div class="az-txt">
+    <ul>
+      <li>Auftragsbestätigung aus dem angenommenen Angebot (ein Klick).</li>
+      <li>Nachträge/Zusatzaufträge während der Ausführung, vom Kunden bestätigen lassen (Unterschrift am Handy).</li>
+      <li>Regieberichte/Stundenzettel digital mit Unterschrift des Kunden.</li>
+      <li>Baustellen-Tagebuch: Fotos, Notizen, Wetter, Behinderungen.</li>
+      <li>Abschlagsrechnungen nach Baufortschritt oder Zahlungsplan.</li>
+      <li>Abnahmeprotokoll mit Mängelliste, Fotos, Unterschrift beider Seiten; Abnahmedatum startet die Gewährleistungsfrist.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 7 RECHNUNG ============ -->
+<section class="az-sec" data-id="rechnung" data-title="Rechnung, E-Rechnung und Originalrechnung">
+  <div class="az-txt">
+    <p>XRechnung und ZUGFeRD sind bereits eingebaut. Ziel: zu jeder Rechnung gibt es <b>eine E-Rechnung und eine Originalrechnung (PDF) mit identischem Inhalt</b>.</p>
+    <h3>Ein Datensatz, zwei Ausgaben</h3>
+    <ul>
+      <li>Rechnungsdaten werden <b>einmal</b> erzeugt und festgeschrieben. Daraus entstehen: (a) das lesbare PDF, (b) die E-Rechnung als XML (XRechnung im CII- oder UBL-Format) und (c) wahlweise ein ZUGFeRD-PDF (PDF/A-3 mit eingebetteter XML, Profil EN 16931 oder höher – nicht MINIMUM/BASIC-WL).</li>
+      <li>Nach dem Erzeugen automatischer <b>Abgleich</b>: Summen, Steuer, Positionen, Nummer, Datum im PDF und im XML müssen übereinstimmen. Bei Abweichung wird nicht versendet.</li>
+      <li>Validierung des XML gegen die offiziellen Regeln (z. B. KoSIT-Validator) vor dem Versand; Fehler verständlich anzeigen.</li>
+      <li>Ansicht „E-Rechnung lesbar“: das XML wird als normale Rechnung dargestellt, damit man sieht, was drinsteht.</li>
+      <li>Versand: PDF + XML zusammen per E-Mail; je Kunde einstellbar, welches Format er bekommt.</li>
+    </ul>
+    <h3>Pflichten und Regeln</h3>
+    <ul>
+      <li>Pflichtangaben nach § 14 UStG, Leistungsdatum/-zeitraum, Steuersätze getrennt, Hinweis bei § 13b (Reverse-Charge, Bauleistungen an andere Bauunternehmer), Kleinunternehmer-Hinweis falls zutreffend.</li>
+      <li>Rechnungsarten: Abschlag, Teil-, Schluss- (mit Abzug der Abschläge), Storno/Korrektur, Gutschrift. Festgeschriebene Rechnungen werden nie geändert, nur storniert (GoBD).</li>
+      <li>Lohnanteil für § 35a ausweisen.</li>
+      <li>Offene Posten, Zahlungseingang (automatisch über den Bank-Abgleich, siehe eigener Abschnitt), Skonto, Mahnstufen mit Vorlagen.</li>
+      <li><b>Eingangsrechnungen</b> (E-Rechnungen von Lieferanten) empfangen, lesbar anzeigen, dem Vorgang zuordnen – für die Nachkalkulation.</li>
+      <li>Übergabe an den Steuerberater: siehe Abschnitt „Steuervorbereitung“.</li>
+      <li>Stand Nov. 2026: Empfang von E-Rechnungen ist seit 01.01.2025 Pflicht; Ausstellen im B2B ab 01.01.2027 für Betriebe mit über 800.000 € Vorjahresumsatz, ab 01.01.2028 für alle. Rechnungen an Privatkunden bleiben als PDF/Papier zulässig. Vor dem Bau aktuellen Stand prüfen.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="z. B. welche Bibliothek für XRechnung/ZUGFeRD schon genutzt wird …"></textarea></div>
+</section>
+
+<!-- ============ BANK ============ -->
+<section class="az-sec" data-id="bank" data-title="Bank-Abgleich: Kontoauszug und offene Rechnungen">
+  <div class="az-txt">
+    <p>Ziel: Zahlungseingänge und -ausgänge werden automatisch den offenen Rechnungen zugeordnet. Man sieht sofort, was bezahlt ist, was fehlt und was gemahnt werden muss.</p>
+    <h3>Kontoauszüge holen</h3>
+    <ul>
+      <li>Import als Datei: <b>CAMT.053</b> (XML, heutiger Standard der Banken), MT940 (älter), CSV mit Spaltenzuordnung je Bank.</li>
+      <li>Ausbaustufe: direkter Abruf vom Bankkonto (FinTS/HBCI oder ein PSD2-Kontodienst), mehrere Konten.</li>
+      <li>Doppelte Umsätze beim erneuten Import erkennen und überspringen.</li>
+    </ul>
+    <h3>Automatischer Abgleich</h3>
+    <ul>
+      <li>Jeder Umsatz wird mit offenen Ausgangs- <i>und</i> Eingangsrechnungen verglichen: <b>Rechnungsnummer</b> im Verwendungszweck, Betrag, Name/IBAN des Zahlers, Datum.</li>
+      <li>Ergebnis mit Sicherheitsstufe: <i>sicher</i> (Nummer + Betrag passen) → nach Bestätigung oder automatisch verbuchen; <i>Vorschlag</i> (nur Betrag/Name passt) → Nutzer bestätigt; <i>unklar</i> → Liste „nicht zugeordnet“.</li>
+      <li>Sonderfälle: Teilzahlung (Rest bleibt offen), Skonto-Abzug (prüfen, ob Frist eingehalten), Überzahlung, eine Zahlung für mehrere Rechnungen, Abschlagszahlungen, Bankgebühren, Rücklastschrift.</li>
+      <li>Das Programm lernt: einmal bestätigte Zuordnungen (z. B. IBAN → Kunde) werden beim nächsten Mal vorgeschlagen.</li>
+      <li>Zahlungen ohne Rechnung (z. B. Tankkarte, Miete, Versicherung) einer Kategorie/einem Konto zuordnen, mit Regeln („Verwendungszweck enthält Aral → Kfz-Kosten, Fahrzeug XY“).</li>
+    </ul>
+    <h3>Folgen im Programm</h3>
+    <ul>
+      <li>Rechnung wird auf „bezahlt“/„teilweise bezahlt“ gesetzt, mit Zahlungsdatum – sichtbar im Vorgang und in der Kundenakte.</li>
+      <li>Überfällige, nicht bezahlte Rechnungen → Vorschlag für Zahlungserinnerung/Mahnung (Mahnung wird nicht automatisch verschickt).</li>
+      <li>Eingangsrechnungen: Übersicht, was noch zu bezahlen ist, Skontofristen, Vorschlag für Überweisungen (Ausbaustufe: SEPA-Datei erzeugen).</li>
+      <li>Übersicht offene Posten und Liquidität: erwartete Eingänge, fällige Ausgänge.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welche Bank(en)? Welches Format kann die Bank liefern?"></textarea></div>
+</section>
+
+<!-- ============ STEUER ============ -->
+<section class="az-sec" data-id="steuer" data-title="Steuervorbereitung für den Steuerberater">
+  <div class="az-txt">
+    <p>Ziel: Der Steuerberater bekommt jeden Monat (oder Quartal) vollständige, geordnete Unterlagen – ohne Schuhkarton. Die Auftragszentrale ersetzt keine Buchhaltung und keine Steuerberatung, bereitet aber alles so vor, dass er direkt weiterarbeiten kann.</p>
+    <h3>Was gesammelt wird</h3>
+    <ul>
+      <li>Alle Ausgangsrechnungen (inkl. Storno/Gutschrift), Eingangsrechnungen (E-Rechnungen und gescannte/fotografierte Belege), Kassenbelege, Bankumsätze aus dem Bank-Abgleich.</li>
+      <li>Belege fotografieren in der App (Tankquittung, Baumarkt) → Texterkennung schlägt Datum, Betrag, Steuersatz, Lieferant vor → dem Vorgang/Fahrzeug/einer Kostenart zuordnen.</li>
+      <li>Jeder Beleg hat einen Status: fehlt, erfasst, geprüft, übergeben. Liste „Bankumsatz ohne Beleg“ und „Beleg ohne Zahlung“.</li>
+    </ul>
+    <h3>Übergabe</h3>
+    <ul>
+      <li><b>DATEV-Export</b> (Buchungsstapel im DATEV-Format mit Belegen, Kontenrahmen SKR03 oder SKR04 wählbar, Belegbild verknüpft) – das Format, das die meisten Steuerberater einlesen.</li>
+      <li>Alternativ: ZIP-Paket je Zeitraum mit allen Belegen als PDF/XML plus Übersichtstabelle (CSV/Excel).</li>
+      <li>Ausbaustufe: direkte Übertragung an DATEV Unternehmen online.</li>
+      <li>Export-Protokoll: welcher Zeitraum wann übergeben wurde; übergebene Zeiträume sperren (Änderung nur per Storno/Korrektur).</li>
+    </ul>
+    <h3>Auswertungen zur Vorbereitung</h3>
+    <ul>
+      <li>Umsatzsteuer-Übersicht je Zeitraum: Umsätze nach Steuersatz, § 13b-Umsätze, Vorsteuer aus Eingangsrechnungen – als Kontrollzahl für die Umsatzsteuer-Voranmeldung (die Anmeldung selbst macht der Steuerberater bzw. ELSTER).</li>
+      <li>Ist- oder Soll-Versteuerung einstellbar (bestimmt, ob Rechnungsdatum oder Zahlungseingang zählt).</li>
+      <li>Einnahmen-Überschuss-Übersicht nach Kostenarten (Material, Fahrzeuge, Personal, Werkzeug …), Fahrzeugkosten je Kennzeichen.</li>
+      <li>Stunden und Zuschläge je Mitarbeiter als Vorbereitung für die Lohnabrechnung (Übergabe als Liste, keine eigene Lohnabrechnung).</li>
+    </ul>
+    <h3>Pflichten</h3>
+    <ul>
+      <li>GoBD: Belege unveränderbar archivieren, Änderungen protokollieren, Verfahrensdokumentation vorbereiten; Aufbewahrungsfristen (Rechnungen/Buchungsbelege 8 Jahre, Bücher/Jahresabschlüsse 10 Jahre – Stand prüfen).</li>
+      <li>E-Rechnungen im Original-Format (XML) aufbewahren, nicht nur als PDF.</li>
+      <li>Datenexport für eine Betriebsprüfung (GDPdU/Z3-Datenträgerüberlassung) als Ausbaustufe.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welcher Kontenrahmen? Was möchte euer Steuerberater bekommen?"></textarea></div>
+</section>
+
+<!-- ============ 8 NACHKONTROLLE ============ -->
+<section class="az-sec" data-id="nachkontrolle" data-title="Nachkontrolle, Gewährleistung, Wartung">
+  <div class="az-txt">
+    <ul>
+      <li>Abschluss-Checkliste muss vollständig sein, bevor die Schlussrechnung freigegeben wird (abschaltbar).</li>
+      <li>Mängel aus der Abnahme als Aufgaben mit Frist und Zuständigem; Erledigung mit Foto.</li>
+      <li>Gewährleistungsfristen je Auftrag (BGB 2/5 Jahre oder VOB/B 4 Jahre) mit Erinnerung vor Ablauf (Begehung anbieten).</li>
+      <li>Wartungsverträge und wiederkehrende Prüfungen beim Kunden (z. B. E-Check, Heizungswartung) → automatische Wiedervorlage und Angebot/Auftrag.</li>
+      <li>Nachkalkulation und kurze Auswertung „Was lief gut/schlecht“ je Auftrag.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ ANLAGENAKTE (Vorschlag) ============ -->
+<section class="az-sec" data-id="anlagenakte" data-idea="1" data-title="Anlagenakte beim Kunden und gewerkspezifische Nachweise">
+  <div class="az-txt">
+    <ul>
+      <li>Je Objekt eine <b>Anlagenakte</b>: welche Geräte/Anlagen wurden verbaut (Hersteller, Typ, Seriennummer, Einbaudatum, Garantieende, Handbuch/Datenblatt, Fotos).</li>
+      <li>Daraus: Wartungsangebote, Garantiefälle, schneller Überblick bei Störungsanrufen („was ist bei dem Kunden verbaut?“).</li>
+      <li>Prüf- und Messprotokolle (z. B. Elektro: Erstprüfung nach DIN VDE 0100-600, wiederkehrende Prüfung, E-Check; Messwerte eingeben oder aus dem Messgerät importieren) als PDF an den Kunden und in die Akte.</li>
+      <li>Vorlagen für typische Formulare je Gewerk, z. B. Anmeldung beim Netzbetreiber (Wallbox, PV, Wärmepumpe), Inbetriebnahmeprotokoll, Übergabe-/Einweisungsprotokoll.</li>
+      <li>Hinweis auf mögliche Förderprogramme beim Angebot (z. B. Heizung, Energieeffizienz) mit Checkliste der nötigen Nachweise – Stand der Programme immer aktuell prüfen, keine Rechtsberatung.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welche Gewerke / Protokolle braucht ihr?"></textarea></div>
+</section>
+
+<!-- ============ 9 PERSONAL ============ -->
+<section class="az-sec" data-id="personal" data-title="Personal">
+  <div class="az-txt">
+    <ul>
+      <li>Mitarbeiterakte: Kontaktdaten, Lohngruppe, Arbeitszeitmodell, Führerscheinklassen, Qualifikationen und Nachweise mit Ablaufdatum (z. B. Elektrofachkraft, Ersthelfer, Staplerschein, Arbeiten unter Spannung, Höhenarbeit) – Erinnerung vor Ablauf.</li>
+      <li>Abwesenheiten: Urlaub (Antrag/Genehmigung), Krankheit, Schule/Berufsschule, Fortbildung; Kalenderansicht.</li>
+      <li><b>Krankmeldung</b> per App durch den Mitarbeiter oder das Büro → betroffene Einsätze werden sofort markiert (siehe Einsatzplanung).</li>
+      <li>Zeiterfassung je Auftrag (Start/Stopp in der App, Pausen, Fahrzeit), Übergabe an Nachkalkulation und Lohnvorbereitung.</li>
+      <li>Persönliche Werkzeug-/Geräteausgabe je Mitarbeiter.</li>
+      <li>Datenschutz: Gesundheitsdaten nur „abwesend/krank“, keine Diagnosen; Rechte so, dass Monteure nur ihre eigenen Daten sehen.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 10 TEAMS ============ -->
+<section class="az-sec" data-id="teams" data-title="Teams">
+  <div class="az-txt">
+    <ul>
+      <li>Teams aus Mitarbeitern bilden (fest oder für einen Zeitraum), mit Teamleiter.</li>
+      <li>Team hat Stamm-Fahrzeug und Stamm-Maschinen.</li>
+      <li>Aufträge an einzelne Mitarbeiter oder ganze Teams zuweisen; einzelne Personen können für einen Tag ausgeliehen werden.</li>
+      <li>Team-Übersicht: wer ist heute da, welche Baustelle, welches Fahrzeug, welche Geräte.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ ARBEITSSCHUTZ (Vorschlag) ============ -->
+<section class="az-sec" data-id="arbeitsschutz" data-idea="1" data-title="Arbeitsschutz, Unterweisungen und Nachunternehmer">
+  <div class="az-txt">
+    <h3>Arbeitsschutz</h3>
+    <ul>
+      <li>Gefährdungsbeurteilung je Baustelle aus Vorlagen (Höhe, Strom, Staub, Lärm …), am Handy vor Arbeitsbeginn bestätigen.</li>
+      <li>Jährliche Unterweisungen mit digitaler Unterschrift und Erinnerung; Ausgabe persönlicher Schutzausrüstung dokumentieren.</li>
+      <li>Gefahrstoffliste mit Sicherheitsdatenblättern.</li>
+    </ul>
+    <h3>Nachunternehmer</h3>
+    <ul>
+      <li>Nachunternehmer als eigene Kontakte mit Gewerk, Stundensätzen und Nachweisen (Freistellungsbescheinigung nach § 48b EStG, Versicherung) inkl. Ablaufwarnung.</li>
+      <li>Teilaufträge aus dem Angebot an Nachunternehmer vergeben, in der Plantafel sichtbar; deren Rechnungen dem Vorgang zuordnen (§ 13b beachten).</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
+<!-- ============ 11 FUHRPARK ============ -->
+<section class="az-sec" data-id="fuhrpark" data-title="Fahrzeuge, Maschinen und Geräte">
+  <div class="az-txt">
+    <h3>Fahrzeuge</h3>
+    <ul>
+      <li>Kennzeichen, Typ, Zuladung, Sitzplätze, nötige Führerscheinklasse, Kilometerstand, Leasing-/Finanzierungsende.</li>
+      <li>Termine mit Erinnerung: <b>HU</b>, Inspektion, Reifenwechsel, UVV-Prüfung, Führerscheinkontrolle der Fahrer.</li>
+      <li>Status: verfügbar, im Einsatz, <b>in Reparatur</b>, in Werkstatt-Termin, außer Dienst; mit Zeitraum.</li>
+      <li>Zuordnung zu Team oder Mitarbeiter; Kosten (Tanken, Reparatur) erfassen.</li>
+      <li><i>Idee:</i> Fahrtenbuch aus den Einsätzen vorbefüllen (Datum, Ziel, Kunde, km) – nur Fahrer bestätigt; Tankkarten-Umsätze über den Bank-Abgleich dem Fahrzeug zuordnen.</li>
+      <li><i>Idee:</i> Schadensmeldung per App (Foto, Beschreibung) → Fahrzeug automatisch auf „in Reparatur“, Planung wird gewarnt.</li>
+    </ul>
+    <h3>Maschinen und Geräte</h3>
+    <ul>
+      <li>Inventar mit Bild, Seriennummer, Kaufdatum, Wert; Gruppen (z. B. Bohrhammer, Kernbohrgerät, Messgerät, Gerüst).</li>
+      <li>Wartungsintervalle und Prüfungen: Wartung nach Zeit/Betriebsstunden, <b>Prüfung ortsveränderlicher elektrischer Betriebsmittel (DGUV V3)</b>, Kalibrierung von Messgeräten.</li>
+      <li>Wo ist was? Wer hat welche Maschine, auf welcher Baustelle, seit wann. Ausgabe/Rückgabe per QR-Code-Aufkleber und Handy-Scan.</li>
+      <li>Übersicht „Verfügbarkeit“: wie viele Geräte einer Art es gibt, wie viele unterwegs, in Reparatur oder frei – für jeden Tag der Planung.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 12 EINSATZPLANUNG ============ -->
+<section class="az-sec" data-id="planung" data-title="Einsatzplanung (Plantafel) mit Planungs-Assistent">
+  <div class="az-txt">
+    <ul>
+      <li>Plantafel: Tag/Woche/Monat; Zeilen = Mitarbeiter, Teams, Fahrzeuge oder Maschinen; Aufträge per Ziehen und Ablegen zuweisen.</li>
+      <li>Einsatz = Auftrag + Zeitraum + Personen/Team + Fahrzeug + Maschinen + Packliste.</li>
+      <li>Monteure sehen ihre Einsätze in der App mit Adresse, Navigation, Unterlagen, Checklisten.</li>
+      <li><i>Idee:</i> Notdienst-/Störungsaufträge: Schnellerfassung in 30 Sekunden, Bereitschaftsplan (wer hat heute Notdienst), Notdienstzuschlag automatisch.</li>
+      <li><i>Idee:</i> Routenvorschlag bei mehreren Einsätzen am Tag; Fahrzeit zwischen Baustellen in der Planung berücksichtigen.</li>
+      <li><i>Idee:</i> Wetterhinweis bei Außenarbeiten (Dach, Fassade, Erdarbeiten) für die geplanten Tage.</li>
+      <li><i>Idee:</i> Kalender-Abo (iCal) für Mitarbeiter, damit Einsätze auch im Handy-Kalender stehen.</li>
+    </ul>
+    <h3>Der Assistent prüft und warnt</h3>
+    <ul>
+      <li>Mitarbeiter krank/Urlaub/Berufsschule → „Auftrag X kann heute nicht wie geplant bedient werden“.</li>
+      <li>Doppelbuchung von Person, Fahrzeug oder Maschine.</li>
+      <li>Fahrzeug muss im Einsatzzeitraum zur <b>HU</b>/Werkstatt, ist in Reparatur oder Prüfung/Wartung einer Maschine fällig.</li>
+      <li>Benötigte Maschine (aus Leistungsvorlage/Packliste) ist nicht verfügbar oder nicht genug vorhanden.</li>
+      <li>Qualifikation oder Führerschein fehlt; Fahrzeug hat zu wenig Plätze für das Team.</li>
+      <li>Material laut Packliste noch nicht bestellt/geliefert.</li>
+    </ul>
+    <h3>Der Assistent schlägt vor</h3>
+    <ul>
+      <li>„Mitarbeiter Y hat an diesem Tag keinen Auftrag und die nötige Qualifikation – hinzufügen?“</li>
+      <li>Ersatzfahrzeug oder Ersatzgerät, das frei ist.</li>
+      <li>Verschieben auf den nächsten passenden Tag mit Vorschlag einer Nachricht an den Kunden.</li>
+    </ul>
+    <p>Regeln sind nachvollziehbar (es wird angezeigt, <i>warum</i> gewarnt wird). Der Mensch entscheidet – der Assistent ändert nichts ohne Bestätigung. Erst regelbasiert bauen; eine KI-Unterstützung kann später dazukommen.</p>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 13 KATALOGE ============ -->
+<section class="az-sec" data-id="kataloge" data-title="Lieferantenkataloge und Artikelstamm">
+  <div class="az-txt">
+    <ul>
+      <li>Import von Herstellern und Großhändlern (z. B. Busch-Jaeger, meist über den Elektrogroßhandel): <b>DATANORM 4 und 5</b>, <b>BMEcat</b>, CSV/Excel mit Spaltenzuordnung.</li>
+      <li>Artikeldaten: Artikelnummer, EAN, Hersteller, Kurz- und Langtext, Warengruppe, Einheit, Listenpreis, Rabattgruppe, eigener Einkaufspreis, Bild, technische Merkmale.
+        Beispiel: <code>Steckdose SCHUKO, cremeweiß, 16 A / 250 V, Unterputz – Preis X €</code>.</li>
+      <li>Rabattgruppen/Konditionen je Lieferant; Preisaktualisierung durch neuen Import (Änderungen anzeigen, alte Preise in bestehenden Angeboten bleiben).</li>
+      <li>Mehrere Lieferanten für denselben Artikel (EAN) → günstigsten anzeigen.</li>
+      <li>Eigene Artikel und Leistungsvorlagen anlegen; Favoriten und Schnellsuche.</li>
+      <li>Ausbaustufe: <b>IDS-Connect</b> (Artikel direkt aus dem Großhändler-Shop übernehmen, Live-Preis/Verfügbarkeit) und Bestellung beim Großhändler aus der Packliste (z. B. UGL/IDS).</li>
+      <li>Große Kataloge (Hunderttausende Artikel) müssen schnell durchsuchbar bleiben (Index).</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welche Lieferanten / Großhändler werden genutzt?"></textarea></div>
+</section>
+
+<!-- ============ LAGER (Vorschlag) ============ -->
+<section class="az-sec" data-id="lager" data-idea="1" data-title="Lager und Bestellwesen">
+  <div class="az-txt">
+    <ul>
+      <li>Lagerorte: Hauptlager, <b>Fahrzeuglager</b> (jeder Wagen ist ein kleines Lager), Baustelle.</li>
+      <li>Bestand je Artikel und Ort, Mindestbestand → Bestellvorschlag; Umbuchen zwischen Lagerorten per Scan (EAN/QR).</li>
+      <li>Packliste bucht Material vom Lager auf den Auftrag; Restmaterial wird zurückgebucht → stimmt für die Nachkalkulation.</li>
+      <li>Bestellungen beim Großhändler aus Packliste oder Bestellvorschlag (PDF/E-Mail, später IDS/UGL); Liefertermin, Wareneingang mit Lieferschein-Foto, Teillieferungen.</li>
+      <li>Lieferschein ↔ Eingangsrechnung ↔ Bestellung abgleichen (Menge und Preis); Abweichungen markieren.</li>
+      <li>Inventur zum Jahresende per Handy (Zählliste je Lagerort), Ergebnis für den Steuerberater.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Gibt es ein festes Lager? Fahrzeuglager?"></textarea></div>
+</section>
+
+<!-- ============ 14 CHECKLISTEN ============ -->
+<section class="az-sec" data-id="checklisten" data-title="Checklisten: Packliste und Abschluss">
+  <div class="az-txt">
+    <h3>Packliste (vor dem Einsatz)</h3>
+    <ul>
+      <li>Wird automatisch aus dem Angebot/Auftrag erzeugt: Material zusammengefasst nach Artikel und Menge, plus Werkzeuge/Maschinen aus den Leistungsvorlagen.</li>
+      <li>Aufteilen: „ist im Lager“, „muss bestellt werden“, „wird direkt auf die Baustelle geliefert“.</li>
+      <li>Beim Beladen abhaken (Handy), fehlende Teile markieren; Packliste je Einsatztag teilbar.</li>
+      <li>Druckbar als PDF.</li>
+    </ul>
+    <h3>Abschluss-Checkliste (nach den Arbeiten)</h3>
+    <ul>
+      <li>Aus den Positionen des Auftrags erzeugt („alle Steckdosen gesetzt“, „Messprotokoll erstellt“, „Baustelle gereinigt“) plus Vorlagen je Gewerk.</li>
+      <li>Jeder Punkt: erledigt/nicht erledigt/nicht nötig, Foto, Kommentar; Mehr- oder Mindermengen gegenüber Angebot erfassen → fließt in die Rechnung.</li>
+      <li>Unterschrift des Kunden; daraus Abnahme- und Übergabeprotokoll.</li>
+      <li>Checklisten-Vorlagen frei anlegen und bearbeiten.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ 15 SERVER ============ -->
+<section class="az-sec" data-id="server" data-title="Server, Synchronisation und App">
+  <div class="az-txt">
+    <ul>
+      <li>Das Programm verbindet sich mit einem Server; Anmeldung am PC und mit einer <b>Android-App</b> (später ggf. iOS/Browser). Überall dieselben Daten.</li>
+      <li><b>Offline zuerst:</b> Auf der Baustelle ohne Netz weiterarbeiten (Aufmaß, Angebot, Checklisten, Zeiten), später automatisch abgleichen. Konflikte erkennen und verständlich lösen lassen.</li>
+      <li>Benutzer und Rollen: Inhaber/Admin, Büro, Teamleiter, Monteur, Azubi – mit fein einstellbaren Rechten (z. B. Monteur sieht keine Einkaufspreise).</li>
+      <li>Sicherheit: verschlüsselte Verbindung, sichere Passwörter, Geräte abmelden/sperren, Protokoll der Anmeldungen.</li>
+      <li>Automatische Sicherungen auf dem Server, Wiederherstellung testen; Daten in Deutschland/EU; Auftragsverarbeitungsvertrag bedenken.</li>
+      <li>Fotos und Dokumente effizient übertragen (verkleinern, im Hintergrund hochladen).</li>
+      <li>Weiterhin nutzbar ohne Server (Einzelplatz) – der Server ist eine Option.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welcher Server? Eigener, gemietet, Cloudflare …"></textarea></div>
+</section>
+
+<!-- ============ MONTEURAPP (Vorschlag) ============ -->
+<section class="az-sec" data-id="monteurapp" data-idea="1" data-title="Baustellen-App für Monteure">
+  <div class="az-txt">
+    <ul>
+      <li>Startbildschirm „Mein Tag“: Einsätze in Reihenfolge, Navigation, Ansprechpartner anrufen, Notizen vom Büro.</li>
+      <li>Mit wenigen Tippern: Arbeitszeit starten/stoppen, verbrauchtes Material scannen oder aus der Packliste abhaken, Fotos (vorher/nachher, mit Datum/Ort), Mängel oder Zusatzarbeiten melden.</li>
+      <li><b>Sprachnotiz → Text</b> (Diktat), damit niemand mit Handschuhen tippen muss.</li>
+      <li>Regiebericht, Abnahme und Checkliste vor Ort mit Kundenunterschrift abschließen.</li>
+      <li>Krank-/Abwesenheitsmeldung und Urlaubsantrag aus der App.</li>
+      <li>Funktioniert offline; große Schaltflächen, Hell-/Dunkel-Modus, auch für ältere Geräte.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
+<!-- ============ 16 DOKUMENTE ============ -->
+<section class="az-sec" data-id="dokumente" data-title="Dokumente, Vorlagen und Kommunikation">
+  <div class="az-txt">
+    <ul>
+      <li>Einheitliches Layout für alle PDFs (Angebot, AB, Rechnung, Lieferschein, Regiebericht, Packliste, Abnahme), im Programm anpassbar.</li>
+      <li>E-Mail-Vorlagen mit Platzhaltern; gesendete E-Mails im Vorgang ablegen.</li>
+      <li>Dokumentenablage je Vorgang (Pläne, Fotos, Datenblätter, Messprotokolle) – revisionssicher für Belege (GoBD).</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ KOMMUNIKATION (Vorschlag) ============ -->
+<section class="az-sec" data-id="kommunikation" data-idea="1" data-title="Kundenkommunikation und Kundenportal">
+  <div class="az-txt">
+    <ul>
+      <li>Terminbestätigung und Erinnerung am Vortag per E-Mail/SMS automatisch; Kunde kann bestätigen oder Verschiebung anfragen.</li>
+      <li>„Monteur ist unterwegs“-Nachricht mit ungefährer Ankunftszeit (ein Knopf in der App).</li>
+      <li>Kundenportal per persönlichem Link: Angebot ansehen und annehmen, Termine, Rechnungen, Dokumente, Fotos vom Baufortschritt.</li>
+      <li>Nach Abschluss: kurze Zufriedenheitsabfrage; bei guter Bewertung Hinweis auf öffentliche Bewertung.</li>
+      <li>Alle Nachrichten landen im Vorgang (keine Infos mehr nur im Handy eines Mitarbeiters).</li>
+      <li>Datenschutz: Einwilligung für SMS/Messenger, Portal-Links mit Ablaufdatum.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
+<!-- ============ 17 AUSWERTUNG ============ -->
+<section class="az-sec" data-id="auswertung" data-title="Startseite und Auswertungen">
+  <div class="az-txt">
+    <ul>
+      <li>Startseite „Heute“: Einsätze, Warnungen des Assistenten, fällige Termine (HU, Wartung, Prüfungen, Gewährleistung), offene Angebote zum Nachfassen, überfällige Rechnungen, nicht zugeordnete Bankumsätze, fehlende Belege.</li>
+      <li>Auswertungen: Umsatz, offene Posten, Angebotsquote, Auslastung je Mitarbeiter/Team, Nachkalkulation je Auftrag, Kosten je Fahrzeug.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ KI (Vorschlag) ============ -->
+<section class="az-sec" data-id="ki" data-idea="1" data-title="KI-Helfer (optional, abschaltbar)">
+  <div class="az-txt">
+    <ul>
+      <li>Angebotsentwurf aus Sprachnotiz, Fotos und Aufmaß vorschlagen („Bad: 6 Steckdosen, 2 Lichtauslässe, FI erneuern“) – Mensch prüft und ändert.</li>
+      <li>Langtexte und Kunden-E-Mails formulieren lassen, Textbausteine verbessern.</li>
+      <li>Belege und Lieferanten-PDFs auslesen (falls keine E-Rechnung vorliegt).</li>
+      <li>Fragen an die eigenen Daten: „Welche Aufträge haben letztes Jahr Verlust gemacht?“</li>
+      <li>Datenschutz: klar anzeigen, welche Daten an einen KI-Dienst gehen; ohne KI muss alles weiter funktionieren.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
+<!-- ============ EINRICHTUNG (Vorschlag) ============ -->
+<section class="az-sec" data-id="einrichtung" data-idea="1" data-title="Einrichtung, Datenübernahme und Hilfe">
+  <div class="az-txt">
+    <ul>
+      <li>Einrichtungsassistent beim ersten Start: Firmendaten, Logo, Bank, Steuerdaten, Nummernkreise, Stundensätze, Mitarbeiter, Fahrzeuge.</li>
+      <li>Datenübernahme aus Excel/CSV oder anderen Programmen (Kunden, Artikel, offene Posten).</li>
+      <li>Demo-Firma mit Beispieldaten zum Ausprobieren und Testen, getrennt von echten Daten.</li>
+      <li>Kurze Hilfetexte direkt an den Feldern, Video-/Bild-Anleitungen, Suchfeld „Wie mache ich …?“.</li>
+      <li>Mehrere Firmen/Mandanten oder Niederlassungen in einem Programm (Ausbaustufe).</li>
+      <li>Sicherung als Datei jederzeit herunterladbar und wieder einspielbar.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
+<!-- ============ 18 MARKT ============ -->
+<section class="az-sec" data-id="markt" data-title="Ideen aus dem Markt (nur Inspiration)">
+  <div class="az-txt">
+    <p>Was gängige Handwerkerprogramme bieten und was für uns interessant ist – <b>nicht nachbauen</b>, nur als Anregung:</p>
+    <ul>
+      <li>Durchgehende Projekt-Pipeline vom Kontakt bis zur Zahlung; Plantafel mit Ziehen/Ablegen; Zeiterfassung in der App.</li>
+      <li>DATANORM- und GAEB-Import, Aufmaß mit Übergabe ins Angebot, Materialkataloge.</li>
+      <li>Digitale Unterschrift beim Kunden (Angebot, Regiebericht, Abnahme).</li>
+      <li>Schnittstellen zu Großhändlern (IDS) und zum Steuerberater (DATEV); Bankabgleich mit automatischer Zuordnung von Zahlungen; Belege per Handyfoto mit Texterkennung.</li>
+      <li>Kundenportal: Kunde sieht Angebot/Termin/Rechnung online (Ausbaustufe).</li>
+      <li>Häufige Kritik an Marktprodukten, die wir besser machen wollen: zu kompliziert, Funktionen in teuren Zusatzpaketen, schwache Offline-Fähigkeit, Buchhaltung nur rudimentär.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Eigene Beobachtungen, Programme, die man sich anschauen will …"></textarea></div>
+</section>
+
+<!-- ============ 19 VORGEHEN ============ -->
+<section class="az-sec" data-id="vorgehen" data-title="Vorgehen, Reihenfolge und Abnahmekriterien">
+  <div class="az-txt">
+    <h3>Vorschlag für die Reihenfolge</h3>
+    <ul>
+      <li>Schritt 0: Bestandsaufnahme – Code lesen, kurz zusammenfassen, was vorhanden ist und wie das Datenmodell aussieht. Abgleich mit diesem Leitfaden: was fehlt, was kollidiert.</li>
+      <li>Schritt 1: Datenmodell erweitern (Vorgang, Mitarbeiter, Teams, Fahrzeuge, Maschinen, Termine) mit Migration.</li>
+      <li>Schritt 2: Rechnung – E-Rechnung und Original-PDF aus einem Datensatz mit Abgleich; danach Bank-Abgleich (Kontoauszug ↔ offene Rechnungen) und Steuervorbereitung (DATEV-Export).</li>
+      <li>Schritt 3: Kataloge (DATANORM/CSV) und Leistungsvorlagen.</li>
+      <li>Schritt 4: Aufmaß → Angebot, Packliste und Abschluss-Checkliste.</li>
+      <li>Schritt 5: Personal, Teams, Fuhrpark/Maschinen mit Terminen.</li>
+      <li>Schritt 6: Plantafel und Planungs-Assistent.</li>
+      <li>Schritt 7: Server, Benutzer/Rollen, Synchronisation, Android-App.</li>
+      <li>Schritt 8: Auswertungen, Nachkontrolle, Lager, Anlagenakte, Baustellen-App, Kundenkommunikation.</li>
+      <li>Schritt 9: Ausbaustufen (GAEB, IDS, Kundenportal, Arbeitsschutz, Nachunternehmer, KI-Helfer, Mandanten). Einrichtungsassistent und Demo-Firma wachsen von Anfang an mit.</li>
+    </ul>
+    <h3>Jeder Schritt gilt als fertig, wenn</h3>
+    <ul>
+      <li>vorhandene Funktionen nachweislich weiter laufen (vorher/nachher getestet),</li>
+      <li>die neue Funktion mit realistischen Beispieldaten getestet ist (z. B. Elektro-Auftrag „Küche neu verkabeln“),</li>
+      <li>bei Rechnungen das XML validiert und mit dem PDF abgeglichen ist,</li>
+      <li>eine kurze Änderungsliste und Testanleitung geliefert wurde.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+</main>
+
+<dialog id="az-dlg">
+  <div class="az-dlg-h"><b>Fertiger Prompt</b><span><button class="az-btn" id="az-dlg-copy">Kopieren</button> <button class="az-btn" id="az-dlg-close">Schließen</button></span></div>
+  <pre id="az-pre"></pre>
+</dialog>
+</div>
+
+<script>
+(function(){
+  var KEY='auftragszentrale-leitfaden-v1';
+  var main=document.getElementById('az-main');
+  var STATUS=[['','– Status –'],['vorhanden','vorhanden'],['teilweise','teilweise gebaut'],['neu','neu bauen']];
+
+  function store(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+  function msg(t){var m=document.getElementById('az-msg');m.textContent=t;clearTimeout(msg.t);msg.t=setTimeout(function(){m.textContent=''},2500)}
+
+  function decorate(sec){
+    if(sec.dataset.fixed||sec.querySelector('.az-sec-h'))return;
+    var h=document.createElement('div');h.className='az-sec-h';
+    var title;
+    if(sec.dataset.custom){title=document.createElement('input');title.className='az-custom-title';title.value=sec.dataset.title||'Eigener Abschnitt';title.addEventListener('input',function(){sec.dataset.title=title.value;toc();save()})}
+    else{title=document.createElement('h2');title.textContent=sec.dataset.title;if(sec.dataset.idea){var bd=document.createElement('span');bd.className='az-badge';bd.textContent='Ideen-Vorschlag';title.appendChild(bd)}}
+    var sel=document.createElement('select');sel.setAttribute('aria-label','Status');
+    STATUS.forEach(function(s){var o=document.createElement('option');o.value=s[0];o.textContent=s[1];sel.appendChild(o)});
+    sel.value=sec.dataset.status||'';
+    sel.addEventListener('change',function(){sec.dataset.status=sel.value;toc();save()});
+    var inc=document.createElement('label');inc.className='az-inc';
+    var cb=document.createElement('input');cb.type='checkbox';cb.checked=sec.dataset.off!=='1';
+    cb.addEventListener('change',function(){sec.dataset.off=cb.checked?'':'1';sec.classList.toggle('az-off',!cb.checked);save()});
+    inc.appendChild(cb);inc.appendChild(document.createTextNode('in Prompt'));
+    h.appendChild(title);h.appendChild(sel);h.appendChild(inc);
+    if(sec.dataset.custom){var d=document.createElement('button');d.className='az-del';d.textContent='entfernen';d.addEventListener('click',function(){if(confirm('Abschnitt entfernen?')){sec.remove();toc();save()}});h.appendChild(d)}
+    sec.insertBefore(h,sec.firstChild);
+    sec.classList.toggle('az-off',sec.dataset.off==='1');
+  }
+
+  function secTitle(sec){return sec.dataset.fixed?sec.querySelector('h2').textContent:(sec.dataset.title||'')}
+
+  function toc(){
+    var ol=document.getElementById('az-toc');ol.innerHTML='';
+    main.querySelectorAll('.az-sec').forEach(function(sec,i){
+      if(!sec.id)sec.id='s-'+sec.dataset.id;
+      var li=document.createElement('li'),a=document.createElement('a');
+      a.href='#'+sec.id;a.textContent=secTitle(sec);li.appendChild(a);
+      var dot=document.createElement('span');dot.className='az-dot';dot.dataset.s=sec.dataset.status||'';li.appendChild(dot);
+      ol.appendChild(li);
+    });
+  }
+
+  function collect(){
+    var d={ts:Date.now(),fields:{},secs:{},custom:[]};
+    document.querySelectorAll('[data-key]').forEach(function(f){d.fields[f.dataset.key]=f.value});
+    main.querySelectorAll('.az-sec').forEach(function(sec){
+      if(sec.dataset.fixed)return;
+      var n=sec.querySelector('.az-note textarea');
+      var e={status:sec.dataset.status||'',off:sec.dataset.off||'',note:n?n.value:''};
+      if(sec.dataset.custom){e.id=sec.dataset.id;e.title=sec.dataset.title||'';d.custom.push(e)}
+      else d.secs[sec.dataset.id]=e;
+    });
+    return d;
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(collect()))}catch(e){}}
+
+  function addCustom(e){
+    var sec=document.createElement('section');sec.className='az-sec';
+    sec.dataset.custom='1';sec.dataset.id=e.id||('c'+Date.now());sec.dataset.title=e.title||'Eigener Abschnitt';
+    sec.dataset.status=e.status||'';sec.dataset.off=e.off||'';
+    sec.innerHTML='<div class="az-txt"><p style="color:var(--muted);font-size:.9rem">Eigener Abschnitt – Beschreibung in das Feld schreiben. Der Text geht als Anforderung in den Prompt.</p></div><div class="az-note"><label>Anforderung / Notizen</label><textarea></textarea></div>';
+    sec.querySelector('textarea').value=e.note||'';
+    var last=main.querySelector('[data-id="vorgehen"]');main.insertBefore(sec,last);
+    decorate(sec);return sec;
+  }
+
+  function apply(d){
+    if(!d)return;
+    Object.keys(d.fields||{}).forEach(function(k){var f=document.querySelector('[data-key="'+k+'"]');if(f)f.value=d.fields[k]});
+    Object.keys(d.secs||{}).forEach(function(id){
+      var sec=main.querySelector('.az-sec[data-id="'+id+'"]');if(!sec)return;var e=d.secs[id];
+      sec.dataset.status=e.status||'';sec.dataset.off=e.off||'';
+      var n=sec.querySelector('.az-note textarea');if(n)n.value=e.note||'';
+    });
+    (d.custom||[]).forEach(function(e){if(!main.querySelector('.az-sec[data-id="'+e.id+'"]'))addCustom(e)});
+  }
+
+  // Text eines Abschnitts als Markdown
+  function md(node){
+    var out=[];
+    node.childNodes.forEach(function(c){
+      if(c.nodeType!==1)return;
+      var t=c.tagName;
+      if(t==='H3')out.push('\n### '+c.textContent.trim());
+      else if(t==='P')out.push(inline(c));
+      else if(t==='UL'||t==='OL')c.querySelectorAll(':scope > li').forEach(function(li){out.push('- '+inline(li))});
+      else if(c.classList.contains('az-idee'))out.push('> '+inline(c));
+    });
+    return out.join('\n');
+  }
+  function inline(el){
+    var s='';el.childNodes.forEach(function(n){
+      if(n.nodeType===3)s+=n.textContent;
+      else if(n.tagName==='B')s+='**'+n.textContent+'**';
+      else if(n.tagName==='CODE')s+='`'+n.textContent+'`';
+      else s+=n.textContent;
+    });
+    return s.replace(/\s+/g,' ').trim();
+  }
+
+  function build(){
+    var L=[],f={};
+    document.querySelectorAll('[data-key]').forEach(function(x){f[x.dataset.key]=x.value.trim()});
+    L.push('# Auftrag: Weiterentwicklung der „Auftragszentrale“ (Handwerker-Software)\n');
+    var sb=[['stack','Technik / Plattform'],['done','Bereits gebaut und funktionsfähig'],['files','Wichtige Dateien / Tabellen'],['betrieb','Zielbetrieb'],['next','Als Nächstes bauen']];
+    var any=sb.some(function(s){return f[s[0]]});
+    if(any){L.push('## Projekt-Steckbrief');sb.forEach(function(s){if(f[s[0]])L.push('- **'+s[1]+':** '+f[s[0]].replace(/\n+/g,'; '))});L.push('')}
+    var lbl={vorhanden:'VORHANDEN – prüfen, nicht kaputt machen, nur gezielt verbessern',teilweise:'TEILWEISE GEBAUT – vorhandenen Stand lesen und Lücken schließen',neu:'NEU BAUEN'};
+    var nr=0;
+    main.querySelectorAll('.az-sec').forEach(function(sec){
+      if(sec.dataset.fixed||sec.dataset.off==='1')return;
+      nr++;
+      L.push('## '+nr+'. '+secTitle(sec));
+      if(sec.dataset.status)L.push('**Status:** '+lbl[sec.dataset.status]);
+      var note=(sec.querySelector('.az-note textarea')||{}).value||'';note=note.trim();
+      if(sec.dataset.custom){if(note)L.push(note)}
+      else{L.push(md(sec.querySelector('.az-txt')));if(note)L.push('\n**Notizen des Auftraggebers (haben Vorrang):**\n'+note)}
+      L.push('');
+    });
+    L.push('---\nBeginne mit der Bestandsaufnahme des vorhandenen Codes und melde dich mit einer kurzen Zusammenfassung und einem Plan für den ersten Schritt, bevor du größere Änderungen machst.');
+    return L.join('\n').replace(/\n{3,}/g,'\n\n');
+  }
+
+  function copy(){
+    var t=build();
+    function fallback(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');msg('Prompt kopiert ✓')}catch(e){msg('Kopieren nicht möglich – „Prompt ansehen“ nutzen')}ta.remove()}
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).then(function(){msg('Prompt kopiert ✓')},fallback);else fallback();
+  }
+
+  function saveFile(){
+    save();
+    var clone=document.documentElement.cloneNode(true);
+    // aktuellen Stand fest in die Datei schreiben
+    var d=collect();
+    var tag=clone.querySelector('#az-preset');if(tag)tag.remove();
+    var s=document.createElement('script');s.id='az-preset';s.type='application/json';s.textContent=JSON.stringify(d).replace(/</g,'\\u003c');
+    clone.querySelector('body').insertBefore(s,clone.querySelector('body').firstChild);
+    // dynamisch erzeugte Teile entfernen, sie entstehen beim Öffnen neu
+    clone.querySelectorAll('.az-sec-h').forEach(function(h){if(!h.parentNode.dataset.fixed)h.remove()});
+    clone.querySelectorAll('.az-sec[data-custom]').forEach(function(x){x.remove()});
+    clone.querySelector('#az-toc').innerHTML='';
+    clone.querySelectorAll('.az-sec').forEach(function(x){x.classList.remove('az-off');x.removeAttribute('id');if(!x.dataset.fixed){delete x.dataset.status;delete x.dataset.off}});
+    clone.querySelectorAll('textarea').forEach(function(x){x.textContent=''});
+    clone.querySelectorAll('input[data-key]').forEach(function(x){x.removeAttribute('value')});
+    clone.removeAttribute('data-theme');var dl=clone.querySelector('dialog');if(dl)dl.removeAttribute('open');
+    var html='<!doctype html>\n'+clone.outerHTML;
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([html],{type:'text/html'}));
+    var dt=new Date();a.download='auftragszentrale-prompt_'+dt.toISOString().slice(0,10)+'.html';
+    document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},500);
+    msg('Datei mit Notizen gespeichert ✓');
+  }
+
+  // Start
+  var preset=null;try{var p=document.getElementById('az-preset');if(p)preset=JSON.parse(p.textContent)}catch(e){}
+  main.querySelectorAll('.az-sec').forEach(decorate);
+  var st=store();
+  apply(preset&&(!st||(preset.ts||0)>(st.ts||0))?preset:st);
+  main.querySelectorAll('.az-sec').forEach(function(sec){var h=sec.querySelector('.az-sec-h select');if(h)h.value=sec.dataset.status||'';var cb=sec.querySelector('.az-inc input');if(cb)cb.checked=sec.dataset.off!=='1';sec.classList.toggle('az-off',sec.dataset.off==='1')});
+  toc();
+
+  main.addEventListener('input',function(e){if(e.target.matches('textarea,input'))save()});
+  document.getElementById('az-copy').onclick=copy;
+  document.getElementById('az-save').onclick=saveFile;
+  document.getElementById('az-add').onclick=function(){var s=addCustom({});toc();save();s.scrollIntoView({behavior:'smooth'});s.querySelector('.az-custom-title').select()};
+  var dlg=document.getElementById('az-dlg');
+  document.getElementById('az-show').onclick=function(){document.getElementById('az-pre').textContent=build();dlg.showModal()};
+  document.getElementById('az-dlg-close').onclick=function(){dlg.close()};
+  document.getElementById('az-dlg-copy').onclick=copy;
+  document.getElementById('az-theme').onclick=function(){
+    var r=document.documentElement,cur=r.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+    r.dataset.theme=cur==='dark'?'light':'dark';try{localStorage.setItem(KEY+'-theme',r.dataset.theme)}catch(e){}
+  };
+  try{var th=localStorage.getItem(KEY+'-theme');if(th)document.documentElement.dataset.theme=th}catch(e){}
+})();
+</script>
+</body>
+</html>
