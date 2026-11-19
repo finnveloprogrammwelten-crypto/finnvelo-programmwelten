@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           19.11.2026: PC 1.3.29, App 1.2.34). Ein in der Kachel "Aktualisierung"
+           19.11.2026: PC 1.3.30, App 1.2.35). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10329, versionName: "1.3.29",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.29.exe",
-                        hinweise: "Zähler: Neben der Zahl steht, wie viel du gerade dazugetippt hast („+3“). Die Knöpfe sind größer, den Namen änderst du über die Einstellungen. Druckvorlage am Handy: Erst entsteht ein PDF zum Ablegen, danach öffnet es sich zum Drucken. Kamera-Erfassung: Jede Karte wird kurz fotografiert und im Hintergrund erkannt – gleich die nächste zeigen. Oben rechts steht, wie viele noch in Arbeit sind. Beim Öffnen der Erfassung zeigt ein Balken, wann die Erkennung bereit ist." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10234, versionName: "1.2.34",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.34.apk",
-                             hinweise: "Zähler: Neben der Zahl steht, wie viel du gerade dazugetippt hast („+3“). Die Knöpfe sind größer, den Namen änderst du über die Einstellungen. Druckvorlage am Handy: Erst entsteht ein PDF zum Ablegen, danach öffnet es sich zum Drucken. Kamera-Erfassung: Jede Karte wird kurz fotografiert und im Hintergrund erkannt – gleich die nächste zeigen. Oben rechts steht, wie viele noch in Arbeit sind. Beim Öffnen der Erfassung zeigt ein Balken, wann die Erkennung bereit ist." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10330, versionName: "1.3.30",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.30.exe",
+                        hinweise: "Kamera-Erfassung schneller: Jedes Foto wird gleich dort erkannt, wo die Karte liegt – bei Magic etwa doppelt so schnell. Zähler: Neben der Zahl steht, wie viel du gerade dazugetippt hast („+3“). Die Knöpfe sind größer, den Namen änderst du über die Einstellungen. Druckvorlage am Handy: Erst entsteht ein PDF zum Ablegen, danach öffnet es sich zum Drucken. Kamera-Erfassung: Jede Karte wird kurz fotografiert und im Hintergrund erkannt – gleich die nächste zeigen. Oben rechts steht, wie viele noch in Arbeit sind. Beim Öffnen der Erfassung zeigt ein Balken, wann die Erkennung bereit ist." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10235, versionName: "1.2.35",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.35.apk",
+                             hinweise: "Kamera-Erfassung schneller: Jedes Foto wird gleich dort erkannt, wo die Karte liegt – bei Magic etwa doppelt so schnell. Zähler: Neben der Zahl steht, wie viel du gerade dazugetippt hast („+3“). Die Knöpfe sind größer, den Namen änderst du über die Einstellungen. Druckvorlage am Handy: Erst entsteht ein PDF zum Ablegen, danach öffnet es sich zum Drucken. Kamera-Erfassung: Jede Karte wird kurz fotografiert und im Hintergrund erkannt – gleich die nächste zeigen. Oben rechts steht, wie viele noch in Arbeit sind. Beim Öffnen der Erfassung zeigt ein Balken, wann die Erkennung bereit ist." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10329, versionName: "1.3.29",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.29-universal.dmg",
