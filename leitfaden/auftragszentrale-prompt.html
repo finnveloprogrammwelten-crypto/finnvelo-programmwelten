@@ -250,13 +250,76 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
       <li>Pflichtangaben nach § 14 UStG, Leistungsdatum/-zeitraum, Steuersätze getrennt, Hinweis bei § 13b (Reverse-Charge, Bauleistungen an andere Bauunternehmer), Kleinunternehmer-Hinweis falls zutreffend.</li>
       <li>Rechnungsarten: Abschlag, Teil-, Schluss- (mit Abzug der Abschläge), Storno/Korrektur, Gutschrift. Festgeschriebene Rechnungen werden nie geändert, nur storniert (GoBD).</li>
       <li>Lohnanteil für § 35a ausweisen.</li>
-      <li>Offene Posten, Zahlungseingang erfassen, Skonto, Mahnstufen mit Vorlagen.</li>
+      <li>Offene Posten, Zahlungseingang (automatisch über den Bank-Abgleich, siehe eigener Abschnitt), Skonto, Mahnstufen mit Vorlagen.</li>
       <li><b>Eingangsrechnungen</b> (E-Rechnungen von Lieferanten) empfangen, lesbar anzeigen, dem Vorgang zuordnen – für die Nachkalkulation.</li>
-      <li>Export für den Steuerberater (DATEV-Format / Belege mit Buchungsdaten).</li>
+      <li>Übergabe an den Steuerberater: siehe Abschnitt „Steuervorbereitung“.</li>
       <li>Stand Nov. 2026: Empfang von E-Rechnungen ist seit 01.01.2025 Pflicht; Ausstellen im B2B ab 01.01.2027 für Betriebe mit über 800.000 € Vorjahresumsatz, ab 01.01.2028 für alle. Rechnungen an Privatkunden bleiben als PDF/Papier zulässig. Vor dem Bau aktuellen Stand prüfen.</li>
     </ul>
   </div>
   <div class="az-note"><label>Notizen</label><textarea placeholder="z. B. welche Bibliothek für XRechnung/ZUGFeRD schon genutzt wird …"></textarea></div>
+</section>
+
+<!-- ============ BANK ============ -->
+<section class="az-sec" data-id="bank" data-title="Bank-Abgleich: Kontoauszug und offene Rechnungen">
+  <div class="az-txt">
+    <p>Ziel: Zahlungseingänge und -ausgänge werden automatisch den offenen Rechnungen zugeordnet. Man sieht sofort, was bezahlt ist, was fehlt und was gemahnt werden muss.</p>
+    <h3>Kontoauszüge holen</h3>
+    <ul>
+      <li>Import als Datei: <b>CAMT.053</b> (XML, heutiger Standard der Banken), MT940 (älter), CSV mit Spaltenzuordnung je Bank.</li>
+      <li>Ausbaustufe: direkter Abruf vom Bankkonto (FinTS/HBCI oder ein PSD2-Kontodienst), mehrere Konten.</li>
+      <li>Doppelte Umsätze beim erneuten Import erkennen und überspringen.</li>
+    </ul>
+    <h3>Automatischer Abgleich</h3>
+    <ul>
+      <li>Jeder Umsatz wird mit offenen Ausgangs- <i>und</i> Eingangsrechnungen verglichen: <b>Rechnungsnummer</b> im Verwendungszweck, Betrag, Name/IBAN des Zahlers, Datum.</li>
+      <li>Ergebnis mit Sicherheitsstufe: <i>sicher</i> (Nummer + Betrag passen) → nach Bestätigung oder automatisch verbuchen; <i>Vorschlag</i> (nur Betrag/Name passt) → Nutzer bestätigt; <i>unklar</i> → Liste „nicht zugeordnet“.</li>
+      <li>Sonderfälle: Teilzahlung (Rest bleibt offen), Skonto-Abzug (prüfen, ob Frist eingehalten), Überzahlung, eine Zahlung für mehrere Rechnungen, Abschlagszahlungen, Bankgebühren, Rücklastschrift.</li>
+      <li>Das Programm lernt: einmal bestätigte Zuordnungen (z. B. IBAN → Kunde) werden beim nächsten Mal vorgeschlagen.</li>
+      <li>Zahlungen ohne Rechnung (z. B. Tankkarte, Miete, Versicherung) einer Kategorie/einem Konto zuordnen, mit Regeln („Verwendungszweck enthält Aral → Kfz-Kosten, Fahrzeug XY“).</li>
+    </ul>
+    <h3>Folgen im Programm</h3>
+    <ul>
+      <li>Rechnung wird auf „bezahlt“/„teilweise bezahlt“ gesetzt, mit Zahlungsdatum – sichtbar im Vorgang und in der Kundenakte.</li>
+      <li>Überfällige, nicht bezahlte Rechnungen → Vorschlag für Zahlungserinnerung/Mahnung (Mahnung wird nicht automatisch verschickt).</li>
+      <li>Eingangsrechnungen: Übersicht, was noch zu bezahlen ist, Skontofristen, Vorschlag für Überweisungen (Ausbaustufe: SEPA-Datei erzeugen).</li>
+      <li>Übersicht offene Posten und Liquidität: erwartete Eingänge, fällige Ausgänge.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welche Bank(en)? Welches Format kann die Bank liefern?"></textarea></div>
+</section>
+
+<!-- ============ STEUER ============ -->
+<section class="az-sec" data-id="steuer" data-title="Steuervorbereitung für den Steuerberater">
+  <div class="az-txt">
+    <p>Ziel: Der Steuerberater bekommt jeden Monat (oder Quartal) vollständige, geordnete Unterlagen – ohne Schuhkarton. Die Auftragszentrale ersetzt keine Buchhaltung und keine Steuerberatung, bereitet aber alles so vor, dass er direkt weiterarbeiten kann.</p>
+    <h3>Was gesammelt wird</h3>
+    <ul>
+      <li>Alle Ausgangsrechnungen (inkl. Storno/Gutschrift), Eingangsrechnungen (E-Rechnungen und gescannte/fotografierte Belege), Kassenbelege, Bankumsätze aus dem Bank-Abgleich.</li>
+      <li>Belege fotografieren in der App (Tankquittung, Baumarkt) → Texterkennung schlägt Datum, Betrag, Steuersatz, Lieferant vor → dem Vorgang/Fahrzeug/einer Kostenart zuordnen.</li>
+      <li>Jeder Beleg hat einen Status: fehlt, erfasst, geprüft, übergeben. Liste „Bankumsatz ohne Beleg“ und „Beleg ohne Zahlung“.</li>
+    </ul>
+    <h3>Übergabe</h3>
+    <ul>
+      <li><b>DATEV-Export</b> (Buchungsstapel im DATEV-Format mit Belegen, Kontenrahmen SKR03 oder SKR04 wählbar, Belegbild verknüpft) – das Format, das die meisten Steuerberater einlesen.</li>
+      <li>Alternativ: ZIP-Paket je Zeitraum mit allen Belegen als PDF/XML plus Übersichtstabelle (CSV/Excel).</li>
+      <li>Ausbaustufe: direkte Übertragung an DATEV Unternehmen online.</li>
+      <li>Export-Protokoll: welcher Zeitraum wann übergeben wurde; übergebene Zeiträume sperren (Änderung nur per Storno/Korrektur).</li>
+    </ul>
+    <h3>Auswertungen zur Vorbereitung</h3>
+    <ul>
+      <li>Umsatzsteuer-Übersicht je Zeitraum: Umsätze nach Steuersatz, § 13b-Umsätze, Vorsteuer aus Eingangsrechnungen – als Kontrollzahl für die Umsatzsteuer-Voranmeldung (die Anmeldung selbst macht der Steuerberater bzw. ELSTER).</li>
+      <li>Ist- oder Soll-Versteuerung einstellbar (bestimmt, ob Rechnungsdatum oder Zahlungseingang zählt).</li>
+      <li>Einnahmen-Überschuss-Übersicht nach Kostenarten (Material, Fahrzeuge, Personal, Werkzeug …), Fahrzeugkosten je Kennzeichen.</li>
+      <li>Stunden und Zuschläge je Mitarbeiter als Vorbereitung für die Lohnabrechnung (Übergabe als Liste, keine eigene Lohnabrechnung).</li>
+    </ul>
+    <h3>Pflichten</h3>
+    <ul>
+      <li>GoBD: Belege unveränderbar archivieren, Änderungen protokollieren, Verfahrensdokumentation vorbereiten; Aufbewahrungsfristen (Rechnungen/Buchungsbelege 8 Jahre, Bücher/Jahresabschlüsse 10 Jahre – Stand prüfen).</li>
+      <li>E-Rechnungen im Original-Format (XML) aufbewahren, nicht nur als PDF.</li>
+      <li>Datenexport für eine Betriebsprüfung (GDPdU/Z3-Datenträgerüberlassung) als Ausbaustufe.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welcher Kontenrahmen? Was möchte euer Steuerberater bekommen?"></textarea></div>
 </section>
 
 <!-- ============ 8 NACHKONTROLLE ============ -->
@@ -420,7 +483,7 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
 <section class="az-sec" data-id="auswertung" data-title="Startseite und Auswertungen">
   <div class="az-txt">
     <ul>
-      <li>Startseite „Heute“: Einsätze, Warnungen des Assistenten, fällige Termine (HU, Wartung, Prüfungen, Gewährleistung), offene Angebote zum Nachfassen, überfällige Rechnungen.</li>
+      <li>Startseite „Heute“: Einsätze, Warnungen des Assistenten, fällige Termine (HU, Wartung, Prüfungen, Gewährleistung), offene Angebote zum Nachfassen, überfällige Rechnungen, nicht zugeordnete Bankumsätze, fehlende Belege.</li>
       <li>Auswertungen: Umsatz, offene Posten, Angebotsquote, Auslastung je Mitarbeiter/Team, Nachkalkulation je Auftrag, Kosten je Fahrzeug.</li>
     </ul>
   </div>
@@ -435,7 +498,7 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
       <li>Durchgehende Projekt-Pipeline vom Kontakt bis zur Zahlung; Plantafel mit Ziehen/Ablegen; Zeiterfassung in der App.</li>
       <li>DATANORM- und GAEB-Import, Aufmaß mit Übergabe ins Angebot, Materialkataloge.</li>
       <li>Digitale Unterschrift beim Kunden (Angebot, Regiebericht, Abnahme).</li>
-      <li>Schnittstellen zu Großhändlern (IDS) und zum Steuerberater (DATEV).</li>
+      <li>Schnittstellen zu Großhändlern (IDS) und zum Steuerberater (DATEV); Bankabgleich mit automatischer Zuordnung von Zahlungen; Belege per Handyfoto mit Texterkennung.</li>
       <li>Kundenportal: Kunde sieht Angebot/Termin/Rechnung online (Ausbaustufe).</li>
       <li>Häufige Kritik an Marktprodukten, die wir besser machen wollen: zu kompliziert, Funktionen in teuren Zusatzpaketen, schwache Offline-Fähigkeit, Buchhaltung nur rudimentär.</li>
     </ul>
@@ -450,7 +513,7 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
     <ul>
       <li>Schritt 0: Bestandsaufnahme – Code lesen, kurz zusammenfassen, was vorhanden ist und wie das Datenmodell aussieht. Abgleich mit diesem Leitfaden: was fehlt, was kollidiert.</li>
       <li>Schritt 1: Datenmodell erweitern (Vorgang, Mitarbeiter, Teams, Fahrzeuge, Maschinen, Termine) mit Migration.</li>
-      <li>Schritt 2: Rechnung – E-Rechnung und Original-PDF aus einem Datensatz mit Abgleich.</li>
+      <li>Schritt 2: Rechnung – E-Rechnung und Original-PDF aus einem Datensatz mit Abgleich; danach Bank-Abgleich (Kontoauszug ↔ offene Rechnungen) und Steuervorbereitung (DATEV-Export).</li>
       <li>Schritt 3: Kataloge (DATANORM/CSV) und Leistungsvorlagen.</li>
       <li>Schritt 4: Aufmaß → Angebot, Packliste und Abschluss-Checkliste.</li>
       <li>Schritt 5: Personal, Teams, Fuhrpark/Maschinen mit Terminen.</li>
