@@ -68,6 +68,7 @@ header.az-head p{margin:0;color:var(--muted)}
 .az-field input{min-height:0}
 .az-field{margin:10px 0}
 .az-field label{display:block;font-size:.85rem;font-weight:600;margin-bottom:4px}
+.az-badge{display:inline-block;font-size:.7rem;font-weight:600;letter-spacing:.02em;background:var(--accent-soft);color:var(--accent);border-radius:999px;padding:2px 8px;margin-left:8px;vertical-align:3px}
 .az-del{font-size:.8rem;border:none;background:none;color:var(--muted);cursor:pointer;text-decoration:underline}
 .az-custom-title{font:inherit;font-size:1.15rem;font-weight:700;border:1px dashed var(--line);border-radius:6px;padding:3px 8px;background:transparent;color:var(--ink);flex:1;min-width:200px}
 .az-legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.85rem;color:var(--muted);margin:6px 0 0}
@@ -86,7 +87,7 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
 <header class="az-head">
   <h1>Auftragszentrale – Prompt &amp; Leitfaden</h1>
   <p>Bau-Prompt für die Weiterentwicklung der Handwerker-Software. Jeder Abschnitt hat einen Status und ein Notizfeld. „Prompt kopieren“ setzt alles (inkl. Status und Notizen) zu einem fertigen Prompt zusammen.</p>
-  <div class="az-legend"><span class="l1">vorhanden</span><span class="l2">teilweise gebaut</span><span class="l3">neu bauen</span></div>
+  <div class="az-legend"><span class="l1">vorhanden</span><span class="l2">teilweise gebaut</span><span class="l3">neu bauen</span><span class="az-badge" style="margin:0">Ideen-Vorschlag</span> = zusätzliche Idee von Claude – Häkchen „in Prompt“ entfernen, wenn nicht gewünscht</div>
 </header>
 
 <div class="az-bar">
@@ -336,6 +337,20 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
   <div class="az-note"><label>Notizen</label><textarea></textarea></div>
 </section>
 
+<!-- ============ ANLAGENAKTE (Vorschlag) ============ -->
+<section class="az-sec" data-id="anlagenakte" data-idea="1" data-title="Anlagenakte beim Kunden und gewerkspezifische Nachweise">
+  <div class="az-txt">
+    <ul>
+      <li>Je Objekt eine <b>Anlagenakte</b>: welche Geräte/Anlagen wurden verbaut (Hersteller, Typ, Seriennummer, Einbaudatum, Garantieende, Handbuch/Datenblatt, Fotos).</li>
+      <li>Daraus: Wartungsangebote, Garantiefälle, schneller Überblick bei Störungsanrufen („was ist bei dem Kunden verbaut?“).</li>
+      <li>Prüf- und Messprotokolle (z. B. Elektro: Erstprüfung nach DIN VDE 0100-600, wiederkehrende Prüfung, E-Check; Messwerte eingeben oder aus dem Messgerät importieren) als PDF an den Kunden und in die Akte.</li>
+      <li>Vorlagen für typische Formulare je Gewerk, z. B. Anmeldung beim Netzbetreiber (Wallbox, PV, Wärmepumpe), Inbetriebnahmeprotokoll, Übergabe-/Einweisungsprotokoll.</li>
+      <li>Hinweis auf mögliche Förderprogramme beim Angebot (z. B. Heizung, Energieeffizienz) mit Checkliste der nötigen Nachweise – Stand der Programme immer aktuell prüfen, keine Rechtsberatung.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Welche Gewerke / Protokolle braucht ihr?"></textarea></div>
+</section>
+
 <!-- ============ 9 PERSONAL ============ -->
 <section class="az-sec" data-id="personal" data-title="Personal">
   <div class="az-txt">
@@ -364,6 +379,24 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
   <div class="az-note"><label>Notizen</label><textarea></textarea></div>
 </section>
 
+<!-- ============ ARBEITSSCHUTZ (Vorschlag) ============ -->
+<section class="az-sec" data-id="arbeitsschutz" data-idea="1" data-title="Arbeitsschutz, Unterweisungen und Nachunternehmer">
+  <div class="az-txt">
+    <h3>Arbeitsschutz</h3>
+    <ul>
+      <li>Gefährdungsbeurteilung je Baustelle aus Vorlagen (Höhe, Strom, Staub, Lärm …), am Handy vor Arbeitsbeginn bestätigen.</li>
+      <li>Jährliche Unterweisungen mit digitaler Unterschrift und Erinnerung; Ausgabe persönlicher Schutzausrüstung dokumentieren.</li>
+      <li>Gefahrstoffliste mit Sicherheitsdatenblättern.</li>
+    </ul>
+    <h3>Nachunternehmer</h3>
+    <ul>
+      <li>Nachunternehmer als eigene Kontakte mit Gewerk, Stundensätzen und Nachweisen (Freistellungsbescheinigung nach § 48b EStG, Versicherung) inkl. Ablaufwarnung.</li>
+      <li>Teilaufträge aus dem Angebot an Nachunternehmer vergeben, in der Plantafel sichtbar; deren Rechnungen dem Vorgang zuordnen (§ 13b beachten).</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
 <!-- ============ 11 FUHRPARK ============ -->
 <section class="az-sec" data-id="fuhrpark" data-title="Fahrzeuge, Maschinen und Geräte">
   <div class="az-txt">
@@ -373,6 +406,8 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
       <li>Termine mit Erinnerung: <b>HU</b>, Inspektion, Reifenwechsel, UVV-Prüfung, Führerscheinkontrolle der Fahrer.</li>
       <li>Status: verfügbar, im Einsatz, <b>in Reparatur</b>, in Werkstatt-Termin, außer Dienst; mit Zeitraum.</li>
       <li>Zuordnung zu Team oder Mitarbeiter; Kosten (Tanken, Reparatur) erfassen.</li>
+      <li><i>Idee:</i> Fahrtenbuch aus den Einsätzen vorbefüllen (Datum, Ziel, Kunde, km) – nur Fahrer bestätigt; Tankkarten-Umsätze über den Bank-Abgleich dem Fahrzeug zuordnen.</li>
+      <li><i>Idee:</i> Schadensmeldung per App (Foto, Beschreibung) → Fahrzeug automatisch auf „in Reparatur“, Planung wird gewarnt.</li>
     </ul>
     <h3>Maschinen und Geräte</h3>
     <ul>
@@ -392,6 +427,10 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
       <li>Plantafel: Tag/Woche/Monat; Zeilen = Mitarbeiter, Teams, Fahrzeuge oder Maschinen; Aufträge per Ziehen und Ablegen zuweisen.</li>
       <li>Einsatz = Auftrag + Zeitraum + Personen/Team + Fahrzeug + Maschinen + Packliste.</li>
       <li>Monteure sehen ihre Einsätze in der App mit Adresse, Navigation, Unterlagen, Checklisten.</li>
+      <li><i>Idee:</i> Notdienst-/Störungsaufträge: Schnellerfassung in 30 Sekunden, Bereitschaftsplan (wer hat heute Notdienst), Notdienstzuschlag automatisch.</li>
+      <li><i>Idee:</i> Routenvorschlag bei mehreren Einsätzen am Tag; Fahrzeit zwischen Baustellen in der Planung berücksichtigen.</li>
+      <li><i>Idee:</i> Wetterhinweis bei Außenarbeiten (Dach, Fassade, Erdarbeiten) für die geplanten Tage.</li>
+      <li><i>Idee:</i> Kalender-Abo (iCal) für Mitarbeiter, damit Einsätze auch im Handy-Kalender stehen.</li>
     </ul>
     <h3>Der Assistent prüft und warnt</h3>
     <ul>
@@ -428,6 +467,21 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
     </ul>
   </div>
   <div class="az-note"><label>Notizen</label><textarea placeholder="Welche Lieferanten / Großhändler werden genutzt?"></textarea></div>
+</section>
+
+<!-- ============ LAGER (Vorschlag) ============ -->
+<section class="az-sec" data-id="lager" data-idea="1" data-title="Lager und Bestellwesen">
+  <div class="az-txt">
+    <ul>
+      <li>Lagerorte: Hauptlager, <b>Fahrzeuglager</b> (jeder Wagen ist ein kleines Lager), Baustelle.</li>
+      <li>Bestand je Artikel und Ort, Mindestbestand → Bestellvorschlag; Umbuchen zwischen Lagerorten per Scan (EAN/QR).</li>
+      <li>Packliste bucht Material vom Lager auf den Auftrag; Restmaterial wird zurückgebucht → stimmt für die Nachkalkulation.</li>
+      <li>Bestellungen beim Großhändler aus Packliste oder Bestellvorschlag (PDF/E-Mail, später IDS/UGL); Liefertermin, Wareneingang mit Lieferschein-Foto, Teillieferungen.</li>
+      <li>Lieferschein ↔ Eingangsrechnung ↔ Bestellung abgleichen (Menge und Preis); Abweichungen markieren.</li>
+      <li>Inventur zum Jahresende per Handy (Zählliste je Lagerort), Ergebnis für den Steuerberater.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder="Gibt es ein festes Lager? Fahrzeuglager?"></textarea></div>
 </section>
 
 <!-- ============ 14 CHECKLISTEN ============ -->
@@ -467,6 +521,21 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
   <div class="az-note"><label>Notizen</label><textarea placeholder="Welcher Server? Eigener, gemietet, Cloudflare …"></textarea></div>
 </section>
 
+<!-- ============ MONTEURAPP (Vorschlag) ============ -->
+<section class="az-sec" data-id="monteurapp" data-idea="1" data-title="Baustellen-App für Monteure">
+  <div class="az-txt">
+    <ul>
+      <li>Startbildschirm „Mein Tag“: Einsätze in Reihenfolge, Navigation, Ansprechpartner anrufen, Notizen vom Büro.</li>
+      <li>Mit wenigen Tippern: Arbeitszeit starten/stoppen, verbrauchtes Material scannen oder aus der Packliste abhaken, Fotos (vorher/nachher, mit Datum/Ort), Mängel oder Zusatzarbeiten melden.</li>
+      <li><b>Sprachnotiz → Text</b> (Diktat), damit niemand mit Handschuhen tippen muss.</li>
+      <li>Regiebericht, Abnahme und Checkliste vor Ort mit Kundenunterschrift abschließen.</li>
+      <li>Krank-/Abwesenheitsmeldung und Urlaubsantrag aus der App.</li>
+      <li>Funktioniert offline; große Schaltflächen, Hell-/Dunkel-Modus, auch für ältere Geräte.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
 <!-- ============ 16 DOKUMENTE ============ -->
 <section class="az-sec" data-id="dokumente" data-title="Dokumente, Vorlagen und Kommunikation">
   <div class="az-txt">
@@ -479,6 +548,21 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
   <div class="az-note"><label>Notizen</label><textarea></textarea></div>
 </section>
 
+<!-- ============ KOMMUNIKATION (Vorschlag) ============ -->
+<section class="az-sec" data-id="kommunikation" data-idea="1" data-title="Kundenkommunikation und Kundenportal">
+  <div class="az-txt">
+    <ul>
+      <li>Terminbestätigung und Erinnerung am Vortag per E-Mail/SMS automatisch; Kunde kann bestätigen oder Verschiebung anfragen.</li>
+      <li>„Monteur ist unterwegs“-Nachricht mit ungefährer Ankunftszeit (ein Knopf in der App).</li>
+      <li>Kundenportal per persönlichem Link: Angebot ansehen und annehmen, Termine, Rechnungen, Dokumente, Fotos vom Baufortschritt.</li>
+      <li>Nach Abschluss: kurze Zufriedenheitsabfrage; bei guter Bewertung Hinweis auf öffentliche Bewertung.</li>
+      <li>Alle Nachrichten landen im Vorgang (keine Infos mehr nur im Handy eines Mitarbeiters).</li>
+      <li>Datenschutz: Einwilligung für SMS/Messenger, Portal-Links mit Ablaufdatum.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
 <!-- ============ 17 AUSWERTUNG ============ -->
 <section class="az-sec" data-id="auswertung" data-title="Startseite und Auswertungen">
   <div class="az-txt">
@@ -488,6 +572,35 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
     </ul>
   </div>
   <div class="az-note"><label>Notizen</label><textarea></textarea></div>
+</section>
+
+<!-- ============ KI (Vorschlag) ============ -->
+<section class="az-sec" data-id="ki" data-idea="1" data-title="KI-Helfer (optional, abschaltbar)">
+  <div class="az-txt">
+    <ul>
+      <li>Angebotsentwurf aus Sprachnotiz, Fotos und Aufmaß vorschlagen („Bad: 6 Steckdosen, 2 Lichtauslässe, FI erneuern“) – Mensch prüft und ändert.</li>
+      <li>Langtexte und Kunden-E-Mails formulieren lassen, Textbausteine verbessern.</li>
+      <li>Belege und Lieferanten-PDFs auslesen (falls keine E-Rechnung vorliegt).</li>
+      <li>Fragen an die eigenen Daten: „Welche Aufträge haben letztes Jahr Verlust gemacht?“</li>
+      <li>Datenschutz: klar anzeigen, welche Daten an einen KI-Dienst gehen; ohne KI muss alles weiter funktionieren.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
+</section>
+
+<!-- ============ EINRICHTUNG (Vorschlag) ============ -->
+<section class="az-sec" data-id="einrichtung" data-idea="1" data-title="Einrichtung, Datenübernahme und Hilfe">
+  <div class="az-txt">
+    <ul>
+      <li>Einrichtungsassistent beim ersten Start: Firmendaten, Logo, Bank, Steuerdaten, Nummernkreise, Stundensätze, Mitarbeiter, Fahrzeuge.</li>
+      <li>Datenübernahme aus Excel/CSV oder anderen Programmen (Kunden, Artikel, offene Posten).</li>
+      <li>Demo-Firma mit Beispieldaten zum Ausprobieren und Testen, getrennt von echten Daten.</li>
+      <li>Kurze Hilfetexte direkt an den Feldern, Video-/Bild-Anleitungen, Suchfeld „Wie mache ich …?“.</li>
+      <li>Mehrere Firmen/Mandanten oder Niederlassungen in einem Programm (Ausbaustufe).</li>
+      <li>Sicherung als Datei jederzeit herunterladbar und wieder einspielbar.</li>
+    </ul>
+  </div>
+  <div class="az-note"><label>Notizen</label><textarea placeholder=""></textarea></div>
 </section>
 
 <!-- ============ 18 MARKT ============ -->
@@ -519,7 +632,8 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
       <li>Schritt 5: Personal, Teams, Fuhrpark/Maschinen mit Terminen.</li>
       <li>Schritt 6: Plantafel und Planungs-Assistent.</li>
       <li>Schritt 7: Server, Benutzer/Rollen, Synchronisation, Android-App.</li>
-      <li>Schritt 8: Auswertungen, Nachkontrolle, Ausbaustufen (GAEB, IDS, Kundenportal).</li>
+      <li>Schritt 8: Auswertungen, Nachkontrolle, Lager, Anlagenakte, Baustellen-App, Kundenkommunikation.</li>
+      <li>Schritt 9: Ausbaustufen (GAEB, IDS, Kundenportal, Arbeitsschutz, Nachunternehmer, KI-Helfer, Mandanten). Einrichtungsassistent und Demo-Firma wachsen von Anfang an mit.</li>
     </ul>
     <h3>Jeder Schritt gilt als fertig, wenn</h3>
     <ul>
@@ -554,7 +668,7 @@ dialog pre{margin:0;padding:16px;white-space:pre-wrap;font:13px/1.5 ui-monospace
     var h=document.createElement('div');h.className='az-sec-h';
     var title;
     if(sec.dataset.custom){title=document.createElement('input');title.className='az-custom-title';title.value=sec.dataset.title||'Eigener Abschnitt';title.addEventListener('input',function(){sec.dataset.title=title.value;toc();save()})}
-    else{title=document.createElement('h2');title.textContent=sec.dataset.title}
+    else{title=document.createElement('h2');title.textContent=sec.dataset.title;if(sec.dataset.idea){var bd=document.createElement('span');bd.className='az-badge';bd.textContent='Ideen-Vorschlag';title.appendChild(bd)}}
     var sel=document.createElement('select');sel.setAttribute('aria-label','Status');
     STATUS.forEach(function(s){var o=document.createElement('option');o.value=s[0];o.textContent=s[1];sel.appendChild(o)});
     sel.value=sec.dataset.status||'';
