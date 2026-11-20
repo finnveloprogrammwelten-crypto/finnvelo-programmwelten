@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           20.11.2026: PC 1.3.36, App 1.2.41). Ein in der Kachel "Aktualisierung"
+           20.11.2026: PC 1.3.37, App 1.2.42). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10336, versionName: "1.3.36",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.36.exe",
-                        hinweise: "Druckvorlagen drucken in Originalgröße: Jede PDF gibt dem Druckprogramm „Tatsächliche Größe“ vor, auch für die Coconut-Commander. Neu: „PDF einlesen“ (Meine Decks, Sammlung, Verkaufen, Einkaufen). Druckvorlagen, Deck-, Einkaufs- und Verkaufslisten werden zum Deck, in die Sammlung oder in die Listen übernommen. Zähler: Beim Wechsel auf Coconut bleibt die eingestellte Spielerzahl." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10241, versionName: "1.2.41",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.41.apk",
-                             hinweise: "Druckvorlagen drucken in Originalgröße: Jede PDF gibt dem Druckprogramm „Tatsächliche Größe“ vor, auch für die Coconut-Commander. Neu: „PDF einlesen“ (Meine Decks, Sammlung, Verkaufen, Einkaufen). Druckvorlagen, Deck-, Einkaufs- und Verkaufslisten werden zum Deck, in die Sammlung oder in die Listen übernommen. Zähler: Beim Wechsel auf Coconut bleibt die eingestellte Spielerzahl." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10337, versionName: "1.3.37",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.37.exe",
+                        hinweise: "Suche: mehrere Begriffe mit Semikolon oder Komma trennen (z. B. „Arielle; Ursula“), es wird alles gezeigt, was zu einem davon passt. PDF einlesen: Die Liste erscheint jetzt auch bei eingestellter Einzelerfassung. Am Handy stehen Ziel und „Übernehmen“ unter den Karten. PDF einlesen: Eingelesene Kartenbilder werden neben der erkannten Karte gezeigt." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10242, versionName: "1.2.42",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.42.apk",
+                             hinweise: "Suche: mehrere Begriffe mit Semikolon oder Komma trennen (z. B. „Arielle; Ursula“), es wird alles gezeigt, was zu einem davon passt. PDF einlesen: Die Liste erscheint jetzt auch bei eingestellter Einzelerfassung. Am Handy stehen Ziel und „Übernehmen“ unter den Karten. PDF einlesen: Eingelesene Kartenbilder werden neben der erkannten Karte gezeigt." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10336, versionName: "1.3.36",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.36-universal.dmg",
