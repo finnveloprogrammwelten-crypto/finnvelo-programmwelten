@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           20.11.2026: PC 1.3.35, App 1.2.40). Ein in der Kachel "Aktualisierung"
+           20.11.2026: PC 1.3.36, App 1.2.41). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10335, versionName: "1.3.35",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.35.exe",
-                        hinweise: "Deck-Generator versteht das Zusammenspiel der Karten besser – direkt aus den Kartentexten, auch bei neuen Karten. Coconut: Der Generator baut auf die Coconut-Karte hin (z. B. Arielle: Prinzessinnen und Lieder) und testet nach Coconut-Regeln (25 Legende, Gegner mit passender Coconut-Karte). Themen beliebig viele, mit Reihenfolge; Obergrenzen je Kosten 1–10; „Sehr gründlich“ dauert höchstens eine Stunde. Online-Decks abgleichen mit eigener Fortschrittsanzeige – bauen geht nebenher. Handy: Kartensuche im Generator liegt nicht mehr unter der eigenen Tastatur." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10240, versionName: "1.2.40",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.40.apk",
-                             hinweise: "Deck-Generator versteht das Zusammenspiel der Karten besser – direkt aus den Kartentexten, auch bei neuen Karten. Coconut: Der Generator baut auf die Coconut-Karte hin (z. B. Arielle: Prinzessinnen und Lieder) und testet nach Coconut-Regeln (25 Legende, Gegner mit passender Coconut-Karte). Themen beliebig viele, mit Reihenfolge; Obergrenzen je Kosten 1–10; „Sehr gründlich“ dauert höchstens eine Stunde. Online-Decks abgleichen mit eigener Fortschrittsanzeige – bauen geht nebenher. Handy: Kartensuche im Generator liegt nicht mehr unter der eigenen Tastatur." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10336, versionName: "1.3.36",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.36.exe",
+                        hinweise: "Druckvorlagen drucken in Originalgröße: Jede PDF gibt dem Druckprogramm „Tatsächliche Größe“ vor, auch für die Coconut-Commander. Neu: „PDF einlesen“ (Meine Decks, Sammlung, Verkaufen, Einkaufen). Druckvorlagen, Deck-, Einkaufs- und Verkaufslisten werden zum Deck, in die Sammlung oder in die Listen übernommen. Zähler: Beim Wechsel auf Coconut bleibt die eingestellte Spielerzahl." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10241, versionName: "1.2.41",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.41.apk",
+                             hinweise: "Druckvorlagen drucken in Originalgröße: Jede PDF gibt dem Druckprogramm „Tatsächliche Größe“ vor, auch für die Coconut-Commander. Neu: „PDF einlesen“ (Meine Decks, Sammlung, Verkaufen, Einkaufen). Druckvorlagen, Deck-, Einkaufs- und Verkaufslisten werden zum Deck, in die Sammlung oder in die Listen übernommen. Zähler: Beim Wechsel auf Coconut bleibt die eingestellte Spielerzahl." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10335, versionName: "1.3.35",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.35-universal.dmg",
