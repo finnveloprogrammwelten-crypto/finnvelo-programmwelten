@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           19.11.2026: PC 1.3.33, App 1.2.38). Ein in der Kachel "Aktualisierung"
+           20.11.2026: PC 1.3.34, App 1.2.39). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10333, versionName: "1.3.33",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.33.exe",
-                        hinweise: "Coconut Commander: alle 30 Karten mit Bild wie in der offiziellen App – auch die sechs neuen. Coconut Commander: jede Karte zusätzlich auf Deutsch übersetzt zum Ausdrucken (Umschalter DE/EN). Coconut Commander am Handy: Druckvorlage jetzt auch als PDF." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10238, versionName: "1.2.38",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.38.apk",
-                             hinweise: "Coconut Commander: alle 30 Karten mit Bild wie in der offiziellen App – auch die sechs neuen. Coconut Commander: jede Karte zusätzlich auf Deutsch übersetzt zum Ausdrucken (Umschalter DE/EN). Coconut Commander am Handy: Druckvorlage jetzt auch als PDF." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10334, versionName: "1.3.34",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.34.exe",
+                        hinweise: "Kamera-Erfassung: Der schnelle Blick nach Karten ist rund 20 % schneller – bei allen Spielen, gleiche Ergebnisse. Yu-Gi-Oh!: In der Großansicht steht jetzt, dass „Replica – Not for Use in Sanctioned Tournaments“ und die Jahreszahl zur Bildvorlage gehören, nicht zu deiner Karte." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10239, versionName: "1.2.39",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.39.apk",
+                             hinweise: "Kamera-Erfassung: Der schnelle Blick nach Karten ist rund 20 % schneller – bei allen Spielen, gleiche Ergebnisse. Yu-Gi-Oh!: In der Großansicht steht jetzt, dass „Replica – Not for Use in Sanctioned Tournaments“ und die Jahreszahl zur Bildvorlage gehören, nicht zu deiner Karte." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10333, versionName: "1.3.33",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.33-universal.dmg",
