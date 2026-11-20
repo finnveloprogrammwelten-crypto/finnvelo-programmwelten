@@ -1,0 +1,134 @@
+{
+	"kategorien": {
+		"rohstoff":    { "name": "Rohstoff",           "stufe": 1 },
+		"raffiniert":  { "name": "Raffiniertes Gut",   "stufe": 2 },
+		"komponente":  { "name": "Komponente",         "stufe": 3 },
+		"hightech":    { "name": "High-Tech",          "stufe": 4 },
+		"konsum":      { "name": "Konsumgut",          "stufe": 2 },
+		"luxus":       { "name": "Luxusgut",           "stufe": 3 },
+		"schmuggel":   { "name": "Schmuggelware",      "stufe": 3 }
+	},
+	"waren": [
+		{
+			"id": "eisenerz",
+			"name": "Eisenerz",
+			"kategorie": "rohstoff",
+			"basispreis": 12,
+			"volumen": 1,
+			"beschreibung": "Rohes, eisenhaltiges Gestein aus Asteroiden und Minen. Grundstoff für Stahl."
+		},
+		{
+			"id": "kupfererz",
+			"name": "Kupfererz",
+			"kategorie": "rohstoff",
+			"basispreis": 16,
+			"volumen": 1,
+			"beschreibung": "Grünlich schimmerndes Erz. Wird zu Kupferdraht für Elektrik verarbeitet."
+		},
+		{
+			"id": "siliziumerz",
+			"name": "Siliziumerz",
+			"kategorie": "rohstoff",
+			"basispreis": 18,
+			"volumen": 1,
+			"beschreibung": "Quarzreiches Gestein, Ausgangsstoff für Siliziumscheiben."
+		},
+		{
+			"id": "wassereis",
+			"name": "Wassereis",
+			"kategorie": "rohstoff",
+			"basispreis": 8,
+			"volumen": 1,
+			"beschreibung": "Gefrorenes Wasser aus Eismonden. Trinkwasser, Landwirtschaft und Treibstoff."
+		},
+		{
+			"id": "wasserstoff",
+			"name": "Wasserstoff",
+			"kategorie": "rohstoff",
+			"basispreis": 10,
+			"volumen": 1,
+			"beschreibung": "Aus Gasriesen geschöpftes Gas, Rohstoff für Treibstoffzellen."
+		},
+		{
+			"id": "stahl",
+			"name": "Stahl",
+			"kategorie": "raffiniert",
+			"basispreis": 38,
+			"volumen": 1,
+			"beschreibung": "Gewalzte Stahlträger und -platten für Schiffbau und Industrie."
+		},
+		{
+			"id": "kupferdraht",
+			"name": "Kupferdraht",
+			"kategorie": "raffiniert",
+			"basispreis": 44,
+			"volumen": 1,
+			"beschreibung": "Aufgespulter Draht für Leitungen, Motoren und Elektronik."
+		},
+		{
+			"id": "siliziumscheiben",
+			"name": "Siliziumscheiben",
+			"kategorie": "raffiniert",
+			"basispreis": 62,
+			"volumen": 1,
+			"beschreibung": "Hochreine Wafer, die Grundlage jeder Elektronik."
+		},
+		{
+			"id": "treibstoffzellen",
+			"name": "Treibstoffzellen",
+			"kategorie": "raffiniert",
+			"basispreis": 34,
+			"volumen": 1,
+			"beschreibung": "Genormte Energiezellen für Schiffsantriebe und Kraftwerke."
+		},
+		{
+			"id": "nahrungsrationen",
+			"name": "Nahrungsrationen",
+			"kategorie": "konsum",
+			"basispreis": 22,
+			"volumen": 1,
+			"beschreibung": "Haltbare Fertignahrung. Jede Station und jede Stadt braucht sie."
+		},
+		{
+			"id": "medikamente",
+			"name": "Medikamente",
+			"kategorie": "konsum",
+			"basispreis": 95,
+			"volumen": 1,
+			"beschreibung": "Arzneimittel und medizinisches Verbrauchsmaterial."
+		},
+		{
+			"id": "maschinenteile",
+			"name": "Maschinenteile",
+			"kategorie": "komponente",
+			"basispreis": 85,
+			"volumen": 2,
+			"beschreibung": "Lager, Getriebe und Pumpen für Fabriken und Bergbaugerät."
+		},
+		{
+			"id": "elektronik",
+			"name": "Elektronik",
+			"kategorie": "hightech",
+			"basispreis": 170,
+			"volumen": 1,
+			"beschreibung": "Steuerplatinen, Sensoren und Rechenkerne."
+		},
+		{
+			"id": "synthwein",
+			"name": "Synthwein",
+			"kategorie": "luxus",
+			"basispreis": 210,
+			"volumen": 1,
+			"beschreibung": "Edler Wein aus Bioreaktoren. Bei Reichen sehr begehrt."
+		},
+		{
+			"id": "raumkraut",
+			"name": "Raumkraut",
+			"kategorie": "schmuggel",
+			"basispreis": 290,
+			"volumen": 1,
+			"illegal": true,
+			"beschreibung": "Ein berauschendes Kraut aus Schwerelos-Gärten. In den meisten Systemen verboten."
+		}
+	]
+}
