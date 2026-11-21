@@ -1886,12 +1886,12 @@ export class Counter extends DurableObject {
                              apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.43.apk",
                              hinweise: "Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken, zum Abhaken und als PDF zum Ausdrucken. Neu: Proxy drucken – Karte antippen (oder Karten → Details) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
-        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10337, versionName: "1.3.37",
-                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.37-universal.dmg",
-                         hinweise: "Suche: mehrere Begriffe mit Semikolon oder Komma trennen (z. B. „Arielle; Ursula“), es wird alles gezeigt, was zu einem davon passt. PDF einlesen: Die Liste erscheint jetzt auch bei eingestellter Einzelerfassung. Am Handy stehen Ziel und „Übernehmen“ unter den Karten. PDF einlesen: Eingelesene Kartenbilder werden neben der erkannten Karte gezeigt." },
-        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10337, versionName: "1.3.37",
-                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.37-x86_64.AppImage",
-                           hinweise: "Suche: mehrere Begriffe mit Semikolon oder Komma trennen (z. B. „Arielle; Ursula“), es wird alles gezeigt, was zu einem davon passt. PDF einlesen: Die Liste erscheint jetzt auch bei eingestellter Einzelerfassung. Am Handy stehen Ziel und „Übernehmen“ unter den Karten. PDF einlesen: Eingelesene Kartenbilder werden neben der erkannten Karte gezeigt." },
+        "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10338, versionName: "1.3.38",
+                         apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.38-universal.dmg",
+                         hinweise: "Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken, zum Abhaken und als PDF zum Ausdrucken. Neu: Proxy drucken – Karte antippen (oder Karten → Details) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
+        "lorcana-linux": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10338, versionName: "1.3.38",
+                           apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.38-x86_64.AppImage",
+                           hinweise: "Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken, zum Abhaken und als PDF zum Ausdrucken. Neu: Proxy drucken – Karte antippen (oder Karten → Details) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
         /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
            Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
