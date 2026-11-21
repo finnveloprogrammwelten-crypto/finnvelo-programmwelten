@@ -1877,14 +1877,14 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           21.11.2026: PC 1.3.40, App 1.2.45). Ein in der Kachel "Aktualisierung"
+           21.11.2026: PC 1.3.41, App 1.2.46). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10340, versionName: "1.3.40",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.40.exe",
-                        hinweise: "Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken, zum Abhaken und als PDF zum Ausdrucken. Die Deckliste nennt Nachdrucke: hinter dem Namen steht, in welchen anderen Sets es die Karte auch gibt. Neu: Proxy drucken – Karte antippen (oder Karten → Details, Großansicht der Sammlung) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10245, versionName: "1.2.45",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.45.apk",
-                             hinweise: "Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken, zum Abhaken und als PDF zum Ausdrucken. Die Deckliste nennt Nachdrucke: hinter dem Namen steht, in welchen anderen Sets es die Karte auch gibt. Neu: Proxy drucken – Karte antippen (oder Karten → Details, Großansicht der Sammlung) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10341, versionName: "1.3.41",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.41.exe",
+                        hinweise: "Neu: „Direkt drucken“ in der Druckvorlage (PC) – druckt ohne PDF-Programm fest in Originalgröße. Manche PDF-Programme verkleinern die Seite trotz „Tatsächliche Größe“. Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken und Nachdrucken, zum Abhaken und als PDF. Neu: Proxy drucken – Karte antippen (oder Karten → Details, Großansicht der Sammlung) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10246, versionName: "1.2.46",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.46.apk",
+                             hinweise: "Neu: „Direkt drucken“ in der Druckvorlage (PC) – druckt ohne PDF-Programm fest in Originalgröße. Manche PDF-Programme verkleinern die Seite trotz „Tatsächliche Größe“. Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken und Nachdrucken, zum Abhaken und als PDF. Neu: Proxy drucken – Karte antippen (oder Karten → Details, Großansicht der Sammlung) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10340, versionName: "1.3.40",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.40-universal.dmg",
