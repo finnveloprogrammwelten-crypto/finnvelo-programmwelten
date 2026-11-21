@@ -1865,12 +1865,12 @@ export class Counter extends DurableObject {
         "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         /* Vorbelegt mit der gelieferten Fassung, damit die App sofort etwas
            Sinnvolles bekommt - auch bevor jemand die Kachel angefasst hat.
-           Stand 19.11.2026: 2.1 (Code 26006); vorher 2.0 (Code 26005), 1.3 (Code 26004). Vorher stand hier eine 1.5.0, die
+           Stand 21.11.2026: 2.2 (Code 26018); vorher 2.1 (Code 26006), 2.0 (Code 26005), 1.3 (Code 26004). Vorher stand hier eine 1.5.0, die
            es nie gab (Code 10500 - kleiner als jede ausgelieferte Fassung). */
-        lesezeit: { programm: "FINNVELO-LESEZEIT", version: "2.1", versionsCode: 26006, versionCode: 26006,
+        lesezeit: { programm: "FINNVELO-LESEZEIT", version: "2.2", versionsCode: 26018, versionCode: 26018,
                     adresse: "https://finnveloprogramme.com/lesezeit/",
-                    apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-2.1.apk",
-                    datei: "FINNVELO-Lesezeit-2.1.apk",
+                    apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Lesezeit/FINNVELO-Lesezeit-2.2.apk",
+                    datei: "FINNVELO-Lesezeit-2.2.apk",
                     /* Paketname bleibt bewusst "lesetagebuch": Android erkennt eine App
                        an ihm. Wuerde er wechseln, gaebe es kein Update mehr, sondern
                        eine zweite App daneben - mit leeren Daten. Nur der ANZEIGENAME
