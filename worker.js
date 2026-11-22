@@ -300,6 +300,10 @@ const VERSION_ABLAGEN = {
   /* Haus- und Gartenplaner (06.11.2026, ab Fassung 1.0.1): Die HTML-Datei fragt genau diese Adresse ab.
      Felder: version, url, notes. */
   "/haus-und-gartenplaner/version.json": "haus-und-gartenplaner",
+  /* Haus- und Gartenplaner ab 2.0.0 (22.11.2026): Windows-Programm mit Selbst-Aktualisierung wie die
+     Auftragszentrale (datei/groesse/sha256). Gepflegt direkt in der Datenbank (u0 der Seite
+     haus-und-gartenplaner-pc). version.json oben bleibt für die alte HTML-Datei 1.0.1. */
+  "/haus-und-gartenplaner/pc.json": "haus-und-gartenplaner-pc",
   /* Command Control Handy-App (14.11.2026, ab 1.0): Die App fragt genau diese Adresse ab, prueft den
      Schluessel, laedt die APK selbst aus "apk" und vergleicht Paketname + versionCode der Datei.
      Im Ordner /command-control/ darf keine echte android.json liegen. */
@@ -1933,11 +1937,12 @@ export class Counter extends DurableObject {
                            apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.42-x86_64.AppImage",
                            sha256: "a9e82d0df1c882491746158286e6f6ef7f271dec0d10813892fd4a7e5a7c05bb",
                            hinweise: "Neu: Der Deck-Generator mischt zwei Spielarten, z. B. Aggro-Midrange – einfach zwei Grundtempi wählen. Er kehrt beim Überarbeiten immer zum besten Deck zurück, statt an einem schwächeren Umbau weiterzubauen, und startet mit dem Wissen aus 105 eigenen Testbauten (im Schnitt gut 3 Prozentpunkte stärkere Decks). Neu: Impressum und Datenschutz in den Einstellungen. Sicherer: Die Scannerseite im Handy-Browser läuft nur noch, solange ihr QR-Code aufgeklappt ist, und lässt nur das Handy mit diesem Code herein. Neue Fassungen werden vor dem Einrichten auf Echtheit geprüft." },
-        /* Haus- und Gartenplaner: vorbelegt mit Fassung 1.0.1 (Felder wie im Planer: version, url, notes).
-           Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
-        "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "1.0.1", versionName: "1.0.1",
-            url: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Finnvelo-Haus-und-Gartenplaner/FINNVELO-Haus-und-Gartenplaner-1.0.1.html",
-            notes: "Dach und Möbel in der Gesamtansicht an der richtigen Stelle, Kamera zeigt das ganze Haus, lesbare Eingabefelder in schmalen Fenstern." },
+        /* Haus- und Gartenplaner, alte HTML-Datei 1.0.1 (Felder wie dort: version, url, notes): seit 22.11.2026
+           Verweis auf das Windows-Programm 2.0.0. Ein in der Datenbank gespeicherter Eintrag hat Vorrang. */
+        "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "2.0.0", versionName: "2.0.0",
+            url: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Finnvelo-Haus-und-Gartenplaner/FINNVELO-Haus-und-Gartenplaner-Setup-2.0.0.exe",
+            notes: "Ab Fassung 2.0 ist der Planer ein Windows-Programm mit Aufmaß für alle Gewerke. Bitte vorher Ihre Projekte über „Speichern (Ort wählen)“ als Datei sichern und im neuen Programm über „Projekt laden“ öffnen – Daten aus dem Browser kann das Programm nicht übernehmen." },
+        "haus-und-gartenplaner-pc": { schluessel: "FINNVELO-HAUS-UND-GARTENPLANER-PC", versionCode: 0, versionName: "", datei: "", groesse: 0, sha256: "", hinweise: "" },
         /* Command Control Handy-App: vorbelegt mit Fassung 1.0 (versionCode muss exakt zur APK passen:
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10500, versionName: "1.5.0",
