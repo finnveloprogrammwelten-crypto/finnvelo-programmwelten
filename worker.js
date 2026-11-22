@@ -1151,6 +1151,22 @@ export class Counter extends DurableObject {
       return json(r, r.ok ? 200 : 400);
     }
 
+    // --- Kanaele (Klar Schiff u. a.): Kanal auf Wunsch loeschen (22.11.2026) ---
+    if (url.pathname === "/api/kanal-verwaltung/loeschen" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      if (!await adminOk(b)) return json({ fehler: "unauthorized" }, 401);
+      const code = String(b.code || "").trim().toUpperCase();
+      if (!/^FNV-[A-Z0-9]{4}-[A-Z0-9]{2}$/.test(code)) return json({ ok: false, fehler: "Der Kanalcode passt nicht ins Schema." }, 400);
+      if (!this.env || !this.env.KANAELE) return json({ ok: false, fehler: "Keine Bindung KANAELE." }, 503);
+      const stub = this.env.KANAELE.get(this.env.KANAELE.idFromName(code));
+      const a = await stub.fetch("https://kanal/kanal-leeren");
+      const erg = a.ok ? await a.json() : { ok: false };
+      this.sql.exec("DELETE FROM kanalliste WHERE code = ?", code);
+      try { this.sql.exec("DELETE FROM marken WHERE code = ?", code); } catch (_e) { /* Tabelle gibt es noch nicht */ }
+      return json({ ok: !!erg.ok, hatteDaten: !!erg.hatteDaten });
+    }
+
     // --- Kurze Fehlerauskunft fuer die Admin-Leiste ----------------------
     // Absichtlich schlank: /api/serverstatus rechnet die ganze Datenbank durch,
     // das waere fuer einen Hinweis in der Leiste zu teuer.
@@ -2646,6 +2662,11 @@ export default {
     // (/api/kanal/... und /api/serverstatus), sonst verschluckt er sie.
     if (url.pathname.startsWith("/api/")) {
       if (!env || !env.COUNTERS) return json({ error: "storage_not_configured" }, 503);
+      /* /api/kanalliste ist nur fuer den Worker selbst gedacht (er ruft das
+         Objekt direkt auf, nicht ueber diesen Durchreicher). Bis 22.11.2026
+         war es von aussen erreichbar: Liste aller Kanalcodes, Marken-Auskunft
+         und Eintraege ins Fehlerbuch. Deshalb hier abweisen. */
+      if (url.pathname === "/api/kanalliste") return json({ error: "not_found" }, 404);
       const id = env.COUNTERS.idFromName("global");
       const stub = env.COUNTERS.get(id);
       return stub.fetch(request);
@@ -3252,6 +3273,16 @@ export class Kanal extends DurableObject {
       // "bremse" bleibt bewusst draussen: reine Sperrzeiten, nach dem
       // Zurueckspielen falsch und ohne Wert.
       return jsonAntwort({ ok: true, tabellen: aus });
+    }
+
+    /* Kanal auf Wunsch sofort loeschen (22.11.2026, Zusage in der
+       Datenschutzerklaerung 4.3). Wie die Sicherung nur ueber diesen Pfad
+       erreichbar, den der Zaehler ausschliesslich nach Admin-Pruefung setzt. */
+    if (url.pathname === "/kanal-leeren") {
+      let hatte = false;
+      try { hatte = !!this.kanalZeile(); } catch (_e) { hatte = false; }
+      await this.ctx.storage.deleteAll();
+      return jsonAntwort({ ok: true, hatteDaten: hatte });
     }
 
     if (url.pathname === "/kanal-einspielen") {
