@@ -3038,8 +3038,8 @@
              gepflegt wird er mit neue-fassung.mjs bzw. direkt in der Datenbank. */
         ],
         fest: { schluessel: 'FINNVELO-EINKAUFSPLANER' },
-        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 100600, versionName: '1.6.0',
-                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-1.6.0.apk', hinweise: '' }
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 100601, versionName: '1.6.1',
+                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-1.6.1.apk', hinweise: '' }
       },
       {
         seite: 'einkaufsliste', art: 'pc',
