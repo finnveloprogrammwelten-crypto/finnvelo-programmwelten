@@ -46,7 +46,7 @@
   'use strict';
 
   var API = '/api';
-  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'lesezeit', 'lorcana', 'tester'];
+  var PROGRAM_PAGES = ['command-control', 'archivar', 'aufgabenplaner', 'finanzmanager', 'medienstudio', 'haus-und-gartenplaner', 'mischwaldrechner', 'tourenplaner', 'einkaufsliste', 'lesezeit', 'lorcana', 'auftragszentrale', 'tester'];
 
   function pageKey() {
     var path = (location.pathname || '').toLowerCase();

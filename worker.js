@@ -77,8 +77,9 @@ const RESERVIERT = [
   "lesezeit",      // Ordner mit APK und Fassungsdatei
   "klarschiff",    // Programmseite + Ordner mit APK; die Fassungsdatei
                    // kommt vom Worker, im Ordner darf keine liegen
-  "lorcana"        // Programmseite; /lorcana/pc.json und /android.json kommen
+  "lorcana",       // Programmseite; /lorcana/pc.json und /android.json kommen
                    // vom Worker (06.11.2026), im Ordner darf keine liegen
+  "auftragszentrale" // Programmseite (22.11.2026); /auftragszentrale/pc.json kommt vom Worker
 ];
 const APP_RE = /^[a-z0-9-]{1,40}$/;
 // Block-Schluessel: ein Kleinbuchstabe + Zahl. Kategorien u.a.:
