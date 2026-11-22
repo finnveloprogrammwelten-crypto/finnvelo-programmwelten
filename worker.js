@@ -1908,14 +1908,15 @@ export class Counter extends DurableObject {
                        heisst jetzt Lesezeit. */
                     paket: "de.finnvelo.lesetagebuch" },
         /* Lorcana / TCG Sammelmappe: vorbelegt mit der jeweils zuletzt hochgeladenen Fassung (Stand
-           21.11.2026: PC 1.3.41, App 1.2.46). Ein in der Kachel "Aktualisierung"
+           22.11.2026: PC 1.3.42, App 1.2.47). Ein in der Kachel "Aktualisierung"
            gespeicherter Eintrag hat Vorrang. */
-        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10341, versionName: "1.3.41",
-                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.41.exe",
-                        hinweise: "Neu: „Direkt drucken“ in der Druckvorlage (PC) – druckt ohne PDF-Programm fest in Originalgröße. Manche PDF-Programme verkleinern die Seite trotz „Tatsächliche Größe“. Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken und Nachdrucken, zum Abhaken und als PDF. Neu: Proxy drucken – Karte antippen (oder Karten → Details, Großansicht der Sammlung) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
-        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10246, versionName: "1.2.46",
-                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.46.apk",
-                             hinweise: "Neu: „Direkt drucken“ in der Druckvorlage (PC) – druckt ohne PDF-Programm fest in Originalgröße. Manche PDF-Programme verkleinern die Seite trotz „Tatsächliche Größe“. Neu: „Deckliste“ bei Meine Decks, im Deckbau und beim Generator – alle Karten nach Set und Farbe sortiert, mit deinen eigenen Drucken und Nachdrucken, zum Abhaken und als PDF. Neu: Proxy drucken – Karte antippen (oder Karten → Details, Großansicht der Sammlung) → „Drucken“, 1 bis 4 Exemplare in Originalgröße, Druck wählbar." },
+        "lorcana-pc": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10342, versionName: "1.3.42",
+                        apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-Einrichtung-1.3.42.exe",
+                        sha256: "3100412319fbf1a63dc484c685b81b3f83f945de00b75d93bb67931c0b8ff4c5",
+                        hinweise: "Neu: Der Deck-Generator mischt zwei Spielarten, z. B. Aggro-Midrange – einfach zwei Grundtempi wählen. Er kehrt beim Überarbeiten immer zum besten Deck zurück, statt an einem schwächeren Umbau weiterzubauen, und startet mit dem Wissen aus 105 eigenen Testbauten (im Schnitt gut 3 Prozentpunkte stärkere Decks). Neu: Impressum und Datenschutz in den Einstellungen. Sicherer: Die Scannerseite im Handy-Browser läuft nur noch, solange ihr QR-Code aufgeklappt ist, und lässt nur das Handy mit diesem Code herein. Neue Fassungen werden vor dem Einrichten auf Echtheit geprüft." },
+        "lorcana-android": { schluessel: "FINNVELO-LORCANA-ANDROID", versionCode: 10247, versionName: "1.2.47",
+                             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.2.47.apk",
+                             hinweise: "Neu: Der Deck-Generator mischt zwei Spielarten, z. B. Aggro-Midrange – einfach zwei Grundtempi wählen. Er kehrt beim Überarbeiten immer zum besten Deck zurück, statt an einem schwächeren Umbau weiterzubauen, und startet mit dem Wissen aus 105 eigenen Testbauten (im Schnitt gut 3 Prozentpunkte stärkere Decks). Neu: Impressum und Datenschutz in den Einstellungen. Fotos falsch erkannter Karten im Fehlerprotokoll werden nach 30 Tagen gelöscht." },
         /* Mac (Universal-DMG) und Linux/Steam Deck (AppImage): Aufbau wie lorcana-pc, gleicher Schlüssel. */
         "lorcana-mac": { schluessel: "FINNVELO-LORCANA-PC", versionCode: 10341, versionName: "1.3.41",
                          apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/FinnveloLorcana/FINNVELO-TCG-Sammelmappe-1.3.41-universal.dmg",
