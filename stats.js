@@ -3033,10 +3033,13 @@
              stehen, und eine neue APK wuerde als verfaelscht abgelehnt. */
           { key: 'sha256', label: 'SHA-256 der APK (64 Zeichen; leer = keine Prüfung)', typ: 'text', ph: '64 Zeichen 0-9 a-f' },
           { key: 'groesse', label: 'Größe der APK in Byte', typ: 'zahl', ph: 'z. B. 1487499' }
+          /* Ab 1.6.0 steht in der Datei zusätzlich der Block "oberflaeche" (Update ohne
+             Neuinstallation). Er hat hier kein Feld und bleibt beim Speichern erhalten;
+             gepflegt wird er mit neue-fassung.mjs bzw. direkt in der Datenbank. */
         ],
         fest: { schluessel: 'FINNVELO-EINKAUFSPLANER' },
-        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 100501, versionName: '1.5.1',
-                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-1.5.1.apk', hinweise: '' }
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 100600, versionName: '1.6.0',
+                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-1.6.0.apk', hinweise: '' }
       },
       {
         seite: 'einkaufsliste', art: 'pc',
