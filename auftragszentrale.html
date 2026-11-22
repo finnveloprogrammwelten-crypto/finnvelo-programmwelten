@@ -80,7 +80,8 @@
       <div class="program-detail__body program-detail__body--archivar">
         <!-- Seite angelegt 22.11.2026 (Auftrag der Auftragszentrale-Sitzung, Freigabe Tatorasa), Aufbau nach dem
              Muster der Lesezeit-Seite. Alle Angaben aus dem Quelltext der Fassung 1.1.0, geliefert von der
-             Auftragszentrale-Sitzung. 1.2.0 (22.11.2026): Bank-Abgleich, DATEV-Export, PDF/A-3 – „In Arbeit“ entfällt. -->
+             Auftragszentrale-Sitzung. 1.2.0 (22.11.2026): Bank-Abgleich, DATEV-Export, PDF/A-3 – „In Arbeit“ entfällt.
+             1.3.0 (22.11.2026): Rechtsstand. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Die Auftragszentrale ist für kleine und mittlere Handwerksbetriebe gemacht – Elektro, Sanitär-Heizung-Klima, Bau, Maler sowie Garten- und Pflasterbau. Schon die Startseite zeigt den Tag im Überblick: was ansteht, wer wo arbeitet und welche Fristen ablaufen. Die Warnzentrale sammelt, was bald fällig wird. Der Kalender zeigt Tag, Woche, Monat oder Jahr mit Einsätzen, Urlaub, Krankheit, Fahrzeugausfällen und den Feiertagen aller Bundesländer.</p>
@@ -88,6 +89,7 @@
           <p>Den Materialkatalog liest du aus DATANORM, CSV, Excel, PDF-Preislisten oder sogar aus Fotos ein. Den Shop des eigenen Großhändlers öffnest du im Programm (IDS-Connect oder OCI). Der Warenkorb kommt mit den Preisen als Bestellung zurück; dafür braucht der Betrieb einen Shop-Zugang bei seinem Großhändler. Einkauf und Lager laufen im selben Programm. Angebote entstehen als Leistungsverzeichnis mit GAEB-Austausch und Aufmaß. Bausteine nehmen Rechenarbeit ab: Bei einer Pflasterfläche gibst du nur die Maße ein, die Positionen berechnet das Programm.</p>
           <p>Für den Schriftverkehr gestaltest du eigene Briefvorlagen mit Live-Vorschau. Daraus entstehen Angebote, Auftragsbestätigungen, Lieferscheine, Rechnungen aller Arten (Abschlag, Teil, Schluss, Storno, Gutschrift), Mahnungen und Bestellungen – Rechnungen als E-Rechnung auch im Format XRechnung oder ZUGFeRD. Zahlungsüberwachung, Mahnwesen, Zeiterfassung, Nachkalkulation, Auslastung und Touren gehören dazu. Versendet wird über den eigenen Postausgang des Betriebs, und für den Steuerberater stellt das Programm die Unterlagen als PDF, als Ordner mit allen Belegen oder direkt per E-Mail zusammen. Die ZUGFeRD-Rechnung ist ein PDF/A-3 nach Norm (geprüft mit dem Prüfprogramm Mustang/veraPDF); XRechnung und ZUGFeRD bestehen den amtlichen KoSIT-Prüfer. Rechnungen an Privatkunden enthalten den gesetzlichen Hinweis zur Aufbewahrungspflicht.</p>
           <p>Seit Fassung 1.2.0 gleicht die Auftragszentrale auch das Bankkonto ab: Du liest den Kontoauszug als CSV-Datei aus dem Online-Banking ein. Die Spalten der gängigen Banken erkennt das Programm selbst – Sparkasse, Volks- und Raiffeisenbanken, Deutsche Bank/Postbank, Commerzbank, comdirect, ING, DKB und N26; bei anderen ordnest du sie einmal von Hand zu. Zahlungen mit Rechnungsnummer und passendem Betrag – auch mit Skonto oder als Sammelzahlung – ordnet sie den Kunden- und Lieferantenrechnungen von selbst zu, der Rest kommt als Vorschlag. Für den Steuerberater gibt es den Buchungsstapel im DATEV-Format (SKR 03 oder SKR 04) mit den Ausgangs- und Eingangsrechnungen und den Zahlungen; Berater- und Mandantennummer trägt der Betrieb ein.</p>
+          <p><strong>Rechtsstand</strong> – Ändern sich Werte aus Gesetzen, etwa Basiszinssatz, Steuersätze oder Zahlungsfristen, meldet sich die Auftragszentrale. Sie prüft dazu selbst bei der Deutschen Bundesbank und auf gesetze-im-internet.de, ohne Cloud. Jede Änderung erscheint mit dem genauen Gesetzestext (bisherige und neue Fassung, Unterschiede markiert), dem bisherigen und dem neuen Wert im Programm und der Stelle in den Einstellungen, an der man ihn selbst eintragen kann. Übernommen wird nur, was der Unternehmer bestätigt. Ankündigungen, die erst künftig gelten (z. B. E-Rechnungspflicht 2027), kommen zusätzlich über eine gepflegte Liste. Beides lässt sich unter Systemeinstellungen → Rechtsstand abschalten. Ersetzt keine Steuer- oder Rechtsberatung.</p>
           <p>Auch der Weg in die andere Richtung ist abgedeckt: Eingangsrechnungen und Lieferscheine liest die Auftragszentrale ein. E-Rechnungen (ZUGFeRD, XRechnung) liest sie genau aus, andere PDFs und Fotos über die Texterkennung. Danach gleicht sie die Belege mit der Bestellung ab und meldet Abweichungen bei Preis oder Menge. Stundensätze je Rolle mit Zuschlägen für Notdienst, Nacht, Samstag, Sonntag und Feiertag, Materialaufschläge und Fahrtkosten (Pauschale oder Kilometer) greifen in Angebot und Rechnung von selbst. Fast überall gibt es Rechtsklick-Menüs, etwa „Heute krank melden“, eine Abwesenheit eintragen oder „Prüfung erledigt“.</p>
           <p>Alle Daten liegen als Dateien auf dem eigenen Rechner, im Mehrplatzbetrieb auf dem eigenen Server des Betriebs – ohne Benutzerkonto bei Finnvelo und ohne Cloud. Mit Programmpasswort sind sie verschlüsselt (AES-256). Ein Passwortschutz mit Zurücksetzen über Sicherheitsfragen, Master-Key und Sicherheitszertifikat schützt den Zugang. Die Auftragszentrale läuft auf einem einzelnen Rechner oder auf mehreren Rechnern über einen eigenen Server des Betriebs. Neue Fassungen meldet sie seit Fassung 1.1.0 selbst.</p>
 
@@ -145,8 +147,8 @@
               <p>Stundensätze je Rolle mit Zuschlägen für Notdienst, Nacht, Samstag, Sonntag und Feiertag, dazu Materialaufschläge und Fahrtkosten – sie greifen in Angebot und Rechnung von selbst.</p>
             </article>
             <article>
-              <h3>Rechtsklick-Menüs</h3>
-              <p>Fast überall ein Rechtsklick-Menü für das Naheliegende, etwa „Heute krank melden“, Abwesenheit eintragen oder „Prüfung erledigt“.</p>
+              <h3>Rechtsstand</h3>
+              <p>Ändern sich Basiszins, Steuersätze oder Fristen, meldet sich das Programm – mit dem genauen Gesetzestext. Es prüft selbst bei Bundesbank und gesetze-im-internet.de; übernommen wird nur, was du bestätigst.</p>
             </article>
             <article>
               <h3>Bank-Abgleich</h3>
@@ -247,6 +249,15 @@
               <ul class="einstellungs-liste">
                 <li><strong>Automatisch nach neuen Fassungen sehen</strong>Kurz nach dem Start und danach höchstens einmal in der Stunde.</li>
                 <li><strong>Jetzt nachsehen</strong>Die Suche von Hand anstoßen.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Rechtsstand</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Selbst bei amtlichen Stellen nachsehen</strong>Basiszins bei der Deutschen Bundesbank und 14 Vorschriften auf gesetze-im-internet.de – einmal im Monat, den Basiszins um den 1. Januar und 1. Juli täglich.</li>
+                <li><strong>Liste von Finnvelo-Programmwelten abrufen</strong>Einmal am Tag, mit Hinweisen auf Änderungen, die erst künftig gelten.</li>
+                <li><strong>Zuletzt geprüft und abgerufen</strong>Wann die amtlichen Stellen und die Liste zuletzt nachgesehen wurden.</li>
+                <li><strong>Jetzt nachsehen</strong>Die Prüfung von Hand anstoßen. Übernommen wird nur, was du bestätigst.</li>
               </ul>
             </article>
           </div>
@@ -361,6 +372,7 @@
             <li>Meldet neue Fassungen selbst (ab 1.1.0)</li>
             <li>Bank-Abgleich mit dem Kontoauszug als CSV</li>
             <li>DATEV-Export für den Steuerberater (SKR 03/04)</li>
+            <li>Rechtsstand: Gesetzeswerte selbst geprüft, übernommen nur nach Bestätigung</li>
           </ul>
         </section>
 
@@ -380,15 +392,15 @@
           <h2 id="privacy-title">Daten und Datenschutz</h2>
           <p>Die Daten liegen im Ordner %AppData%\finnvelo-auftragszentrale: Stammdaten und Vorgänge, Einstellungen, Dokumente und Fotos zu Aufträgen, Artikelbilder und die erzeugten Belege (PDF und E-Rechnung). Bei jedem Programmstart legt die Auftragszentrale eine Tagessicherung im Unterordner „backups“ an; die letzten 30 bleiben, einstellbar von 3 bis 90. Unter Systemeinstellungen → Daten &amp; Sicherung lassen sich alle Daten als eine Datei sichern und wieder einlesen. Mit Programmpasswort sind die Daten verschlüsselt (AES-256). Im Mehrplatzbetrieb liegen sie auf dem Server des Betriebs. Beim Deinstallieren bleibt der Datenordner stehen.</p>
           <p>Die Daten von Kunden und Mitarbeitern verantwortet der Betrieb, der das Programm nutzt; ich erhalte davon nichts. Von sich aus fragt die Auftragszentrale nur nach neuen Fassungen – kurz nach dem Start und danach höchstens einmal in der Stunde, abschaltbar unter Systemeinstellungen → Programm-Updates → „Automatisch nach neuen Fassungen sehen“. Eine neue Fassung lädt sie erst nach einem Klick von GitHub.</p>
-          <p>Darüber hinaus geht nur etwas ins Internet, wenn der Betrieb es einrichtet und nutzt: der eigene Server im Mehrplatzbetrieb, der Postausgang für E-Mails, der Shop des Großhändlers über IDS-Connect oder OCI, die Preissuche „Im Netz suchen“ (öffnet Google im Browser) und Artikelbilder, die von der Adresse im Katalog geladen werden. Bank-Abgleich und DATEV-Export arbeiten nur mit Dateien auf dem Rechner; dabei geht nichts ins Netz. Die Einzelheiten stehen in der <a href="/datenschutz">Datenschutzerklärung</a> unter 4.9.</p>
+          <p>Darüber hinaus geht nur etwas ins Internet, wenn der Betrieb es einrichtet und nutzt: der eigene Server im Mehrplatzbetrieb, der Postausgang für E-Mails, der Shop des Großhändlers über IDS-Connect oder OCI, die Preissuche „Im Netz suchen“ (öffnet Google im Browser) und Artikelbilder, die von der Adresse im Katalog geladen werden. Bank-Abgleich und DATEV-Export arbeiten nur mit Dateien auf dem Rechner; dabei geht nichts ins Netz. Ab Fassung 1.3.0 ruft sie außerdem höchstens einmal am Tag die Rechtsstand-Liste von finnveloprogramme.com ab und sieht einmal im Monat selbst bei der Deutschen Bundesbank und auf gesetze-im-internet.de nach – beides abschaltbar unter Systemeinstellungen → Rechtsstand. Die Einzelheiten stehen in der <a href="/datenschutz">Datenschutzerklärung</a> unter 4.9.</p>
         </section>
 
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
           <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
-            <h3>Fassung 1.2.0</h3>
+            <h3>Fassung 1.3.0</h3>
             <p>Installationsprogramm für Windows 10 oder 11 (64 Bit), rund 86 MB. Die Auftragszentrale prüft selbst, ob eine neuere Fassung bereitsteht.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Auftragszentrale/FINNVELO-Auftragszentrale-Setup-1.2.0.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Auftragszentrale/FINNVELO-Auftragszentrale-Setup-1.3.0.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Mehrere Rechner</h3>
