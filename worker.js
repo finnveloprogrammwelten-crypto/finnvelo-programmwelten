@@ -306,7 +306,10 @@ const VERSION_ABLAGEN = {
   /* Command Control PC-Programm (16.11.2026, ab 1.5.3): Selbst-Update. Das Programm fragt diese Adresse
      (mit ?t=<Zeit>) ab, prueft den Schluessel FINNVELO-COMMAND-CONTROL-PC und laedt "datei" (https,
      GitHub-Weiterleitung erlaubt), prueft groesse und sha256. Auch hier keine echte Datei ablegen. */
-  "/command-control/pc.json": "command-control-pc"
+  "/command-control/pc.json": "command-control-pc",
+  /* FINNVELO Auftragszentrale (22.11.2026, ab 1.1.0): Windows-Programm mit Selbst-Update wie CC-PC
+     (datei/groesse/sha256). Gepflegt direkt in der Datenbank (u0 der Seite auftragszentrale-pc), ohne Kachel. */
+  "/auftragszentrale/pc.json": "auftragszentrale-pc"
 };
 
 export class Counter extends DurableObject {
@@ -1888,6 +1891,7 @@ export class Counter extends DurableObject {
         "einkaufsliste-pc": { schluessel: "FINNVELO-EINKAUFSPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "mischwald-pc": { schluessel: "FINNVELO-MISCHWALD-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "lesezeit-pc": { schluessel: "FINNVELO-LESEZEIT-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
+        "auftragszentrale-pc": { schluessel: "FINNVELO-AUFTRAGSZENTRALE-PC", versionCode: 0, versionName: "", datei: "", groesse: 0, sha256: "", hinweise: "" },
         "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         /* Vorbelegt mit der gelieferten Fassung, damit die App sofort etwas
