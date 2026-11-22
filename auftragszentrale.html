@@ -80,13 +80,14 @@
       <div class="program-detail__body program-detail__body--archivar">
         <!-- Seite angelegt 22.11.2026 (Auftrag der Auftragszentrale-Sitzung, Freigabe Tatorasa), Aufbau nach dem
              Muster der Lesezeit-Seite. Alle Angaben aus dem Quelltext der Fassung 1.1.0, geliefert von der
-             Auftragszentrale-Sitzung. Noch nicht veröffentlichte Funktionen stehen nur unter „In Arbeit“. -->
+             Auftragszentrale-Sitzung. 1.2.0 (22.11.2026): Bank-Abgleich, DATEV-Export, PDF/A-3 – „In Arbeit“ entfällt. -->
         <section class="program-info-block program-info-block--wide" aria-labelledby="description-title">
           <h2 id="description-title">Beschreibung</h2>
           <p>Die Auftragszentrale ist für kleine und mittlere Handwerksbetriebe gemacht – Elektro, Sanitär-Heizung-Klima, Bau, Maler sowie Garten- und Pflasterbau. Schon die Startseite zeigt den Tag im Überblick: was ansteht, wer wo arbeitet und welche Fristen ablaufen. Die Warnzentrale sammelt, was bald fällig wird. Der Kalender zeigt Tag, Woche, Monat oder Jahr mit Einsätzen, Urlaub, Krankheit, Fahrzeugausfällen und den Feiertagen aller Bundesländer.</p>
           <p>Personal und Teams führst du mit ihren Nachweisen; läuft ein Nachweis ab, warnt das Programm rechtzeitig. Abwesenheiten trägst du direkt im Kalender per Rechtsklick ein. Aufträge laufen über eine Statuskette. Wartungsverträge erinnern an fällige Wartungen; der Folgeauftrag entsteht mit einem Klick. Für Fahrzeuge und Geräte behält die Auftragszentrale die Hauptuntersuchung nach § 29 StVZO und die Prüffristen nach DGUV im Blick.</p>
           <p>Den Materialkatalog liest du aus DATANORM, CSV, Excel, PDF-Preislisten oder sogar aus Fotos ein. Den Shop des eigenen Großhändlers öffnest du im Programm (IDS-Connect oder OCI). Der Warenkorb kommt mit den Preisen als Bestellung zurück; dafür braucht der Betrieb einen Shop-Zugang bei seinem Großhändler. Einkauf und Lager laufen im selben Programm. Angebote entstehen als Leistungsverzeichnis mit GAEB-Austausch und Aufmaß. Bausteine nehmen Rechenarbeit ab: Bei einer Pflasterfläche gibst du nur die Maße ein, die Positionen berechnet das Programm.</p>
-          <p>Für den Schriftverkehr gestaltest du eigene Briefvorlagen mit Live-Vorschau. Daraus entstehen Angebote, Auftragsbestätigungen, Lieferscheine, Rechnungen aller Arten (Abschlag, Teil, Schluss, Storno, Gutschrift), Mahnungen und Bestellungen – Rechnungen als E-Rechnung auch im Format XRechnung oder ZUGFeRD. Zahlungsüberwachung, Mahnwesen, Zeiterfassung, Nachkalkulation, Auslastung und Touren gehören dazu. Versendet wird über den eigenen Postausgang des Betriebs, und für den Steuerberater stellt das Programm die Unterlagen als PDF, als Ordner mit allen Belegen oder direkt per E-Mail zusammen.</p>
+          <p>Für den Schriftverkehr gestaltest du eigene Briefvorlagen mit Live-Vorschau. Daraus entstehen Angebote, Auftragsbestätigungen, Lieferscheine, Rechnungen aller Arten (Abschlag, Teil, Schluss, Storno, Gutschrift), Mahnungen und Bestellungen – Rechnungen als E-Rechnung auch im Format XRechnung oder ZUGFeRD. Zahlungsüberwachung, Mahnwesen, Zeiterfassung, Nachkalkulation, Auslastung und Touren gehören dazu. Versendet wird über den eigenen Postausgang des Betriebs, und für den Steuerberater stellt das Programm die Unterlagen als PDF, als Ordner mit allen Belegen oder direkt per E-Mail zusammen. Die ZUGFeRD-Rechnung ist ein PDF/A-3 nach Norm (geprüft mit dem Prüfprogramm Mustang/veraPDF); XRechnung und ZUGFeRD bestehen den amtlichen KoSIT-Prüfer. Rechnungen an Privatkunden enthalten den gesetzlichen Hinweis zur Aufbewahrungspflicht.</p>
+          <p>Seit Fassung 1.2.0 gleicht die Auftragszentrale auch das Bankkonto ab: Du liest den Kontoauszug als CSV-Datei aus dem Online-Banking ein. Die Spalten der gängigen Banken erkennt das Programm selbst – Sparkasse, Volks- und Raiffeisenbanken, Deutsche Bank/Postbank, Commerzbank, comdirect, ING, DKB und N26; bei anderen ordnest du sie einmal von Hand zu. Zahlungen mit Rechnungsnummer und passendem Betrag – auch mit Skonto oder als Sammelzahlung – ordnet sie den Kunden- und Lieferantenrechnungen von selbst zu, der Rest kommt als Vorschlag. Für den Steuerberater gibt es den Buchungsstapel im DATEV-Format (SKR 03 oder SKR 04) mit den Ausgangs- und Eingangsrechnungen und den Zahlungen; Berater- und Mandantennummer trägt der Betrieb ein.</p>
           <p>Auch der Weg in die andere Richtung ist abgedeckt: Eingangsrechnungen und Lieferscheine liest die Auftragszentrale ein. E-Rechnungen (ZUGFeRD, XRechnung) liest sie genau aus, andere PDFs und Fotos über die Texterkennung. Danach gleicht sie die Belege mit der Bestellung ab und meldet Abweichungen bei Preis oder Menge. Stundensätze je Rolle mit Zuschlägen für Notdienst, Nacht, Samstag, Sonntag und Feiertag, Materialaufschläge und Fahrtkosten (Pauschale oder Kilometer) greifen in Angebot und Rechnung von selbst. Fast überall gibt es Rechtsklick-Menüs, etwa „Heute krank melden“, eine Abwesenheit eintragen oder „Prüfung erledigt“.</p>
           <p>Alle Daten liegen als Dateien auf dem eigenen Rechner, im Mehrplatzbetrieb auf dem eigenen Server des Betriebs – ohne Benutzerkonto bei Finnvelo und ohne Cloud. Mit Programmpasswort sind sie verschlüsselt (AES-256). Ein Passwortschutz mit Zurücksetzen über Sicherheitsfragen, Master-Key und Sicherheitszertifikat schützt den Zugang. Die Auftragszentrale läuft auf einem einzelnen Rechner oder auf mehreren Rechnern über einen eigenen Server des Betriebs. Neue Fassungen meldet sie seit Fassung 1.1.0 selbst.</p>
 
@@ -148,16 +149,22 @@
               <p>Fast überall ein Rechtsklick-Menü für das Naheliegende, etwa „Heute krank melden“, Abwesenheit eintragen oder „Prüfung erledigt“.</p>
             </article>
             <article>
+              <h3>Bank-Abgleich</h3>
+              <p>Kontoauszug als CSV aus dem Online-Banking einlesen. Zahlungen mit Rechnungsnummer und passendem Betrag – auch mit Skonto oder als Sammelzahlung – werden von selbst zugeordnet, der Rest kommt als Vorschlag.</p>
+            </article>
+            <article>
+              <h3>DATEV-Export</h3>
+              <p>Buchungsstapel im DATEV-Format (SKR 03 oder SKR 04) mit Ausgangs- und Eingangsrechnungen und den Zahlungen – für den Steuerberater.</p>
+            </article>
+            <article>
+              <h3>E-Rechnung nach Norm</h3>
+              <p>ZUGFeRD als PDF/A-3, geprüft mit Mustang/veraPDF; XRechnung und ZUGFeRD bestehen den amtlichen KoSIT-Prüfer.</p>
+            </article>
+            <article>
               <h3>Passwortschutz mit Zurücksetzen</h3>
               <p>Zugang mit Programmpasswort. Zurücksetzen über Sicherheitsfragen oder den Master-Key, danach ein Sicherheitszertifikat zum Ablegen.</p>
             </article>
           </div>
-
-          <h3>In Arbeit</h3>
-          <ul class="feature-list feature-list--einspaltig">
-            <li>Bank-Abgleich: Kontoauszug als CSV einlesen und Zahlungen den Kunden- und Lieferantenrechnungen zuordnen – kommt mit der nächsten Fassung.</li>
-            <li>DATEV-Export für den Steuerberater – in Arbeit.</li>
-          </ul>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="surface-title" data-fv-gallery-section>
@@ -168,7 +175,7 @@
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="settings-title">
           <h2 id="settings-title">Einstellungen – das kannst du anpassen</h2>
-          <p>Die Einstellungen sind auf drei Stellen verteilt: die Systemeinstellungen (Zahnrad oder F10), die Firmendaten und die Belegvorlage. Die Bezeichnungen stehen hier so wie im Programm.</p>
+          <p>Die Einstellungen sind auf mehrere Stellen verteilt: die Systemeinstellungen (Zahnrad oder F10), die Firmendaten, die Belegvorlage sowie die Dialoge „Unterlagen für den Steuerberater“ und „Rechnungen“. Die Bezeichnungen stehen hier so wie im Programm.</p>
           <h3 class="program-media-gruppe">Systemeinstellungen</h3>
           <div class="einstellungs-raster">
             <article class="einstellungs-gruppe">
@@ -309,6 +316,26 @@
               </ul>
             </article>
           </div>
+          <h3 class="program-media-gruppe">Steuerberater und Bank-Abgleich</h3>
+          <div class="einstellungs-raster">
+            <article class="einstellungs-gruppe">
+              <h3>DATEV-Export (Angaben vom Steuerberater)</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Berater- und Mandantennummer</strong>Wie vom Steuerberater angegeben.</li>
+                <li><strong>Kontenrahmen</strong>SKR 03 oder SKR 04.</li>
+                <li><strong>Wirtschaftsjahr beginnt im</strong>Monat des Beginns.</li>
+                <li><strong>Material buchen als</strong>Wareneingang oder Roh-, Hilfs- und Betriebsstoffe.</li>
+                <li><strong>Bankkonto und Kasse</strong>Bankkonto sowie Kasse für Barzahlungen.</li>
+                <li><strong>DATEV-Datei in den Ordner und an die E-Mail legen</strong>An oder aus.</li>
+              </ul>
+            </article>
+            <article class="einstellungs-gruppe">
+              <h3>Bank-Abgleich (Rechnungen)</h3>
+              <ul class="einstellungs-liste">
+                <li><strong>Eindeutige Zahlungen selbst buchen</strong>An oder aus.</li>
+              </ul>
+            </article>
+          </div>
         </section>
 
         <section class="program-info-block program-info-block--wide" aria-labelledby="tutorial-title">
@@ -332,6 +359,8 @@
             <li>Passwortschutz mit Zurücksetzen und Sicherheitszertifikat</li>
             <li>Einzelplatz oder Mehrplatz über einen eigenen Server</li>
             <li>Meldet neue Fassungen selbst (ab 1.1.0)</li>
+            <li>Bank-Abgleich mit dem Kontoauszug als CSV</li>
+            <li>DATEV-Export für den Steuerberater (SKR 03/04)</li>
           </ul>
         </section>
 
@@ -343,6 +372,7 @@
             <li>Wer Fristen für Nachweise, Hauptuntersuchung und DGUV-Prüfungen nicht mehr im Kopf behalten möchte.</li>
             <li>Wer Material aus den Katalogen des Großhandels übernehmen und direkt dort bestellen will.</li>
             <li>Wer Angebote, Rechnungen und E-Rechnungen im eigenen Briefkopf schreiben und die Zahlungen im Blick behalten möchte.</li>
+            <li>Wer Zahlungen nicht mehr von Hand mit dem Kontoauszug abgleichen und dem Steuerberater die Buchungen im DATEV-Format geben will.</li>
           </ul>
         </section>
 
@@ -350,15 +380,15 @@
           <h2 id="privacy-title">Daten und Datenschutz</h2>
           <p>Die Daten liegen im Ordner %AppData%\finnvelo-auftragszentrale: Stammdaten und Vorgänge, Einstellungen, Dokumente und Fotos zu Aufträgen, Artikelbilder und die erzeugten Belege (PDF und E-Rechnung). Bei jedem Programmstart legt die Auftragszentrale eine Tagessicherung im Unterordner „backups“ an; die letzten 30 bleiben, einstellbar von 3 bis 90. Unter Systemeinstellungen → Daten &amp; Sicherung lassen sich alle Daten als eine Datei sichern und wieder einlesen. Mit Programmpasswort sind die Daten verschlüsselt (AES-256). Im Mehrplatzbetrieb liegen sie auf dem Server des Betriebs. Beim Deinstallieren bleibt der Datenordner stehen.</p>
           <p>Die Daten von Kunden und Mitarbeitern verantwortet der Betrieb, der das Programm nutzt; ich erhalte davon nichts. Von sich aus fragt die Auftragszentrale nur nach neuen Fassungen – kurz nach dem Start und danach höchstens einmal in der Stunde, abschaltbar unter Systemeinstellungen → Programm-Updates → „Automatisch nach neuen Fassungen sehen“. Eine neue Fassung lädt sie erst nach einem Klick von GitHub.</p>
-          <p>Darüber hinaus geht nur etwas ins Internet, wenn der Betrieb es einrichtet und nutzt: der eigene Server im Mehrplatzbetrieb, der Postausgang für E-Mails, der Shop des Großhändlers über IDS-Connect oder OCI, die Preissuche „Im Netz suchen“ (öffnet Google im Browser) und Artikelbilder, die von der Adresse im Katalog geladen werden. Die Einzelheiten stehen in der <a href="/datenschutz">Datenschutzerklärung</a> unter 4.9.</p>
+          <p>Darüber hinaus geht nur etwas ins Internet, wenn der Betrieb es einrichtet und nutzt: der eigene Server im Mehrplatzbetrieb, der Postausgang für E-Mails, der Shop des Großhändlers über IDS-Connect oder OCI, die Preissuche „Im Netz suchen“ (öffnet Google im Browser) und Artikelbilder, die von der Adresse im Katalog geladen werden. Bank-Abgleich und DATEV-Export arbeiten nur mit Dateien auf dem Rechner; dabei geht nichts ins Netz. Die Einzelheiten stehen in der <a href="/datenschutz">Datenschutzerklärung</a> unter 4.9.</p>
         </section>
 
         <section class="program-info-block program-download-block program-download-block--pc" aria-labelledby="download-pc-title">
           <h2 id="download-pc-title">Download (PC-Version)</h2>
           <div class="download-slot">
-            <h3>Fassung 1.1.0</h3>
+            <h3>Fassung 1.2.0</h3>
             <p>Installationsprogramm für Windows 10 oder 11 (64 Bit), rund 86 MB. Die Auftragszentrale prüft selbst, ob eine neuere Fassung bereitsteht.</p>
-            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Auftragszentrale/FINNVELO-Auftragszentrale-Setup-1.1.0.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
+            <a class="button" href="https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Auftragszentrale/FINNVELO-Auftragszentrale-Setup-1.2.0.exe" target="_blank" rel="noopener">PC-Version herunterladen</a>
           </div>
           <div class="download-slot download-slot--muted">
             <h3>Mehrere Rechner</h3>
