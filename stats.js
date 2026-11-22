@@ -3023,15 +3023,20 @@
         pruef: '/einkaufsliste/version.json',
         titel: 'Android-App', hinweis: HINWEIS_APP,
         felder: [
-          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 2.11.0' },
-          { key: 'versionCode', label: 'Versions-Code (major x 10000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 21100' },
+          { key: 'versionName', label: 'Versionsnummer (muss zum APK-Namen passen)', typ: 'text', ph: 'z. B. 1.5.0' },
+          { key: 'versionCode', label: 'Versions-Code (seit der Neuzählung: major x 100000 + minor x 100 + patch)', typ: 'zahl', ph: 'z. B. 100500' },
           { key: 'apk', label: 'Download-Adresse der APK', typ: 'url',
-            ph: 'https://github.com/.../FINNVELO-Einkaufsplaner-2.11.0.apk' },
-          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' }
+            ph: 'https://github.com/.../FINNVELO-Einkaufsplaner-1.5.0.apk' },
+          { key: 'hinweise', label: 'Was ist neu (kurzer Hinweis)', typ: 'text', ph: '' },
+          /* Seit 1.5.0 (22.11.2026) prüft die App die geladene Datei mit sha256. Die
+             Felder muessen sichtbar sein: Beim Speichern bleiben alte Werte sonst
+             stehen, und eine neue APK wuerde als verfaelscht abgelehnt. */
+          { key: 'sha256', label: 'SHA-256 der APK (64 Zeichen; leer = keine Prüfung)', typ: 'text', ph: '64 Zeichen 0-9 a-f' },
+          { key: 'groesse', label: 'Größe der APK in Byte', typ: 'zahl', ph: 'z. B. 1487499' }
         ],
         fest: { schluessel: 'FINNVELO-EINKAUFSPLANER' },
-        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 21100, versionName: '2.11.0',
-                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-2.11.0.apk', hinweise: '' }
+        vorgabe: { schluessel: 'FINNVELO-EINKAUFSPLANER', versionCode: 100500, versionName: '1.5.0',
+                   apk: GH + 'Einkaufsplaner/FINNVELO-Einkaufsplaner-1.5.0.apk', hinweise: '' }
       },
       {
         seite: 'einkaufsliste', art: 'pc',
