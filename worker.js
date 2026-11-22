@@ -310,7 +310,12 @@ const VERSION_ABLAGEN = {
   "/command-control/pc.json": "command-control-pc",
   /* FINNVELO Auftragszentrale (22.11.2026, ab 1.1.0): Windows-Programm mit Selbst-Update wie CC-PC
      (datei/groesse/sha256). Gepflegt direkt in der Datenbank (u0 der Seite auftragszentrale-pc), ohne Kachel. */
-  "/auftragszentrale/pc.json": "auftragszentrale-pc"
+  "/auftragszentrale/pc.json": "auftragszentrale-pc",
+  /* Rechtsstand-Dienst der Auftragszentrale (22.11.2026, ab 1.3.0): Liste mit Änderungen von Gesetzeswerten
+     (Basiszins, Steuersätze, Fristen), höchstens einmal am Tag abgefragt. Inhalt kommt von der
+     Auftragszentrale-Sitzung nach Tatorasas Freigabe und steht in der Datenbank (u0 der Seite
+     auftragszentrale-rechtsstand); keine feste Datei im Ordner. */
+  "/auftragszentrale/rechtsstand.json": "auftragszentrale-rechtsstand"
 };
 
 export class Counter extends DurableObject {
@@ -1893,6 +1898,7 @@ export class Counter extends DurableObject {
         "mischwald-pc": { schluessel: "FINNVELO-MISCHWALD-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "lesezeit-pc": { schluessel: "FINNVELO-LESEZEIT-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "auftragszentrale-pc": { schluessel: "FINNVELO-AUFTRAGSZENTRALE-PC", versionCode: 0, versionName: "", datei: "", groesse: 0, sha256: "", hinweise: "" },
+        "auftragszentrale-rechtsstand": { format: "finnvelo-rechtsstand", version: 1, programm: "auftragszentrale", stand: "", aenderungen: [] },
         "tourenplaner-android": { schluessel: "FINNVELO-TOURENPLANER-ANDROID", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         "tourenplaner-pc": { schluessel: "FINNVELO-TOURENPLANER-PC", versionCode: 0, versionName: "", apk: "", hinweise: "" },
         /* Vorbelegt mit der gelieferten Fassung, damit die App sofort etwas
@@ -2696,7 +2702,9 @@ export default {
     const VERSION_ROUTEN = VERSION_ABLAGEN;
     if (versionPfad.endsWith("/version.json") || versionPfad.endsWith("/android.json")
         || versionPfad.endsWith("/pc.json") || versionPfad.endsWith("/mac.json")
-        || versionPfad.endsWith("/linux.json")) {
+        || versionPfad.endsWith("/linux.json")
+        // fest eingetragene Adressen mit anderem Namen, z. B. /auftragszentrale/rechtsstand.json (22.11.2026)
+        || Object.prototype.hasOwnProperty.call(VERSION_ROUTEN, versionPfad)) {
       let ablage = VERSION_ROUTEN[versionPfad];
       if (!ablage) {
         // Selbst angelegte Adressen aus dem Verzeichnis
