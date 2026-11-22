@@ -691,6 +691,23 @@ code {
   max-width: 900px;
 }
 
+/* Lange Ueberschriften wie „Datenschutzhinweise.“ ragten am Handy 93 px aus dem Kasten (22.11.2026) -
+   deutsche Silbentrennung erlauben, notfalls im Wort umbrechen. */
+.legal h1 {
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  overflow-wrap: break-word;
+}
+
+.impressum-qr {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 6px;
+  background: #ffffff;
+  border-radius: 10px;
+  line-height: 0;
+}
+
 .contact-layout {
   min-height: clamp(620px, 48vw, 900px);
 }
