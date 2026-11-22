@@ -32,7 +32,7 @@
 //   POST /api/zugang {aktion:"zuruecksetzen", pin, neu}     -> ohne altes Passwort
 
 import { DurableObject } from "cloudflare:workers";
-import { behandleEinkauf, EinkaufSpeicher } from "./einkauf-modul.js";
+import { behandleEinkauf, EinkaufSpeicher, einkaufKanalLeeren } from "./einkauf-modul.js";
 import { behandleTourenapi, TourenKanal, TourenKopplung } from "./tourenapi-modul.js";
 import { behandleFinanzapi, FinanzKanal, FinanzKopplung } from "./finanzapi-modul.js";
 import { behandleVorleserapi, VorleserKopplung, VorleserTreff } from "./vorleserapi-modul.js";
@@ -1138,6 +1138,17 @@ export class Counter extends DurableObject {
       // nicht, warum die Liste plotzlich leer war.
       this.spurLegen("/api/fehler/leeren", weg + " Einträge bereinigt");
       return json({ ok: true, geloescht: weg });
+    }
+
+    // --- Einkaufsplaner: Kanal auf Wunsch loeschen (22.11.2026) ------------
+    // Das oeffentliche DELETE in einkauf-modul.js gibt es nicht mehr; geloescht
+    // wird nur noch hier, mit Admin-Passwort und Kanalkennung.
+    if (url.pathname === "/api/einkauf-verwaltung/kanal-loeschen" && method === "POST") {
+      let b = {};
+      try { b = await request.json(); } catch (_e) { b = {}; }
+      if (!await adminOk(b)) return json({ fehler: "unauthorized" }, 401);
+      const r = await einkaufKanalLeeren(this.env, String(b.kanal || ""));
+      return json(r, r.ok ? 200 : 400);
     }
 
     // --- Kurze Fehlerauskunft fuer die Admin-Leiste ----------------------
