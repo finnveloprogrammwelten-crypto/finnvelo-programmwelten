@@ -1938,9 +1938,9 @@ export class Counter extends DurableObject {
                            sha256: "a9e82d0df1c882491746158286e6f6ef7f271dec0d10813892fd4a7e5a7c05bb",
                            hinweise: "Neu: Der Deck-Generator mischt zwei Spielarten, z. B. Aggro-Midrange – einfach zwei Grundtempi wählen. Er kehrt beim Überarbeiten immer zum besten Deck zurück, statt an einem schwächeren Umbau weiterzubauen, und startet mit dem Wissen aus 105 eigenen Testbauten (im Schnitt gut 3 Prozentpunkte stärkere Decks). Neu: Impressum und Datenschutz in den Einstellungen. Sicherer: Die Scannerseite im Handy-Browser läuft nur noch, solange ihr QR-Code aufgeklappt ist, und lässt nur das Handy mit diesem Code herein. Neue Fassungen werden vor dem Einrichten auf Echtheit geprüft." },
         /* Haus- und Gartenplaner, alte HTML-Datei 1.0.1 (Felder wie dort: version, url, notes): seit 22.11.2026
-           Verweis auf das Windows-Programm (Stand 2.0.8). Ein in der Datenbank gespeicherter Eintrag hat Vorrang. */
-        "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "2.0.8", versionName: "2.0.8",
-            url: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Finnvelo-Haus-und-Gartenplaner/FINNVELO-Haus-und-Gartenplaner-Setup-2.0.8.exe",
+           Verweis auf das Windows-Programm (Stand 2.0.9). Ein in der Datenbank gespeicherter Eintrag hat Vorrang. */
+        "haus-und-gartenplaner": { programm: "FINNVELO-HAUS-UND-GARTENPLANER", version: "2.0.9", versionName: "2.0.9",
+            url: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/Finnvelo-Haus-und-Gartenplaner/FINNVELO-Haus-und-Gartenplaner-Setup-2.0.9.exe",
             notes: "Ab Fassung 2.0 ist der Planer ein Windows-Programm mit Aufmaß für alle Gewerke. Bitte vorher Ihre Projekte über „Speichern (Ort wählen)“ als Datei sichern und im neuen Programm über „Projekt laden“ öffnen – Daten aus dem Browser kann das Programm nicht übernehmen." },
         "haus-und-gartenplaner-pc": { schluessel: "FINNVELO-HAUS-UND-GARTENPLANER-PC", versionCode: 0, versionName: "", datei: "", groesse: 0, sha256: "", hinweise: "" },
         /* Command Control Handy-App: vorbelegt mit Fassung 1.0 (versionCode muss exakt zur APK passen:
