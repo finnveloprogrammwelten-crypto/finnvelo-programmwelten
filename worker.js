@@ -1947,17 +1947,17 @@ export class Counter extends DurableObject {
            groß x 10000 + klein x 100 + kleinst). Ein in der Kachel "Aktualisierung" gespeicherter Eintrag hat Vorrang. */
         "command-control-android": { schluessel: "FINNVELO-COMMAND-CONTROL-ANDROID", versionCode: 10500, versionName: "1.5.0",
             apk: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/FINNVELO-Command-Control-1.5.0.apk",
-            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.11)." },
+            hinweise: "Neu in 1.5.0: Die App aktualisiert sich künftig selbst – ohne Neuinstallation. Dies ist das letzte Update über den Installer. Für den Tasten-Editor am Handy mindestens Finnvelo Command Control 1.4.3 am PC (aktuell 1.5.12)." },
         /* Command Control PC-Programm (ab 1.5.3): eigener Aufbau mit datei/groesse/sha256 statt apk. Bewusst
            ohne Kachel "Aktualisierung" - deren PC-Kacheln bauen den Eintrag nur aus apk/hinweise neu und
            wuerden groesse und sha256 verlieren. Gepflegt wird der Eintrag direkt in der Datenbank. */
         "command-control-pc": { schluessel: "FINNVELO-COMMAND-CONTROL-PC",
-                                versionCode: 10511,
-                                versionName: "1.5.11",
-                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.11.exe",
-                                groesse: 378821893,
-                                sha256: "3137fd86199cd07d790e5b4d7ca772dd9a4ce57e7d8c93ed69e095695f0ba4fa",
-                                hinweise: "Neu in 1.5.11: QR-Code zum Impressum in den Einstellungen." },
+                                versionCode: 10512,
+                                versionName: "1.5.12",
+                                datei: "https://github.com/finnveloprogrammwelten-crypto/finnvelo-programmwelten/releases/download/CommandControl/Finnvelo.Command.Control.Setup.1.5.12.exe",
+                                groesse: 378847129,
+                                sha256: "6aa446357e4716dea800c4d945f79b385318e972728cb150ac461402814fec2f",
+                                hinweise: "Neu in 1.5.12: Programm am Handy steuern – ein laufendes Programm am PC (Browser, Programm, Spiel) im Vollbild am Handy bedienen." },
       };
       const standard = leer[app] || { versionCode: 0, versionName: "", version: "", download: "", hinweis: "" };
       const inhalt = rows.length && rows[0].value ? rows[0].value : JSON.stringify(standard);
